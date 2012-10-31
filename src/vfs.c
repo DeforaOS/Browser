@@ -20,6 +20,13 @@
 
 /* public */
 /* functions */
+/* vfs_lstat */
+int vfs_lstat(char const * filename, struct stat * st)
+{
+	return lstat(filename, st);
+}
+
+
 /* vfs_opendir */
 int vfs_closedir(DIR * dir)
 {
@@ -62,4 +69,11 @@ DIR * vfs_opendir(char const * filename, struct stat * st)
 struct dirent * vfs_readdir(DIR * dir)
 {
 	return readdir(dir);
+}
+
+
+/* vfs_stat */
+int vfs_stat(char const * filename, struct stat * st)
+{
+	return stat(filename, st);
 }

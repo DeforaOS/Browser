@@ -1127,14 +1127,14 @@ static int _refresh_new_loop(Browser * browser)
 	_loop_status(browser, _("Refreshing folder: "));
 	location = browser_get_location(browser);
 	if((path = g_build_filename(location, de->d_name, NULL)) == NULL
-			|| lstat(path, &lst) != 0)
+			|| vfs_lstat(path, &lst) != 0)
 	{
 		browser_error(NULL, strerror(errno), 1);
 		if(path != NULL)
 			g_free(path);
 		return 0;
 	}
-	if(S_ISLNK(lst.st_mode) && stat(path, &st) == 0)
+	if(S_ISLNK(lst.st_mode) && vfs_stat(path, &st) == 0)
 		_loop_insert(browser, &iter, path, de->d_name, &lst, &st, 0);
 	else
 		_loop_insert(browser, &iter, path, de->d_name, &lst, &lst, 0);
@@ -1470,7 +1470,7 @@ static gboolean _done_timeout(gpointer data)
 		browser->refresh_id = 0;
 		return FALSE;
 	}
-	if(stat(location, &st) != 0)
+	if(vfs_stat(location, &st) != 0)
 	{
 		browser->refresh_id = 0;
 		browser_error(NULL, strerror(errno), 1);
@@ -1535,7 +1535,7 @@ static int _current_loop(Browser * browser)
 	_loop_status(browser, _("Refreshing folder: "));
 	location = browser_get_location(browser);
 	if((path = g_build_filename(location, de->d_name, NULL)) == NULL
-			|| lstat(path, &lst) != 0)
+			|| vfs_lstat(path, &lst) != 0)
 	{
 		browser_error(NULL, strerror(errno), 1);
 		if(path != NULL)
@@ -1549,7 +1549,7 @@ static int _current_loop(Browser * browser)
 		if(inode == lst.st_ino)
 			break;
 	}
-	if(S_ISLNK(lst.st_mode) && stat(path, &st) == 0)
+	if(S_ISLNK(lst.st_mode) && vfs_stat(path, &st) == 0)
 		p = &st;
 	if(valid != TRUE)
 		_loop_insert(browser, &iter, path, de->d_name, &lst, p, 1);

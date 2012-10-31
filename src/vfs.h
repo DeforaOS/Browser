@@ -25,7 +25,9 @@
 /* public */
 /* functions */
 int vfs_closedir(DIR * dir);
+int vfs_lstat(char const * filename, struct stat * st);
 DIR * vfs_opendir(char const * filename, struct stat * st);
 struct dirent * vfs_readdir(DIR * dir);
+int vfs_stat(char const * filename, struct stat * st);
 
 #endif /* !BROWSER_VFS_H */
