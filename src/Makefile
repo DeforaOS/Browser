@@ -20,7 +20,7 @@ all: subdirs $(TARGETS)
 subdirs:
 	@for i in $(SUBDIRS); do (cd $$i && $(MAKE)) || exit; done
 
-browser_OBJS = browser.o callbacks.o main.o
+browser_OBJS = browser.o callbacks.o vfs.o main.o
 browser_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 browser_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 
@@ -88,6 +88,9 @@ browser.o: browser.c callbacks.h common.c browser.h ../config.h
 
 callbacks.o: callbacks.c browser.h callbacks.h common.c ../config.h
 	$(CC) $(browser_CFLAGS) -c callbacks.c
+
+vfs.o: vfs.c
+	$(CC) $(browser_CFLAGS) -c vfs.c
 
 main.o: main.c browser.h
 	$(CC) $(browser_CFLAGS) -c main.c

@@ -61,6 +61,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/po/project.conf \
 		$(PACKAGE)-$(VERSION)/src/browser.c \
 		$(PACKAGE)-$(VERSION)/src/callbacks.c \
+		$(PACKAGE)-$(VERSION)/src/vfs.c \
 		$(PACKAGE)-$(VERSION)/src/main.c \
 		$(PACKAGE)-$(VERSION)/src/copy.c \
 		$(PACKAGE)-$(VERSION)/src/delete.c \
@@ -77,6 +78,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/common.c \
 		$(PACKAGE)-$(VERSION)/src/desktop.h \
 		$(PACKAGE)-$(VERSION)/src/desktopicon.h \
+		$(PACKAGE)-$(VERSION)/src/vfs.h \
 		$(PACKAGE)-$(VERSION)/src/project.conf \
 		$(PACKAGE)-$(VERSION)/src/plugins/cvs.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/dirtree.c \

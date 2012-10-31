@@ -35,6 +35,7 @@ static char const _license[] =
 #include <gdk/gdkkeysyms.h>
 #include <Desktop.h>
 #include "callbacks.h"
+#include "vfs.h"
 #include "browser.h"
 #include "../config.h"
 #define _(string) gettext(string)
@@ -227,7 +228,6 @@ static gboolean _browser_plugin_is_enabled(Browser * browser,
 static Mime * _browser_get_mime(Browser * browser);
 static void _browser_set_status(Browser * browser, char const * status);
 
-static DIR * _browser_opendir(char const * pathname, struct stat * st);
 static void _browser_plugin_refresh(Browser * browser);
 static void _browser_refresh_do(Browser * browser, DIR * dir, struct stat * st);
 
@@ -1068,7 +1068,7 @@ void browser_refresh(Browser * browser)
 #endif
 	if((location = browser_get_location(browser)) == NULL)
 		return;
-	if((dir = _browser_opendir(location, &st)) == NULL) /* XXX */
+	if((dir = vfs_opendir(location, &st)) == NULL) /* XXX */
 		browser_error(browser, strerror(errno), 1);
 	else
 		_browser_refresh_do(browser, dir, &st);
@@ -1109,7 +1109,7 @@ static int _refresh_new_loop(Browser * browser)
 	struct stat lst;
 	struct stat st;
 
-	while((de = readdir(browser->refresh_dir)) != NULL)
+	while((de = vfs_readdir(browser->refresh_dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
 		{
@@ -1396,7 +1396,7 @@ static void _refresh_done(Browser * browser)
 	GtkTreeIter * iter = &browser->refresh_iter;
 #endif
 
-	closedir(browser->refresh_dir);
+	vfs_closedir(browser->refresh_dir);
 	browser->refresh_dir = NULL;
 #if GTK_CHECK_VERSION(2, 6, 0)
 	if(gtk_tree_model_get_iter_first(model, iter) == TRUE)
@@ -1517,7 +1517,7 @@ static int _current_loop(Browser * browser)
 	gboolean valid;
 	uint64_t inode;
 
-	while((de = readdir(browser->refresh_dir)) != NULL)
+	while((de = vfs_readdir(browser->refresh_dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
 		{
@@ -1680,13 +1680,13 @@ int browser_set_location(Browser * browser, char const * path)
 			mime_action(browser->mime, "open", realpath);
 	}
 	else if(g_file_test(realpath, G_FILE_TEST_IS_DIR)
-			&& (dir = _browser_opendir(realpath, &st)) != NULL)
+			&& (dir = vfs_opendir(realpath, &st)) != NULL)
 	{
 		if(_location_directory(browser, realpath, dir, &st) == 0)
 			gtk_widget_set_sensitive(GTK_WIDGET(browser->tb_updir),
 					strcmp(browser->current->data, "/"));
 		else
-			closedir(dir);
+			vfs_closedir(dir);
 	}
 	else
 		/* XXX errno may not be set */
@@ -2616,37 +2616,6 @@ void browser_unselect_all(Browser * browser)
 
 /* private */
 /* functions */
-/* browser_opendir */
-static DIR * _browser_opendir(char const * pathname, struct stat * st)
-{
-	DIR * dir;
-	int fd;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, pathname);
-#endif
-#if defined(__sun__)
-	if((fd = open(pathname, O_RDONLY)) < 0
-			|| (dir = fdopendir(fd)) == NULL)
-	{
-		if(fd >= 0)
-			close(fd);
-		return NULL;
-	}
-#else
-	if((dir = opendir(pathname)) == NULL)
-		return NULL;
-	fd = dirfd(dir);
-#endif
-	if(st != NULL && fstat(fd, st) != 0)
-	{
-		closedir(dir);
-		return NULL;
-	}
-	return dir;
-}
-
-
 /* browser_plugin_refresh */
 static void _plugin_refresh_do(Browser * browser, char const * path);
 
@@ -2726,7 +2695,7 @@ static void _browser_refresh_do(Browser * browser, DIR * dir, struct stat * st)
 		g_source_remove(browser->refresh_id);
 	browser->refresh_id = 0;
 	if(browser->refresh_dir != NULL)
-		closedir(browser->refresh_dir);
+		vfs_closedir(browser->refresh_dir);
 	browser->refresh_dir = dir;
 	browser->refresh_mti = st->st_mtime;
 	browser->refresh_cnt = 0;
