@@ -34,6 +34,64 @@ int vfs_closedir(DIR * dir)
 }
 
 
+/* vfs_mime_icon */
+GdkPixbuf * vfs_mime_icon(Mime * mime, char const * type, struct stat * st,
+		int size)
+{
+	GdkPixbuf * pixbuf = NULL;
+	char const * emblem;
+	int esize;
+	GdkPixbuf * epixbuf;
+	GtkIconTheme * icontheme;
+
+	mime_icons(mime, type, size, &pixbuf, -1);
+	if(pixbuf == NULL)
+		return NULL;
+	/* determine the emblem */
+	if(S_ISLNK(st->st_mode))
+		emblem = "emblem-symbolic-link";
+	else if((st->st_mode & (S_IRUSR | S_IRGRP | S_IROTH)) == 0)
+		emblem = "emblem-unreadable";
+	else if((st->st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)) == 0)
+		emblem = "emblem-readonly";
+	else
+		return pixbuf;
+	/* determine the size of the emblem */
+	switch(size)
+	{
+		case 24:
+			esize = 12;
+			break;
+		case 48:
+			esize = 24;
+			break;
+		case 96:
+			esize = 32;
+			break;
+		default:
+			return pixbuf;
+	}
+	/* obtain the emblem's icon */
+	icontheme = gtk_icon_theme_get_default();
+	if((epixbuf = gtk_icon_theme_load_icon(icontheme, emblem, esize,
+					GTK_ICON_LOOKUP_USE_BUILTIN
+					| GTK_ICON_LOOKUP_FORCE_SIZE, NULL))
+			== NULL)
+		return pixbuf;
+	pixbuf = gdk_pixbuf_copy(pixbuf);
+	/* blit the emblem */
+#if 0 /* XXX does not show anything (bottom right) */
+	gdk_pixbuf_composite(epixbuf, pixbuf, size - esize, size - esize,
+			esize, esize, 0, 0, 1.0, 1.0, GDK_INTERP_NEAREST,
+			255);
+#else /* blitting at the top left instead */
+	gdk_pixbuf_composite(epixbuf, pixbuf, 0, 0, esize, esize, 0, 0,
+			1.0, 1.0, GDK_INTERP_NEAREST, 255);
+#endif
+	return pixbuf;
+}
+
+
 /* vfs_opendir */
 DIR * vfs_opendir(char const * filename, struct stat * st)
 {

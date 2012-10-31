@@ -1160,11 +1160,7 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		char const ** display, uint64_t * inode, uint64_t * size,
 		char const ** dsize, struct passwd ** pw, struct group ** gr,
 		char const ** ddate, char const ** type, char const * path,
-		GdkPixbuf ** icon_24,
-#if GTK_CHECK_VERSION(2, 6, 0)
-		GdkPixbuf ** icon_48, GdkPixbuf ** icon_96
-#endif
-		);
+		GdkPixbuf ** icon24, GdkPixbuf ** icon48, GdkPixbuf ** icon96);
 
 static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 		char const * path, char const * display, struct stat * lst,
@@ -1192,7 +1188,7 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 			, &icon_48, &icon_96);
 	gtk_list_store_insert_with_values(browser->store, iter, -1,
 #else
-		);
+			, NULL, NULL);
 	gtk_list_store_insert_after(browser->store, iter, NULL);
 	gtk_list_store_set(browser->store, iter,
 #endif
@@ -1231,11 +1227,7 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		char const ** display, uint64_t * inode, uint64_t * size,
 		char const ** dsize, struct passwd ** pw, struct group ** gr,
 		char const ** ddate, char const ** type, char const * path,
-		GdkPixbuf ** icon_24,
-#if GTK_CHECK_VERSION(2, 6, 0)
-		GdkPixbuf ** icon_48, GdkPixbuf ** icon_96
-#endif
-		)
+		GdkPixbuf ** icon24, GdkPixbuf ** icon48, GdkPixbuf ** icon96)
 {
 	char const * p;
 	GError * error = NULL;
@@ -1255,25 +1247,26 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 	*ddate = _insert_date(lst->st_mtime);
 	*type = _insert_mode(lst->st_mode, browser->refresh_dev, lst->st_dev);
 	if(S_ISDIR(st->st_mode))
-		_insert_dir(browser, icon_24,
+	{
+		_insert_dir(browser, icon24,
 #if GTK_CHECK_VERSION(2, 6, 0)
-				icon_48, icon_96,
+				icon48, icon96,
 #endif
 				st->st_dev);
-	else if(st->st_mode & S_IXUSR)
-		mime_icons(browser->mime, "application/x-executable", 24,
-				icon_24,
-#if GTK_CHECK_VERSION(2, 6, 0)
-				48, icon_48, 96, icon_96,
-#endif
-				-1);
-	else if(browser->mime != NULL && *type == NULL
-			&& (*type = mime_type(browser->mime, path)) != NULL)
-		mime_icons(browser->mime, *type, 24, icon_24,
-#if GTK_CHECK_VERSION(2, 6, 0)
-				48, icon_48, 96, icon_96,
-#endif
-				-1);
+		return;
+	}
+	if(st->st_mode & S_IXUSR)
+		*type = "application/x-executable";
+	if(browser->mime == NULL)
+		return;
+	if(*type == NULL && (*type = mime_type(browser->mime, path)) == NULL)
+		return;
+	if(icon24 != NULL)
+		*icon24 = vfs_mime_icon(browser->mime, *type, lst, 24);
+	if(icon48 != NULL)
+		*icon48 = vfs_mime_icon(browser->mime, *type, lst, 48);
+	if(icon96 != NULL)
+		*icon96 = vfs_mime_icon(browser->mime, *type, lst, 96);
 }
 
 static char const * _insert_size(off_t size)
@@ -1333,8 +1326,6 @@ static char const * _insert_mode(mode_t mode, dev_t parent, dev_t dev)
 		return "inode/chardevice";
 	else if(S_ISFIFO(mode))
 		return "inode/fifo";
-	else if(S_ISLNK(mode))
-		return "inode/symlink";
 #ifdef S_ISSOCK
 	else if(S_ISSOCK(mode))
 		return "inode/socket";
