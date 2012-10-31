@@ -384,19 +384,24 @@ static void _refresh_type(Properties * properties, struct stat * st)
 
 	if(S_ISDIR(st->st_mode))
 	{
-		if((pixbuf = gtk_icon_theme_load_icon(properties->theme,
-						"gnome-fs-directory", 48, 0,
-						NULL)) != NULL)
-			image = gtk_image_new_from_pixbuf(pixbuf);
-		if(image == NULL)
-			image = gtk_image_new_from_stock(GTK_STOCK_DIRECTORY,
-					GTK_ICON_SIZE_DIALOG);
 		type = "inode/directory";
 		if((p = strdup(properties->filename)) != NULL
 				&& lstat(dirname(p), &dirst) == 0
 				&& st->st_dev != dirst.st_dev)
+		{
 			type = "inode/mountpoint";
+			pixbuf = gtk_icon_theme_load_icon(properties->theme,
+					"mount-point", 48, 0, NULL);
+		}
 		free(p);
+		if(pixbuf == NULL)
+			pixbuf = gtk_icon_theme_load_icon(properties->theme,
+					"gnome-fs-directory", 48, 0, NULL);
+		if(pixbuf != NULL)
+			image = gtk_image_new_from_pixbuf(pixbuf);
+		if(image == NULL)
+			image = gtk_image_new_from_stock(GTK_STOCK_DIRECTORY,
+					GTK_ICON_SIZE_DIALOG);
 	}
 	else if(S_ISBLK(st->st_mode))
 		type = "inode/blockdevice";
