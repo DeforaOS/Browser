@@ -18,6 +18,7 @@
 #ifndef DESKTOP_BROWSER_H
 # define DESKTOP_BROWSER_H
 
+# include <sys/stat.h>
 # include <gtk/gtk.h>
 # include <Desktop.h>
 # include "Browser/desktop.h"
@@ -34,6 +35,8 @@ typedef struct _BrowserPluginHelper
 {
 	Browser * browser;
 	int (*error)(Browser * browser, char const * message, int ret);
+	GdkPixbuf * (*get_icon)(Browser * browser, char const * type,
+			struct stat * st, int size);
 	Mime * (*get_mime)(Browser * browser);
 	int (*set_location)(Browser * browser, char const * path);
 } BrowserPluginHelper;

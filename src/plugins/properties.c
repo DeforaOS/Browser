@@ -376,6 +376,7 @@ static void _refresh_name(GtkWidget * widget, char const * filename)
 
 static void _refresh_type(Properties * properties, struct stat * st)
 {
+	BrowserPluginHelper * helper = properties->helper;
 	char const * type = NULL;
 	char const * ltype = NULL;
 	GdkPixbuf * pixbuf = NULL;
@@ -416,16 +417,12 @@ static void _refresh_type(Properties * properties, struct stat * st)
 	else if(S_ISSOCK(st->st_mode))
 		type = "inode/socket";
 #endif
-	if(type == NULL && properties->mime != NULL)
-	{
-		type = mime_type(properties->mime, properties->filename);
-		if(type != NULL)
-		{
-			mime_icons(properties->mime, type, 48, &pixbuf, -1);
-			if(pixbuf != NULL)
-				image = gtk_image_new_from_pixbuf(pixbuf);
-		}
-	}
+	if(type == NULL && properties->mime != NULL
+			&& (type = mime_type(properties->mime,
+					properties->filename)) != NULL
+			&& (pixbuf = helper->get_icon(helper->browser,
+					type, st, 48)) != NULL)
+		image = gtk_image_new_from_pixbuf(pixbuf);
 	if(type == NULL)
 		type = _("Unknown type");
 	if(image == NULL && (pixbuf = gtk_icon_theme_load_icon(

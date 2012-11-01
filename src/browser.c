@@ -225,6 +225,8 @@ unsigned int browser_cnt = 0;
 /* accessors */
 static gboolean _browser_plugin_is_enabled(Browser * browser,
 		char const * plugin);
+static GdkPixbuf * _browser_get_icon(Browser * browser, char const * type,
+		struct stat * st, int size);
 static Mime * _browser_get_mime(Browser * browser);
 static void _browser_set_status(Browser * browser, char const * status);
 
@@ -313,6 +315,7 @@ Browser * browser_new(char const * directory)
 	/* plug-ins */
 	browser->pl_helper.browser = browser;
 	browser->pl_helper.error = browser_error;
+	browser->pl_helper.get_icon = _browser_get_icon;
 	browser->pl_helper.get_mime = _browser_get_mime;
 	browser->pl_helper.set_location = browser_set_location;
 
@@ -2825,6 +2828,14 @@ static gboolean _browser_plugin_is_enabled(Browser * browser,
 			return TRUE;
 	}
 	return FALSE;
+}
+
+
+/* browser_get_icon */
+static GdkPixbuf * _browser_get_icon(Browser * browser, char const * type,
+		struct stat * st, int size)
+{
+	return vfs_mime_icon(browser->mime, type, st, size);
 }
 
 
