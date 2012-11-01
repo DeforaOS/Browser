@@ -1199,19 +1199,19 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 			BC_IS_EXECUTABLE, st->st_mode & S_IXUSR,
 			BC_IS_MOUNT_POINT,
 			(st->st_dev != browser->refresh_dev) ? TRUE : FALSE,
-			BC_PIXBUF_24, icon_24 != NULL ? icon_24
-			: browser->pb_file_24,
+			BC_PIXBUF_24, (icon_24 != NULL)
+			? icon_24 : browser->pb_file_24,
 #if GTK_CHECK_VERSION(2, 6, 0)
-			BC_PIXBUF_48, icon_48 != NULL ? icon_48
-			: browser->pb_file_48,
-			BC_PIXBUF_96, icon_96 != NULL ? icon_96
-			: browser->pb_file_96,
+			BC_PIXBUF_48, (icon_48 != NULL)
+			? icon_48 : browser->pb_file_48,
+			BC_PIXBUF_96, (icon_96 != NULL)
+			? icon_96 : browser->pb_file_96,
 #endif
 			BC_SIZE, size, BC_DISPLAY_SIZE, dsize,
 			BC_OWNER, pw != NULL ? pw->pw_name : "",
 			BC_GROUP, gr != NULL ? gr->gr_name : "",
 			BC_DATE, lst->st_mtime, BC_DISPLAY_DATE, ddate,
-			BC_MIME_TYPE, type != NULL ? type : "", -1);
+			BC_MIME_TYPE, (type != NULL) ? type : "", -1);
 }
 
 /* insert_all */
@@ -1582,19 +1582,21 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 			BC_DISPLAY_NAME, display, BC_INODE, inode,
 			BC_IS_DIRECTORY, S_ISDIR(st->st_mode),
 			BC_IS_EXECUTABLE, st->st_mode & S_IXUSR,
-			BC_IS_MOUNT_POINT, (st->st_dev != browser->refresh_dev)
-			? TRUE : FALSE,
-			BC_PIXBUF_24, icon_24 != NULL ? icon_24
-			: browser->pb_file_24,
+			BC_IS_MOUNT_POINT,
+			(st->st_dev != browser->refresh_dev) ? TRUE : FALSE,
+			BC_PIXBUF_24, (icon_24 != NULL)
+			? icon_24 : browser->pb_file_24,
 #if GTK_CHECK_VERSION(2, 6, 0)
-			BC_PIXBUF_48, icon_48 != NULL ? icon_48
-			: browser->pb_file_48,
+			BC_PIXBUF_48, (icon_48 != NULL)
+			? icon_48 : browser->pb_file_48,
+			BC_PIXBUF_96, (icon_96 != NULL)
+			? icon_96 : browser->pb_file_96,
 #endif
 			BC_SIZE, size, BC_DISPLAY_SIZE, dsize,
 			BC_OWNER, (pw != NULL) ? pw->pw_name : "",
 			BC_GROUP, (gr != NULL) ? gr->gr_name : "",
 			BC_DATE, lst->st_mtime, BC_DISPLAY_DATE, ddate,
-			BC_MIME_TYPE, type != NULL ? type : "", -1);
+			BC_MIME_TYPE, (type != NULL) ? type : "", -1);
 	/* FIXME refresh the plug-in if the icon is currently selected */
 }
 
