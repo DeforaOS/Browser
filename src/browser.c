@@ -1234,6 +1234,7 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		char const ** ddate, char const ** type, char const * path,
 		GdkPixbuf ** icon24, GdkPixbuf ** icon48, GdkPixbuf ** icon96)
 {
+	char const * ltype = NULL;
 	char const * p;
 	GError * error = NULL;
 
@@ -1260,11 +1261,19 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 				st->st_dev);
 		return;
 	}
-	if(st->st_mode & S_IXUSR)
-		*type = "application/x-executable";
 	if(browser->mime == NULL)
 		return;
-	if(*type == NULL && (*type = mime_type(browser->mime, path)) == NULL)
+	/* load the icons */
+	if(S_ISLNK(lst->st_mode))
+	{
+		/* obtain the target icon for symbolic links */
+		ltype = *type;
+		*type = NULL;
+	}
+	else if(st->st_mode & S_IXUSR)
+		*type = "application/x-executable";
+	if(*type == NULL && (*type = mime_type(browser->mime, path)) == NULL
+			&& ((*type = ltype) == NULL))
 		return;
 	if(icon24 != NULL)
 		*icon24 = vfs_mime_icon(browser->mime, *type, lst, 24);
@@ -1272,6 +1281,8 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		*icon48 = vfs_mime_icon(browser->mime, *type, lst, 48);
 	if(icon96 != NULL)
 		*icon96 = vfs_mime_icon(browser->mime, *type, lst, 96);
+	if(ltype != NULL)
+		*type = ltype;
 }
 
 static char const * _insert_size(off_t size)
@@ -1331,6 +1342,8 @@ static char const * _insert_mode(mode_t mode, dev_t parent, dev_t dev)
 		return "inode/chardevice";
 	else if(S_ISFIFO(mode))
 		return "inode/fifo";
+	else if(S_ISLNK(mode))
+		return "inode/symlink";
 #ifdef S_ISSOCK
 	else if(S_ISSOCK(mode))
 		return "inode/socket";
