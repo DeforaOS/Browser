@@ -1226,10 +1226,7 @@ static char const * _insert_size(off_t size);
 static char const * _insert_date(time_t date);
 static char const * _insert_mode(mode_t mode, dev_t parent, dev_t dev);
 static void _insert_dir(Browser * browser, GdkPixbuf ** icon_24,
-#if GTK_CHECK_VERSION(2, 6, 0)
-		GdkPixbuf ** icon_48, GdkPixbuf ** icon_96,
-#endif
-		dev_t dev);
+		GdkPixbuf ** icon_48, GdkPixbuf ** icon_96, dev_t dev);
 
 static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		char const ** display, uint64_t * inode, uint64_t * size,
@@ -1257,11 +1254,7 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 	*type = _insert_mode(lst->st_mode, browser->refresh_dev, lst->st_dev);
 	if(S_ISDIR(st->st_mode))
 	{
-		_insert_dir(browser, icon24,
-#if GTK_CHECK_VERSION(2, 6, 0)
-				icon48, icon96,
-#endif
-				st->st_dev);
+		_insert_dir(browser, icon24, icon48, icon96, st->st_dev);
 		return;
 	}
 	if(browser->mime == NULL)
@@ -1355,33 +1348,32 @@ static char const * _insert_mode(mode_t mode, dev_t parent, dev_t dev)
 }
 
 static void _insert_dir(Browser * browser, GdkPixbuf ** icon_24,
-#if GTK_CHECK_VERSION(2, 6, 0)
-		GdkPixbuf ** icon_48, GdkPixbuf ** icon_96,
-#endif
-		dev_t dev)
+		GdkPixbuf ** icon_48, GdkPixbuf ** icon_96, dev_t dev)
 {
 	char * rmt = "mount-point";
 
 	if(browser->refresh_dev == dev)
 	{
-		*icon_24 = browser->pb_folder_24;
-#if GTK_CHECK_VERSION(2, 6, 0)
-		*icon_48 = browser->pb_folder_48;
-		*icon_96 = browser->pb_folder_96;
-#endif
+		if(icon_24 != NULL)
+			*icon_24 = browser->pb_folder_24;
+		if(icon_48 != NULL)
+			*icon_48 = browser->pb_folder_48;
+		if(icon_96 != NULL)
+			*icon_96 = browser->pb_folder_96;
 		return;
 	}
-	if((*icon_24 = gtk_icon_theme_load_icon(browser->theme, rmt, 24, 0,
-					NULL)) == NULL)
+	if(icon_24 != NULL
+			&& (*icon_24 = gtk_icon_theme_load_icon(browser->theme,
+					rmt, 24, 0, NULL)) == NULL)
 		*icon_24 = browser->pb_folder_24;
-#if GTK_CHECK_VERSION(2, 6, 0)
-	if((*icon_48 = gtk_icon_theme_load_icon(browser->theme, rmt, 48, 0,
-					NULL)) == NULL)
+	if(icon_48 != NULL
+			&& (*icon_48 = gtk_icon_theme_load_icon(browser->theme,
+					rmt, 48, 0, NULL)) == NULL)
 		*icon_48 = browser->pb_folder_48;
-	if((*icon_96 = gtk_icon_theme_load_icon(browser->theme, rmt, 96, 0,
-					NULL)) == NULL)
+	if(icon_96 != NULL
+			&& (*icon_96 = gtk_icon_theme_load_icon(browser->theme,
+					rmt, 96, 0, NULL)) == NULL)
 		*icon_96 = browser->pb_folder_96;
-#endif
 }
 
 static gboolean _refresh_new_idle(gpointer data)
