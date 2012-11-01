@@ -26,6 +26,7 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 #include <System.h>
+#include "vfs.h"
 #include "../include/Browser/desktop.h"
 #include "desktopicon.h"
 #include "../config.h"
@@ -113,6 +114,8 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 {
 	DesktopIcon * desktopicon;
 	struct stat st;
+	struct stat lst;
+	struct stat * s = &lst;
 	Mime * mime;
 	char const * mimetype = NULL;
 	gboolean isdir = FALSE;
@@ -127,24 +130,26 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 	fprintf(stderr, "DEBUG: %s(%p, \"%s\", \"%s\")\n", __func__,
 			(void *)desktop, name, path);
 #endif
-	if(path != NULL && stat(path, &st) == 0)
+	if(path != NULL && lstat(path, &lst) == 0)
 	{
+		if(S_ISLNK(lst.st_mode) && stat(path, &st) == 0)
+			s = &st;
 		mime = desktop_get_mime(desktop);
-		if(S_ISDIR(st.st_mode))
+		if(S_ISDIR(s->st_mode))
 		{
 			isdir = TRUE;
 			image = desktop_get_folder(desktop);
 		}
-		else if(st.st_mode & S_IXUSR)
+		else if(s->st_mode & S_IXUSR)
 		{
 			/* FIXME use access() for this */
 			isexec = TRUE;
-			mime_icons(mime, "application/x-executable",
-					DESKTOPICON_ICON_SIZE, &image, -1);
+			image = vfs_mime_icon(mime, "application/x-executable",
+					s, DESKTOPICON_ICON_SIZE);
 		}
 		else if((mimetype = mime_type(mime, path)) != NULL)
-			mime_icons(mime, mimetype, DESKTOPICON_ICON_SIZE,
-					&image, -1);
+			image = vfs_mime_icon(mime, mimetype, &lst,
+					DESKTOPICON_ICON_SIZE);
 	}
 	if(name == NULL)
 	{
