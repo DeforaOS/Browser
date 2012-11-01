@@ -377,6 +377,7 @@ static void _refresh_name(GtkWidget * widget, char const * filename)
 static void _refresh_type(Properties * properties, struct stat * st)
 {
 	char const * type = NULL;
+	char const * ltype = NULL;
 	GdkPixbuf * pixbuf = NULL;
 	GtkWidget * image = NULL;
 	char * p;
@@ -410,12 +411,12 @@ static void _refresh_type(Properties * properties, struct stat * st)
 	else if(S_ISFIFO(st->st_mode))
 		type = "inode/fifo";
 	else if(S_ISLNK(st->st_mode))
-		type = "inode/symlink";
+		ltype = "inode/symlink";
 #ifdef S_ISSOCK
 	else if(S_ISSOCK(st->st_mode))
 		type = "inode/socket";
 #endif
-	else if(properties->mime != NULL)
+	if(type == NULL && properties->mime != NULL)
 	{
 		type = mime_type(properties->mime, properties->filename);
 		if(type != NULL)
@@ -425,9 +426,8 @@ static void _refresh_type(Properties * properties, struct stat * st)
 				image = gtk_image_new_from_pixbuf(pixbuf);
 		}
 	}
-	else
+	if(type == NULL)
 		type = _("Unknown type");
-	gtk_label_set_text(GTK_LABEL(properties->type), type);
 	if(image == NULL && (pixbuf = gtk_icon_theme_load_icon(
 					properties->theme, "gnome-fs-regular",
 					48, 0, NULL)) != NULL)
@@ -441,6 +441,9 @@ static void _refresh_type(Properties * properties, struct stat * st)
 	gtk_image_set_from_pixbuf(GTK_IMAGE(properties->image),
 			gtk_image_get_pixbuf(GTK_IMAGE(image)));
 	gtk_widget_destroy(image);
+	if(ltype != NULL)
+		type = ltype;
+	gtk_label_set_text(GTK_LABEL(properties->type), type);
 }
 
 static void _refresh_mode(GtkWidget ** widget, mode_t mode, gboolean sensitive)
@@ -586,8 +589,8 @@ static void _properties_on_apply(gpointer data)
 	for(i = 0; i < 9; i++)
 		mode |= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
 					properties->mode[i])) << i;
-	if(chown(properties->filename, properties->uid, gid) != 0
-			|| chmod(properties->filename, mode) != 0)
+	if(lchown(properties->filename, properties->uid, gid) != 0
+			|| lchmod(properties->filename, mode) != 0)
 		_properties_error(properties, properties->filename, 1);
 }
 
