@@ -1,5 +1,5 @@
 SUBDIRS	= plugins
-TARGETS	= browser copy delete desktop desktopctl move open properties view
+TARGETS	= browser copy delete desktop desktopctl move open properties vfs.o view
 PREFIX	= /usr/local
 DESTDIR	=
 BINDIR	= $(PREFIX)/bin
@@ -20,11 +20,11 @@ all: subdirs $(TARGETS)
 subdirs:
 	@for i in $(SUBDIRS); do (cd $$i && $(MAKE)) || exit; done
 
-browser_OBJS = browser.o callbacks.o vfs.o main.o
+browser_OBJS = browser.o callbacks.o main.o
 browser_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
-browser_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+browser_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) vfs.o
 
-browser: $(browser_OBJS)
+browser: $(browser_OBJS) vfs.o
 	$(CC) -o browser $(browser_OBJS) $(browser_LDFLAGS)
 
 copy_OBJS = copy.o
@@ -43,9 +43,9 @@ delete: $(delete_OBJS)
 
 desktop_OBJS = desktop.o desktopicon.o
 desktop_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS) `pkg-config --cflags x11 xrandr`
-desktop_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) `pkg-config --libs x11 xrandr`
+desktop_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) `pkg-config --libs x11 xrandr` vfs.o
 
-desktop: $(desktop_OBJS)
+desktop: $(desktop_OBJS) vfs.o
 	$(CC) -o desktop $(desktop_OBJS) $(desktop_LDFLAGS)
 
 desktopctl_OBJS = desktopctl.o
@@ -71,10 +71,13 @@ open: $(open_OBJS)
 
 properties_OBJS = properties.o
 properties_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
-properties_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+properties_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) vfs.o
 
-properties: $(properties_OBJS)
+properties: $(properties_OBJS) vfs.o
 	$(CC) -o properties $(properties_OBJS) $(properties_LDFLAGS)
+
+vfs.o_OBJS = vfs.o
+vfs.o_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 
 view_OBJS = view.o
 view_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
@@ -88,9 +91,6 @@ browser.o: browser.c callbacks.h common.c browser.h ../config.h
 
 callbacks.o: callbacks.c browser.h callbacks.h common.c ../config.h
 	$(CC) $(browser_CFLAGS) -c callbacks.c
-
-vfs.o: vfs.c
-	$(CC) $(browser_CFLAGS) -c vfs.c
 
 main.o: main.c browser.h
 	$(CC) $(browser_CFLAGS) -c main.c
@@ -119,16 +119,19 @@ open.o: open.c
 properties.o: properties.c ../include/Browser.h browser.h common.c
 	$(CC) $(properties_CFLAGS) -c properties.c
 
+vfs.o: vfs.c
+	$(CC) $(vfs.o_CFLAGS) -c vfs.c
+
 view.o: view.c
 	$(CC) $(view_CFLAGS) -c view.c
 
 clean:
 	@for i in $(SUBDIRS); do (cd $$i && $(MAKE) clean) || exit; done
-	$(RM) -- $(browser_OBJS) $(copy_OBJS) $(delete_OBJS) $(desktop_OBJS) $(desktopctl_OBJS) $(move_OBJS) $(open_OBJS) $(properties_OBJS) $(view_OBJS)
+	$(RM) -- $(browser_OBJS) $(copy_OBJS) $(delete_OBJS) $(desktop_OBJS) $(desktopctl_OBJS) $(move_OBJS) $(open_OBJS) $(properties_OBJS) $(vfs.o_OBJS) $(view_OBJS)
 
 distclean:
 	@for i in $(SUBDIRS); do (cd $$i && $(MAKE) distclean) || exit; done
-	$(RM) -- $(browser_OBJS) $(copy_OBJS) $(delete_OBJS) $(desktop_OBJS) $(desktopctl_OBJS) $(move_OBJS) $(open_OBJS) $(properties_OBJS) $(view_OBJS)
+	$(RM) -- $(browser_OBJS) $(copy_OBJS) $(delete_OBJS) $(desktop_OBJS) $(desktopctl_OBJS) $(move_OBJS) $(open_OBJS) $(properties_OBJS) $(vfs.o_OBJS) $(view_OBJS)
 	$(RM) -- $(TARGETS)
 
 install: $(TARGETS)

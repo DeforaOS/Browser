@@ -37,6 +37,7 @@
 #include <X11/extensions/Xrandr.h>
 #include <System.h>
 #include "../include/Browser/desktop.h"
+#include "vfs.h"
 #include "desktop.h"
 #include "../config.h"
 #define _(string) gettext(string)
@@ -997,7 +998,6 @@ static gboolean _done_timeout(gpointer data);
 
 void desktop_refresh(Desktop * desktop)
 {
-	int fd;
 	struct stat st;
 
 #ifdef DEBUG
@@ -1011,30 +1011,11 @@ void desktop_refresh(Desktop * desktop)
 		return;
 	}
 	desktop->refresh_source = 0;
-#ifdef __sun__
-	if((fd = open(desktop->path, O_RDONLY)) < 0
-			|| fstat(fd, &st) != 0
-			|| (desktop->refresh_dir = fdopendir(fd)) == NULL)
-	{
-		desktop_error(NULL, desktop->path, 0);
-		if(fd >= 0)
-			close(fd);
-		return;
-	}
-#else
-	if((desktop->refresh_dir = opendir(desktop->path)) == NULL)
+	if((desktop->refresh_dir = vfs_opendir(desktop->path, &st)) == NULL)
 	{
 		desktop_error(NULL, desktop->path, 0);
 		return;
 	}
-	fd = dirfd(desktop->refresh_dir);
-	if(fstat(fd, &st) != 0)
-	{
-		desktop_error(NULL, desktop->path, 0);
-		closedir(desktop->refresh_dir);
-		return;
-	}
-#endif
 	desktop->refresh_mti = st.st_mtime;
 	desktop->refresh_source = g_idle_add(_current_idle, desktop);
 }
@@ -1071,7 +1052,7 @@ static int _current_loop_applications(Desktop * desktop)
 		return -1;
 	if((config = config_new()) == NULL)
 		return -1;
-	while((de = readdir(desktop->refresh_dir)) != NULL)
+	while((de = vfs_readdir(desktop->refresh_dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
 			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
@@ -1125,7 +1106,7 @@ static int _current_loop_categories(Desktop * desktop)
 	char const * q;
 	char const * r;
 
-	while((de = readdir(desktop->refresh_dir)) != NULL)
+	while((de = vfs_readdir(desktop->refresh_dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
 			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
@@ -1192,7 +1173,7 @@ static int _current_loop_files(Desktop * desktop)
 	String * p;
 	DesktopIcon * desktopicon;
 
-	while((de = readdir(desktop->refresh_dir)) != NULL)
+	while((de = vfs_readdir(desktop->refresh_dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
 			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
@@ -1264,7 +1245,7 @@ static gboolean _current_done(Desktop * desktop)
 		else
 			desktopicon_set_updated(desktop->icon[i++], FALSE);
 	if(desktop->refresh_dir != NULL)
-		closedir(desktop->refresh_dir);
+		vfs_closedir(desktop->refresh_dir);
 	desktop->refresh_dir = NULL;
 	desktop_icons_align(desktop);
 	desktop->refresh_source = g_timeout_add(1000, _done_timeout, desktop);

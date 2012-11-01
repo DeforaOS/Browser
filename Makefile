@@ -61,7 +61,6 @@ dist:
 		$(PACKAGE)-$(VERSION)/po/project.conf \
 		$(PACKAGE)-$(VERSION)/src/browser.c \
 		$(PACKAGE)-$(VERSION)/src/callbacks.c \
-		$(PACKAGE)-$(VERSION)/src/vfs.c \
 		$(PACKAGE)-$(VERSION)/src/main.c \
 		$(PACKAGE)-$(VERSION)/src/copy.c \
 		$(PACKAGE)-$(VERSION)/src/delete.c \
@@ -71,6 +70,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/move.c \
 		$(PACKAGE)-$(VERSION)/src/open.c \
 		$(PACKAGE)-$(VERSION)/src/properties.c \
+		$(PACKAGE)-$(VERSION)/src/vfs.c \
 		$(PACKAGE)-$(VERSION)/src/view.c \
 		$(PACKAGE)-$(VERSION)/src/Makefile \
 		$(PACKAGE)-$(VERSION)/src/browser.h \
