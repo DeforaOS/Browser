@@ -1113,6 +1113,7 @@ static int _refresh_new_loop(Browser * browser)
 	{
 		if(de->d_name[0] == '.')
 		{
+			/* skip "." and ".." */
 			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
 						&& de->d_name[2] == '\0'))
 				continue;
@@ -1512,6 +1513,7 @@ static int _current_loop(Browser * browser)
 	{
 		if(de->d_name[0] == '.')
 		{
+			/* skip "." and ".." */
 			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
 						&& de->d_name[2] == '\0'))
 				continue;
