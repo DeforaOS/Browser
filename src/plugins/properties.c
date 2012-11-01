@@ -343,14 +343,24 @@ static int _properties_do_refresh(Properties * properties)
 	char * parent;
 	gboolean writable;
 
+	parent = dirname(properties->filename);
 	if(lstat(properties->filename, &st) != 0)
-		return _properties_error(properties, properties->filename, 0)
-			+ 1;
+	{
+		/* detect if the file was deleted in the meantime */
+		if(errno != ENOENT || lstat(parent, &st) != 0)
+			return _properties_error(properties,
+					properties->filename, 0) + 1;
+		/* consider the parent directory instead */
+		if((parent = strdup(parent)) == NULL)
+			return _properties_error(properties,
+					properties->filename, 0) + 1;
+		free(properties->filename);
+		properties->filename = parent;
+	}
 	_refresh_name(properties->name, properties->filename);
 	_refresh_type(properties, &st);
 	properties->uid = st.st_uid;
 	properties->gid = st.st_gid;
-	parent = dirname(properties->filename);
 	writable = (access(parent, W_OK) == 0) ? TRUE : FALSE;
 	_refresh_mode(&properties->mode[6], (st.st_mode & 0700) >> 6, writable);
 	_refresh_mode(&properties->mode[3], (st.st_mode & 0070) >> 3, writable);
