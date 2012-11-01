@@ -1179,10 +1179,14 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 	GdkPixbuf * icon_48 = browser->pb_file_48;
 	GdkPixbuf * icon_96 = browser->pb_file_96;
 #endif
+	char uid[16] = "";
+	char gid[16] = "";
 
 #ifdef DEBUG
 	fprintf(stderr, "%s%s(\"%s\")\n", "DEBUG: ", __func__, display);
 #endif
+	snprintf(uid, sizeof(uid), "%u", lst->st_uid);
+	snprintf(gid, sizeof(gid), "%u", lst->st_gid);
 	_insert_all(browser, lst, st, &display, &inode, &size, &dsize, &pw, &gr,
 			&ddate, &type, path, &icon_24
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -1208,8 +1212,8 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 			? icon_96 : browser->pb_file_96,
 #endif
 			BC_SIZE, size, BC_DISPLAY_SIZE, dsize,
-			BC_OWNER, pw != NULL ? pw->pw_name : "",
-			BC_GROUP, gr != NULL ? gr->gr_name : "",
+			BC_OWNER, (pw != NULL) ? pw->pw_name : uid,
+			BC_GROUP, (gr != NULL) ? gr->gr_name : gid,
 			BC_DATE, lst->st_mtime, BC_DISPLAY_DATE, ddate,
 			BC_MIME_TYPE, (type != NULL) ? type : "", -1);
 }
@@ -1568,10 +1572,14 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 	GdkPixbuf * icon_48 = browser->pb_file_48;
 	GdkPixbuf * icon_96 = browser->pb_file_96;
 #endif
+	char uid[16] = "";
+	char gid[16] = "";
 
 #ifdef DEBUG
 	fprintf(stderr, "%s%s(\"%s\")\n", "DEBUG: ", __func__, display);
 #endif
+	snprintf(uid, sizeof(uid), "%u", lst->st_uid);
+	snprintf(gid, sizeof(gid), "%u", lst->st_gid);
 	_insert_all(browser, lst, st, &display, &inode, &size, &dsize, &pw, &gr,
 			&ddate, &type, path, &icon_24
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -1593,8 +1601,8 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 			? icon_96 : browser->pb_file_96,
 #endif
 			BC_SIZE, size, BC_DISPLAY_SIZE, dsize,
-			BC_OWNER, (pw != NULL) ? pw->pw_name : "",
-			BC_GROUP, (gr != NULL) ? gr->gr_name : "",
+			BC_OWNER, (pw != NULL) ? pw->pw_name : uid,
+			BC_GROUP, (gr != NULL) ? gr->gr_name : gid,
 			BC_DATE, lst->st_mtime, BC_DISPLAY_DATE, ddate,
 			BC_MIME_TYPE, (type != NULL) ? type : "", -1);
 	/* FIXME refresh the plug-in if the icon is currently selected */
