@@ -123,6 +123,7 @@ static void _properties_destroy(Properties * properties)
 /* properties_refresh */
 static void _properties_refresh(Properties * properties, GList * selection)
 {
+	/* FIXME support multiple selection */
 	char * path = (selection != NULL) ? selection->data : NULL;
 
 #ifdef DEBUG
