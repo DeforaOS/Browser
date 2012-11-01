@@ -1185,8 +1185,8 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 #ifdef DEBUG
 	fprintf(stderr, "%s%s(\"%s\")\n", "DEBUG: ", __func__, display);
 #endif
-	snprintf(uid, sizeof(uid), "%u", lst->st_uid);
-	snprintf(gid, sizeof(gid), "%u", lst->st_gid);
+	snprintf(uid, sizeof(uid), "%lu", (unsigned long)lst->st_uid);
+	snprintf(gid, sizeof(gid), "%lu", (unsigned long)lst->st_gid);
 	_insert_all(browser, lst, st, &display, &inode, &size, &dsize, &pw, &gr,
 			&ddate, &type, path, &icon_24
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -1578,8 +1578,8 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 #ifdef DEBUG
 	fprintf(stderr, "%s%s(\"%s\")\n", "DEBUG: ", __func__, display);
 #endif
-	snprintf(uid, sizeof(uid), "%u", lst->st_uid);
-	snprintf(gid, sizeof(gid), "%u", lst->st_gid);
+	snprintf(uid, sizeof(uid), "%lu", (unsigned long)lst->st_uid);
+	snprintf(gid, sizeof(gid), "%lu", (unsigned long)lst->st_gid);
 	_insert_all(browser, lst, st, &display, &inode, &size, &dsize, &pw, &gr,
 			&ddate, &type, path, &icon_24
 #if GTK_CHECK_VERSION(2, 6, 0)
