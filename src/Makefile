@@ -3,6 +3,7 @@ TARGETS	= browser copy delete desktop desktopctl move open properties vfs.o view
 PREFIX	= /usr/local
 DESTDIR	=
 BINDIR	= $(PREFIX)/bin
+SBINDIR	= $(PREFIX)/sbin
 CC	?= cc
 CPPFLAGSF?=
 CPPFLAGS?=
