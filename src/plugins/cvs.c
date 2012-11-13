@@ -999,11 +999,15 @@ static gboolean _cvs_task_on_io_can_read(GIOChannel * channel,
 /* rtrim */
 static void _rtrim(char * string)
 {
+	unsigned char * s = (unsigned char *)string;
 	size_t i;
-	int c;
 
-	if(string == NULL || (i = strlen(string)) == 0)
+	if(s == NULL || (i = strlen(string)) == 0)
 		return;
-	for(i--; i > 0 && (c = string[i]) != '\0' && isspace(c); i--)
+	for(i--; s[i] != '\0' && isspace(s[i]); i--)
+	{
 		string[i] = '\0';
+		if(i == 0)
+			break;
+	}
 }
