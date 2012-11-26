@@ -2036,12 +2036,19 @@ static void _on_preferences_monitors_changed(gpointer data)
 				active);
 	}
 #endif
-	snprintf(buf, sizeof(buf), _("%dx%d (at %d,%d)"), geometry.width,
-			geometry.height, geometry.x, geometry.y);
+	if(width < 0 || height < 0)
+		snprintf(buf, sizeof(buf), "%s", _("Unknown size"));
+	else
+		snprintf(buf, sizeof(buf), _("%dx%d (at %d,%d)"),
+				geometry.width, geometry.height,
+				geometry.x, geometry.y);
 	gtk_label_set_text(GTK_LABEL(desktop->pr_monitors_res), buf);
-	snprintf(buf, sizeof(buf), _("%dx%d mm (%.0lfx%.0lf DPI)"), width,
-			height, geometry.width * 25.4 / width,
-			geometry.height * 25.4 / height);
+	if(width < 0 || height < 0)
+		snprintf(buf, sizeof(buf), "%s", _("Unknown resolution"));
+	else
+		snprintf(buf, sizeof(buf), _("%dx%d mm (%.0lfx%.0lf DPI)"),
+				width, height, geometry.width * 25.4 / width,
+				geometry.height * 25.4 / height);
 	gtk_label_set_text(GTK_LABEL(desktop->pr_monitors_size), buf);
 }
 
