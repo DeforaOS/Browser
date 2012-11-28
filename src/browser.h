@@ -194,6 +194,8 @@ int browser_config_save(Browser * browser);
 
 void browser_focus_location(Browser * browser);
 
+void browser_go_back(Browser * browser);
+void browser_go_forward(Browser * browser);
 void browser_go_home(Browser * browser);
 
 /* plug-ins */

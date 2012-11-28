@@ -325,19 +325,8 @@ void on_help_contents(gpointer data)
 void on_back(gpointer data)
 {
 	Browser * browser = data;
-	char const * location;
 
-	if((location = browser_get_location(browser)) == NULL
-			|| browser->current->prev == NULL) /* XXX */
-		return;
-	browser->current = g_list_previous(browser->current);
-	gtk_widget_set_sensitive(GTK_WIDGET(browser->tb_back),
-			browser->current->prev != NULL);
-	gtk_widget_set_sensitive(GTK_WIDGET(browser->tb_updir),
-			strcmp(location, "/") != 0);
-	gtk_widget_set_sensitive(GTK_WIDGET(browser->tb_forward),
-			TRUE);
-	browser_refresh(browser);
+	browser_go_back(browser);
 }
 
 
@@ -383,18 +372,8 @@ void on_cut(gpointer data)
 void on_forward(gpointer data)
 {
 	Browser * browser = data;
-	char const * location;
 
-	if((location = browser_get_location(browser)) == NULL
-			|| browser->current->next == NULL) /* XXX */
-		return;
-	browser->current = browser->current->next;
-	gtk_widget_set_sensitive(GTK_WIDGET(browser->tb_back), TRUE);
-	gtk_widget_set_sensitive(GTK_WIDGET(browser->tb_updir),
-			strcmp(location, "/") != 0);
-	gtk_widget_set_sensitive(GTK_WIDGET(browser->tb_forward),
-			browser->current->next != NULL);
-	browser_refresh(browser); /* FIXME if it fails history is wrong */
+	browser_go_forward(browser);
 }
 
 
