@@ -250,7 +250,6 @@ static void _browser_on_selection_changed(gpointer data);
 /* browser_new */
 static gboolean _new_idle(gpointer data);
 static void _idle_load_plugins(Browser * browser);
-static int _new_pixbufs(Browser * browser);
 static GtkListStore * _create_store(Browser * browser);
 
 Browser * browser_new(char const * directory)
@@ -278,9 +277,7 @@ Browser * browser_new(char const * directory)
 		return NULL;
 	}
 	browser->window = NULL;
-	if(_new_pixbufs(browser) != 0)
-		browser_error(browser, _("Error while loading default icons"),
-				1);
+	browser->theme = gtk_icon_theme_get_default();
 
 	/* config */
 	/* set defaults */
@@ -549,54 +546,6 @@ static void _idle_load_plugins(Browser * browser)
 		i = 0;
 	}
 	free(p);
-}
-
-static int _new_pixbufs(Browser * browser)
-{
-	char * file[] = { "gnome-fs-regular",
-#if GTK_CHECK_VERSION(2, 6, 0)
-		GTK_STOCK_FILE,
-#endif
-		GTK_STOCK_MISSING_IMAGE, NULL };
-	char * folder[] = { "gnome-fs-directory",
-#if GTK_CHECK_VERSION(2, 6, 0)
-		GTK_STOCK_DIRECTORY,
-#endif
-		GTK_STOCK_MISSING_IMAGE, NULL };
-	char ** p;
-
-	browser->theme = gtk_icon_theme_get_default();
-	browser->pb_file_24 = NULL;
-	for(p = file; *p != NULL && browser->pb_file_24 == NULL; p++)
-		browser->pb_file_24 = gtk_icon_theme_load_icon(browser->theme,
-				*p, 24, 0, NULL);
-	browser->pb_folder_24 = NULL;
-	for(p = folder; *p != NULL && browser->pb_folder_24 == NULL; p++)
-		browser->pb_folder_24 = gtk_icon_theme_load_icon(browser->theme,
-				*p, 24, 0, NULL);
-#if !GTK_CHECK_VERSION(2, 6, 0)
-	return browser->pb_file_24 == NULL || browser->pb_folder_24 == NULL;
-#else
-	browser->pb_file_48 = NULL;
-	for(p = file; *p != NULL && browser->pb_file_48 == NULL; p++)
-		browser->pb_file_48 = gtk_icon_theme_load_icon(browser->theme,
-				*p, 48, 0, NULL);
-	browser->pb_folder_48 = NULL;
-	for(p = folder; *p != NULL && browser->pb_folder_48 == NULL; p++)
-		browser->pb_folder_48 = gtk_icon_theme_load_icon(browser->theme,
-				*p, 48, 0, NULL);
-	browser->pb_file_96 = NULL;
-	for(p = file; *p != NULL && browser->pb_file_96 == NULL; p++)
-		browser->pb_file_96 = gtk_icon_theme_load_icon(browser->theme,
-				*p, 96, 0, NULL);
-	browser->pb_folder_96 = NULL;
-	for(p = folder; *p != NULL && browser->pb_folder_96 == NULL; p++)
-		browser->pb_folder_96 = gtk_icon_theme_load_icon(browser->theme,
-				*p, 96, 0, NULL);
-	return browser->pb_file_24 == NULL || browser->pb_folder_24 == NULL
-		|| browser->pb_file_48 == NULL || browser->pb_folder_48 == NULL
-		|| browser->pb_file_96 == NULL || browser->pb_folder_96 == NULL;
-#endif
 }
 
 static int _sort_func(GtkTreeModel * model, GtkTreeIter * a, GtkTreeIter * b,
@@ -1214,10 +1163,10 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 	char const * dsize = "";
 	char const * ddate = "";
 	char const * type = NULL;
-	GdkPixbuf * icon_24 = browser->pb_file_24;
+	GdkPixbuf * icon_24 = NULL;
 #if GTK_CHECK_VERSION(2, 6, 0)
-	GdkPixbuf * icon_48 = browser->pb_file_48;
-	GdkPixbuf * icon_96 = browser->pb_file_96;
+	GdkPixbuf * icon_48 = NULL;
+	GdkPixbuf * icon_96 = NULL;
 #endif
 	char uid[16] = "";
 	char gid[16] = "";
@@ -1243,13 +1192,10 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 			BC_IS_EXECUTABLE, st->st_mode & S_IXUSR,
 			BC_IS_MOUNT_POINT,
 			(st->st_dev != browser->refresh_dev) ? TRUE : FALSE,
-			BC_PIXBUF_24, (icon_24 != NULL)
-			? icon_24 : browser->pb_file_24,
+			BC_PIXBUF_24, icon_24,
 #if GTK_CHECK_VERSION(2, 6, 0)
-			BC_PIXBUF_48, (icon_48 != NULL)
-			? icon_48 : browser->pb_file_48,
-			BC_PIXBUF_96, (icon_96 != NULL)
-			? icon_96 : browser->pb_file_96,
+			BC_PIXBUF_48, icon_48,
+			BC_PIXBUF_96, icon_96,
 #endif
 			BC_SIZE, size, BC_DISPLAY_SIZE, dsize,
 			BC_OWNER, (pw != NULL) ? pw->pw_name : uid,
@@ -1303,11 +1249,9 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		ltype = *type;
 		*type = NULL;
 	}
-	else if(st->st_mode & S_IXUSR)
-		*type = "application/x-executable";
-	if(*type == NULL && (*type = mime_type(browser->mime, path)) == NULL
-			&& ((*type = ltype) == NULL))
-		return;
+	if(*type == NULL && (*type = mime_type(browser->mime, path)) == NULL)
+		if(st->st_mode & S_IXUSR)
+			*type = "application/x-executable";
 	if(icon24 != NULL)
 		*icon24 = vfs_mime_icon(browser->mime, *type, lst, 24);
 	if(icon48 != NULL)
@@ -1387,30 +1331,16 @@ static char const * _insert_mode(mode_t mode, dev_t parent, dev_t dev)
 static void _insert_dir(Browser * browser, GdkPixbuf ** icon_24,
 		GdkPixbuf ** icon_48, GdkPixbuf ** icon_96, dev_t dev)
 {
-	char * rmt = "mount-point";
+	char const * type = "inode/directory";
 
-	if(browser->refresh_dev == dev)
-	{
-		if(icon_24 != NULL)
-			*icon_24 = browser->pb_folder_24;
-		if(icon_48 != NULL)
-			*icon_48 = browser->pb_folder_48;
-		if(icon_96 != NULL)
-			*icon_96 = browser->pb_folder_96;
-		return;
-	}
-	if(icon_24 != NULL
-			&& (*icon_24 = gtk_icon_theme_load_icon(browser->theme,
-					rmt, 24, 0, NULL)) == NULL)
-		*icon_24 = browser->pb_folder_24;
-	if(icon_48 != NULL
-			&& (*icon_48 = gtk_icon_theme_load_icon(browser->theme,
-					rmt, 48, 0, NULL)) == NULL)
-		*icon_48 = browser->pb_folder_48;
-	if(icon_96 != NULL
-			&& (*icon_96 = gtk_icon_theme_load_icon(browser->theme,
-					rmt, 96, 0, NULL)) == NULL)
-		*icon_96 = browser->pb_folder_96;
+	if(browser->refresh_dev != dev)
+		type = "inode/mountpoint";
+	if(icon_24 != NULL)
+		mime_icons(browser->mime, type, 24, icon_24, -1);
+	if(icon_48 != NULL)
+		mime_icons(browser->mime, type, 48, icon_48, -1);
+	if(icon_96 != NULL)
+		mime_icons(browser->mime, type, 96, icon_96, -1);
 }
 
 static gboolean _refresh_new_idle(gpointer data)
@@ -1612,10 +1542,10 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 	char const * dsize = "";
 	char const * ddate = "";
 	char const * type = NULL;
-	GdkPixbuf * icon_24 = browser->pb_file_24;
+	GdkPixbuf * icon_24 = NULL;
 #if GTK_CHECK_VERSION(2, 6, 0)
-	GdkPixbuf * icon_48 = browser->pb_file_48;
-	GdkPixbuf * icon_96 = browser->pb_file_96;
+	GdkPixbuf * icon_48 = NULL;
+	GdkPixbuf * icon_96 = NULL;
 #endif
 	char uid[16] = "";
 	char gid[16] = "";
@@ -1637,13 +1567,10 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 			BC_IS_EXECUTABLE, st->st_mode & S_IXUSR,
 			BC_IS_MOUNT_POINT,
 			(st->st_dev != browser->refresh_dev) ? TRUE : FALSE,
-			BC_PIXBUF_24, (icon_24 != NULL)
-			? icon_24 : browser->pb_file_24,
+			BC_PIXBUF_24, icon_24,
 #if GTK_CHECK_VERSION(2, 6, 0)
-			BC_PIXBUF_48, (icon_48 != NULL)
-			? icon_48 : browser->pb_file_48,
-			BC_PIXBUF_96, (icon_96 != NULL)
-			? icon_96 : browser->pb_file_96,
+			BC_PIXBUF_48, icon_48,
+			BC_PIXBUF_96, icon_96,
 #endif
 			BC_SIZE, size, BC_DISPLAY_SIZE, dsize,
 			BC_OWNER, (pw != NULL) ? pw->pw_name : uid,

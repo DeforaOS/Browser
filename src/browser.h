@@ -119,14 +119,6 @@ struct _Browser
 
 	/* widgets */
 	GtkIconTheme * theme;
-	GdkPixbuf * pb_file_24;
-	GdkPixbuf * pb_folder_24;
-#if GTK_CHECK_VERSION(2, 6, 0)
-	GdkPixbuf * pb_file_48;
-	GdkPixbuf * pb_folder_48;
-	GdkPixbuf * pb_file_96;
-	GdkPixbuf * pb_folder_96;
-#endif
 	GtkWidget * window;
 #if GTK_CHECK_VERSION(2, 18, 0)
 	GtkWidget * infobar;
