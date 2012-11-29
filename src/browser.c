@@ -44,7 +44,6 @@ static char const _license[] =
 #define COMMON_CONFIG_FILENAME
 #include "common.c"
 
-
 /* constants */
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
