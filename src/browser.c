@@ -870,10 +870,11 @@ void browser_go_back(Browser * browser)
 {
 	char const * location;
 
-	if((location = browser_get_location(browser)) == NULL
-			|| browser->current->prev == NULL) /* XXX */
+	if(browser->current == NULL || browser->current->prev == NULL)
 		return;
 	browser->current = g_list_previous(browser->current);
+	if((location = browser_get_location(browser)) == NULL)
+		return;
 	gtk_widget_set_sensitive(GTK_WIDGET(browser->tb_back),
 			browser->current->prev != NULL);
 	gtk_widget_set_sensitive(GTK_WIDGET(browser->tb_updir),
@@ -889,10 +890,11 @@ void browser_go_forward(Browser * browser)
 {
 	char const * location;
 
-	if((location = browser_get_location(browser)) == NULL
-			|| browser->current->next == NULL) /* XXX */
+	if(browser->current == NULL || browser->current->next == NULL) /* XXX */
 		return;
 	browser->current = browser->current->next;
+	if((location = browser_get_location(browser)) == NULL)
+		return;
 	gtk_widget_set_sensitive(GTK_WIDGET(browser->tb_back), TRUE);
 	gtk_widget_set_sensitive(GTK_WIDGET(browser->tb_updir),
 			strcmp(location, "/") != 0);
