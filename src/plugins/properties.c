@@ -428,10 +428,11 @@ static void _refresh_type(Properties * properties, struct stat * st)
 	else if(S_ISSOCK(st->st_mode))
 		type = "inode/socket";
 #endif
-	else if(st->st_mode & S_IXUSR)
+	if(type == NULL && properties->mime != NULL
+			&& (type = mime_type(properties->mime,
+					properties->filename)) == NULL
+			&& st->st_mode & S_IXUSR)
 		type = "application/x-executable";
-	if(type == NULL && properties->mime != NULL)
-		type = mime_type(properties->mime, properties->filename);
 	if(type != NULL && (pixbuf = helper->get_icon(helper->browser,
 					type, st, 48)) != NULL)
 		image = gtk_image_new_from_pixbuf(pixbuf);
