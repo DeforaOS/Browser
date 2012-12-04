@@ -48,7 +48,9 @@ GdkPixbuf * vfs_mime_icon(Mime * mime, char const * type, struct stat * st,
 	if(pixbuf == NULL)
 		return NULL;
 	/* determine the emblem */
-	if(S_ISLNK(st->st_mode))
+	if(S_ISCHR(st->st_mode) || S_ISBLK(st->st_mode))
+		emblem = "emblem-system";
+	else if(S_ISLNK(st->st_mode))
 		emblem = "emblem-symbolic-link";
 	else if((st->st_mode & (S_IRUSR | S_IRGRP | S_IROTH)) == 0)
 		emblem = "emblem-unreadable";
