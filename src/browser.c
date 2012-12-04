@@ -1209,8 +1209,9 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 static char const * _insert_size(off_t size);
 static char const * _insert_date(time_t date);
 static char const * _insert_mode(mode_t mode, dev_t parent, dev_t dev);
-static void _insert_dir(Browser * browser, GdkPixbuf ** icon_24,
-		GdkPixbuf ** icon_48, GdkPixbuf ** icon_96, dev_t dev);
+static void _insert_dir(Browser * browser, char const * name,
+		GdkPixbuf ** icon_24, GdkPixbuf ** icon_48,
+		GdkPixbuf ** icon_96, struct stat * st);
 
 static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		char const ** display, uint64_t * inode, uint64_t * size,
@@ -1238,7 +1239,7 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 	*type = _insert_mode(lst->st_mode, browser->refresh_dev, lst->st_dev);
 	if(S_ISDIR(st->st_mode))
 	{
-		_insert_dir(browser, icon24, icon48, icon96, st->st_dev);
+		_insert_dir(browser, *display, icon24, icon48, icon96, st);
 		return;
 	}
 	if(browser->mime == NULL)
@@ -1329,13 +1330,53 @@ static char const * _insert_mode(mode_t mode, dev_t parent, dev_t dev)
 	return NULL;
 }
 
-static void _insert_dir(Browser * browser, GdkPixbuf ** icon_24,
-		GdkPixbuf ** icon_48, GdkPixbuf ** icon_96, dev_t dev)
+static void _insert_dir(Browser * browser, char const * name,
+		GdkPixbuf ** icon_24, GdkPixbuf ** icon_48,
+		GdkPixbuf ** icon_96, struct stat * st)
 {
 	char const * type = "inode/directory";
+	char const * icon = NULL;
+	int flags = GTK_ICON_LOOKUP_FORCE_SIZE;
 
-	if(browser->refresh_dev != dev)
+	if(browser->refresh_dev != st->st_dev)
 		type = "inode/mountpoint";
+	/* special folder icons */
+	else if(strcasecmp(name, "Desktop") == 0)
+		icon = "gnome-fs-desktop";
+	else if(strcasecmp(name, "Documents") == 0)
+		icon = "folder-documents";
+	else if(strcasecmp(name, "Download") == 0
+			|| strcasecmp(name, "Downloads") == 0)
+		icon = "folder-download";
+	else if(strcasecmp(name, "Music") == 0)
+		icon = "folder-music";
+	else if(strcasecmp(name, "Pictures") == 0)
+		icon = "folder-pictures";
+	else if(strcmp(name, "public_html") == 0
+			|| strcasecmp(name, "Shared") == 0)
+		icon = "folder-publicshared";
+	else if(strcasecmp(name, "Templates") == 0)
+		icon = "folder-templates";
+	else if(strcasecmp(name, "Video") == 0
+			|| strcasecmp(name, "Videos") == 0)
+		icon = "folder-videos";
+	if(icon != NULL)
+	{
+		/* try to load the special icons */
+		if(icon_24 != NULL && (*icon_24 = gtk_icon_theme_load_icon(
+						browser->theme, icon, 24, flags,
+						NULL)) != NULL)
+			icon_24 = NULL;
+		if(icon_48 != NULL && (*icon_48 = gtk_icon_theme_load_icon(
+						browser->theme, icon, 48, flags,
+						NULL)) != NULL)
+			icon_48 = NULL;
+		if(icon_96 != NULL && (*icon_96 = gtk_icon_theme_load_icon(
+						browser->theme, icon, 96, flags,
+						NULL)) != NULL)
+			icon_96 = NULL;
+	}
+	/* generic fallback */
 	if(icon_24 != NULL)
 		mime_icons(browser->mime, type, 24, icon_24, -1);
 	if(icon_48 != NULL)
