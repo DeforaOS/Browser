@@ -1209,9 +1209,6 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 static char const * _insert_size(off_t size);
 static char const * _insert_date(time_t date);
 static char const * _insert_mode(mode_t mode, dev_t parent, dev_t dev);
-static void _insert_dir(Browser * browser, char const * name,
-		GdkPixbuf ** icon_24, GdkPixbuf ** icon_48,
-		GdkPixbuf ** icon_96, struct stat * st);
 
 static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		char const ** display, uint64_t * inode, uint64_t * size,
@@ -1329,12 +1326,6 @@ static char const * _insert_mode(mode_t mode, dev_t parent, dev_t dev)
 		return "inode/socket";
 #endif
 	return NULL;
-}
-
-static void _insert_dir(Browser * browser, char const * name,
-		GdkPixbuf ** icon_24, GdkPixbuf ** icon_48,
-		GdkPixbuf ** icon_96, struct stat * st)
-{
 }
 
 static gboolean _refresh_new_idle(gpointer data)
