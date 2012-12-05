@@ -462,8 +462,8 @@ static void _refresh_type(Properties * properties, struct stat * st)
 			&& st->st_mode & S_IXUSR)
 		type = "application/x-executable";
 	if(type != NULL && pixbuf == NULL
-			&& (pixbuf = helper->get_icon(helper->browser,
-					type, st, iconsize)) != NULL)
+			&& (pixbuf = helper->get_icon(helper->browser, type, st,
+					iconsize)) != NULL)
 		image = gtk_image_new_from_pixbuf(pixbuf);
 	if(type == NULL)
 		type = _("Unknown type");
