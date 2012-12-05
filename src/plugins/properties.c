@@ -396,6 +396,7 @@ static void _refresh_type(Properties * properties, struct stat * st)
 	GtkWidget * image = NULL;
 	char * p;
 	struct stat dirst;
+	const int iconsize = 48;
 	int flags = GTK_ICON_LOOKUP_FORCE_SIZE;
 
 	if(S_ISDIR(st->st_mode))
@@ -432,10 +433,11 @@ static void _refresh_type(Properties * properties, struct stat * st)
 		free(p);
 		if(icon != NULL)
 			pixbuf = gtk_icon_theme_load_icon(properties->theme,
-					icon, 48, flags, NULL);
+					icon, iconsize, flags, NULL);
 		if(pixbuf == NULL)
 			pixbuf = gtk_icon_theme_load_icon(properties->theme,
-					"gnome-fs-directory", 48, flags, NULL);
+					"gnome-fs-directory", iconsize, flags,
+					NULL);
 		if(pixbuf != NULL)
 			image = gtk_image_new_from_pixbuf(pixbuf);
 		if(image == NULL)
@@ -461,13 +463,13 @@ static void _refresh_type(Properties * properties, struct stat * st)
 		type = "application/x-executable";
 	if(type != NULL && pixbuf == NULL
 			&& (pixbuf = helper->get_icon(helper->browser,
-					type, st, 48)) != NULL)
+					type, st, iconsize)) != NULL)
 		image = gtk_image_new_from_pixbuf(pixbuf);
 	if(type == NULL)
 		type = _("Unknown type");
 	if(image == NULL && (pixbuf = gtk_icon_theme_load_icon(
 					properties->theme, "gnome-fs-regular",
-					48, flags, NULL)) != NULL)
+					iconsize, flags, NULL)) != NULL)
 		image = gtk_image_new_from_pixbuf(pixbuf);
 	if(image == NULL)
 		image = gtk_image_new_from_stock(GTK_STOCK_FILE,
