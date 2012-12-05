@@ -15,6 +15,9 @@
 
 
 
+#include <stdlib.h>
+#include <string.h>
+#include <libgen.h>
 #include "vfs.h"
 
 
@@ -31,6 +34,65 @@ int vfs_lstat(char const * filename, struct stat * st)
 int vfs_closedir(DIR * dir)
 {
 	return closedir(dir);
+}
+
+
+/* vfs_folder_icon */
+GdkPixbuf * vfs_mime_folder_icon(Mime * mime, char const * filename,
+		struct stat * st, int size)
+{
+	GdkPixbuf * ret = NULL;
+	char const * icon = NULL;
+	struct stat s;
+	char * p;
+	struct stat lst;
+	size_t i;
+	struct
+	{
+		char const * name;
+		char const * icon;
+	} name_icon[] =
+	{
+		{ "Desktop",	"gnome-fs-desktop"	},
+		{ "Documents",	"folder-documents"	},
+		{ "Download",	"folder-download"	},
+		{ "Downloads",	"folder-download"	},
+		{ "Music",	"folder-music"		},
+		{ "Pictures",	"folder-pictures"	},
+		{ "public_html","folder-publicshared"	},
+		{ "Templates",	"folder-templates"	},
+		{ "Video",	"folder-videos"		},
+		{ "Videos",	"folder-videos"		},
+	};
+	GtkIconTheme * icontheme;
+	int flags = GTK_ICON_LOOKUP_FORCE_SIZE;
+
+	if(st == NULL && lstat(filename, &s) == 0)
+		st = &s;
+	/* check if the folder is a mountpoint */
+	if((p = strdup(filename)) != NULL
+			&& st != NULL
+			&& lstat(dirname(p), &lst) == 0
+			&& st->st_dev != lst.st_dev)
+		icon = "mount-point";
+	if(p != NULL && icon == NULL)
+		for(i = 0; i < sizeof(name_icon) / sizeof(*name_icon); i++)
+			if(strcasecmp(basename(p), name_icon[i].name) == 0)
+			{
+				icon = name_icon[i].icon;
+				break;
+			}
+	free(p);
+	if(icon != NULL)
+	{
+		icontheme = gtk_icon_theme_get_default();
+		ret = gtk_icon_theme_load_icon(icontheme, icon, size, flags,
+				NULL);
+	}
+	/* generic fallback */
+	if(ret == NULL)
+		mime_icons(mime, "inode/directory", size, &ret, -1);
+	return ret;
 }
 
 

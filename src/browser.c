@@ -1334,55 +1334,12 @@ static void _insert_dir(Browser * browser, char const * name,
 		GdkPixbuf ** icon_24, GdkPixbuf ** icon_48,
 		GdkPixbuf ** icon_96, struct stat * st)
 {
-	char const * type = "inode/directory";
-	char const * icon = NULL;
-	int flags = GTK_ICON_LOOKUP_FORCE_SIZE;
-
-	if(browser->refresh_dev != st->st_dev)
-		type = "inode/mountpoint";
-	/* special folder icons */
-	else if(strcasecmp(name, "Desktop") == 0)
-		icon = "gnome-fs-desktop";
-	else if(strcasecmp(name, "Documents") == 0)
-		icon = "folder-documents";
-	else if(strcasecmp(name, "Download") == 0
-			|| strcasecmp(name, "Downloads") == 0)
-		icon = "folder-download";
-	else if(strcasecmp(name, "Music") == 0)
-		icon = "folder-music";
-	else if(strcasecmp(name, "Pictures") == 0)
-		icon = "folder-pictures";
-	else if(strcmp(name, "public_html") == 0
-			|| strcasecmp(name, "Shared") == 0)
-		icon = "folder-publicshared";
-	else if(strcasecmp(name, "Templates") == 0)
-		icon = "folder-templates";
-	else if(strcasecmp(name, "Video") == 0
-			|| strcasecmp(name, "Videos") == 0)
-		icon = "folder-videos";
-	if(icon != NULL)
-	{
-		/* try to load the special icons */
-		if(icon_24 != NULL && (*icon_24 = gtk_icon_theme_load_icon(
-						browser->theme, icon, 24, flags,
-						NULL)) != NULL)
-			icon_24 = NULL;
-		if(icon_48 != NULL && (*icon_48 = gtk_icon_theme_load_icon(
-						browser->theme, icon, 48, flags,
-						NULL)) != NULL)
-			icon_48 = NULL;
-		if(icon_96 != NULL && (*icon_96 = gtk_icon_theme_load_icon(
-						browser->theme, icon, 96, flags,
-						NULL)) != NULL)
-			icon_96 = NULL;
-	}
-	/* generic fallback */
 	if(icon_24 != NULL)
-		mime_icons(browser->mime, type, 24, icon_24, -1);
+		*icon_24 = vfs_mime_folder_icon(browser->mime, name, st, 24);
 	if(icon_48 != NULL)
-		mime_icons(browser->mime, type, 48, icon_48, -1);
+		*icon_48 = vfs_mime_folder_icon(browser->mime, name, st, 48);
 	if(icon_96 != NULL)
-		mime_icons(browser->mime, type, 96, icon_96, -1);
+		*icon_96 = vfs_mime_folder_icon(browser->mime, name, st, 96);
 }
 
 static gboolean _refresh_new_idle(gpointer data)

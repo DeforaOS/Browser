@@ -27,6 +27,8 @@
 /* public */
 /* functions */
 int vfs_closedir(DIR * dir);
+GdkPixbuf * vfs_mime_folder_icon(Mime * mime, char const * name,
+		struct stat * st, int size);
 int vfs_lstat(char const * filename, struct stat * st);
 GdkPixbuf * vfs_mime_icon(Mime * mime, char const * type, struct stat * st,
 		int size);
