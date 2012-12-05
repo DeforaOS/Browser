@@ -27,7 +27,7 @@ int vfs_lstat(char const * filename, struct stat * st)
 }
 
 
-/* vfs_opendir */
+/* vfs_closedir */
 int vfs_closedir(DIR * dir)
 {
 	return closedir(dir);
