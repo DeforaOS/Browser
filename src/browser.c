@@ -1237,11 +1237,6 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 	*gr = getgrgid(lst->st_gid);
 	*ddate = _insert_date(lst->st_mtime);
 	*type = _insert_mode(lst->st_mode, browser->refresh_dev, lst->st_dev);
-	if(S_ISDIR(st->st_mode))
-	{
-		_insert_dir(browser, *display, icon24, icon48, icon96, st);
-		return;
-	}
 	if(browser->mime == NULL)
 		return;
 	/* load the icons */
@@ -1255,11 +1250,17 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		if(st->st_mode & S_IXUSR)
 			*type = "application/x-executable";
 	if(icon24 != NULL)
-		*icon24 = vfs_mime_icon(browser->mime, *type, lst, 24);
+		*icon24 = S_ISDIR(st->st_mode)
+			? vfs_mime_folder_icon(browser->mime, path, lst, 24)
+			: vfs_mime_icon(browser->mime, *type, lst, 24);
 	if(icon48 != NULL)
-		*icon48 = vfs_mime_icon(browser->mime, *type, lst, 48);
+		*icon48 = S_ISDIR(st->st_mode)
+			? vfs_mime_folder_icon(browser->mime, path, lst, 48)
+			: vfs_mime_icon(browser->mime, *type, lst, 48);
 	if(icon96 != NULL)
-		*icon96 = vfs_mime_icon(browser->mime, *type, lst, 96);
+		*icon96 = S_ISDIR(st->st_mode)
+			? vfs_mime_folder_icon(browser->mime, path, lst, 96)
+			: vfs_mime_icon(browser->mime, *type, lst, 96);
 	if(ltype != NULL)
 		*type = ltype;
 }
@@ -1334,12 +1335,6 @@ static void _insert_dir(Browser * browser, char const * name,
 		GdkPixbuf ** icon_24, GdkPixbuf ** icon_48,
 		GdkPixbuf ** icon_96, struct stat * st)
 {
-	if(icon_24 != NULL)
-		*icon_24 = vfs_mime_folder_icon(browser->mime, name, st, 24);
-	if(icon_48 != NULL)
-		*icon_48 = vfs_mime_folder_icon(browser->mime, name, st, 48);
-	if(icon_96 != NULL)
-		*icon_96 = vfs_mime_folder_icon(browser->mime, name, st, 96);
 }
 
 static gboolean _refresh_new_idle(gpointer data)
