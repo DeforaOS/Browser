@@ -97,15 +97,14 @@ GdkPixbuf * vfs_mime_folder_icon(Mime * mime, char const * filename,
 
 
 /* vfs_mime_icon */
+GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size,
+		char const * emblem);
+
 GdkPixbuf * vfs_mime_icon(Mime * mime, char const * type, struct stat * st,
 		int size)
 {
 	GdkPixbuf * pixbuf = NULL;
 	char const * emblem;
-	int esize;
-	GdkPixbuf * epixbuf;
-	GtkIconTheme * icontheme;
-	int flags = GTK_ICON_LOOKUP_USE_BUILTIN | GTK_ICON_LOOKUP_FORCE_SIZE;
 
 	mime_icons(mime, type, size, &pixbuf, -1);
 	if(pixbuf == NULL)
@@ -120,7 +119,20 @@ GdkPixbuf * vfs_mime_icon(Mime * mime, char const * type, struct stat * st,
 	else if((st->st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)) == 0)
 		emblem = "emblem-readonly";
 	else
-		return pixbuf;
+		emblem = NULL;
+	/* apply the emblem if relevant */
+	if(emblem != NULL)
+		pixbuf = _mime_icon_emblem(pixbuf, size, emblem);
+	return pixbuf;
+}
+
+GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size, char const * emblem)
+{
+	int esize;
+	GdkPixbuf * epixbuf;
+	GtkIconTheme * icontheme;
+	int flags = GTK_ICON_LOOKUP_USE_BUILTIN | GTK_ICON_LOOKUP_FORCE_SIZE;
+
 	/* determine the size of the emblem */
 	switch(size)
 	{
@@ -134,7 +146,8 @@ GdkPixbuf * vfs_mime_icon(Mime * mime, char const * type, struct stat * st,
 			esize = 32;
 			break;
 		default:
-			return pixbuf;
+			esize = 12;
+			break;
 	}
 	/* obtain the emblem's icon */
 	icontheme = gtk_icon_theme_get_default();
