@@ -105,6 +105,7 @@ GdkPixbuf * vfs_mime_icon(Mime * mime, char const * type, struct stat * st,
 	int esize;
 	GdkPixbuf * epixbuf;
 	GtkIconTheme * icontheme;
+	int flags = GTK_ICON_LOOKUP_USE_BUILTIN | GTK_ICON_LOOKUP_FORCE_SIZE;
 
 	mime_icons(mime, type, size, &pixbuf, -1);
 	if(pixbuf == NULL)
@@ -137,10 +138,8 @@ GdkPixbuf * vfs_mime_icon(Mime * mime, char const * type, struct stat * st,
 	}
 	/* obtain the emblem's icon */
 	icontheme = gtk_icon_theme_get_default();
-	if((epixbuf = gtk_icon_theme_load_icon(icontheme, emblem, esize,
-					GTK_ICON_LOOKUP_USE_BUILTIN
-					| GTK_ICON_LOOKUP_FORCE_SIZE, NULL))
-			== NULL)
+	if((epixbuf = gtk_icon_theme_load_icon(icontheme, emblem, esize, flags,
+					NULL)) == NULL)
 		return pixbuf;
 	pixbuf = gdk_pixbuf_copy(pixbuf);
 	/* blit the emblem */
