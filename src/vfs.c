@@ -91,7 +91,7 @@ GdkPixbuf * vfs_mime_folder_icon(Mime * mime, char const * filename,
 	}
 	/* generic fallback */
 	if(ret == NULL)
-		mime_icons(mime, "inode/directory", size, &ret, -1);
+		ret = vfs_mime_icon(mime, "inode/directory", st, size);
 	return ret;
 }
 
