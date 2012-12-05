@@ -388,28 +388,54 @@ static void _refresh_name(GtkWidget * widget, char const * filename)
 static void _refresh_type(Properties * properties, struct stat * st)
 {
 	BrowserPluginHelper * helper = properties->helper;
+	char const * name;
 	char const * type = NULL;
 	char const * ltype = NULL;
+	char const * icon = NULL;
 	GdkPixbuf * pixbuf = NULL;
 	GtkWidget * image = NULL;
 	char * p;
 	struct stat dirst;
+	int flags = GTK_ICON_LOOKUP_FORCE_SIZE;
 
 	if(S_ISDIR(st->st_mode))
 	{
+		name = basename(properties->filename);
+		/* XXX code duplication from the Browser class */
 		type = "inode/directory";
 		if((p = strdup(properties->filename)) != NULL
 				&& lstat(dirname(p), &dirst) == 0
 				&& st->st_dev != dirst.st_dev)
 		{
 			type = "inode/mountpoint";
-			pixbuf = gtk_icon_theme_load_icon(properties->theme,
-					"mount-point", 48, 0, NULL);
+			icon = "mount-point";
 		}
+		else if(strcasecmp(name, "Desktop") == 0)
+			icon = "gnome-fs-desktop";
+		else if(strcasecmp(name, "Documents") == 0)
+			icon = "folder-documents";
+		else if(strcasecmp(name, "Download") == 0
+				|| strcasecmp(name, "Downloads") == 0)
+			icon = "folder-download";
+		else if(strcasecmp(name, "Music") == 0)
+			icon = "folder-music";
+		else if(strcasecmp(name, "Pictures") == 0)
+			icon = "folder-pictures";
+		else if(strcmp(name, "public_html") == 0
+				|| strcasecmp(name, "Shared") == 0)
+			icon = "folder-publicshared";
+		else if(strcasecmp(name, "Templates") == 0)
+			icon = "folder-templates";
+		else if(strcasecmp(name, "Video") == 0
+				|| strcasecmp(name, "Videos") == 0)
+			icon = "folder-videos";
 		free(p);
+		if(icon != NULL)
+			pixbuf = gtk_icon_theme_load_icon(properties->theme,
+					icon, 48, flags, NULL);
 		if(pixbuf == NULL)
 			pixbuf = gtk_icon_theme_load_icon(properties->theme,
-					"gnome-fs-directory", 48, 0, NULL);
+					"gnome-fs-directory", 48, flags, NULL);
 		if(pixbuf != NULL)
 			image = gtk_image_new_from_pixbuf(pixbuf);
 		if(image == NULL)
@@ -433,14 +459,15 @@ static void _refresh_type(Properties * properties, struct stat * st)
 					properties->filename)) == NULL
 			&& st->st_mode & S_IXUSR)
 		type = "application/x-executable";
-	if(type != NULL && (pixbuf = helper->get_icon(helper->browser,
+	if(type != NULL && pixbuf == NULL
+			&& (pixbuf = helper->get_icon(helper->browser,
 					type, st, 48)) != NULL)
 		image = gtk_image_new_from_pixbuf(pixbuf);
 	if(type == NULL)
 		type = _("Unknown type");
 	if(image == NULL && (pixbuf = gtk_icon_theme_load_icon(
 					properties->theme, "gnome-fs-regular",
-					48, 0, NULL)) != NULL)
+					48, flags, NULL)) != NULL)
 		image = gtk_image_new_from_pixbuf(pixbuf);
 	if(image == NULL)
 		image = gtk_image_new_from_stock(GTK_STOCK_FILE,
