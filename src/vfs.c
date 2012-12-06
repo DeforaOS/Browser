@@ -57,8 +57,8 @@ GdkPixbuf * vfs_mime_icon(Mime * mime, char const * filename,
 	if(S_ISDIR(mode))
 		ret = _mime_icon_folder(mime, filename, lst, st, size);
 	else if(S_ISLNK(mode) && ((st != NULL && S_ISDIR(st->st_mode))
-				|| (stat(filename, &s) == 0)
-				&& S_ISDIR(s.st_mode)))
+				|| (stat(filename, &s) == 0
+					&& S_ISDIR(s.st_mode))))
 		ret = _mime_icon_folder(mime, filename, lst, st, size);
 	else
 		mime_icons(mime, type, size, &ret, -1);
@@ -89,6 +89,10 @@ static GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size,
 	GtkIconTheme * icontheme;
 	int flags = GTK_ICON_LOOKUP_USE_BUILTIN | GTK_ICON_LOOKUP_FORCE_SIZE;
 
+	/* work on a copy */
+	epixbuf = gdk_pixbuf_copy(pixbuf);
+	gdk_pixbuf_unref(pixbuf);
+	pixbuf = epixbuf;
 	/* determine the size of the emblem */
 	switch(size)
 	{
@@ -110,7 +114,6 @@ static GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size,
 	if((epixbuf = gtk_icon_theme_load_icon(icontheme, emblem, esize, flags,
 					NULL)) == NULL)
 		return pixbuf;
-	pixbuf = gdk_pixbuf_copy(pixbuf);
 	/* blit the emblem */
 #if 0 /* XXX does not show anything (bottom right) */
 	gdk_pixbuf_composite(epixbuf, pixbuf, size - esize, size - esize,
@@ -120,6 +123,7 @@ static GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size,
 	gdk_pixbuf_composite(epixbuf, pixbuf, 0, 0, esize, esize, 0, 0,
 			1.0, 1.0, GDK_INTERP_NEAREST, 255);
 #endif
+	gdk_pixbuf_unref(epixbuf);
 	return pixbuf;
 }
 
