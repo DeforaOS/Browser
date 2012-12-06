@@ -21,11 +21,11 @@ distclean:
 
 install:
 	@for i in $(SUBDIRS); do (cd $$i && $(MAKE) install) || exit; done
-	$(MKDIR) $(DESTDIR)$(PREFIX)/include/Desktop
-	$(INSTALL) -m 0644 -- Browser.h $(DESTDIR)$(PREFIX)/include/Desktop/Browser.h
+	$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/Desktop
+	$(INSTALL) -m 0644 -- Browser.h $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser.h
 
 uninstall:
 	@for i in $(SUBDIRS); do (cd $$i && $(MAKE) uninstall) || exit; done
-	$(RM) -- $(DESTDIR)$(PREFIX)/include/Desktop/Browser.h
+	$(RM) -- $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser.h
 
 .PHONY: all subdirs clean distclean install uninstall

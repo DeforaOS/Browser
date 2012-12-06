@@ -49,6 +49,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/include/Makefile \
 		$(PACKAGE)-$(VERSION)/include/project.conf \
 		$(PACKAGE)-$(VERSION)/include/Browser/desktop.h \
+		$(PACKAGE)-$(VERSION)/include/Browser/plugin.h \
 		$(PACKAGE)-$(VERSION)/include/Browser/Makefile \
 		$(PACKAGE)-$(VERSION)/include/Browser/project.conf \
 		$(PACKAGE)-$(VERSION)/po/Makefile \
