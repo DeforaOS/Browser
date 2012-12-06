@@ -461,8 +461,8 @@ static void _refresh_type(Properties * properties, struct stat * st)
 					properties->filename)) == NULL
 			&& st->st_mode & S_IXUSR)
 		type = "application/x-executable";
-	if(type != NULL && pixbuf == NULL
-			&& (pixbuf = helper->get_icon(helper->browser, type, st,
+	if(pixbuf == NULL && (pixbuf = helper->get_icon(helper->browser,
+					properties->filename, type, st,
 					iconsize)) != NULL)
 		image = gtk_image_new_from_pixbuf(pixbuf);
 	if(type == NULL)

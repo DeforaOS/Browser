@@ -224,8 +224,8 @@ unsigned int browser_cnt = 0;
 /* accessors */
 static gboolean _browser_plugin_is_enabled(Browser * browser,
 		char const * plugin);
-static GdkPixbuf * _browser_get_icon(Browser * browser, char const * type,
-		struct stat * st, int size);
+static GdkPixbuf * _browser_get_icon(Browser * browser, char const * filename,
+		char const * type, struct stat * st, int size);
 static Mime * _browser_get_mime(Browser * browser);
 static void _browser_set_status(Browser * browser, char const * status);
 
@@ -2773,9 +2773,17 @@ static gboolean _browser_plugin_is_enabled(Browser * browser,
 
 
 /* browser_get_icon */
-static GdkPixbuf * _browser_get_icon(Browser * browser, char const * type,
-		struct stat * st, int size)
+static GdkPixbuf * _browser_get_icon(Browser * browser, char const * filename,
+		char const * type, struct stat * st, int size)
 {
+	struct stat s;
+
+	if(st == NULL && lstat(filename, &s) == 0)
+		st = &s;
+	if(st != NULL && S_ISDIR(st->st_mode))
+		return vfs_mime_folder_icon(browser->mime, filename, st, size);
+	if(filename != NULL && type == NULL)
+		type = mime_type(browser->mime, filename);
 	return vfs_mime_icon(browser->mime, type, st, size);
 }
 
