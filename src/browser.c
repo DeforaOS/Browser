@@ -967,6 +967,8 @@ int browser_load(Browser * browser, char const * plugin)
 			BPC_NAME_DISPLAY, _(bpd->name),
 			BPC_PLUGIN, p, BPC_BROWSERPLUGINDEFINITION, bpd,
 			BPC_BROWSERPLUGIN, bp, BPC_WIDGET, widget, -1);
+	if(icon != NULL)
+		g_object_unref(icon);
 	gtk_box_pack_start(GTK_BOX(browser->pl_box), widget, TRUE, TRUE, 0);
 	if(gtk_widget_get_no_show_all(browser->pl_view) == TRUE)
 	{
@@ -2286,6 +2288,8 @@ static void _preferences_set_plugins(Browser * browser)
 				BPC_NAME, de->d_name, BPC_ENABLED, enabled,
 				BPC_ICON, icon, BPC_NAME_DISPLAY, _(bpd->name),
 				-1);
+		if(icon != NULL)
+			g_object_unref(icon);
 		plugin_delete(p);
 	}
 	closedir(dir);
