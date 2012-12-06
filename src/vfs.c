@@ -37,96 +37,48 @@ int vfs_closedir(DIR * dir)
 }
 
 
-/* vfs_folder_icon */
-GdkPixbuf * vfs_mime_folder_icon(Mime * mime, char const * filename,
-		struct stat * st, int size)
-{
-	GdkPixbuf * ret = NULL;
-	char const * icon = NULL;
-	struct stat s;
-	char * p;
-	struct stat lst;
-	size_t i;
-	struct
-	{
-		char const * name;
-		char const * icon;
-	} name_icon[] =
-	{
-		{ "Desktop",	"gnome-fs-desktop"	},
-		{ "Documents",	"folder-documents"	},
-		{ "Download",	"folder-download"	},
-		{ "Downloads",	"folder-download"	},
-		{ "Music",	"folder-music"		},
-		{ "Pictures",	"folder-pictures"	},
-		{ "public_html","folder-publicshared"	},
-		{ "Templates",	"folder-templates"	},
-		{ "Video",	"folder-videos"		},
-		{ "Videos",	"folder-videos"		},
-	};
-	GtkIconTheme * icontheme;
-	int flags = GTK_ICON_LOOKUP_FORCE_SIZE;
-
-	if(st == NULL && lstat(filename, &s) == 0)
-		st = &s;
-	/* check if the folder is a mountpoint */
-	if((p = strdup(filename)) != NULL
-			&& st != NULL
-			&& lstat(dirname(p), &lst) == 0
-			&& st->st_dev != lst.st_dev)
-		icon = "mount-point";
-	if(p != NULL && icon == NULL)
-		for(i = 0; i < sizeof(name_icon) / sizeof(*name_icon); i++)
-			if(strcasecmp(basename(p), name_icon[i].name) == 0)
-			{
-				icon = name_icon[i].icon;
-				break;
-			}
-	free(p);
-	if(icon != NULL)
-	{
-		icontheme = gtk_icon_theme_get_default();
-		ret = gtk_icon_theme_load_icon(icontheme, icon, size, flags,
-				NULL);
-	}
-	/* generic fallback */
-	if(ret == NULL)
-		ret = vfs_mime_icon(mime, "inode/directory", st, size);
-	return ret;
-}
-
-
 /* vfs_mime_icon */
-GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size,
+static GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size,
 		char const * emblem);
+static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
+		struct stat * lst, struct stat * st, int size);
 
-GdkPixbuf * vfs_mime_icon(Mime * mime, char const * type, struct stat * st,
+GdkPixbuf * vfs_mime_icon(Mime * mime, char const * filename,
+		char const * type, struct stat * lst, struct stat * st,
 		int size)
 {
-	GdkPixbuf * pixbuf = NULL;
+	GdkPixbuf * ret = NULL;
+	mode_t mode = (lst != NULL) ? lst->st_mode : 0;
 	char const * emblem;
 
-	mime_icons(mime, type, size, &pixbuf, -1);
-	if(pixbuf == NULL)
+	if(type == NULL)
+		type = vfs_mime_type(mime, filename, S_ISLNK(mode) ? 0 : mode);
+	if(S_ISDIR(mode) || (S_ISLNK(mode) && st != NULL
+				&& S_ISDIR(st->st_mode)))
+		ret = _mime_icon_folder(mime, filename, lst, st, size);
+	else
+		mime_icons(mime, type, size, &ret, -1);
+	if(ret == NULL)
 		return NULL;
 	/* determine the emblem */
-	if(S_ISCHR(st->st_mode) || S_ISBLK(st->st_mode))
+	if(S_ISCHR(lst->st_mode) || S_ISBLK(lst->st_mode))
 		emblem = "emblem-system";
-	else if(S_ISLNK(st->st_mode))
+	else if(S_ISLNK(lst->st_mode))
 		emblem = "emblem-symbolic-link";
-	else if((st->st_mode & (S_IRUSR | S_IRGRP | S_IROTH)) == 0)
+	else if((lst->st_mode & (S_IRUSR | S_IRGRP | S_IROTH)) == 0)
 		emblem = "emblem-unreadable";
-	else if((st->st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)) == 0)
+	else if((lst->st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)) == 0)
 		emblem = "emblem-readonly";
 	else
 		emblem = NULL;
 	/* apply the emblem if relevant */
 	if(emblem != NULL)
-		pixbuf = _mime_icon_emblem(pixbuf, size, emblem);
-	return pixbuf;
+		ret = _mime_icon_emblem(ret, size, emblem);
+	return ret;
 }
 
-GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size, char const * emblem)
+static GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size,
+		char const * emblem)
 {
 	int esize;
 	GdkPixbuf * epixbuf;
@@ -165,6 +117,109 @@ GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size, char const * emblem)
 			1.0, 1.0, GDK_INTERP_NEAREST, 255);
 #endif
 	return pixbuf;
+}
+
+static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
+		struct stat * lst, struct stat * st, int size)
+{
+	GdkPixbuf * ret = NULL;
+	char const * icon = NULL;
+	struct stat ls;
+	struct stat s;
+	struct stat ps;
+	char * p;
+	size_t i;
+	struct
+	{
+		char const * name;
+		char const * icon;
+	} name_icon[] =
+	{
+		{ "Desktop",	"gnome-fs-desktop"	},
+		{ "Documents",	"folder-documents"	},
+		{ "Download",	"folder-download"	},
+		{ "Downloads",	"folder-download"	},
+		{ "Music",	"folder-music"		},
+		{ "Pictures",	"folder-pictures"	},
+		{ "public_html","folder-publicshared"	},
+		{ "Templates",	"folder-templates"	},
+		{ "Video",	"folder-videos"		},
+		{ "Videos",	"folder-videos"		},
+	};
+	GtkIconTheme * icontheme;
+	int flags = GTK_ICON_LOOKUP_FORCE_SIZE;
+
+	if(lst == NULL && vfs_lstat(filename, &ls) == 0)
+		lst = &ls;
+	if(st == NULL && vfs_stat(filename, &s) == 0)
+		st = &s;
+	/* check if the folder is a mountpoint */
+	if((p = strdup(filename)) != NULL
+			&& st != NULL
+			&& vfs_lstat(dirname(p), &ps) == 0
+			&& st->st_dev != ps.st_dev)
+		icon = "mount-point";
+	if(p != NULL && icon == NULL)
+		for(i = 0; i < sizeof(name_icon) / sizeof(*name_icon); i++)
+			if(strcasecmp(basename(p), name_icon[i].name) == 0)
+			{
+				icon = name_icon[i].icon;
+				break;
+			}
+	free(p);
+	if(icon != NULL)
+	{
+		icontheme = gtk_icon_theme_get_default();
+		ret = gtk_icon_theme_load_icon(icontheme, icon, size, flags,
+				NULL);
+	}
+	/* generic fallback */
+	if(ret == NULL)
+		mime_icons(mime, "inode/directory", size, &ret, -1);
+	return ret;
+}
+
+
+/* vfs_mime_type */
+char const * vfs_mime_type(Mime * mime, char const * filename, mode_t mode)
+{
+	char const * ret = NULL;
+	struct stat st;
+	struct stat pst;
+	char * p = NULL;
+
+	if(mode == 0 && filename != NULL && vfs_lstat(filename, &st) == 0)
+		mode = st.st_mode;
+	if(S_ISDIR(mode))
+	{
+		/* look for mountpoints */
+		if(filename != NULL && (p = strdup(filename)) != NULL
+				&& vfs_lstat(filename, &st) == 0
+				&& vfs_lstat(dirname(p), &pst) == 0
+				&& st.st_dev != pst.st_dev)
+			ret = "inode/mountpoint";
+		else
+			ret = "inode/directory";
+		free(p);
+		return ret;
+	}
+	else if(S_ISBLK(mode))
+		return "inode/blockdevice";
+	else if(S_ISCHR(mode))
+		return "inode/chardevice";
+	else if(S_ISFIFO(mode))
+		return "inode/fifo";
+	else if(S_ISLNK(mode))
+		return "inode/symlink";
+#ifdef S_ISSOCK
+	else if(S_ISSOCK(mode))
+		return "inode/socket";
+#endif
+	if(mime != NULL && filename != NULL)
+		ret = mime_type(mime, filename);
+	if(ret == NULL && (mode & S_IXUSR) != 0)
+		ret = "application/x-executable";
+	return ret;
 }
 
 

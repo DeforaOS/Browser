@@ -144,11 +144,12 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 		{
 			/* FIXME use access() for this */
 			isexec = TRUE;
-			image = vfs_mime_icon(mime, "application/x-executable",
-					s, DESKTOPICON_ICON_SIZE);
+			image = vfs_mime_icon(mime, path,
+					"application/x-executable", &lst, s,
+					DESKTOPICON_ICON_SIZE);
 		}
 		else if((mimetype = mime_type(mime, path)) != NULL)
-			image = vfs_mime_icon(mime, mimetype, &lst,
+			image = vfs_mime_icon(mime, path, mimetype, &lst, s,
 					DESKTOPICON_ICON_SIZE);
 	}
 	if(name == NULL)

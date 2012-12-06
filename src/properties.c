@@ -84,8 +84,11 @@ static void _properties_delete(Properties * properties);
 
 /* accessors */
 static GdkPixbuf * _properties_get_icon(Properties * properties,
-		char const * type, struct stat * st, int size);
+		char const * filename, char const * type, struct stat * lst,
+		struct stat * st, int size);
 static Mime * _properties_get_mime(Properties * properties);
+static char const * _properties_get_type(Properties * properties,
+		char const * filename, mode_t mode);
 static int _properties_set_location(Properties * properties,
 		char const * filename);
 
@@ -153,6 +156,7 @@ static Properties * _properties_new(Mime * mime, char const * plugin,
 	properties->helper.error = _properties_error;
 	properties->helper.get_icon = _properties_get_icon;
 	properties->helper.get_mime = _properties_get_mime;
+	properties->helper.get_type = _properties_get_type;
 	properties->helper.set_location = _properties_helper_set_location;
 	properties->window = NULL;
 	if(properties->filename == NULL)
@@ -273,9 +277,10 @@ static void _properties_delete(Properties * properties)
 /* accessors */
 /* properties_get_icon */
 static GdkPixbuf * _properties_get_icon(Properties * properties,
-		char const * type, struct stat * st, int size)
+		char const * filename, char const * type, struct stat * lst,
+		struct stat * st, int size)
 {
-	return vfs_mime_icon(properties->mime, type, st, size);
+	return vfs_mime_icon(properties->mime, filename, type, lst, st, size);
 }
 
 
@@ -283,6 +288,14 @@ static GdkPixbuf * _properties_get_icon(Properties * properties,
 static Mime * _properties_get_mime(Properties * properties)
 {
 	return properties->mime;
+}
+
+
+/* properties_get_type */
+static char const * _properties_get_type(Properties * properties,
+		char const * filename, mode_t mode)
+{
+	return vfs_mime_type(properties->mime, filename, mode);
 }
 
 

@@ -750,7 +750,6 @@ static void _cvs_on_add(gpointer data)
 	gchar * dirname;
 	gchar * basename;
 	char * argv[] = { "cvs", "add", "--", NULL, NULL, NULL };
-	Mime * mime;
 	char const * type;
 
 	if(cvs->filename == NULL)
@@ -758,8 +757,7 @@ static void _cvs_on_add(gpointer data)
 	dirname = g_path_get_dirname(cvs->filename);
 	basename = g_path_get_basename(cvs->filename);
 	argv[3] = basename;
-	mime = cvs->helper->get_mime(cvs->helper->browser);
-	type = mime_type(mime, cvs->filename);
+	type = cvs->helper->get_type(cvs->helper->browser, cvs->filename, 0);
 	if(_add_is_binary(type))
 	{
 		argv[4] = argv[3];

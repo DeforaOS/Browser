@@ -225,8 +225,11 @@ unsigned int browser_cnt = 0;
 static gboolean _browser_plugin_is_enabled(Browser * browser,
 		char const * plugin);
 static GdkPixbuf * _browser_get_icon(Browser * browser, char const * filename,
-		char const * type, struct stat * st, int size);
+		char const * type, struct stat * lst, struct stat * st,
+		int size);
 static Mime * _browser_get_mime(Browser * browser);
+static char const * _browser_get_type(Browser * browser, char const * filename,
+		mode_t mode);
 static void _browser_set_status(Browser * browser, char const * status);
 
 static void _browser_plugin_refresh(Browser * browser);
@@ -313,6 +316,7 @@ Browser * browser_new(char const * directory)
 	browser->pl_helper.error = browser_error;
 	browser->pl_helper.get_icon = _browser_get_icon;
 	browser->pl_helper.get_mime = _browser_get_mime;
+	browser->pl_helper.get_type = _browser_get_type;
 	browser->pl_helper.set_location = browser_set_location;
 
 	/* widgets */
@@ -1208,7 +1212,6 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 /* insert_all */
 static char const * _insert_size(off_t size);
 static char const * _insert_date(time_t date);
-static char const * _insert_mode(mode_t mode, dev_t parent, dev_t dev);
 
 static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		char const ** display, uint64_t * inode, uint64_t * size,
@@ -1216,7 +1219,6 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		char const ** ddate, char const ** type, char const * path,
 		GdkPixbuf ** icon24, GdkPixbuf ** icon48, GdkPixbuf ** icon96)
 {
-	char const * ltype = NULL;
 	char const * p;
 	GError * error = NULL;
 
@@ -1233,33 +1235,19 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 	*pw = getpwuid(lst->st_uid);
 	*gr = getgrgid(lst->st_gid);
 	*ddate = _insert_date(lst->st_mtime);
-	*type = _insert_mode(lst->st_mode, browser->refresh_dev, lst->st_dev);
+	*type = vfs_mime_type(browser->mime, path, lst->st_mode);
+	/* load the icons */
 	if(browser->mime == NULL)
 		return;
-	/* load the icons */
-	if(S_ISLNK(lst->st_mode))
-	{
-		/* obtain the target icon for symbolic links */
-		ltype = *type;
-		*type = NULL;
-	}
-	if(*type == NULL && (*type = mime_type(browser->mime, path)) == NULL)
-		if(st->st_mode & S_IXUSR)
-			*type = "application/x-executable";
 	if(icon24 != NULL)
-		*icon24 = S_ISDIR(st->st_mode)
-			? vfs_mime_folder_icon(browser->mime, path, lst, 24)
-			: vfs_mime_icon(browser->mime, *type, lst, 24);
+		*icon24 = vfs_mime_icon(browser->mime, path, *type, lst, st,
+				24);
 	if(icon48 != NULL)
-		*icon48 = S_ISDIR(st->st_mode)
-			? vfs_mime_folder_icon(browser->mime, path, lst, 48)
-			: vfs_mime_icon(browser->mime, *type, lst, 48);
+		*icon48 = vfs_mime_icon(browser->mime, path, *type, lst, st,
+				48);
 	if(icon96 != NULL)
-		*icon96 = S_ISDIR(st->st_mode)
-			? vfs_mime_folder_icon(browser->mime, path, lst, 96)
-			: vfs_mime_icon(browser->mime, *type, lst, 96);
-	if(ltype != NULL)
-		*type = ltype;
+		*icon96 = vfs_mime_icon(browser->mime, path, *type, lst, st,
+				96);
 }
 
 static char const * _insert_size(off_t size)
@@ -1303,29 +1291,6 @@ static char const * _insert_date(time_t date)
 		len = strftime(buf, sizeof(buf), "%b %e %H:%M", &tm);
 	buf[len] = '\0';
 	return buf;
-}
-
-static char const * _insert_mode(mode_t mode, dev_t parent, dev_t dev)
-{
-	if(S_ISDIR(mode))
-	{
-		if(parent != dev)
-			return "inode/mountpoint";
-		return "inode/directory";
-	}
-	else if(S_ISBLK(mode))
-		return "inode/blockdevice";
-	else if(S_ISCHR(mode))
-		return "inode/chardevice";
-	else if(S_ISFIFO(mode))
-		return "inode/fifo";
-	else if(S_ISLNK(mode))
-		return "inode/symlink";
-#ifdef S_ISSOCK
-	else if(S_ISSOCK(mode))
-		return "inode/socket";
-#endif
-	return NULL;
 }
 
 static gboolean _refresh_new_idle(gpointer data)
@@ -2774,17 +2739,10 @@ static gboolean _browser_plugin_is_enabled(Browser * browser,
 
 /* browser_get_icon */
 static GdkPixbuf * _browser_get_icon(Browser * browser, char const * filename,
-		char const * type, struct stat * st, int size)
+		char const * type, struct stat * lst, struct stat * st,
+		int size)
 {
-	struct stat s;
-
-	if(st == NULL && lstat(filename, &s) == 0)
-		st = &s;
-	if(st != NULL && S_ISDIR(st->st_mode))
-		return vfs_mime_folder_icon(browser->mime, filename, st, size);
-	if(filename != NULL && type == NULL)
-		type = mime_type(browser->mime, filename);
-	return vfs_mime_icon(browser->mime, type, st, size);
+	return vfs_mime_icon(browser->mime, filename, type, lst, st, size);
 }
 
 
@@ -2792,6 +2750,14 @@ static GdkPixbuf * _browser_get_icon(Browser * browser, char const * filename,
 static Mime * _browser_get_mime(Browser * browser)
 {
 	return browser->mime;
+}
+
+
+/* browser_get_type */
+static char const * _browser_get_type(Browser * browser, char const * filename,
+		mode_t mode)
+{
+	return vfs_mime_type(browser->mime, filename, mode);
 }
 
 

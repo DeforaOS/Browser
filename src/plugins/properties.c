@@ -39,7 +39,6 @@ typedef struct _BrowserPlugin
 {
 	BrowserPluginHelper * helper;
 
-	Mime * mime;
 	char * filename;
 	uid_t uid;
 	gid_t gid;
@@ -69,7 +68,7 @@ static void _properties_refresh(Properties * properties, GList * selection);
 
 /* properties */
 static Properties * _properties_new(BrowserPluginHelper * helper,
-		char const * filename, Mime * mime);
+		char const * filename);
 static void _properties_delete(Properties * properties);
 
 /* accessors */
@@ -107,9 +106,7 @@ BrowserPluginDefinition plugin =
 /* properties_init */
 static Properties * _properties_init(BrowserPluginHelper * helper)
 {
-	Mime * mime = helper->get_mime(helper->browser);
-
-	return _properties_new(helper, NULL, mime);
+	return _properties_new(helper, NULL);
 }
 
 
@@ -141,7 +138,7 @@ static GtkWidget * _new_label_left(GtkSizeGroup * group, char const * text);
 static void _new_pack(GtkWidget * vbox, GtkWidget * label, GtkWidget * widget);
 
 static Properties * _properties_new(BrowserPluginHelper * helper,
-		char const * filename, Mime * mime)
+		char const * filename)
 {
 	Properties * properties;
 	GtkSizeGroup * group;
@@ -156,7 +153,6 @@ static Properties * _properties_new(BrowserPluginHelper * helper,
 	if((properties = object_new(sizeof(*properties))) == NULL)
 		return NULL;
 	properties->helper = helper;
-	properties->mime = mime;
 	properties->filename = NULL;
 	properties->theme = gtk_icon_theme_get_default();
 	properties->group = NULL;
@@ -329,7 +325,7 @@ static int _properties_error(Properties * properties, char const * message,
 
 /* properties_do_refresh */
 static void _refresh_name(GtkWidget * widget, char const * filename);
-static void _refresh_type(Properties * properties, struct stat * st);
+static void _refresh_type(Properties * properties, struct stat * lst);
 static void _refresh_mode(GtkWidget ** widget, mode_t mode, gboolean sensitive);
 static void _refresh_owner(Properties * properties, uid_t uid);
 static int _refresh_group(Properties * properties, gid_t gid,
@@ -385,103 +381,20 @@ static void _refresh_name(GtkWidget * widget, char const * filename)
 	g_free(gfilename);
 }
 
-static void _refresh_type(Properties * properties, struct stat * st)
+static void _refresh_type(Properties * properties, struct stat * lst)
 {
 	BrowserPluginHelper * helper = properties->helper;
-	char const * name;
 	char const * type = NULL;
-	char const * ltype = NULL;
-	char const * icon = NULL;
-	GdkPixbuf * pixbuf = NULL;
-	GtkWidget * image = NULL;
-	char * p;
-	struct stat dirst;
+	GdkPixbuf * pixbuf;
 	const int iconsize = 48;
-	int flags = GTK_ICON_LOOKUP_FORCE_SIZE;
 
-	if(S_ISDIR(st->st_mode))
-	{
-		name = basename(properties->filename);
-		/* XXX code duplication from the Browser class */
-		type = "inode/directory";
-		if((p = strdup(properties->filename)) != NULL
-				&& lstat(dirname(p), &dirst) == 0
-				&& st->st_dev != dirst.st_dev)
-		{
-			type = "inode/mountpoint";
-			icon = "mount-point";
-		}
-		else if(strcasecmp(name, "Desktop") == 0)
-			icon = "gnome-fs-desktop";
-		else if(strcasecmp(name, "Documents") == 0)
-			icon = "folder-documents";
-		else if(strcasecmp(name, "Download") == 0
-				|| strcasecmp(name, "Downloads") == 0)
-			icon = "folder-download";
-		else if(strcasecmp(name, "Music") == 0)
-			icon = "folder-music";
-		else if(strcasecmp(name, "Pictures") == 0)
-			icon = "folder-pictures";
-		else if(strcmp(name, "public_html") == 0
-				|| strcasecmp(name, "Shared") == 0)
-			icon = "folder-publicshared";
-		else if(strcasecmp(name, "Templates") == 0)
-			icon = "folder-templates";
-		else if(strcasecmp(name, "Video") == 0
-				|| strcasecmp(name, "Videos") == 0)
-			icon = "folder-videos";
-		free(p);
-		if(icon != NULL)
-			pixbuf = gtk_icon_theme_load_icon(properties->theme,
-					icon, iconsize, flags, NULL);
-		if(pixbuf == NULL)
-			pixbuf = gtk_icon_theme_load_icon(properties->theme,
-					"gnome-fs-directory", iconsize, flags,
-					NULL);
-		if(pixbuf != NULL)
-			image = gtk_image_new_from_pixbuf(pixbuf);
-		if(image == NULL)
-			image = gtk_image_new_from_stock(GTK_STOCK_DIRECTORY,
-					GTK_ICON_SIZE_DIALOG);
-	}
-	else if(S_ISBLK(st->st_mode))
-		type = "inode/blockdevice";
-	else if(S_ISBLK(st->st_mode))
-		type = "inode/chardevice";
-	else if(S_ISFIFO(st->st_mode))
-		type = "inode/fifo";
-	else if(S_ISLNK(st->st_mode))
-		ltype = "inode/symlink";
-#ifdef S_ISSOCK
-	else if(S_ISSOCK(st->st_mode))
-		type = "inode/socket";
-#endif
-	if(type == NULL && properties->mime != NULL
-			&& (type = mime_type(properties->mime,
-					properties->filename)) == NULL
-			&& st->st_mode & S_IXUSR)
-		type = "application/x-executable";
-	if(pixbuf == NULL && (pixbuf = helper->get_icon(helper->browser,
-					properties->filename, type, st,
-					iconsize)) != NULL)
-		image = gtk_image_new_from_pixbuf(pixbuf);
+	type = helper->get_type(helper->browser, properties->filename,
+			lst->st_mode);
+	pixbuf = helper->get_icon(helper->browser, properties->filename, type,
+			lst, NULL, iconsize);
+	gtk_image_set_from_pixbuf(GTK_IMAGE(properties->image), pixbuf);
 	if(type == NULL)
 		type = _("Unknown type");
-	if(image == NULL && (pixbuf = gtk_icon_theme_load_icon(
-					properties->theme, "gnome-fs-regular",
-					iconsize, flags, NULL)) != NULL)
-		image = gtk_image_new_from_pixbuf(pixbuf);
-	if(image == NULL)
-		image = gtk_image_new_from_stock(GTK_STOCK_FILE,
-				GTK_ICON_SIZE_DIALOG);
-	if(image == NULL)
-		image = gtk_image_new_from_stock(GTK_STOCK_MISSING_IMAGE,
-				GTK_ICON_SIZE_DIALOG);
-	gtk_image_set_from_pixbuf(GTK_IMAGE(properties->image),
-			gtk_image_get_pixbuf(GTK_IMAGE(image)));
-	gtk_widget_destroy(image);
-	if(ltype != NULL)
-		type = ltype;
 	gtk_label_set_text(GTK_LABEL(properties->type), type);
 }
 

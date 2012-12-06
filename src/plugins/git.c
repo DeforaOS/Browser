@@ -553,7 +553,6 @@ static void _git_on_add(gpointer data)
 	gchar * dirname;
 	gchar * basename;
 	char * argv[] = { "git", "add", "--", NULL, NULL, NULL };
-	Mime * mime;
 	char const * type;
 
 	if(git->filename == NULL)
@@ -561,10 +560,10 @@ static void _git_on_add(gpointer data)
 	dirname = g_path_get_dirname(git->filename);
 	basename = g_path_get_basename(git->filename);
 	argv[3] = basename;
-	mime = git->helper->get_mime(git->helper->browser);
-	type = mime_type(mime, git->filename);
+	type = git->helper->get_type(git->helper->browser, git->filename, 0);
 	if(_add_is_binary(type))
 	{
+		/* FIXME this should certainly be removed */
 		argv[4] = argv[3];
 		argv[3] = argv[2];
 		argv[2] = "-kb";

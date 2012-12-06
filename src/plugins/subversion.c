@@ -519,7 +519,6 @@ static void _subversion_on_add(gpointer data)
 	gchar * dirname;
 	gchar * basename;
 	char * argv[] = { "svn", "add", "--", NULL, NULL, NULL };
-	Mime * mime;
 	char const * type;
 
 	if(svn->filename == NULL)
@@ -527,10 +526,10 @@ static void _subversion_on_add(gpointer data)
 	dirname = g_path_get_dirname(svn->filename);
 	basename = g_path_get_basename(svn->filename);
 	argv[3] = basename;
-	mime = svn->helper->get_mime(svn->helper->browser);
-	type = mime_type(mime, svn->filename);
+	type = svn->helper->get_type(svn->helper->browser, svn->filename, 0);
 	if(_add_is_binary(type))
 	{
+		/* FIXME this should certainly be removed */
 		argv[4] = argv[3];
 		argv[3] = argv[2];
 		argv[2] = "-kb";

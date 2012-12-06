@@ -27,11 +27,11 @@
 /* public */
 /* functions */
 int vfs_closedir(DIR * dir);
-GdkPixbuf * vfs_mime_folder_icon(Mime * mime, char const * name,
-		struct stat * st, int size);
 int vfs_lstat(char const * filename, struct stat * st);
-GdkPixbuf * vfs_mime_icon(Mime * mime, char const * type, struct stat * st,
+GdkPixbuf * vfs_mime_icon(Mime * mime, char const * filename,
+		char const * type, struct stat * lst, struct stat * st,
 		int size);
+char const * vfs_mime_type(Mime * mime, char const * filename, mode_t mode);
 DIR * vfs_opendir(char const * filename, struct stat * st);
 struct dirent * vfs_readdir(DIR * dir);
 int vfs_stat(char const * filename, struct stat * st);

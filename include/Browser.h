@@ -36,8 +36,11 @@ typedef struct _BrowserPluginHelper
 	Browser * browser;
 	int (*error)(Browser * browser, char const * message, int ret);
 	GdkPixbuf * (*get_icon)(Browser * browser, char const * filename,
-			char const * type, struct stat * st, int size);
+			char const * type, struct stat * lst, struct stat * st,
+			int size);
 	Mime * (*get_mime)(Browser * browser);
+	char const * (*get_type)(Browser * browser, char const * filename,
+			mode_t mode);
 	int (*set_location)(Browser * browser, char const * path);
 } BrowserPluginHelper;
 
