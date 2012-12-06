@@ -1207,6 +1207,14 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 			BC_GROUP, (gr != NULL) ? gr->gr_name : gid,
 			BC_DATE, lst->st_mtime, BC_DISPLAY_DATE, ddate,
 			BC_MIME_TYPE, (type != NULL) ? type : "", -1);
+	if(icon_24 != NULL)
+		g_object_unref(icon_24);
+#if GTK_CHECK_VERSION(2, 6, 0)
+	if(icon_48 != NULL)
+		g_object_unref(icon_48);
+	if(icon_96 != NULL)
+		g_object_unref(icon_96);
+#endif
 }
 
 /* insert_all */

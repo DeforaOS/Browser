@@ -90,7 +90,9 @@ static GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size,
 	int flags = GTK_ICON_LOOKUP_USE_BUILTIN | GTK_ICON_LOOKUP_FORCE_SIZE;
 
 	/* work on a copy */
-	pixbuf = gdk_pixbuf_copy(pixbuf);
+	epixbuf = gdk_pixbuf_copy(pixbuf);
+	g_object_unref(pixbuf);
+	pixbuf = epixbuf;
 	/* determine the size of the emblem */
 	switch(size)
 	{
