@@ -393,6 +393,7 @@ static void _refresh_type(Properties * properties, struct stat * lst)
 	pixbuf = helper->get_icon(helper->browser, properties->filename, type,
 			lst, NULL, iconsize);
 	gtk_image_set_from_pixbuf(GTK_IMAGE(properties->image), pixbuf);
+	g_object_unref(pixbuf);
 	if(type == NULL)
 		type = _("Unknown type");
 	gtk_label_set_text(GTK_LABEL(properties->type), type);
