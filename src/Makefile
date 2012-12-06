@@ -120,7 +120,7 @@ open.o: open.c
 properties.o: properties.c ../include/Browser.h browser.h common.c
 	$(CC) $(properties_CFLAGS) -c properties.c
 
-vfs.o: vfs.c
+vfs.o: vfs.c vfs.h
 	$(CC) $(vfs.o_CFLAGS) -c vfs.c
 
 view.o: view.c
