@@ -135,22 +135,12 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 		if(S_ISLNK(lst.st_mode) && stat(path, &st) == 0)
 			s = &st;
 		mime = desktop_get_mime(desktop);
-		if(S_ISDIR(s->st_mode))
-		{
-			isdir = TRUE;
-			image = desktop_get_folder(desktop);
-		}
-		else if(s->st_mode & S_IXUSR)
-		{
-			/* FIXME use access() for this */
-			isexec = TRUE;
-			image = vfs_mime_icon(mime, path,
-					"application/x-executable", &lst, s,
-					DESKTOPICON_ICON_SIZE);
-		}
-		else if((mimetype = mime_type(mime, path)) != NULL)
-			image = vfs_mime_icon(mime, path, mimetype, &lst, s,
-					DESKTOPICON_ICON_SIZE);
+		isdir = S_ISDIR(s->st_mode) ? TRUE : FALSE;
+		isexec = (isdir == FALSE) && (s->st_mode & S_IXUSR)
+			? TRUE : FALSE;
+		mimetype = vfs_mime_type(mime, path, s->st_mode);
+		image = vfs_mime_icon(mime, path, mimetype, &lst, NULL,
+				DESKTOPICON_ICON_SIZE);
 	}
 	if(name == NULL)
 	{

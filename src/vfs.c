@@ -49,12 +49,16 @@ GdkPixbuf * vfs_mime_icon(Mime * mime, char const * filename,
 {
 	GdkPixbuf * ret = NULL;
 	mode_t mode = (lst != NULL) ? lst->st_mode : 0;
+	struct stat s;
 	char const * emblem;
 
 	if(type == NULL)
 		type = vfs_mime_type(mime, filename, S_ISLNK(mode) ? 0 : mode);
-	if(S_ISDIR(mode) || (S_ISLNK(mode) && st != NULL
-				&& S_ISDIR(st->st_mode)))
+	if(S_ISDIR(mode))
+		ret = _mime_icon_folder(mime, filename, lst, st, size);
+	else if(S_ISLNK(mode) && ((st != NULL && S_ISDIR(st->st_mode))
+				|| (stat(filename, &s) == 0)
+				&& S_ISDIR(s.st_mode)))
 		ret = _mime_icon_folder(mime, filename, lst, st, size);
 	else
 		mime_icons(mime, type, size, &ret, -1);
