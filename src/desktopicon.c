@@ -157,6 +157,8 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 	}
 	if((desktopicon = _desktopicon_new_do(desktop, image, name)) == NULL)
 		return NULL;
+	if(image != NULL)
+		g_object_unref(image);
 	gtk_drag_source_set(desktopicon->event, GDK_BUTTON1_MASK, targets,
 			targets_cnt, GDK_ACTION_COPY | GDK_ACTION_MOVE);
 	gtk_drag_dest_set(desktopicon->event, GTK_DEST_DEFAULT_ALL, targets,
@@ -231,6 +233,8 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path)
 	if(image == NULL)
 		image = desktop_get_file(desktop);
 	desktopicon = _desktopicon_new_do(desktop, image, p);
+	if(image != NULL)
+		g_object_unref(image);
 	config_delete(config); /* XXX also remove reference to the pixbuf */
 	if(desktopicon == NULL)
 	{
@@ -511,8 +515,13 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 	gtk_container_add(GTK_CONTAINER(desktopicon->window),
 			desktopicon->event);
 	if(image == NULL)
+	{
 		image = desktop_get_file(desktop);
-	_desktopicon_set_icon(desktopicon, image);
+		_desktopicon_set_icon(desktopicon, image);
+		g_object_unref(image);
+	}
+	else
+		_desktopicon_set_icon(desktopicon, image);
 	_desktopicon_set_name(desktopicon, name);
 	_desktopicon_update_transparency(desktopicon);
 	return desktopicon;

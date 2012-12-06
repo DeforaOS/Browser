@@ -642,6 +642,7 @@ int desktop_get_drag_data(Desktop * desktop, GtkSelectionData * seldata)
 /* desktop_get_file */
 GdkPixbuf * desktop_get_file(Desktop * desktop)
 {
+	g_object_ref(desktop->file);
 	return desktop->file;
 }
 
@@ -649,6 +650,7 @@ GdkPixbuf * desktop_get_file(Desktop * desktop)
 /* desktop_get_folder */
 GdkPixbuf * desktop_get_folder(Desktop * desktop)
 {
+	g_object_ref(desktop->folder);
 	return desktop->folder;
 }
 
