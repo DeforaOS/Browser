@@ -1365,8 +1365,11 @@ static gboolean _done_thumbnails(gpointer data)
 				error = NULL;
 			}
 			else
+			{
 				gtk_list_store_set(browser->store, iter,
 						BC_PIXBUF_96, icon, -1);
+				g_object_unref(icon);
+			}
 		}
 		free(type);
 		free(path);
