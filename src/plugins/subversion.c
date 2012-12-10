@@ -511,14 +511,12 @@ static void _subversion_task_close_channel(SVNTask * task, GIOChannel * channel)
 
 /* callbacks */
 /* svn_on_add */
-static gboolean _add_is_binary(char const * type);
-
 static void _subversion_on_add(gpointer data)
 {
 	SVN * svn = data;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "svn", "add", "--", NULL, NULL, NULL };
+	char * argv[] = { "svn", "add", "--", NULL, NULL };
 	char const * type;
 
 	if(svn->filename == NULL)
@@ -527,35 +525,9 @@ static void _subversion_on_add(gpointer data)
 	basename = g_path_get_basename(svn->filename);
 	argv[3] = basename;
 	type = svn->helper->get_type(svn->helper->browser, svn->filename, 0);
-	if(_add_is_binary(type))
-	{
-		/* FIXME this should certainly be removed */
-		argv[4] = argv[3];
-		argv[3] = argv[2];
-		argv[2] = "-kb";
-	}
 	_subversion_add_task(svn, "svn add", dirname, argv);
 	g_free(basename);
 	g_free(dirname);
-}
-
-static gboolean _add_is_binary(char const * type)
-{
-	char const text[] = "text/";
-	char const * types[] = { "application/x-perl",
-		"application/x-shellscript",
-		"application/xml",
-		"application/xslt+xml" };
-	size_t i;
-
-	if(type == NULL)
-		return TRUE;
-	if(strncmp(text, type, sizeof(text) - 1) == 0)
-		return FALSE;
-	for(i = 0; i < sizeof(types) / sizeof(*types); i++)
-		if(strcmp(types[i], type) == 0)
-			return FALSE;
-	return TRUE;
 }
 
 
