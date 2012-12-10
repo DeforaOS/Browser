@@ -545,14 +545,12 @@ static void _git_task_close_channel(GitTask * task, GIOChannel * channel)
 
 /* callbacks */
 /* git_on_add */
-static gboolean _add_is_binary(char const * type);
-
 static void _git_on_add(gpointer data)
 {
 	Git * git = data;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "git", "add", "--", NULL, NULL, NULL };
+	char * argv[] = { "git", "add", "--", NULL, NULL };
 	char const * type;
 
 	if(git->filename == NULL)
@@ -561,35 +559,9 @@ static void _git_on_add(gpointer data)
 	basename = g_path_get_basename(git->filename);
 	argv[3] = basename;
 	type = git->helper->get_type(git->helper->browser, git->filename, 0);
-	if(_add_is_binary(type))
-	{
-		/* FIXME this should certainly be removed */
-		argv[4] = argv[3];
-		argv[3] = argv[2];
-		argv[2] = "-kb";
-	}
 	_git_add_task(git, "git add", dirname, argv);
 	g_free(basename);
 	g_free(dirname);
-}
-
-static gboolean _add_is_binary(char const * type)
-{
-	char const text[] = "text/";
-	char const * types[] = { "application/x-perl",
-		"application/x-shellscript",
-		"application/xml",
-		"application/xslt+xml" };
-	size_t i;
-
-	if(type == NULL)
-		return TRUE;
-	if(strncmp(text, type, sizeof(text) - 1) == 0)
-		return FALSE;
-	for(i = 0; i < sizeof(types) / sizeof(*types); i++)
-		if(strcmp(types[i], type) == 0)
-			return FALSE;
-	return TRUE;
 }
 
 
