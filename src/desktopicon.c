@@ -189,8 +189,9 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path)
 	DesktopIcon * desktopicon;
 	Config * config;
 	const char section[] = "Desktop Entry";
-	char const * p;
+	char const * name;
 	char const * icon;
+	char const * p;
 	size_t len;
 	String * buf;
 	GError * error = NULL;
@@ -202,7 +203,14 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path)
 #endif
 	if((config = config_new()) == NULL)
 		return NULL;
-	if(config_load(config, path) != 0)
+	if(config_load(config, path) != 0
+			|| (p = config_get(config, section, "Type")) == NULL
+			|| (strcmp(p, "Application") != 0
+				&& strcmp(p, "Directory") != 0
+				&& strcmp(p, "URL") != 0)
+			|| (name = config_get(config, section, "Name")) == NULL
+			|| ((p = config_get(config, section, "NoDisplay"))
+				!= NULL && strcmp(p, "true") == 0))
 	{
 		config_delete(config);
 		return NULL;
