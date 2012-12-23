@@ -207,6 +207,7 @@ static void _desktop_show_preferences(Desktop * desktop);
 /* functions */
 /* desktop_new */
 /* callbacks */
+static void _new_icons(Desktop * desktop);
 static gboolean _new_idle(gpointer data);
 static void _idle_background(Desktop * desktop, Config * config);
 static void _idle_icons(Desktop * desktop, Config * config);
@@ -259,8 +260,31 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 			| GDK_PROPERTY_CHANGE_MASK);
 	gdk_window_add_filter(desktop->root, _on_root_event, desktop);
 	/* draw the icons and background when idle */
+	_new_icons(desktop);
 	g_idle_add(_new_idle, desktop);
 	return desktop;
+}
+
+static void _new_icons(Desktop * desktop)
+{
+	const char * file[] = { "gnome-fs-regular",
+#if GTK_CHECK_VERSION(2, 6, 0)
+		GTK_STOCK_FILE,
+#endif
+		GTK_STOCK_MISSING_IMAGE, NULL };
+	const char * folder[] = { "gnome-fs-directory",
+#if GTK_CHECK_VERSION(2, 6, 0)
+		GTK_STOCK_DIRECTORY,
+#endif
+		GTK_STOCK_MISSING_IMAGE, NULL };
+	char const ** p;
+
+	for(p = file; *p != NULL && desktop->file == NULL; p++)
+		desktop->file = gtk_icon_theme_load_icon(desktop->theme,
+				*p, DESKTOPICON_ICON_SIZE, 0, NULL);
+	for(p = folder; *p != NULL && desktop->folder == NULL; p++)
+		desktop->folder = gtk_icon_theme_load_icon(desktop->theme, *p,
+				DESKTOPICON_ICON_SIZE, 0, NULL);
 }
 
 static gboolean _new_idle(gpointer data)
@@ -829,30 +853,10 @@ static int _icons_categories(Desktop * desktop)
 static int _icons_files(Desktop * desktop)
 {
 	const char path[] = "/" DESKTOP;
-	const char * file[] = { "gnome-fs-regular",
-#if GTK_CHECK_VERSION(2, 6, 0)
-		GTK_STOCK_FILE,
-#endif
-		GTK_STOCK_MISSING_IMAGE, NULL };
-	const char * folder[] = { "gnome-fs-directory",
-#if GTK_CHECK_VERSION(2, 6, 0)
-		GTK_STOCK_DIRECTORY,
-#endif
-		GTK_STOCK_MISSING_IMAGE, NULL };
-	char const ** p;
 	struct stat st;
 
 	if(desktop->mime == NULL)
 		desktop->mime = mime_new(NULL);
-	if(desktop->file == NULL)
-		for(p = file; *p != NULL && desktop->file == NULL; p++)
-			desktop->file = gtk_icon_theme_load_icon(desktop->theme,
-					*p, DESKTOPICON_ICON_SIZE, 0, NULL);
-	if(desktop->folder == NULL)
-		for(p = folder; *p != NULL && desktop->folder == NULL; p++)
-			desktop->folder = gtk_icon_theme_load_icon(
-					desktop->theme, *p,
-					DESKTOPICON_ICON_SIZE, 0, NULL);
 	_icons_files_add_home(desktop);
 	desktop->path_cnt = strlen(desktop->home) + 1 + sizeof(path);
 	if((desktop->path = malloc(desktop->path_cnt)) == NULL)
