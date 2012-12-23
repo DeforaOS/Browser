@@ -57,7 +57,6 @@ struct _DesktopIcon
 	char const * mimetype;
 	/* applications */
 	char * exec;
-	char * tryexec;
 
 	/* callback */
 	DesktopIconCallback callback;
@@ -188,7 +187,6 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path)
 	char const * p;
 	char const * icon;
 	char * exec = NULL;
-	char * tryexec = NULL;
 	size_t len;
 	String * buf;
 	GError * error = NULL;
@@ -206,13 +204,10 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path)
 	}
 	if((p = config_get(config, section, "Exec")) != NULL)
 		exec = strdup(p);
-	if((p = config_get(config, section, "TryExec")) != NULL)
-		tryexec = strdup(p);
 	if(exec == NULL || (p = config_get(config, section, "Name")) == NULL
 			|| (icon = config_get(config, section, "Icon")) == NULL)
 	{
 		free(exec);
-		free(tryexec);
 		config_delete(config);
 		return NULL;
 	}
@@ -239,11 +234,9 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path)
 	if(desktopicon == NULL)
 	{
 		free(exec);
-		free(tryexec);
 		return NULL;
 	}
 	desktopicon->exec = exec;
-	desktopicon->tryexec = tryexec;
 	desktopicon_set_confirm(desktopicon, FALSE);
 	desktopicon_set_executable(desktopicon, TRUE);
 	desktopicon_set_immutable(desktopicon, TRUE);
@@ -274,7 +267,6 @@ DesktopIcon * desktopicon_new_category(Desktop * desktop, char const * name,
 /* desktopicon_delete */
 void desktopicon_delete(DesktopIcon * desktopicon)
 {
-	free(desktopicon->tryexec);
 	free(desktopicon->exec);
 	free(desktopicon->name);
 	free(desktopicon->path);
@@ -839,8 +831,7 @@ static void _on_icon_run(gpointer data)
 
 	if(desktopicon->confirm != FALSE && _run_confirm(desktopicon) != TRUE)
 		return;
-	if((argv[0] = desktopicon->exec) != NULL
-			|| (argv[0] = desktopicon->tryexec) != NULL)
+	if((argv[0] = desktopicon->exec) != NULL)
 		/* FIXME it's actually a format string */
 		res = g_spawn_command_line_async(argv[0], &error);
 	else
