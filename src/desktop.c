@@ -1048,6 +1048,7 @@ static int _current_loop_applications(Desktop * desktop)
 	struct dirent * de;
 	size_t len;
 	const char ext[] = ".desktop";
+	const char section[] = "Desktop Entry";
 	char * path = NULL;
 	char * p;
 	Config * config;
@@ -1083,8 +1084,7 @@ static int _current_loop_applications(Desktop * desktop)
 		config_reset(config);
 		if(config_load(config, path) != 0)
 			continue;
-		if((q = config_get(config, "Desktop Entry", "Categories"))
-				== NULL)
+		if((q = config_get(config, section, "Categories")) == NULL)
 			continue;
 		if(string_find(q, desktop->category->category) == NULL)
 			continue;
