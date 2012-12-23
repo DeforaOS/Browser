@@ -621,6 +621,7 @@ static void _desktopicon_update_transparency(DesktopIcon * desktopicon)
 
 
 /* callbacks */
+/* on_desktopicon_closex */
 static gboolean _on_desktopicon_closex(void)
 {
 	return TRUE;
@@ -793,6 +794,8 @@ static void _popup_mime(Mime * mime, char const * mimetype, char const * action,
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 }
 
+
+/* on_icon_open */
 static void _on_icon_open(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
@@ -823,6 +826,8 @@ static void _on_icon_open(gpointer data)
 	}
 }
 
+
+/* on_icon_edit */
 static void _on_icon_edit(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
@@ -832,38 +837,75 @@ static void _on_icon_edit(gpointer data)
 	mime_action(mime, "edit", desktopicon->path);
 }
 
+
+/* on_icon_run */
+static void _run_application(DesktopIcon * desktopicon);
 static gboolean _run_confirm(DesktopIcon * desktopicon);
+static void _run_directory(DesktopIcon * desktopicon);
+static void _run_url(DesktopIcon * desktopicon);
+
 static void _on_icon_run(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
 	const char section[] = "Desktop Entry";
 	char const * p;
-	char * argv[] = { NULL, NULL, NULL };
-	gboolean res = TRUE;
-	GSpawnFlags flags = G_SPAWN_SEARCH_PATH | G_SPAWN_FILE_AND_ARGV_ZERO;
-	GError * error = NULL;
 
 	if(desktopicon->confirm != FALSE && _run_confirm(desktopicon) != TRUE)
 		return;
-	if((p = config_get(desktopicon->config, section, "Exec")) != NULL)
+	if((p = config_get(desktopicon->config, section, "Type")) == NULL)
+		return;
+	else if(strcmp(p, "Application") == 0)
+		_run_application(desktopicon);
+	else if(strcmp(p, "Directory") == 0)
+		_run_directory(desktopicon);
+	else if(strcmp(p, "URL") == 0)
+		_run_url(desktopicon);
+}
+
+static void _run_application(DesktopIcon * desktopicon)
+{
+	/* XXX code duplicated from DeforaOS Panel */
+	const char section[] = "Desktop Entry";
+	char * program;
+	char * p;
+	char const * q;
+	pid_t pid;
+	GError * error = NULL;
+
+	if((q = config_get(desktopicon->config, section, "Exec")) == NULL)
+		return;
+	if((program = strdup(q)) == NULL)
+		return; /* XXX report error */
+	/* XXX crude way to ignore %f, %F, %u and %U */
+	if((p = strchr(program, '%')) != NULL)
+		*p = '\0';
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() \"%s\"", __func__, program);
+#endif
+	if((q = config_get(desktopicon->config, section, "Path")) == NULL)
 	{
-		/* FIXME it's actually a format string */
-		if((argv[0] = strdup(p)) != NULL)
-			res = g_spawn_command_line_async(argv[0], &error);
-		free(argv[0]);
+		/* execute the program directly */
+		if(g_spawn_command_line_async(program, &error) != TRUE)
+		{
+			desktop_error(desktopicon->desktop, error->message, 1);
+			g_error_free(error);
+		}
 	}
-	else
+	else if((pid = fork()) == 0)
 	{
-		argv[0] = desktopicon->path;
-		argv[1] = argv[0];
-		res = g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL,
-				&error);
+		/* change the current working directory */
+		if(chdir(q) != 0)
+			desktop_error(desktopicon->desktop, strerror(errno), 1);
+		else if(g_spawn_command_line_async(program, &error) != TRUE)
+		{
+			desktop_error(desktopicon->desktop, error->message, 1);
+			g_error_free(error);
+		}
+		exit(0);
 	}
-	if(res != TRUE)
-	{
-		desktop_error(desktopicon->desktop, error->message, 1);
-		g_error_free(error);
-	}
+	else if(pid < 0)
+		desktop_error(desktopicon->desktop, strerror(errno), 1);
+	free(program);
 }
 
 static gboolean _run_confirm(DesktopIcon * desktopicon)
@@ -885,6 +927,54 @@ static gboolean _run_confirm(DesktopIcon * desktopicon)
 	return (res == GTK_RESPONSE_YES) ? TRUE : FALSE;
 }
 
+static void _run_directory(DesktopIcon * desktopicon)
+{
+	const char section[] = "Desktop Entry";
+	char const * directory;
+	/* XXX open with the default file manager instead */
+	char * argv[] = { "browser", "--", NULL, NULL };
+	int flags = G_SPAWN_SEARCH_PATH;
+	GError * error = NULL;
+
+	/* XXX this may not might the correct key */
+	if((directory = config_get(desktopicon->config, section, "Path"))
+			== NULL)
+		return;
+	if((argv[2] = strdup(directory)) == NULL)
+		desktop_error(desktopicon->desktop, strerror(errno), 1);
+	else if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
+			!= TRUE)
+	{
+		desktop_error(desktopicon->desktop, error->message, 1);
+		g_error_free(error);
+	}
+	free(argv[2]);
+}
+
+static void _run_url(DesktopIcon * desktopicon)
+{
+	const char section[] = "Desktop Entry";
+	char const * url;
+	/* XXX open with the default web browser instead */
+	char * argv[] = { "surfer", "--", NULL, NULL };
+	int flags = G_SPAWN_SEARCH_PATH;
+	GError * error = NULL;
+
+	if((url = config_get(desktopicon->config, section, "URL")) == NULL)
+		return;
+	if((argv[2] = strdup(url)) == NULL)
+		desktop_error(desktopicon->desktop, strerror(errno), 1);
+	else if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
+			!= TRUE)
+	{
+		desktop_error(desktopicon->desktop, error->message, 1);
+		g_error_free(error);
+	}
+	free(argv[2]);
+}
+
+
+/* on_icon_open_with */
 static void _on_icon_open_with(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
@@ -914,6 +1004,8 @@ static void _on_icon_open_with(gpointer data)
 	g_free(filename);
 }
 
+
+/* on_icon_rename */
 static void _on_icon_rename(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
@@ -985,6 +1077,8 @@ static void _on_icon_rename(gpointer data)
 	gtk_widget_destroy(dialog);
 }
 
+
+/* on_icon_delete */
 static void _on_icon_delete(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
@@ -1015,6 +1109,8 @@ static void _on_icon_delete(gpointer data)
 	}
 }
 
+
+/* on_icon_properties */
 static void _on_icon_properties(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
@@ -1028,6 +1124,8 @@ static void _on_icon_properties(gpointer data)
 		desktop_error(desktopicon->desktop, argv[0], 1); /* XXX */
 }
 
+
+/* on_icon_key_press */
 static gboolean _on_icon_key_press(GtkWidget * widget, GdkEventKey * event,
 		gpointer data)
 	/* FIXME handle shift and control */
@@ -1051,6 +1149,8 @@ static gboolean _on_icon_key_press(GtkWidget * widget, GdkEventKey * event,
 	return TRUE;
 }
 
+
+/* on_icon_drag_data_get */
 static void _on_icon_drag_data_get(GtkWidget * widget, GdkDragContext * context,
 		GtkSelectionData * seldata, guint info, guint time,
 		gpointer data)
@@ -1060,6 +1160,8 @@ static void _on_icon_drag_data_get(GtkWidget * widget, GdkDragContext * context,
 	desktop_get_drag_data(desktopicon->desktop, seldata);
 }
 
+
+/* on_icon_drag_data_received */
 static void _on_icon_drag_data_received(GtkWidget * widget,
 		GdkDragContext * context, gint x, gint y,
 		GtkSelectionData * seldata, guint info, guint time,
