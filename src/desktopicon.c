@@ -210,7 +210,9 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path)
 				&& strcmp(p, "URL") != 0)
 			|| (name = config_get(config, section, "Name")) == NULL
 			|| ((p = config_get(config, section, "NoDisplay"))
-				!= NULL && strcmp(p, "true") == 0))
+				!= NULL && strcmp(p, "true") == 0)
+			|| ((p = config_get(config, section, "TryExec")) != NULL
+				&& access(p, X_OK) != 0 && errno == ENOENT))
 	{
 		config_delete(config);
 		return NULL;
@@ -835,16 +837,21 @@ static void _on_icon_run(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
 	const char section[] = "Desktop Entry";
+	char const * p;
 	char * argv[] = { NULL, NULL, NULL };
-	gboolean res;
+	gboolean res = TRUE;
 	GSpawnFlags flags = G_SPAWN_SEARCH_PATH | G_SPAWN_FILE_AND_ARGV_ZERO;
 	GError * error = NULL;
 
 	if(desktopicon->confirm != FALSE && _run_confirm(desktopicon) != TRUE)
 		return;
-	if((argv[0] = config_get(desktopicon->config, section, "Exec")) != NULL)
+	if((p = config_get(desktopicon->config, section, "Exec")) != NULL)
+	{
 		/* FIXME it's actually a format string */
-		res = g_spawn_command_line_async(argv[0], &error);
+		if((argv[0] = strdup(p)) != NULL)
+			res = g_spawn_command_line_async(argv[0], &error);
+		free(argv[0]);
+	}
 	else
 	{
 		argv[0] = desktopicon->path;
@@ -853,7 +860,10 @@ static void _on_icon_run(gpointer data)
 				&error);
 	}
 	if(res != TRUE)
-		desktop_error(desktopicon->desktop, argv[0], 1); /* XXX */
+	{
+		desktop_error(desktopicon->desktop, error->message, 1);
+		g_error_free(error);
+	}
 }
 
 static gboolean _run_confirm(DesktopIcon * desktopicon)
