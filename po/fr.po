@@ -977,6 +977,3 @@ msgstr "Volumes"
 #: ../src/plugins/volumes.c:228
 msgid "Root filesystem"
 msgstr "Racine"
-
-#~ msgid "Error while loading default icons"
-#~ msgstr "Erreur lors du chargement des icônes"
