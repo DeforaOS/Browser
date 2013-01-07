@@ -3,16 +3,16 @@ PREFIX	= /usr/local
 DESTDIR	=
 BINDIR	= $(PREFIX)/bin
 SBINDIR	= $(PREFIX)/sbin
-CC	?= cc
-CPPFLAGSF?=
-CPPFLAGS?=
+CC	= cc
+CPPFLAGSF=
+CPPFLAGS=
 CFLAGSF	= -W `pkg-config --cflags gtk+-2.0`
 CFLAGS	= -Wall -g -O2
 LDFLAGSF= `pkg-config --libs gtk+-2.0`
-RM	?= rm -f
-LN	?= ln -f
-MKDIR	?= mkdir -p
-INSTALL	?= install
+RM	= rm -f
+LN	= ln -f
+MKDIR	= mkdir -p
+INSTALL	= install
 
 
 all: $(TARGETS)

@@ -2,19 +2,19 @@ TARGETS	= cvs.so dirtree.so git.so preview.so properties.so subversion.so templa
 PREFIX	= /usr/local
 DESTDIR	=
 LIBDIR	= $(PREFIX)/lib
-CC	?= cc
+CC	= cc
 CPPFLAGSF= -I ../../include
 CPPFLAGS=
 CFLAGSF	= -W `pkg-config --cflags libDesktop`
 CFLAGS	= -Wall -g -O2 -pedantic -fPIC
 LDFLAGSF= `pkg-config --libs libDesktop`
-AR	?= ar
-RANLIB	?= ranlib
-CCSHARED?= $(CC) -shared
-RM	?= rm -f
-LN	?= ln -f
-MKDIR	?= mkdir -p
-INSTALL	?= install
+AR	= ar
+RANLIB	= ranlib
+CCSHARED= $(CC) -shared
+RM	= rm -f
+LN	= ln -f
+MKDIR	= mkdir -p
+INSTALL	= install
 
 
 all: $(TARGETS)

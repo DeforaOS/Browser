@@ -1,10 +1,10 @@
 TARGETS	= browser.1 browser.html copy.1 copy.html delete.1 delete.html desktop.1 desktop.html desktopctl.1 desktopctl.html move.1 move.html open.1 open.html properties.1 properties.html view.1 view.html
 PREFIX	= /usr/local
 DESTDIR	=
-RM	?= rm -f
-LN	?= ln -f
-MKDIR	?= mkdir -p
-INSTALL	?= install
+RM	= rm -f
+LN	= ln -f
+MKDIR	= mkdir -p
+INSTALL	= install
 
 
 all: $(TARGETS)
