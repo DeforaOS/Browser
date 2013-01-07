@@ -22,10 +22,12 @@ Browser.pc: Browser.pc.in ../config.sh
 clean:
 	@for i in $(SUBDIRS); do (cd $$i && $(MAKE) clean) || exit; done
 	$(RM) -- $(Browser.pc_OBJS)
+	./pkgconfig.sh -c -P "$(PREFIX)" -- "Browser.pc"
 
 distclean:
 	@for i in $(SUBDIRS); do (cd $$i && $(MAKE) distclean) || exit; done
 	$(RM) -- $(Browser.pc_OBJS)
+	./pkgconfig.sh -c -P "$(PREFIX)" -- "Browser.pc"
 	$(RM) -- $(TARGETS)
 
 install: $(TARGETS)

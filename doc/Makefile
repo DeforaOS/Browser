@@ -65,6 +65,7 @@ view.html: view.xml
 
 clean:
 	$(RM) -- $(browser.1_OBJS) $(browser.html_OBJS) $(copy.1_OBJS) $(copy.html_OBJS) $(delete.1_OBJS) $(delete.html_OBJS) $(desktop.1_OBJS) $(desktop.html_OBJS) $(desktopctl.1_OBJS) $(desktopctl.html_OBJS) $(move.1_OBJS) $(move.html_OBJS) $(open.1_OBJS) $(open.html_OBJS) $(properties.1_OBJS) $(properties.html_OBJS) $(view.1_OBJS) $(view.html_OBJS)
+	./docbook.sh -c -P "$(PREFIX)" -- "view.html"
 
 distclean: clean
 	$(RM) -- $(TARGETS)
