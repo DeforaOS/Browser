@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2006-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,11 @@
 /* usage */
 static int _usage(void)
 {
-	fputs(_("Usage: browser [directory...]\n"), stderr);
+#if GTK_CHECK_VERSION(2, 6, 0)
+	fputs(_("Usage: browser [-D|-I|-L|-T] [directory...]\n"), stderr);
+#else
+	fputs(_("Usage: browser [-D] [directory...]\n"), stderr);
+#endif
 	return 1;
 }
 
@@ -51,22 +55,47 @@ int main(int argc, char * argv[])
 {
 	int o;
 	int i;
+	int view = -1;
+	Browser * browser;
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 	gtk_init(&argc, &argv);
-	while((o = getopt(argc, argv, "")) != -1)
+#if GTK_CHECK_VERSION(2, 6, 0)
+	while((o = getopt(argc, argv, "DILT")) != -1)
+#else
+	while((o = getopt(argc, argv, "D")) != -1)
+#endif
 		switch(o)
 		{
+			case 'D':
+				view = BV_DETAILS;
+				break;
+#if GTK_CHECK_VERSION(2, 6, 0)
+			case 'I':
+				view = BV_ICONS;
+				break;
+			case 'L':
+				view = BV_LIST;
+				break;
+			case 'T':
+				view = BV_THUMBNAILS;
+				break;
+#endif
 			default:
 				return _usage();
 		}
 	if(optind == argc)
-		browser_new(NULL);
+	{
+		if((browser = browser_new(NULL)) != NULL && view != -1)
+			browser_set_view(browser, view);
+	}
 	else
 		for(i = optind; i < argc; i++)
-			browser_new(argv[i]);
+			if((browser = browser_new(argv[i])) != NULL
+					&& view != -1)
+				browser_set_view(browser, view);
 	gtk_main();
 	return 0;
 }

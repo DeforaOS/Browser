@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Browser 0.1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-12-24 03:46+0100\n"
+"POT-Creation-Date: 2013-01-18 23:13+0100\n"
 "PO-Revision-Date: 2010-03-29 23:28+0200\n"
 "Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
 "Language-Team: French\n"
@@ -757,9 +757,13 @@ msgstr "Voulez-vous vraiment effacer "
 msgid " file(s)?"
 msgstr " fichier(s) ?"
 
-#: ../src/main.c:44
-msgid "Usage: browser [directory...]\n"
-msgstr "Usage: browser [dossier...]\n"
+#: ../src/main.c:45
+msgid "Usage: browser [-D|-I|-L|-T] [directory...]\n"
+msgstr "Usage: browser [-D|-I|-L|-T] [dossier...]\n"
+
+#: ../src/main.c:47
+msgid "Usage: browser [-D] [directory...]\n"
+msgstr "Usage: browser [-D] [dossier...]\n"
 
 #: ../src/move.c:100
 msgid "Move file(s)"
