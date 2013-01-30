@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2007-2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2007-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -222,6 +222,7 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 #if !GTK_CHECK_VERSION(2, 24, 0)
 	int depth;
 #endif
+	GdkEventMask mask;
 
 	if((desktop = object_new(sizeof(*desktop))) == NULL)
 		return NULL;
@@ -255,9 +256,10 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 			&desktop->window.y, &desktop->window.width,
 			&desktop->window.height, &depth);
 #endif
-	gdk_window_set_events(desktop->root, gdk_window_get_events(
-				desktop->root) | GDK_BUTTON_PRESS_MASK
-			| GDK_PROPERTY_CHANGE_MASK);
+	mask = gdk_window_get_events(desktop->root) | GDK_PROPERTY_CHANGE_MASK;
+	if(prefs->popup != 0)
+		mask |= GDK_BUTTON_PRESS_MASK;
+	gdk_window_set_events(desktop->root, mask);
 	gdk_window_add_filter(desktop->root, _on_root_event, desktop);
 	/* draw the icons and background when idle */
 	_new_icons(desktop);
@@ -2333,7 +2335,8 @@ static int _usage(void)
 "  -f	Display contents of the desktop folder (default)\n"
 "  -h	Display the homescreen\n"
 "  -m	Monitor where to display the desktop\n"
-"  -n	Do not display icons on the desktop\n"), stderr);
+"  -n	Do not display icons on the desktop\n"
+"  -N	Do not intercept mouse clicks on the desktop\n"), stderr);
 	return 1;
 }
 
@@ -2352,8 +2355,9 @@ int main(int argc, char * argv[])
 	prefs.alignment = -1;
 	prefs.icons = -1;
 	prefs.monitor = -1;
+	prefs.popup = 1;
 	gtk_init(&argc, &argv);
-	while((o = getopt(argc, argv, "HVacfhm:n")) != -1)
+	while((o = getopt(argc, argv, "HVacfhm:nN")) != -1)
 		switch(o)
 		{
 			case 'H':
@@ -2381,6 +2385,9 @@ int main(int argc, char * argv[])
 				break;
 			case 'n':
 				prefs.icons = DESKTOP_ICONS_NONE;
+				break;
+			case 'N':
+				prefs.popup = 0;
 				break;
 			default:
 				return _usage();
