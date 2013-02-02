@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2010-2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2010-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -840,6 +840,7 @@ static void _on_icon_edit(gpointer data)
 
 /* on_icon_run */
 static void _run_application(DesktopIcon * desktopicon);
+static void _run_binary(DesktopIcon * desktopicon);
 static gboolean _run_confirm(DesktopIcon * desktopicon);
 static void _run_directory(DesktopIcon * desktopicon);
 static void _run_url(DesktopIcon * desktopicon);
@@ -852,7 +853,9 @@ static void _on_icon_run(gpointer data)
 
 	if(desktopicon->confirm != FALSE && _run_confirm(desktopicon) != TRUE)
 		return;
-	if((p = config_get(desktopicon->config, section, "Type")) == NULL)
+	if(desktopicon->config == NULL)
+		_run_binary(desktopicon);
+	else if((p = config_get(desktopicon->config, section, "Type")) == NULL)
 		return;
 	else if(strcmp(p, "Application") == 0)
 		_run_application(desktopicon);
@@ -906,6 +909,21 @@ static void _run_application(DesktopIcon * desktopicon)
 	else if(pid < 0)
 		desktop_error(desktopicon->desktop, strerror(errno), 1);
 	free(program);
+}
+
+static void _run_binary(DesktopIcon * desktopicon)
+{
+	char * argv[] = { NULL, NULL };
+	int flags = 0;
+	GError * error = NULL;
+
+	argv[0] = desktopicon->path;
+	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
+			!= TRUE)
+	{
+		desktop_error(desktopicon->desktop, error->message, 1);
+		g_error_free(error);
+	}
 }
 
 static gboolean _run_confirm(DesktopIcon * desktopicon)
