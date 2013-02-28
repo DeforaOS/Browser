@@ -42,6 +42,10 @@ static void _favorites_destroy(Favorites * favorites);
 static GtkWidget * _favorites_get_widget(Favorites * favorites);
 static void _favorites_refresh(Favorites * favorites, GList * selection);
 
+/* callbacks */
+static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
+		GtkTreeViewColumn * column, gpointer data);
+
 
 /* public */
 /* variables */
@@ -104,6 +108,9 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 	/* selection */
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(favorites->view));
 	gtk_tree_selection_set_mode(treesel, GTK_SELECTION_SINGLE);
+	/* signals */
+	g_signal_connect(favorites->view, "row-activated", G_CALLBACK(
+				_favorites_on_row_activated), favorites);
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(
 				favorites->widget), favorites->view);
 	gtk_widget_show_all(favorites->widget);
@@ -173,4 +180,20 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 		g_free(filename);
 	}
 	fclose(fp);
+}
+
+
+/* callbacks */
+static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
+	GtkTreeViewColumn * column, gpointer data)
+{
+	Favorites * favorites = data;
+	GtkTreeModel * model = GTK_TREE_MODEL(favorites->store);
+	GtkTreeIter iter;
+	gchar * location;
+
+	gtk_tree_model_get_iter(model, &iter, path);
+	gtk_tree_model_get(model, &iter, 2, &location, -1);
+	favorites->helper->set_location(favorites->helper->browser, location);
+	g_free(location);
 }
