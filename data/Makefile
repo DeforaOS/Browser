@@ -1,5 +1,5 @@
 SUBDIRS	= 16x16
-MKDIR	= mkdir -p
+MKDIR	= mkdir -m 0755 -p
 INSTALL	= install
 RM	= rm -f
 TARGETS	= Browser.pc
@@ -7,7 +7,7 @@ PREFIX	= /usr/local
 DESTDIR	=
 RM	= rm -f
 LN	= ln -f
-MKDIR	= mkdir -p
+MKDIR	= mkdir -m 0755 -p
 INSTALL	= install
 
 
