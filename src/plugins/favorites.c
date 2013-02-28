@@ -15,7 +15,9 @@
 
 
 
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <System.h>
 #include "Browser.h"
 
@@ -30,11 +32,6 @@ typedef struct _BrowserPlugin
 	GtkWidget * widget;
 	GtkListStore * store;
 	GtkWidget * view;
-
-	/* FIXME implement */
-#if 0
-	~/.gtk-bookmarks
-#endif
 } Favorites;
 
 
@@ -90,6 +87,7 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
 			"text", 1, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(favorites->view), column);
 	/* selection */
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(favorites->view));
 	gtk_tree_selection_set_mode(treesel, GTK_SELECTION_SINGLE);
@@ -118,6 +116,47 @@ static GtkWidget * _favorites_get_widget(Favorites * favorites)
 /* favorites_refresh */
 static void _favorites_refresh(Favorites * favorites, GList * selection)
 {
+	FILE * fp;
+	char const * home;
+	String * filename;
+	char buf[512];
+	size_t len;
+	int c;
+	GtkTreeIter iter;
+
 	gtk_list_store_clear(favorites->store);
-	/* FIXME implement */
+	if((home = getenv("HOME")) == NULL)
+		home = g_get_home_dir();
+	if((filename = string_new_append(home, "/.gtk-bookmarks", NULL))
+			== NULL)
+		return;
+	fp = fopen(filename, "r");
+	string_delete(filename);
+	if(fp == NULL)
+		return;
+	while(fgets(buf, sizeof(buf), fp) != NULL)
+	{
+		if((len = strlen(buf)) == 0)
+			/* ignore empty lines */
+			continue;
+		else if(buf[len - 1] != '\n')
+		{
+			/* skip the rest of the current line */
+			while((c = fgetc(fp)) != EOF && c != '\n');
+			continue;
+		}
+		if(strncmp(buf, "file:///", 8) != 0)
+			/* ignore anything but local file: URLs */
+			continue;
+		buf[len - 1] = '\0';
+		memmove(buf, &buf[7], len - 7);
+#if GTK_CHECK_VERSION(2, 6, 0)
+		gtk_list_store_insert_with_values(favorites->store, &iter, -1,
+#else
+		gtk_list_store_append(favorites->store, &iter);
+		gtk_list_store_set(favorites->store, &iter,
+#endif
+				1, buf, -1);
+	}
+	fclose(fp);
 }
