@@ -914,7 +914,7 @@ static void _run_application(DesktopIcon * desktopicon)
 static void _run_binary(DesktopIcon * desktopicon)
 {
 	char * argv[] = { NULL, NULL };
-	int flags = 0;
+	GSpawnFlags flags = 0;
 	GError * error = NULL;
 
 	argv[0] = desktopicon->path;
@@ -951,7 +951,7 @@ static void _run_directory(DesktopIcon * desktopicon)
 	char const * directory;
 	/* XXX open with the default file manager instead */
 	char * argv[] = { "browser", "--", NULL, NULL };
-	int flags = G_SPAWN_SEARCH_PATH;
+	GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
 
 	/* XXX this may not might the correct key */
@@ -975,7 +975,7 @@ static void _run_url(DesktopIcon * desktopicon)
 	char const * url;
 	/* XXX open with the default web browser instead */
 	char * argv[] = { "surfer", "--", NULL, NULL };
-	int flags = G_SPAWN_SEARCH_PATH;
+	GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
 
 	if((url = config_get(desktopicon->config, section, "URL")) == NULL)
