@@ -52,7 +52,7 @@ static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 BrowserPluginDefinition plugin =
 {
 	"Favorites",
-	NULL,
+	"user-bookmarks",
 	NULL,
 	_favorites_init,
 	_favorites_destroy,
