@@ -121,6 +121,8 @@ install: $(TARGETS)
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
 	$(INSTALL) -m 0644 -- dirtree.so $(DESTDIR)$(LIBDIR)/Browser/plugins/dirtree.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
+	$(INSTALL) -m 0644 -- favorites.so $(DESTDIR)$(LIBDIR)/Browser/plugins/favorites.so
+	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
 	$(INSTALL) -m 0644 -- git.so $(DESTDIR)$(LIBDIR)/Browser/plugins/git.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
 	$(INSTALL) -m 0644 -- preview.so $(DESTDIR)$(LIBDIR)/Browser/plugins/preview.so
@@ -134,6 +136,7 @@ install: $(TARGETS)
 uninstall:
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/cvs.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/dirtree.so
+	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/favorites.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/git.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/preview.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/properties.so
