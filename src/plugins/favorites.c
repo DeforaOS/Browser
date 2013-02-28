@@ -32,6 +32,7 @@ typedef struct _BrowserPlugin
 	GtkWidget * widget;
 	GtkListStore * store;
 	GtkWidget * view;
+	GdkPixbuf * folder;
 } Favorites;
 
 
@@ -62,18 +63,30 @@ BrowserPluginDefinition plugin =
 static Favorites * _favorites_init(BrowserPluginHelper * helper)
 {
 	Favorites * favorites;
+	GtkIconTheme * icontheme;
+	gint size;
 	GtkCellRenderer * renderer;
 	GtkTreeViewColumn * column;
 	GtkTreeSelection * treesel;
+	GError * error = NULL;
 
 	if((favorites = object_new(sizeof(*favorites))) == NULL)
 		return NULL;
 	favorites->helper = helper;
+	icontheme = gtk_icon_theme_get_default();
+	gtk_icon_size_lookup(GTK_ICON_SIZE_BUTTON, &size, &size);
+	favorites->folder = gtk_icon_theme_load_icon(icontheme, "stock_folder",
+			size, GTK_ICON_LOOKUP_USE_BUILTIN, &error);
+	if(favorites->folder == NULL)
+	{
+		helper->error(helper->browser, error->message, 1);
+		g_error_free(error);
+	}
 	favorites->widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(favorites->widget),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	favorites->store = gtk_list_store_new(2, GDK_TYPE_PIXBUF,
-			G_TYPE_STRING);
+	favorites->store = gtk_list_store_new(3, GDK_TYPE_PIXBUF,
+			G_TYPE_STRING, G_TYPE_STRING);
 	favorites->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				favorites->store));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(favorites->view),
@@ -118,7 +131,7 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 {
 	FILE * fp;
 	char const * home;
-	String * filename;
+	gchar * filename;
 	char buf[512];
 	size_t len;
 	int c;
@@ -127,11 +140,10 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 	gtk_list_store_clear(favorites->store);
 	if((home = getenv("HOME")) == NULL)
 		home = g_get_home_dir();
-	if((filename = string_new_append(home, "/.gtk-bookmarks", NULL))
-			== NULL)
+	if((filename = g_build_filename(home, ".gtk-bookmarks", NULL)) == NULL)
 		return;
 	fp = fopen(filename, "r");
-	string_delete(filename);
+	g_free(filename);
 	if(fp == NULL)
 		return;
 	while(fgets(buf, sizeof(buf), fp) != NULL)
@@ -150,13 +162,15 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 			continue;
 		buf[len - 1] = '\0';
 		memmove(buf, &buf[7], len - 7);
+		filename = g_path_get_basename(buf);
 #if GTK_CHECK_VERSION(2, 6, 0)
 		gtk_list_store_insert_with_values(favorites->store, &iter, -1,
 #else
 		gtk_list_store_append(favorites->store, &iter);
 		gtk_list_store_set(favorites->store, &iter,
 #endif
-				1, buf, -1);
+				0, favorites->folder, 1, filename, 2, buf, -1);
+		g_free(filename);
 	}
 	fclose(fp);
 }
