@@ -27,7 +27,7 @@
 			</author>
 		</authorgroup>
 		<copyright>
-			<year>2012</year>
+			<year>2013</year>
 			<holder>&firstname; &surname; &lt;&email;&gt;</holder>
 		</copyright>
 		<legalnotice>
@@ -49,13 +49,17 @@
 	<refsynopsisdiv>
 		<cmdsynopsis>
 			<command>&name;</command>
-			<arg choice="opt"><option>-H</option>
-				| <option>-V</option></arg>
-			<arg choice="opt"><option>-a</option>
-			 | <option>-c</option>
-			 | <option>-f</option>
-			 | <option>-h</option>
-			 | <option>-n</option></arg>
+			<group choice="opt">
+				<arg choice="plain"><option>-H</option></arg>
+				<arg choice="plain"><option>-V</option></arg>
+			</group>
+			<group choice="opt">
+				<arg choice="plain"><option>-a</option></arg>
+				<arg choice="plain"><option>-c</option></arg>
+				<arg choice="plain"><option>-f</option></arg>
+				<arg choice="plain"><option>-h</option></arg>
+				<arg choice="plain"><option>-n</option></arg>
+			</group>
 			<arg choice="opt"><option>-m</option>
 				<replaceable>monitor</replaceable></arg>
 		</cmdsynopsis>
