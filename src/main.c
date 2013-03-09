@@ -25,7 +25,6 @@
 #include "../config.h"
 #define _(string) gettext(string)
 
-
 /* constants */
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
@@ -36,6 +35,22 @@
 #ifndef LOCALEDIR
 # define LOCALEDIR	DATADIR "/locale"
 #endif
+
+
+/* private */
+/* prototypes */
+static int _error(char const * message, int ret);
+static int _usage(void);
+
+
+/* functions */
+/* error */
+static int _error(char const * message, int ret)
+{
+	fputs("browser: ", stderr);
+	perror(message);
+	return ret;
+}
 
 
 /* usage */
@@ -50,6 +65,8 @@ static int _usage(void)
 }
 
 
+/* public */
+/* functions */
 /* main */
 int main(int argc, char * argv[])
 {
@@ -58,7 +75,8 @@ int main(int argc, char * argv[])
 	int view = -1;
 	Browser * browser;
 
-	setlocale(LC_ALL, "");
+	if(setlocale(LC_ALL, "") == NULL)
+		_error("setlocale", 1);
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 	gtk_init(&argc, &argv);
