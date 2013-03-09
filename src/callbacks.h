@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2006-2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2006-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,10 +25,10 @@
 gboolean on_closex(gpointer data);
 
 /* accelerators */
-gboolean on_close(gpointer data);
-gboolean on_location(gpointer data);
-gboolean on_new_window(gpointer data);
-gboolean on_open_file(gpointer data);
+void on_close(gpointer data);
+void on_location(gpointer data);
+void on_new_window(gpointer data);
+void on_open_file(gpointer data);
 
 /* file menu */
 void on_file_new_window(gpointer data);
