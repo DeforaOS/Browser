@@ -2324,6 +2324,15 @@ static void _preferences_set(Desktop * desktop)
 }
 
 
+/* error */
+static int _error(char const * message, int ret)
+{
+	fputs("desktop: ", stderr);
+	perror(message);
+	return ret;
+}
+
+
 /* usage */
 static int _usage(void)
 {
@@ -2349,7 +2358,8 @@ int main(int argc, char * argv[])
 	DesktopPrefs prefs;
 	char * p;
 
-	setlocale(LC_ALL, "");
+	if(setlocale(LC_ALL, "") == NULL)
+		_error("setlocale", 1);
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 	prefs.alignment = -1;
