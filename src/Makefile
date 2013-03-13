@@ -19,7 +19,7 @@ INSTALL	= install
 all: subdirs $(TARGETS)
 
 subdirs:
-	@for i in $(SUBDIRS); do (cd $$i && $(MAKE)) || exit; done
+	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE)) || exit; done
 
 browser_OBJS = browser.o callbacks.o main.o
 browser_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
@@ -127,16 +127,16 @@ view.o: view.c
 	$(CC) $(view_CFLAGS) -c view.c
 
 clean:
-	@for i in $(SUBDIRS); do (cd $$i && $(MAKE) clean) || exit; done
+	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) clean) || exit; done
 	$(RM) -- $(browser_OBJS) $(copy_OBJS) $(delete_OBJS) $(desktop_OBJS) $(desktopctl_OBJS) $(move_OBJS) $(open_OBJS) $(properties_OBJS) $(vfs.o_OBJS) $(view_OBJS)
 
 distclean:
-	@for i in $(SUBDIRS); do (cd $$i && $(MAKE) distclean) || exit; done
+	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) distclean) || exit; done
 	$(RM) -- $(browser_OBJS) $(copy_OBJS) $(delete_OBJS) $(desktop_OBJS) $(desktopctl_OBJS) $(move_OBJS) $(open_OBJS) $(properties_OBJS) $(vfs.o_OBJS) $(view_OBJS)
 	$(RM) -- $(TARGETS)
 
 install: $(TARGETS)
-	@for i in $(SUBDIRS); do (cd $$i && $(MAKE) install) || exit; done
+	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) install) || exit; done
 	$(MKDIR) $(DESTDIR)$(BINDIR)
 	$(INSTALL) -m 0755 -- browser $(DESTDIR)$(BINDIR)/browser
 	$(MKDIR) $(DESTDIR)$(BINDIR)
@@ -157,7 +157,7 @@ install: $(TARGETS)
 	$(INSTALL) -m 0755 -- view $(DESTDIR)$(BINDIR)/view
 
 uninstall:
-	@for i in $(SUBDIRS); do (cd $$i && $(MAKE) uninstall) || exit; done
+	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) uninstall) || exit; done
 	$(RM) -- $(DESTDIR)$(BINDIR)/browser
 	$(RM) -- $(DESTDIR)$(BINDIR)/copy
 	$(RM) -- $(DESTDIR)$(BINDIR)/delete
