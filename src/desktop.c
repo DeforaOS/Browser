@@ -2336,7 +2336,7 @@ static int _error(char const * message, int ret)
 /* usage */
 static int _usage(void)
 {
-	fputs(_("Usage: desktop [-H|-V][-a|-c|-f|-h|-n][-m monitor]\n"
+	fputs(_("Usage: desktop [-H|-V][-a|-c|-f|-h|-n][-m monitor][-N]\n"
 "  -H	Place icons horizontally\n"
 "  -V	Place icons vertically\n"
 "  -a	Display the applications registered\n"
