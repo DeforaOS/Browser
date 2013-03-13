@@ -12,9 +12,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+/* FIXME:
+ * - no longer skip unknown elements (they are lost on add/remove)
+ * - store the complete line within the list store */
 
 
 
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -29,6 +33,9 @@ typedef struct _BrowserPlugin
 {
 	BrowserPluginHelper * helper;
 
+	char * location;
+
+	/* widgets */
 	GtkWidget * widget;
 	GtkListStore * store;
 	GtkWidget * view;
@@ -37,12 +44,21 @@ typedef struct _BrowserPlugin
 
 
 /* prototypes */
+/* plug-in */
 static Favorites * _favorites_init(BrowserPluginHelper * helper);
 static void _favorites_destroy(Favorites * favorites);
 static GtkWidget * _favorites_get_widget(Favorites * favorites);
 static void _favorites_refresh(Favorites * favorites, GList * selection);
 
+/* accessors */
+static gchar * _favorites_get_filename(void);
+
+/* useful */
+static int _favorites_save(Favorites * favorites);
+
 /* callbacks */
+static void _favorites_on_add(gpointer data);
+static void _favorites_on_remove(gpointer data);
 static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 		GtkTreeViewColumn * column, gpointer data);
 
@@ -69,6 +85,8 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 	Favorites * favorites;
 	GtkIconTheme * icontheme;
 	gint size;
+	GtkWidget * widget;
+	GtkToolItem * toolitem;
 	GtkCellRenderer * renderer;
 	GtkTreeViewColumn * column;
 	GtkTreeSelection * treesel;
@@ -77,6 +95,7 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 	if((favorites = object_new(sizeof(*favorites))) == NULL)
 		return NULL;
 	favorites->helper = helper;
+	favorites->location = NULL;
 	icontheme = gtk_icon_theme_get_default();
 	gtk_icon_size_lookup(GTK_ICON_SIZE_BUTTON, &size, &size);
 	favorites->folder = gtk_icon_theme_load_icon(icontheme, "stock_folder",
@@ -86,8 +105,9 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 		helper->error(helper->browser, error->message, 1);
 		g_error_free(error);
 	}
-	favorites->widget = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(favorites->widget),
+	favorites->widget = gtk_vbox_new(FALSE, 0);
+	widget = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	favorites->store = gtk_list_store_new(3, GDK_TYPE_PIXBUF,
 			G_TYPE_STRING, G_TYPE_STRING);
@@ -111,8 +131,22 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 	/* signals */
 	g_signal_connect(favorites->view, "row-activated", G_CALLBACK(
 				_favorites_on_row_activated), favorites);
-	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(
-				favorites->widget), favorites->view);
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(widget),
+			favorites->view);
+	gtk_box_pack_start(GTK_BOX(favorites->widget), widget, TRUE, TRUE, 0);
+	/* lower toolbar */
+	widget = gtk_toolbar_new();
+	gtk_toolbar_set_icon_size(GTK_TOOLBAR(widget), GTK_ICON_SIZE_MENU);
+	gtk_toolbar_set_style(GTK_TOOLBAR(widget), GTK_TOOLBAR_ICONS);
+	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_ADD);
+	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
+				_favorites_on_add), favorites);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_REMOVE);
+	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
+				_favorites_on_remove), favorites);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	gtk_box_pack_start(GTK_BOX(favorites->widget), widget, FALSE, TRUE, 0);
 	gtk_widget_show_all(favorites->widget);
 	return favorites;
 }
@@ -121,7 +155,7 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 /* favorites_destroy */
 static void _favorites_destroy(Favorites * favorites)
 {
-	/* FIXME implement */
+	free(favorites->location);
 	object_delete(favorites);
 }
 
@@ -137,17 +171,21 @@ static GtkWidget * _favorites_get_widget(Favorites * favorites)
 static void _favorites_refresh(Favorites * favorites, GList * selection)
 {
 	FILE * fp;
-	char const * home;
 	gchar * filename;
 	char buf[512];
 	size_t len;
 	int c;
 	GtkTreeIter iter;
 
+	/* obtain the current selection */
+	free(favorites->location);
+	favorites->location = NULL;
+	if(selection != NULL && selection->next == NULL
+			&& selection->data != NULL)
+		favorites->location = strdup(selection->data);
+	/* refresh the bookmarks */
 	gtk_list_store_clear(favorites->store);
-	if((home = getenv("HOME")) == NULL)
-		home = g_get_home_dir();
-	if((filename = g_build_filename(home, ".gtk-bookmarks", NULL)) == NULL)
+	if((filename = _favorites_get_filename()) == NULL)
 		return;
 	fp = fopen(filename, "r");
 	g_free(filename);
@@ -183,7 +221,92 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 }
 
 
+/* accessors */
+/* favorites_get_filename */
+static gchar * _favorites_get_filename(void)
+{
+	char const * home;
+
+	if((home = getenv("HOME")) == NULL)
+		home = g_get_home_dir();
+	return g_build_filename(home, ".gtk-bookmarks", NULL);
+}
+
+
+/* useful */
+/* favorites_save */
+static int _favorites_save(Favorites * favorites)
+{
+	GtkTreeModel * model = GTK_TREE_MODEL(favorites->store);
+	GtkTreeIter iter;
+	gchar * p;
+	FILE * fp;
+	gboolean valid;
+
+	if((p = _favorites_get_filename()) == NULL)
+		return -1;
+	fp = fopen(p, "w");
+	g_free(p);
+	if(fp == NULL)
+		return -1;
+	for(valid = gtk_tree_model_get_iter_first(model, &iter); valid == TRUE;
+			valid = gtk_tree_model_iter_next(model, &iter))
+	{
+		gtk_tree_model_get(model, &iter, 2, &p, -1);
+		if(p == NULL)
+			continue;
+		fprintf(fp, "%s%s\n", "file://", p);
+		g_free(p);
+	}
+	return fclose(fp);
+}
+
+
 /* callbacks */
+/* favorites_on_add */
+static void _favorites_on_add(gpointer data)
+{
+	Favorites * favorites = data;
+	GtkTreeIter iter;
+	struct stat st;
+	gchar * filename;
+
+	/* XXX ignore non-directories */
+	if(stat(favorites->location, &st) != 0
+			|| !S_ISDIR(st.st_mode))
+		return;
+	if((filename = g_path_get_basename(favorites->location)) == NULL)
+		return;
+#if GTK_CHECK_VERSION(2, 6, 0)
+	gtk_list_store_insert_with_values(favorites->store, &iter, -1,
+#else
+	gtk_list_store_append(favorites->store, &iter);
+	gtk_list_store_set(favorites->store, &iter,
+#endif
+			0, favorites->folder, 1, filename,
+			2, favorites->location, -1);
+	g_free(filename);
+	_favorites_save(favorites);
+}
+
+
+/* favorites_on_remove */
+static void _favorites_on_remove(gpointer data)
+{
+	Favorites * favorites = data;
+	GtkTreeModel * model = GTK_TREE_MODEL(favorites->store);
+	GtkTreeSelection * treesel;
+	GtkTreeIter iter;
+
+	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(favorites->view));
+	if(gtk_tree_selection_get_selected(treesel, &model, &iter) != TRUE)
+		return;
+	gtk_list_store_remove(favorites->store, &iter);
+	_favorites_save(favorites);
+}
+
+
+/* favorites_on_row_activated */
 static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 	GtkTreeViewColumn * column, gpointer data)
 {
