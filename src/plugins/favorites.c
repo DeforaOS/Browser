@@ -176,6 +176,7 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 	size_t len;
 	int c;
 	GtkTreeIter iter;
+	char const scheme[] = "file:///";
 
 	/* obtain the current selection */
 	free(favorites->location);
@@ -202,7 +203,7 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 			while((c = fgetc(fp)) != EOF && c != '\n');
 			continue;
 		}
-		if(strncmp(buf, "file:///", 8) != 0)
+		if(strncmp(buf, scheme, sizeof(scheme) - 1) != 0)
 			/* ignore anything but local file: URLs */
 			continue;
 		buf[len - 1] = '\0';
