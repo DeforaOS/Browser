@@ -1,5 +1,5 @@
 #define PACKAGE "Browser"
-#define VERSION "0.4.10"
+#define VERSION "0.4.11"
 
 #ifndef PREFIX
 # define PREFIX "/usr/local"
