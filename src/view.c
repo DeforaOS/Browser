@@ -179,7 +179,12 @@ static View * _view_new(char const * pathname)
 	struct stat st;
 	char const image[] = "image/";
 	char const text[] = "text/";
+	char const * types[] = { "application/x-perl",
+		"application/x-shellscript",
+		"application/xml",
+		"application/xslt+xml" };
 	char const * type;
+	size_t i;
 	char buf[256];
 	GtkAccelGroup * group;
 	GtkWidget * vbox;
@@ -235,8 +240,19 @@ static View * _view_new(char const * pathname)
 	}
 	else
 	{
-		_view_error(view, _("Unable to view file type"), 1);
-		return NULL;
+		widget = NULL;
+		for(i = 0; i < sizeof(types) / sizeof(*types); i++)
+			if(strcmp(types[i], type) == 0)
+			{
+				widget = _new_text(view, pathname);
+				break;
+			}
+		if(widget == NULL)
+		{
+			_view_error(view, _("Unable to view file type"), 1);
+			return NULL;
+		}
+		gtk_window_set_default_size(GTK_WINDOW(view->window), 600, 400);
 	}
 	gtk_box_pack_start(GTK_BOX(vbox), widget, TRUE, TRUE, 0);
 	gtk_container_add(GTK_CONTAINER(view->window), vbox);
