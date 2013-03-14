@@ -1,6 +1,6 @@
 /* $Id$ */
 static char const _copyright[] =
-"Copyright (c) 2007-2012 Pierre Pronchery <khorben@defora.org>";
+"Copyright (c) 2007-2013 Pierre Pronchery <khorben@defora.org>";
 /* This file is part of DeforaOS Desktop Browser */
 static char const _license[] =
 "view is free software; you can redistribute it and/or modify it under the\n"
@@ -177,6 +177,8 @@ static View * _view_new(char const * pathname)
 {
 	View * view;
 	struct stat st;
+	char const image[] = "image/";
+	char const text[] = "text/";
 	char const * type;
 	char buf[256];
 	GtkAccelGroup * group;
@@ -221,12 +223,12 @@ static View * _view_new(char const * pathname)
 				FALSE);
 #endif
 	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, FALSE, 0);
-	if(strncmp(type, "image/", 6) == 0)
+	if(strncmp(type, image, sizeof(image) - 1) == 0)
 	{
 		if((widget = _new_image(view, pathname)) == NULL)
 			return NULL;
 	}
-	else if(strncmp(type, "text/", 5) == 0)
+	else if(strncmp(type, text, sizeof(text) - 1) == 0)
 	{
 		widget = _new_text(view, pathname);
 		gtk_window_set_default_size(GTK_WINDOW(view->window), 600, 400);
