@@ -61,7 +61,9 @@ static void _common_task_on_child_watch(GPid pid, gint status, gpointer data);
 static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 		GIOCondition condition, gpointer data);
 
+#ifdef COMMON_RTRIM
 static void _common_rtrim(char * string);
+#endif
 
 
 /* functions */
@@ -201,7 +203,8 @@ static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 }
 
 
-/* rtrim */
+#ifdef COMMON_RTRIM
+/* common_rtrim */
 static void _common_rtrim(char * string)
 {
 	unsigned char * s = (unsigned char *)string;
@@ -216,3 +219,4 @@ static void _common_rtrim(char * string)
 			break;
 	}
 }
+#endif

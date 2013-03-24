@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2011-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,16 +24,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <libintl.h>
-#include "Browser.h"
-#define _(string) gettext(string)
-#define N_(string) (string)
+#include "common.c"
 
 
 /* Subversion */
 /* private */
 /* types */
-typedef struct _SVNTask SVNTask;
+typedef struct _CommonTask SVNTask;
 
 typedef struct _BrowserPlugin
 {
@@ -60,30 +57,6 @@ typedef struct _BrowserPlugin
 	size_t tasks_cnt;
 } SVN;
 
-struct _SVNTask
-{
-	SVN * svn;
-
-	GPid pid;
-	guint source;
-
-	/* stdout */
-	gint o_fd;
-	GIOChannel * o_channel;
-	guint o_source;
-
-	/* stderr */
-	gint e_fd;
-	GIOChannel * e_channel;
-	guint e_source;
-
-	/* widgets */
-	GtkWidget * window;
-	GtkWidget * view;
-	GtkWidget * statusbar;
-	guint statusbar_id;
-};
-
 
 /* prototypes */
 static SVN * _subversion_init(BrowserPluginHelper * helper);
@@ -95,13 +68,6 @@ static void _subversion_refresh(SVN * svn, GList * selection);
 static int _subversion_add_task(SVN * svn, char const * title,
 		char const * directory, char * argv[]);
 
-/* tasks */
-static void _subversion_task_delete(SVNTask * task);
-static void _subversion_task_set_status(SVNTask * task, char const * status);
-static void _subversion_task_close(SVNTask * task);
-static void _subversion_task_close_channel(SVNTask * task,
-		GIOChannel * channel);
-
 /* callbacks */
 static void _subversion_on_add(gpointer data);
 static void _subversion_on_blame(gpointer data);
@@ -110,12 +76,6 @@ static void _subversion_on_diff(gpointer data);
 static void _subversion_on_log(gpointer data);
 static void _subversion_on_make(gpointer data);
 static void _subversion_on_update(gpointer data);
-/* tasks */
-static gboolean _subversion_task_on_closex(gpointer data);
-static void _subversion_task_on_child_watch(GPid pid, gint status,
-		gpointer data);
-static gboolean _subversion_task_on_io_can_read(GIOChannel * channel,
-		GIOCondition condition, gpointer data);
 
 
 /* public */
@@ -254,7 +214,7 @@ static void _subversion_destroy(SVN * svn)
 	size_t i;
 
 	for(i = 0; i < svn->tasks_cnt; i++)
-		_subversion_task_delete(svn->tasks[i]);
+		_common_task_delete(svn->tasks[i]);
 	free(svn->tasks);
 	if(svn->source != 0)
 		g_source_remove(svn->source);
@@ -379,7 +339,7 @@ static int _subversion_add_task(SVN * svn, char const * title,
 	svn->tasks = p;
 	if((task = object_new(sizeof(*task))) == NULL)
 		return -helper->error(helper->browser, error_get(), 1);
-	task->svn = svn;
+	task->helper = helper;
 #ifdef DEBUG
 	argv[0] = "echo";
 #endif
@@ -405,7 +365,7 @@ static int _subversion_add_task(SVN * svn, char const * title,
 			directory);
 	gtk_window_set_title(GTK_WINDOW(task->window), buf);
 	g_signal_connect_swapped(task->window, "delete-event", G_CALLBACK(
-				_subversion_task_on_closex), task);
+				_common_task_on_closex), task);
 	vbox = gtk_vbox_new(FALSE, 0);
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
@@ -427,7 +387,7 @@ static int _subversion_add_task(SVN * svn, char const * title,
 	pango_font_description_free(font);
 	/* events */
 	task->source = g_child_watch_add(task->pid,
-			_subversion_task_on_child_watch, task);
+			_common_task_on_child_watch, task);
 	task->o_channel = g_io_channel_unix_new(task->o_fd);
 	if((g_io_channel_set_encoding(task->o_channel, NULL, &error))
 			!= G_IO_STATUS_NORMAL)
@@ -436,7 +396,7 @@ static int _subversion_add_task(SVN * svn, char const * title,
 		g_error_free(error);
 	}
 	task->o_source = g_io_add_watch(task->o_channel, G_IO_IN,
-			_subversion_task_on_io_can_read, task);
+			_common_task_on_io_can_read, task);
 	task->e_channel = g_io_channel_unix_new(task->e_fd);
 	if((g_io_channel_set_encoding(task->e_channel, NULL, &error))
 			!= G_IO_STATUS_NORMAL)
@@ -445,67 +405,9 @@ static int _subversion_add_task(SVN * svn, char const * title,
 		g_error_free(error);
 	}
 	task->e_source = g_io_add_watch(task->e_channel, G_IO_IN,
-			_subversion_task_on_io_can_read, task);
-	_subversion_task_set_status(task, _("Running command..."));
+			_common_task_on_io_can_read, task);
+	_common_task_set_status(task, _("Running command..."));
 	return 0;
-}
-
-
-/* tasks */
-/* svn_task_delete */
-static void _subversion_task_delete(SVNTask * task)
-{
-	_subversion_task_close(task);
-	if(task->source != 0)
-		g_source_remove(task->source);
-	task->source = 0;
-	gtk_widget_destroy(task->window);
-	object_delete(task);
-}
-
-
-/* svn_task_set_status */
-static void _subversion_task_set_status(SVNTask * task, char const * status)
-{
-	GtkStatusbar * sb = GTK_STATUSBAR(task->statusbar);
-
-	if(task->statusbar_id != 0)
-		gtk_statusbar_remove(sb, gtk_statusbar_get_context_id(sb, ""),
-				task->statusbar_id);
-	task->statusbar_id = gtk_statusbar_push(sb,
-			gtk_statusbar_get_context_id(sb, ""), status);
-}
-
-
-/* svn_task_close */
-static void _subversion_task_close(SVNTask * task)
-{
-	_subversion_task_close_channel(task, task->o_channel);
-	_subversion_task_close_channel(task, task->e_channel);
-}
-
-
-/* svn_task_close */
-static void _subversion_task_close_channel(SVNTask * task, GIOChannel * channel)
-{
-	if(channel != NULL && channel == task->o_channel)
-	{
-		if(task->o_source != 0)
-			g_source_remove(task->o_source);
-		task->o_source = 0;
-		g_io_channel_shutdown(task->o_channel, FALSE, NULL);
-		g_io_channel_unref(task->o_channel);
-		task->o_channel = NULL;
-	}
-	if(channel != NULL && task->e_channel != NULL)
-	{
-		if(task->e_source != 0)
-			g_source_remove(task->e_source);
-		task->e_source = 0;
-		g_io_channel_shutdown(task->e_channel, FALSE, NULL);
-		g_io_channel_unref(task->e_channel);
-		task->e_channel = NULL;
-	}
 }
 
 
@@ -655,83 +557,4 @@ static void _subversion_on_update(gpointer data)
 	_subversion_add_task(svn, "svn update", dirname, argv);
 	g_free(basename);
 	g_free(dirname);
-}
-
-
-/* svn_task_on_closex */
-static gboolean _subversion_task_on_closex(gpointer data)
-{
-	SVNTask * task = data;
-
-	gtk_widget_hide(task->window);
-	_subversion_task_close(task);
-	/* FIXME really implement */
-	return TRUE;
-}
-
-
-/* svn_task_on_child_watch */
-static void _subversion_task_on_child_watch(GPid pid, gint status,
-		gpointer data)
-{
-	SVNTask * task = data;
-	char buf[256];
-
-	task->source = 0;
-	if(WIFEXITED(status))
-	{
-		snprintf(buf, sizeof(buf),
-				_("Command exited with error code %d"),
-				WEXITSTATUS(status));
-		_subversion_task_set_status(task, buf);
-	}
-	else if(WIFSIGNALED(status))
-	{
-		snprintf(buf, sizeof(buf), _("Command exited with signal %d"),
-				WTERMSIG(status));
-		_subversion_task_set_status(task, buf);
-	}
-	g_spawn_close_pid(pid);
-}
-
-
-/* svn_task_on_io_can_read */
-static gboolean _subversion_task_on_io_can_read(GIOChannel * channel,
-		GIOCondition condition, gpointer data)
-{
-	SVNTask * task = data;
-	SVN * svn = task->svn;
-	BrowserPluginHelper * helper = svn->helper;
-	char buf[256];
-	gsize cnt = 0;
-	GError * error = NULL;
-	GIOStatus status;
-	GtkTextBuffer * tbuf;
-	GtkTextIter iter;
-
-	if(condition != G_IO_IN)
-		return FALSE;
-	if(channel != task->o_channel && channel != task->e_channel)
-		return FALSE;
-	status = g_io_channel_read_chars(channel, buf, sizeof(buf), &cnt,
-			&error);
-	if(cnt > 0)
-	{
-		tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(task->view));
-		gtk_text_buffer_get_end_iter(tbuf, &iter);
-		gtk_text_buffer_insert(tbuf, &iter, buf, cnt);
-	}
-	switch(status)
-	{
-		case G_IO_STATUS_NORMAL:
-			break;
-		case G_IO_STATUS_ERROR:
-			helper->error(helper->browser, error->message, 1);
-			g_error_free(error);
-		case G_IO_STATUS_EOF:
-		default: /* should not happen... */
-			_subversion_task_close_channel(task, channel);
-			return FALSE;
-	}
-	return TRUE;
 }

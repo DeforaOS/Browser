@@ -100,7 +100,7 @@ preview.o: preview.c ../../include/Browser.h
 properties.o: properties.c ../../include/Browser.h
 	$(CC) $(properties_CFLAGS) -c properties.c
 
-subversion.o: subversion.c ../../include/Browser.h
+subversion.o: subversion.c common.c ../../include/Browser.h
 	$(CC) $(subversion_CFLAGS) -c subversion.c
 
 template.o: template.c ../../include/Browser.h
