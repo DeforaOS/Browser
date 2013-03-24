@@ -11,6 +11,7 @@
 ../src/open.c
 ../src/properties.c
 ../src/view.c
+../src/plugins/common.c
 ../src/plugins/cvs.c
 ../src/plugins/dirtree.c
 ../src/plugins/preview.c
