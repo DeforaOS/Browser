@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011-2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2011-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,16 +22,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <libintl.h>
-#include "Browser.h"
-#define _(string) gettext(string)
-#define N_(string) (string)
+#include "common.c"
 
 
 /* CVS */
 /* private */
 /* types */
-typedef struct _CVSTask CVSTask;
+typedef struct _CommonTask CVSTask;
 
 typedef struct _BrowserPlugin
 {
@@ -62,30 +59,6 @@ typedef struct _BrowserPlugin
 	size_t tasks_cnt;
 } CVS;
 
-struct _CVSTask
-{
-	CVS * cvs;
-
-	GPid pid;
-	guint source;
-
-	/* stdout */
-	gint o_fd;
-	GIOChannel * o_channel;
-	guint o_source;
-
-	/* stderr */
-	gint e_fd;
-	GIOChannel * e_channel;
-	guint e_source;
-
-	/* widgets */
-	GtkWidget * window;
-	GtkWidget * view;
-	GtkWidget * statusbar;
-	guint statusbar_id;
-};
-
 
 /* prototypes */
 static CVS * _cvs_init(BrowserPluginHelper * helper);
@@ -104,12 +77,6 @@ static gboolean _cvs_is_managed(char const * filename, char ** revision);
 static int _cvs_add_task(CVS * cvs, char const * title,
 		char const * directory, char * argv[]);
 
-/* tasks */
-static void _cvs_task_delete(CVSTask * task);
-static void _cvs_task_set_status(CVSTask * task, char const * status);
-static void _cvs_task_close(CVSTask * task);
-static void _cvs_task_close_channel(CVSTask * task, GIOChannel * channel);
-
 /* callbacks */
 static void _cvs_on_add(gpointer data);
 static void _cvs_on_annotate(gpointer data);
@@ -118,13 +85,6 @@ static void _cvs_on_diff(gpointer data);
 static void _cvs_on_log(gpointer data);
 static void _cvs_on_make(gpointer data);
 static void _cvs_on_update(gpointer data);
-/* tasks */
-static gboolean _cvs_task_on_closex(gpointer data);
-static void _cvs_task_on_child_watch(GPid pid, gint status, gpointer data);
-static gboolean _cvs_task_on_io_can_read(GIOChannel * channel,
-		GIOCondition condition, gpointer data);
-
-static void _rtrim(char * string);
 
 
 /* public */
@@ -293,7 +253,7 @@ static void _cvs_destroy(CVS * cvs)
 	size_t i;
 
 	for(i = 0; i < cvs->tasks_cnt; i++)
-		_cvs_task_delete(cvs->tasks[i]);
+		_common_task_delete(cvs->tasks[i]);
 	free(cvs->tasks);
 	if(cvs->source != 0)
 		g_source_remove(cvs->source);
@@ -510,7 +470,7 @@ static char * _cvs_get_repository(char const * pathname)
 		return NULL;
 	snprintf(p, len, "%s/%s", pathname, repository);
 	if(g_file_get_contents(p, &ret, NULL, NULL) == TRUE)
-		_rtrim(ret);
+		_common_rtrim(ret);
 	free(p);
 	return ret;
 }
@@ -529,7 +489,7 @@ static char * _cvs_get_root(char const * pathname)
 		return NULL;
 	snprintf(p, len, "%s/%s", pathname, root);
 	if(g_file_get_contents(p, &ret, NULL, NULL) == TRUE)
-		_rtrim(ret);
+		_common_rtrim(ret);
 	free(p);
 	return ret;
 }
@@ -548,7 +508,7 @@ static char * _cvs_get_tag(char const * pathname)
 		return NULL;
 	snprintf(p, len, "%s/%s", pathname, tag);
 	if(g_file_get_contents(p, &ret, NULL, NULL) == TRUE)
-		_rtrim(ret);
+		_common_rtrim(ret);
 	free(p);
 	return ret;
 }
@@ -611,7 +571,7 @@ static int _cvs_add_task(CVS * cvs, char const * title,
 	cvs->tasks = p;
 	if((task = object_new(sizeof(*task))) == NULL)
 		return -helper->error(helper->browser, error_get(), 1);
-	task->cvs = cvs;
+	task->helper = helper;
 #ifdef DEBUG
 	argv[0] = "echo";
 #endif
@@ -636,7 +596,7 @@ static int _cvs_add_task(CVS * cvs, char const * title,
 	snprintf(buf, sizeof(buf), "%s - %s (%s)", _("CVS"), title, directory);
 	gtk_window_set_title(GTK_WINDOW(task->window), buf);
 	g_signal_connect_swapped(task->window, "delete-event", G_CALLBACK(
-				_cvs_task_on_closex), task);
+				_common_task_on_closex), task);
 	vbox = gtk_vbox_new(FALSE, 0);
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
@@ -657,7 +617,7 @@ static int _cvs_add_task(CVS * cvs, char const * title,
 	gtk_widget_show_all(task->window);
 	pango_font_description_free(font);
 	/* events */
-	task->source = g_child_watch_add(task->pid, _cvs_task_on_child_watch,
+	task->source = g_child_watch_add(task->pid, _common_task_on_child_watch,
 			task);
 	task->o_channel = g_io_channel_unix_new(task->o_fd);
 	if((g_io_channel_set_encoding(task->o_channel, NULL, &error))
@@ -667,7 +627,7 @@ static int _cvs_add_task(CVS * cvs, char const * title,
 		g_error_free(error);
 	}
 	task->o_source = g_io_add_watch(task->o_channel, G_IO_IN,
-			_cvs_task_on_io_can_read, task);
+			_common_task_on_io_can_read, task);
 	task->e_channel = g_io_channel_unix_new(task->e_fd);
 	if((g_io_channel_set_encoding(task->e_channel, NULL, &error))
 			!= G_IO_STATUS_NORMAL)
@@ -676,67 +636,9 @@ static int _cvs_add_task(CVS * cvs, char const * title,
 		g_error_free(error);
 	}
 	task->e_source = g_io_add_watch(task->e_channel, G_IO_IN,
-			_cvs_task_on_io_can_read, task);
-	_cvs_task_set_status(task, _("Running command..."));
+			_common_task_on_io_can_read, task);
+	_common_task_set_status(task, _("Running command..."));
 	return 0;
-}
-
-
-/* tasks */
-/* cvs_task_delete */
-static void _cvs_task_delete(CVSTask * task)
-{
-	_cvs_task_close(task);
-	if(task->source != 0)
-		g_source_remove(task->source);
-	task->source = 0;
-	gtk_widget_destroy(task->window);
-	object_delete(task);
-}
-
-
-/* cvs_task_set_status */
-static void _cvs_task_set_status(CVSTask * task, char const * status)
-{
-	GtkStatusbar * sb = GTK_STATUSBAR(task->statusbar);
-
-	if(task->statusbar_id != 0)
-		gtk_statusbar_remove(sb, gtk_statusbar_get_context_id(sb, ""),
-				task->statusbar_id);
-	task->statusbar_id = gtk_statusbar_push(sb,
-			gtk_statusbar_get_context_id(sb, ""), status);
-}
-
-
-/* cvs_task_close */
-static void _cvs_task_close(CVSTask * task)
-{
-	_cvs_task_close_channel(task, task->o_channel);
-	_cvs_task_close_channel(task, task->e_channel);
-}
-
-
-/* cvs_task_close */
-static void _cvs_task_close_channel(CVSTask * task, GIOChannel * channel)
-{
-	if(channel != NULL && channel == task->o_channel)
-	{
-		if(task->o_source != 0)
-			g_source_remove(task->o_source);
-		task->o_source = 0;
-		g_io_channel_shutdown(task->o_channel, FALSE, NULL);
-		g_io_channel_unref(task->o_channel);
-		task->o_channel = NULL;
-	}
-	if(channel != NULL && task->e_channel != NULL)
-	{
-		if(task->e_source != 0)
-			g_source_remove(task->e_source);
-		task->e_source = 0;
-		g_io_channel_shutdown(task->e_channel, FALSE, NULL);
-		g_io_channel_unref(task->e_channel);
-		task->e_channel = NULL;
-	}
 }
 
 
@@ -913,99 +815,4 @@ static void _cvs_on_update(gpointer data)
 	_cvs_add_task(cvs, "cvs update", dirname, argv);
 	g_free(basename);
 	g_free(dirname);
-}
-
-
-/* cvs_task_on_closex */
-static gboolean _cvs_task_on_closex(gpointer data)
-{
-	CVSTask * task = data;
-
-	gtk_widget_hide(task->window);
-	_cvs_task_close(task);
-	/* FIXME really implement */
-	return TRUE;
-}
-
-
-/* cvs_task_on_child_watch */
-static void _cvs_task_on_child_watch(GPid pid, gint status, gpointer data)
-{
-	CVSTask * task = data;
-	char buf[256];
-
-	task->source = 0;
-	if(WIFEXITED(status))
-	{
-		snprintf(buf, sizeof(buf),
-				_("Command exited with error code %d"),
-				WEXITSTATUS(status));
-		_cvs_task_set_status(task, buf);
-	}
-	else if(WIFSIGNALED(status))
-	{
-		snprintf(buf, sizeof(buf), _("Command exited with signal %d"),
-				WTERMSIG(status));
-		_cvs_task_set_status(task, buf);
-	}
-	g_spawn_close_pid(pid);
-}
-
-
-/* cvs_task_on_io_can_read */
-static gboolean _cvs_task_on_io_can_read(GIOChannel * channel,
-		GIOCondition condition, gpointer data)
-{
-	CVSTask * task = data;
-	CVS * cvs = task->cvs;
-	BrowserPluginHelper * helper = cvs->helper;
-	char buf[256];
-	gsize cnt = 0;
-	GError * error = NULL;
-	GIOStatus status;
-	GtkTextBuffer * tbuf;
-	GtkTextIter iter;
-
-	if(condition != G_IO_IN)
-		return FALSE;
-	if(channel != task->o_channel && channel != task->e_channel)
-		return FALSE;
-	status = g_io_channel_read_chars(channel, buf, sizeof(buf), &cnt,
-			&error);
-	if(cnt > 0)
-	{
-		tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(task->view));
-		gtk_text_buffer_get_end_iter(tbuf, &iter);
-		gtk_text_buffer_insert(tbuf, &iter, buf, cnt);
-	}
-	switch(status)
-	{
-		case G_IO_STATUS_NORMAL:
-			break;
-		case G_IO_STATUS_ERROR:
-			helper->error(helper->browser, error->message, 1);
-			g_error_free(error);
-		case G_IO_STATUS_EOF:
-		default: /* should not happen... */
-			_cvs_task_close_channel(task, channel);
-			return FALSE;
-	}
-	return TRUE;
-}
-
-
-/* rtrim */
-static void _rtrim(char * string)
-{
-	unsigned char * s = (unsigned char *)string;
-	size_t i;
-
-	if(s == NULL || (i = strlen(string)) == 0)
-		return;
-	for(i--; s[i] != '\0' && isspace(s[i]); i--)
-	{
-		string[i] = '\0';
-		if(i == 0)
-			break;
-	}
 }

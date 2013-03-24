@@ -82,7 +82,7 @@ volumes_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 volumes.so: $(volumes_OBJS)
 	$(CCSHARED) -o volumes.so $(volumes_OBJS) $(volumes_LDFLAGS)
 
-cvs.o: cvs.c ../../include/Browser.h
+cvs.o: cvs.c common.c ../../include/Browser.h
 	$(CC) $(cvs_CFLAGS) -c cvs.c
 
 dirtree.o: dirtree.c ../../include/Browser.h
