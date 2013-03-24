@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Browser 0.1.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-03-13 14:44+0100\n"
+"POT-Creation-Date: 2013-03-24 20:41+0100\n"
 "PO-Revision-Date: 2010-03-30 01:04+0200\n"
 "Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
 "Language-Team: Spanish\n"
@@ -198,7 +198,7 @@ msgstr ""
 #: ../src/copy.c:765 ../src/delete.c:425 ../src/delete.c:430
 #: ../src/desktop.c:1444 ../src/desktop.c:1449 ../src/move.c:456
 #: ../src/move.c:460 ../src/properties.c:334 ../src/properties.c:338
-#: ../src/view.c:380 ../src/view.c:385
+#: ../src/view.c:398 ../src/view.c:403
 msgid "Error"
 msgstr ""
 
@@ -207,19 +207,19 @@ msgid "Open file..."
 msgstr ""
 
 #: ../src/browser.c:1013 ../src/desktopicon.c:1005 ../src/view.c:157
-#: ../src/view.c:453
+#: ../src/view.c:471
 msgid "Open with..."
 msgstr ""
 
-#: ../src/browser.c:1021 ../src/view.c:459
+#: ../src/browser.c:1021 ../src/view.c:477
 msgid "Executable files"
 msgstr ""
 
-#: ../src/browser.c:1026 ../src/view.c:464
+#: ../src/browser.c:1026 ../src/view.c:482
 msgid "Shell scripts"
 msgstr ""
 
-#: ../src/browser.c:1030 ../src/desktop.c:1852 ../src/view.c:468
+#: ../src/browser.c:1030 ../src/desktop.c:1852 ../src/view.c:486
 msgid "All files"
 msgstr ""
 
@@ -763,103 +763,103 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#: ../src/view.c:201
+#: ../src/view.c:208
 msgid "Unknown file type"
 msgstr ""
 
-#: ../src/view.c:207
+#: ../src/view.c:214
 msgid "View - "
 msgstr ""
 
-#: ../src/view.c:236
+#: ../src/view.c:252
 msgid "Unable to view file type"
 msgstr ""
 
-#: ../src/view.c:333
+#: ../src/view.c:351
 msgid "View file..."
 msgstr ""
 
-#: ../src/view.c:440 ../src/view.c:549
+#: ../src/view.c:458 ../src/view.c:567
 msgid "Could not edit file"
 msgstr ""
 
-#: ../src/view.c:563
+#: ../src/view.c:581
 msgid "Usage: view file...\n"
 msgstr ""
 
-#: ../src/plugins/cvs.c:135 ../src/plugins/cvs.c:636
-msgid "CVS"
-msgstr "CVS"
-
-#: ../src/plugins/cvs.c:184
-msgid "Root:"
-msgstr ""
-
-#: ../src/plugins/cvs.c:186
-msgid "Repository:"
-msgstr ""
-
-#: ../src/plugins/cvs.c:188
-msgid "Tag:"
-msgstr ""
-
-#: ../src/plugins/cvs.c:190 ../src/plugins/cvs.c:213
-#: ../src/plugins/subversion.c:173 ../src/plugins/subversion.c:191
-msgid "Request diff"
-msgstr ""
-
-#: ../src/plugins/cvs.c:193 ../src/plugins/cvs.c:216
-#: ../src/plugins/subversion.c:194
-msgid "Annotate"
-msgstr ""
-
-#: ../src/plugins/cvs.c:196 ../src/plugins/cvs.c:219
-#: ../src/plugins/subversion.c:176 ../src/plugins/subversion.c:197
-msgid "View log"
-msgstr ""
-
-#: ../src/plugins/cvs.c:199 ../src/plugins/cvs.c:222
-#: ../src/plugins/subversion.c:179 ../src/plugins/subversion.c:200
-msgid "Update"
-msgstr ""
-
-#: ../src/plugins/cvs.c:202 ../src/plugins/cvs.c:225
-#: ../src/plugins/subversion.c:182 ../src/plugins/subversion.c:203
-msgid "Commit"
-msgstr ""
-
-#: ../src/plugins/cvs.c:211
-msgid "Revision:"
-msgstr ""
-
-#: ../src/plugins/cvs.c:232 ../src/plugins/subversion.c:210
-msgid "Add to repository"
-msgstr ""
-
-#: ../src/plugins/cvs.c:235 ../src/plugins/subversion.c:213
-msgid "Run make"
-msgstr ""
-
-#: ../src/plugins/cvs.c:384 ../src/plugins/cvs.c:426
-msgid "Not a CVS repository"
-msgstr ""
-
-#: ../src/plugins/cvs.c:387 ../src/plugins/cvs.c:430
-msgid "Not managed by CVS"
-msgstr ""
-
-#: ../src/plugins/cvs.c:680 ../src/plugins/subversion.c:449
-msgid "Running command..."
-msgstr ""
-
-#: ../src/plugins/cvs.c:941 ../src/plugins/subversion.c:684
+#: ../src/plugins/common.c:151
 #, c-format
 msgid "Command exited with error code %d"
 msgstr ""
 
-#: ../src/plugins/cvs.c:947 ../src/plugins/subversion.c:690
+#: ../src/plugins/common.c:157
 #, c-format
 msgid "Command exited with signal %d"
+msgstr ""
+
+#: ../src/plugins/cvs.c:96 ../src/plugins/cvs.c:597
+msgid "CVS"
+msgstr "CVS"
+
+#: ../src/plugins/cvs.c:145
+msgid "Root:"
+msgstr ""
+
+#: ../src/plugins/cvs.c:147
+msgid "Repository:"
+msgstr ""
+
+#: ../src/plugins/cvs.c:149
+msgid "Tag:"
+msgstr ""
+
+#: ../src/plugins/cvs.c:151 ../src/plugins/cvs.c:174
+#: ../src/plugins/subversion.c:133 ../src/plugins/subversion.c:151
+msgid "Request diff"
+msgstr ""
+
+#: ../src/plugins/cvs.c:154 ../src/plugins/cvs.c:177
+#: ../src/plugins/subversion.c:154
+msgid "Annotate"
+msgstr ""
+
+#: ../src/plugins/cvs.c:157 ../src/plugins/cvs.c:180
+#: ../src/plugins/subversion.c:136 ../src/plugins/subversion.c:157
+msgid "View log"
+msgstr ""
+
+#: ../src/plugins/cvs.c:160 ../src/plugins/cvs.c:183
+#: ../src/plugins/subversion.c:139 ../src/plugins/subversion.c:160
+msgid "Update"
+msgstr ""
+
+#: ../src/plugins/cvs.c:163 ../src/plugins/cvs.c:186
+#: ../src/plugins/subversion.c:142 ../src/plugins/subversion.c:163
+msgid "Commit"
+msgstr ""
+
+#: ../src/plugins/cvs.c:172
+msgid "Revision:"
+msgstr ""
+
+#: ../src/plugins/cvs.c:193 ../src/plugins/subversion.c:170
+msgid "Add to repository"
+msgstr ""
+
+#: ../src/plugins/cvs.c:196 ../src/plugins/subversion.c:173
+msgid "Run make"
+msgstr ""
+
+#: ../src/plugins/cvs.c:345 ../src/plugins/cvs.c:387
+msgid "Not a CVS repository"
+msgstr ""
+
+#: ../src/plugins/cvs.c:348 ../src/plugins/cvs.c:391
+msgid "Not managed by CVS"
+msgstr ""
+
+#: ../src/plugins/cvs.c:641 ../src/plugins/subversion.c:409
+msgid "Running command..."
 msgstr ""
 
 #: ../src/plugins/dirtree.c:75
@@ -914,11 +914,11 @@ msgstr ""
 msgid "Unknown type"
 msgstr ""
 
-#: ../src/plugins/subversion.c:126 ../src/plugins/subversion.c:404
+#: ../src/plugins/subversion.c:86 ../src/plugins/subversion.c:364
 msgid "Subversion"
 msgstr ""
 
-#: ../src/plugins/subversion.c:322
+#: ../src/plugins/subversion.c:282
 msgid "Not a Subversion repository"
 msgstr ""
 
