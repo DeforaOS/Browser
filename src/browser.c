@@ -323,6 +323,7 @@ Browser * browser_new(char const * directory)
 	group = gtk_accel_group_new();
 	browser->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_add_accel_group(GTK_WINDOW(browser->window), group);
+	g_object_unref(group);
 	gtk_window_set_default_size(GTK_WINDOW(browser->window), 720, 480);
 #if GTK_CHECK_VERSION(2, 6, 0)
 	gtk_window_set_icon_name(GTK_WINDOW(browser->window), ICON_NAME);

@@ -211,6 +211,7 @@ static View * _view_new(char const * pathname)
 	group = gtk_accel_group_new();
 	view->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_add_accel_group(GTK_WINDOW(view->window), group);
+	g_object_unref(group);
 	snprintf(buf, sizeof(buf), "%s%s", _("View - "), pathname);
 	gtk_window_set_title(GTK_WINDOW(view->window), buf);
 	g_signal_connect_swapped(view->window, "delete-event", G_CALLBACK(
