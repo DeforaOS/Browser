@@ -91,7 +91,7 @@ dirtree.o: dirtree.c ../../include/Browser.h
 favorites.o: favorites.c ../../include/Browser.h
 	$(CC) $(favorites_CFLAGS) -c favorites.c
 
-git.o: git.c ../../include/Browser.h
+git.o: git.c common.c ../../include/Browser.h
 	$(CC) $(git_CFLAGS) -c git.c
 
 preview.o: preview.c ../../include/Browser.h

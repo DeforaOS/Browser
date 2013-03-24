@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,16 +25,13 @@
 #include <string.h>
 #include <libgen.h>
 #include <errno.h>
-#include <libintl.h>
-#include "Browser.h"
-#define _(string) gettext(string)
-#define N_(string) (string)
+#include "common.c"
 
 
 /* Git */
 /* private */
 /* types */
-typedef struct _GitTask GitTask;
+typedef struct _CommonTask GitTask;
 
 typedef struct _BrowserPlugin
 {
@@ -61,30 +58,6 @@ typedef struct _BrowserPlugin
 	size_t tasks_cnt;
 } Git;
 
-struct _GitTask
-{
-	Git * git;
-
-	GPid pid;
-	guint source;
-
-	/* stdout */
-	gint o_fd;
-	GIOChannel * o_channel;
-	guint o_source;
-
-	/* stderr */
-	gint e_fd;
-	GIOChannel * e_channel;
-	guint e_source;
-
-	/* widgets */
-	GtkWidget * window;
-	GtkWidget * view;
-	GtkWidget * statusbar;
-	guint statusbar_id;
-};
-
 
 /* prototypes */
 static Git * _git_init(BrowserPluginHelper * helper);
@@ -99,12 +72,6 @@ static gboolean _git_is_managed(char const * filename);
 static int _git_add_task(Git * git, char const * title,
 		char const * directory, char * argv[]);
 
-/* tasks */
-static void _git_task_delete(GitTask * task);
-static void _git_task_set_status(GitTask * task, char const * status);
-static void _git_task_close(GitTask * task);
-static void _git_task_close_channel(GitTask * task, GIOChannel * channel);
-
 /* callbacks */
 static void _git_on_add(gpointer data);
 static void _git_on_blame(gpointer data);
@@ -113,11 +80,6 @@ static void _git_on_diff(gpointer data);
 static void _git_on_log(gpointer data);
 static void _git_on_make(gpointer data);
 static void _git_on_pull(gpointer data);
-/* tasks */
-static gboolean _git_task_on_closex(gpointer data);
-static void _git_task_on_child_watch(GPid pid, gint status, gpointer data);
-static gboolean _git_task_on_io_can_read(GIOChannel * channel,
-		GIOCondition condition, gpointer data);
 
 
 /* public */
@@ -256,7 +218,7 @@ static void _git_destroy(Git * git)
 	size_t i;
 
 	for(i = 0; i < git->tasks_cnt; i++)
-		_git_task_delete(git->tasks[i]);
+		_common_task_delete(git->tasks[i]);
 	free(git->tasks);
 	if(git->source != 0)
 		g_source_remove(git->source);
@@ -414,7 +376,7 @@ static int _git_add_task(Git * git, char const * title,
 	git->tasks = p;
 	if((task = object_new(sizeof(*task))) == NULL)
 		return -helper->error(helper->browser, error_get(), 1);
-	task->git = git;
+	task->helper = helper;
 #ifdef DEBUG
 	argv[0] = "echo";
 #endif
@@ -439,7 +401,7 @@ static int _git_add_task(Git * git, char const * title,
 	snprintf(buf, sizeof(buf), "%s - %s (%s)", _("Git"), title, directory);
 	gtk_window_set_title(GTK_WINDOW(task->window), buf);
 	g_signal_connect_swapped(task->window, "delete-event", G_CALLBACK(
-				_git_task_on_closex), task);
+				_common_task_on_closex), task);
 	vbox = gtk_vbox_new(FALSE, 0);
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
@@ -460,7 +422,7 @@ static int _git_add_task(Git * git, char const * title,
 	gtk_widget_show_all(task->window);
 	pango_font_description_free(font);
 	/* events */
-	task->source = g_child_watch_add(task->pid, _git_task_on_child_watch,
+	task->source = g_child_watch_add(task->pid, _common_task_on_child_watch,
 			task);
 	task->o_channel = g_io_channel_unix_new(task->o_fd);
 	if((g_io_channel_set_encoding(task->o_channel, NULL, &error))
@@ -470,7 +432,7 @@ static int _git_add_task(Git * git, char const * title,
 		g_error_free(error);
 	}
 	task->o_source = g_io_add_watch(task->o_channel, G_IO_IN,
-			_git_task_on_io_can_read, task);
+			_common_task_on_io_can_read, task);
 	task->e_channel = g_io_channel_unix_new(task->e_fd);
 	if((g_io_channel_set_encoding(task->e_channel, NULL, &error))
 			!= G_IO_STATUS_NORMAL)
@@ -479,67 +441,9 @@ static int _git_add_task(Git * git, char const * title,
 		g_error_free(error);
 	}
 	task->e_source = g_io_add_watch(task->e_channel, G_IO_IN,
-			_git_task_on_io_can_read, task);
-	_git_task_set_status(task, _("Running command..."));
+			_common_task_on_io_can_read, task);
+	_common_task_set_status(task, _("Running command..."));
 	return 0;
-}
-
-
-/* tasks */
-/* git_task_delete */
-static void _git_task_delete(GitTask * task)
-{
-	_git_task_close(task);
-	if(task->source != 0)
-		g_source_remove(task->source);
-	task->source = 0;
-	gtk_widget_destroy(task->window);
-	object_delete(task);
-}
-
-
-/* git_task_set_status */
-static void _git_task_set_status(GitTask * task, char const * status)
-{
-	GtkStatusbar * sb = GTK_STATUSBAR(task->statusbar);
-
-	if(task->statusbar_id != 0)
-		gtk_statusbar_remove(sb, gtk_statusbar_get_context_id(sb, ""),
-				task->statusbar_id);
-	task->statusbar_id = gtk_statusbar_push(sb,
-			gtk_statusbar_get_context_id(sb, ""), status);
-}
-
-
-/* git_task_close */
-static void _git_task_close(GitTask * task)
-{
-	_git_task_close_channel(task, task->o_channel);
-	_git_task_close_channel(task, task->e_channel);
-}
-
-
-/* git_task_close */
-static void _git_task_close_channel(GitTask * task, GIOChannel * channel)
-{
-	if(channel != NULL && channel == task->o_channel)
-	{
-		if(task->o_source != 0)
-			g_source_remove(task->o_source);
-		task->o_source = 0;
-		g_io_channel_shutdown(task->o_channel, FALSE, NULL);
-		g_io_channel_unref(task->o_channel);
-		task->o_channel = NULL;
-	}
-	if(channel != NULL && task->e_channel != NULL)
-	{
-		if(task->e_source != 0)
-			g_source_remove(task->e_source);
-		task->e_source = 0;
-		g_io_channel_shutdown(task->e_channel, FALSE, NULL);
-		g_io_channel_unref(task->e_channel);
-		task->e_channel = NULL;
-	}
 }
 
 
@@ -689,82 +593,4 @@ static void _git_on_pull(gpointer data)
 	_git_add_task(git, "git pull", dirname, argv);
 	g_free(basename);
 	g_free(dirname);
-}
-
-
-/* git_task_on_closex */
-static gboolean _git_task_on_closex(gpointer data)
-{
-	GitTask * task = data;
-
-	gtk_widget_hide(task->window);
-	_git_task_close(task);
-	/* FIXME really implement */
-	return TRUE;
-}
-
-
-/* git_task_on_child_watch */
-static void _git_task_on_child_watch(GPid pid, gint status, gpointer data)
-{
-	GitTask * task = data;
-	char buf[256];
-
-	task->source = 0;
-	if(WIFEXITED(status))
-	{
-		snprintf(buf, sizeof(buf),
-				_("Command exited with error code %d"),
-				WEXITSTATUS(status));
-		_git_task_set_status(task, buf);
-	}
-	else if(WIFSIGNALED(status))
-	{
-		snprintf(buf, sizeof(buf), _("Command exited with signal %d"),
-				WTERMSIG(status));
-		_git_task_set_status(task, buf);
-	}
-	g_spawn_close_pid(pid);
-}
-
-
-/* git_task_on_io_can_read */
-static gboolean _git_task_on_io_can_read(GIOChannel * channel,
-		GIOCondition condition, gpointer data)
-{
-	GitTask * task = data;
-	Git * git = task->git;
-	BrowserPluginHelper * helper = git->helper;
-	char buf[256];
-	gsize cnt = 0;
-	GError * error = NULL;
-	GIOStatus status;
-	GtkTextBuffer * tbuf;
-	GtkTextIter iter;
-
-	if(condition != G_IO_IN)
-		return FALSE;
-	if(channel != task->o_channel && channel != task->e_channel)
-		return FALSE;
-	status = g_io_channel_read_chars(channel, buf, sizeof(buf), &cnt,
-			&error);
-	if(cnt > 0)
-	{
-		tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(task->view));
-		gtk_text_buffer_get_end_iter(tbuf, &iter);
-		gtk_text_buffer_insert(tbuf, &iter, buf, cnt);
-	}
-	switch(status)
-	{
-		case G_IO_STATUS_NORMAL:
-			break;
-		case G_IO_STATUS_ERROR:
-			helper->error(helper->browser, error->message, 1);
-			g_error_free(error);
-		case G_IO_STATUS_EOF:
-		default: /* should not happen... */
-			_git_task_close_channel(task, channel);
-			return FALSE;
-	}
-	return TRUE;
 }
