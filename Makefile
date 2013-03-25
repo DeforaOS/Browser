@@ -85,6 +85,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/plugins/dirtree.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/favorites.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/git.c \
+		$(PACKAGE)-$(VERSION)/src/plugins/make.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/preview.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/properties.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/subversion.c \

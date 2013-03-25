@@ -1,4 +1,4 @@
-TARGETS	= cvs.so dirtree.so favorites.so git.so preview.so properties.so subversion.so template.so volumes.so
+TARGETS	= cvs.so dirtree.so favorites.so git.so make.so preview.so properties.so subversion.so template.so volumes.so
 PREFIX	= /usr/local
 DESTDIR	=
 LIBDIR	= $(PREFIX)/lib
@@ -47,6 +47,13 @@ git_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 git.so: $(git_OBJS)
 	$(CCSHARED) -o git.so $(git_OBJS) $(git_LDFLAGS)
 
+make_OBJS = make.o
+make_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
+make_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+
+make.so: $(make_OBJS)
+	$(CCSHARED) -o make.so $(make_OBJS) $(make_LDFLAGS)
+
 preview_OBJS = preview.o
 preview_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 preview_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
@@ -94,6 +101,9 @@ favorites.o: favorites.c ../../include/Browser.h
 git.o: git.c common.c ../../include/Browser.h
 	$(CC) $(git_CFLAGS) -c git.c
 
+make.o: make.c common.c ../../include/Browser.h
+	$(CC) $(make_CFLAGS) -c make.c
+
 preview.o: preview.c ../../include/Browser.h
 	$(CC) $(preview_CFLAGS) -c preview.c
 
@@ -110,7 +120,7 @@ volumes.o: volumes.c ../../include/Browser.h
 	$(CC) $(volumes_CFLAGS) -c volumes.c
 
 clean:
-	$(RM) -- $(cvs_OBJS) $(dirtree_OBJS) $(favorites_OBJS) $(git_OBJS) $(preview_OBJS) $(properties_OBJS) $(subversion_OBJS) $(template_OBJS) $(volumes_OBJS)
+	$(RM) -- $(cvs_OBJS) $(dirtree_OBJS) $(favorites_OBJS) $(git_OBJS) $(make_OBJS) $(preview_OBJS) $(properties_OBJS) $(subversion_OBJS) $(template_OBJS) $(volumes_OBJS)
 
 distclean: clean
 	$(RM) -- $(TARGETS)
@@ -125,6 +135,8 @@ install: $(TARGETS)
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
 	$(INSTALL) -m 0644 -- git.so $(DESTDIR)$(LIBDIR)/Browser/plugins/git.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
+	$(INSTALL) -m 0644 -- make.so $(DESTDIR)$(LIBDIR)/Browser/plugins/make.so
+	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
 	$(INSTALL) -m 0644 -- preview.so $(DESTDIR)$(LIBDIR)/Browser/plugins/preview.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
 	$(INSTALL) -m 0644 -- properties.so $(DESTDIR)$(LIBDIR)/Browser/plugins/properties.so
@@ -138,6 +150,7 @@ uninstall:
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/dirtree.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/favorites.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/git.so
+	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/make.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/preview.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/properties.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/subversion.so
