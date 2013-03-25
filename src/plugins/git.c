@@ -50,7 +50,6 @@ typedef struct _BrowserPlugin
 	GtkWidget * file;
 	/* additional actions */
 	GtkWidget * add;
-	GtkWidget * make;
 
 	/* tasks */
 	GitTask ** tasks;
@@ -77,7 +76,6 @@ static void _git_on_blame(gpointer data);
 static void _git_on_commit(gpointer data);
 static void _git_on_diff(gpointer data);
 static void _git_on_log(gpointer data);
-static void _git_on_make(gpointer data);
 static void _git_on_pull(gpointer data);
 
 
@@ -173,9 +171,6 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	git->add = _init_button(bgroup, GTK_STOCK_ADD, _("Add to repository"),
 			G_CALLBACK(_git_on_add), git);
 	gtk_box_pack_start(GTK_BOX(git->widget), git->add, FALSE, TRUE, 0);
-	git->make = _init_button(bgroup, GTK_STOCK_EXECUTE, _("Run make"),
-			G_CALLBACK(_git_on_make), git);
-	gtk_box_pack_start(GTK_BOX(git->widget), git->make, FALSE, TRUE, 0);
 	gtk_widget_show_all(git->widget);
 	pango_font_description_free(font);
 	/* tasks */
@@ -234,7 +229,6 @@ static GtkWidget * _git_get_widget(Git * git)
 
 /* git_refresh */
 static void _refresh_dir(Git * git);
-static void _refresh_make(Git * git, struct stat * st);
 static void _refresh_status(Git * git, char const * status);
 
 static void _git_refresh(Git * git, GList * selection)
@@ -258,10 +252,8 @@ static void _git_refresh(Git * git, GList * selection)
 	gtk_widget_hide(git->directory);
 	gtk_widget_hide(git->file);
 	gtk_widget_hide(git->add);
-	gtk_widget_hide(git->make);
 	if(S_ISDIR(st.st_mode))
 		_refresh_dir(git);
-	_refresh_make(git, &st);
 }
 
 static void _refresh_dir(Git * git)
@@ -279,28 +271,6 @@ static void _refresh_dir(Git * git)
 		return;
 	}
 	gtk_widget_show(git->directory);
-}
-
-static void _refresh_make(Git * git, struct stat * st)
-{
-	gboolean show = FALSE;
-	gchar * dirname;
-	char const * makefile[] = { "Makefile", "makefile", "GNUmakefile" };
-	size_t i;
-	gchar * p;
-
-	dirname = S_ISDIR(st->st_mode) ? g_strdup(git->filename)
-		: g_path_get_dirname(git->filename);
-	for(i = 0; show == FALSE && i < sizeof(makefile) / sizeof(*makefile);
-			i++)
-	{
-		p = g_strdup_printf("%s/%s", dirname, makefile[i]);
-		show = (lstat(p, st) == 0) ? TRUE : FALSE;
-		g_free(p);
-	}
-	g_free(dirname);
-	if(show)
-		gtk_widget_show(git->make);
 }
 
 static void _refresh_status(Git * git, char const * status)
@@ -552,23 +522,6 @@ static void _git_on_log(gpointer data)
 	argv[3] = basename;
 	_git_add_task(git, "git log", dirname, argv);
 	g_free(basename);
-	g_free(dirname);
-}
-
-
-/* git_on_make */
-static void _git_on_make(gpointer data)
-{
-	Git * git = data;
-	struct stat st;
-	gchar * dirname;
-	char * argv[] = { "make", NULL };
-
-	if(git->filename == NULL || lstat(git->filename, &st) != 0)
-		return;
-	dirname = S_ISDIR(st.st_mode) ? g_strdup(git->filename)
-		: g_path_get_dirname(git->filename);
-	_git_add_task(git, "make", dirname, argv);
 	g_free(dirname);
 }
 

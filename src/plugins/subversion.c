@@ -49,7 +49,6 @@ typedef struct _BrowserPlugin
 	GtkWidget * file;
 	/* additional actions */
 	GtkWidget * add;
-	GtkWidget * make;
 
 	/* tasks */
 	SVNTask ** tasks;
@@ -73,7 +72,6 @@ static void _subversion_on_blame(gpointer data);
 static void _subversion_on_commit(gpointer data);
 static void _subversion_on_diff(gpointer data);
 static void _subversion_on_log(gpointer data);
-static void _subversion_on_make(gpointer data);
 static void _subversion_on_update(gpointer data);
 
 
@@ -169,9 +167,6 @@ static SVN * _subversion_init(BrowserPluginHelper * helper)
 	svn->add = _init_button(bgroup, GTK_STOCK_ADD, _("Add to repository"),
 			G_CALLBACK(_subversion_on_add), svn);
 	gtk_box_pack_start(GTK_BOX(svn->widget), svn->add, FALSE, TRUE, 0);
-	svn->make = _init_button(bgroup, GTK_STOCK_EXECUTE, _("Run make"),
-			G_CALLBACK(_subversion_on_make), svn);
-	gtk_box_pack_start(GTK_BOX(svn->widget), svn->make, FALSE, TRUE, 0);
 	gtk_widget_show_all(svn->widget);
 	pango_font_description_free(font);
 	/* tasks */
@@ -230,7 +225,6 @@ static GtkWidget * _subversion_get_widget(SVN * svn)
 
 /* subversion_refresh */
 static void _refresh_dir(SVN * svn);
-static void _refresh_make(SVN * svn, struct stat * st);
 static void _refresh_status(SVN * svn, char const * status);
 
 static void _subversion_refresh(SVN * svn, GList * selection)
@@ -254,10 +248,8 @@ static void _subversion_refresh(SVN * svn, GList * selection)
 	gtk_widget_hide(svn->directory);
 	gtk_widget_hide(svn->file);
 	gtk_widget_hide(svn->add);
-	gtk_widget_hide(svn->make);
 	if(S_ISDIR(st.st_mode))
 		_refresh_dir(svn);
-	_refresh_make(svn, &st);
 }
 
 static void _refresh_dir(SVN * svn)
@@ -285,28 +277,6 @@ static void _refresh_dir(SVN * svn)
 	}
 	free(p);
 	gtk_widget_show(svn->directory);
-}
-
-static void _refresh_make(SVN * svn, struct stat * st)
-{
-	gboolean show = FALSE;
-	gchar * dirname;
-	char const * makefile[] = { "Makefile", "makefile", "GNUmakefile" };
-	size_t i;
-	gchar * p;
-
-	dirname = S_ISDIR(st->st_mode) ? g_strdup(svn->filename)
-		: g_path_get_dirname(svn->filename);
-	for(i = 0; show == FALSE && i < sizeof(makefile) / sizeof(*makefile);
-			i++)
-	{
-		p = g_strdup_printf("%s/%s", dirname, makefile[i]);
-		show = (lstat(p, st) == 0) ? TRUE : FALSE;
-		g_free(p);
-	}
-	g_free(dirname);
-	if(show)
-		gtk_widget_show(svn->make);
 }
 
 static void _refresh_status(SVN * svn, char const * status)
@@ -516,23 +486,6 @@ static void _subversion_on_log(gpointer data)
 	argv[3] = basename;
 	_subversion_add_task(svn, "svn log", dirname, argv);
 	g_free(basename);
-	g_free(dirname);
-}
-
-
-/* svn_on_make */
-static void _subversion_on_make(gpointer data)
-{
-	SVN * svn = data;
-	struct stat st;
-	gchar * dirname;
-	char * argv[] = { "make", NULL };
-
-	if(svn->filename == NULL || lstat(svn->filename, &st) != 0)
-		return;
-	dirname = S_ISDIR(st.st_mode) ? g_strdup(svn->filename)
-		: g_path_get_dirname(svn->filename);
-	_subversion_add_task(svn, "make", dirname, argv);
 	g_free(dirname);
 }
 
