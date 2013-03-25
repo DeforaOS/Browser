@@ -16,7 +16,6 @@
 
 
 #include <System.h>
-#include <ctype.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <stdlib.h>

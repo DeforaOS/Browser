@@ -15,6 +15,10 @@
 
 
 
+#ifdef COMMON_RTRIM
+# include <ctype.h>
+# include <string.h>
+#endif
 #include <libintl.h>
 #include "Browser.h"
 #define _(string) gettext(string)
