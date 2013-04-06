@@ -12,8 +12,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-/* FIXME:
- * - use our own error handling mechanism */
 
 
 
@@ -35,8 +33,6 @@
 /* types */
 typedef struct _CommonTask
 {
-	BrowserPluginHelper * helper;
-
 	GPid pid;
 	guint source;
 
@@ -52,6 +48,10 @@ typedef struct _CommonTask
 
 	/* widgets */
 	GtkWidget * window;
+#if GTK_CHECK_VERSION(2, 18, 0)
+	GtkWidget * infobar;
+	GtkWidget * infobar_label;
+#endif
 	GtkWidget * view;
 	GtkWidget * statusbar;
 	guint statusbar_id;
@@ -71,6 +71,8 @@ static void _common_task_close(CommonTask * task);
 static void _common_task_close_channel(CommonTask * task, GIOChannel * channel);
 
 static void _common_task_copy(CommonTask * task);
+
+static int _common_task_error(CommonTask * task, char const * message, int ret);
 
 static int _common_task_save_buffer_as(CommonTask * task,
 		char const * filename);
@@ -131,7 +133,6 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 
 	if((task = object_new(sizeof(*task))) == NULL)
 		return NULL;
-	task->helper = helper;
 #ifdef DEBUG
 	argv[0] = "echo";
 #endif
@@ -167,6 +168,23 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 	/* toolbar */
 	widget = desktop_toolbar_create(_common_task_toolbar, task, group);
 	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
+#if GTK_CHECK_VERSION(2, 18, 0)
+	/* infobar */
+	task->infobar = gtk_info_bar_new_with_buttons(GTK_STOCK_CLOSE,
+			GTK_RESPONSE_CLOSE, NULL);
+	gtk_info_bar_set_message_type(GTK_INFO_BAR(task->infobar),
+			GTK_MESSAGE_ERROR);
+	g_signal_connect(task->infobar, "close", G_CALLBACK(gtk_widget_hide),
+			NULL);
+	g_signal_connect(task->infobar, "response", G_CALLBACK(
+				gtk_widget_hide), NULL);
+	widget = gtk_info_bar_get_content_area(GTK_INFO_BAR(task->infobar));
+	task->infobar_label = gtk_label_new(NULL);
+	gtk_widget_show(task->infobar_label);
+	gtk_box_pack_start(GTK_BOX(widget), task->infobar_label, TRUE, TRUE, 0);
+	gtk_widget_set_no_show_all(task->infobar, TRUE);
+	gtk_box_pack_start(GTK_BOX(vbox), task->infobar, FALSE, TRUE, 0);
+#endif
 	/* view */
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
@@ -193,7 +211,7 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 	if((g_io_channel_set_encoding(task->o_channel, NULL, &error))
 			!= G_IO_STATUS_NORMAL)
 	{
-		helper->error(helper->browser, error->message, 1);
+		_common_task_error(task, error->message, 1);
 		g_error_free(error);
 	}
 	task->o_source = g_io_add_watch(task->o_channel, G_IO_IN,
@@ -202,7 +220,7 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 	if((g_io_channel_set_encoding(task->e_channel, NULL, &error))
 			!= G_IO_STATUS_NORMAL)
 	{
-		helper->error(helper->browser, error->message, 1);
+		_common_task_error(task, error->message, 1);
 		g_error_free(error);
 	}
 	task->e_source = g_io_add_watch(task->e_channel, G_IO_IN,
@@ -282,10 +300,35 @@ static void _common_task_copy(CommonTask * task)
 }
 
 
+/* common_task_error */
+static int _common_task_error(CommonTask * task, char const * message, int ret)
+{
+#if GTK_CHECK_VERSION(2, 18, 0)
+	gtk_label_set_text(GTK_LABEL(task->infobar_label), message);
+	gtk_widget_show(task->infobar);
+#else
+	GtkWidget * dialog;
+
+	dialog = gtk_message_dialog_new(GTK_WINDOW(task->window),
+			GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR,
+			GTK_BUTTONS_CLOSE,
+# if GTK_CHECK_VERSION(2, 6, 0)
+			"%s", _("Error"));
+	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
+# endif
+			"%s", message);
+	gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
+	g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(
+				gtk_widget_destroy), NULL);
+	gtk_widget_show(dialog);
+#endif
+	return ret;
+}
+
+
 /* common_task_save_buffer_as */
 static int _common_task_save_buffer_as(CommonTask * task, char const * filename)
 {
-	BrowserPluginHelper * helper = task->helper;
 	struct stat st;
 	GtkWidget * dialog;
 	gboolean res;
@@ -317,7 +360,7 @@ static int _common_task_save_buffer_as(CommonTask * task, char const * filename)
 			return -1;
 	}
 	if((fp = fopen(filename, "w")) == NULL)
-		return -helper->error(helper->browser, strerror(errno), 1);
+		return -_common_task_error(task, strerror(errno), 1);
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(task->view));
 	/* XXX allocating the complete file is not optimal */
 	gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(tbuf), &start);
@@ -329,7 +372,7 @@ static int _common_task_save_buffer_as(CommonTask * task, char const * filename)
 	{
 		g_free(buf);
 		fclose(fp);
-		return -helper->error(helper->browser, strerror(errno), 1);
+		return -_common_task_error(task, strerror(errno), 1);
 	}
 	g_free(buf);
 	fclose(fp);
@@ -421,7 +464,6 @@ static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 		GIOCondition condition, gpointer data)
 {
 	CommonTask * task = data;
-	BrowserPluginHelper * helper = task->helper;
 	char buf[256];
 	gsize cnt = 0;
 	GError * error = NULL;
@@ -446,7 +488,7 @@ static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 		case G_IO_STATUS_NORMAL:
 			break;
 		case G_IO_STATUS_ERROR:
-			helper->error(helper->browser, error->message, 1);
+			_common_task_error(task, error->message, 1);
 			g_error_free(error);
 		case G_IO_STATUS_EOF:
 		default: /* should not happen... */
