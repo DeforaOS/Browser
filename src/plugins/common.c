@@ -12,13 +12,18 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+/* FIXME:
+ * - use our own error handling mechanism */
 
 
 
+#include <sys/stat.h>
 #ifdef COMMON_RTRIM
 # include <ctype.h>
-# include <string.h>
 #endif
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
 #include <libintl.h>
 #include <gdk/gdkkeysyms.h>
 #include "Browser.h"
@@ -59,9 +64,15 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 		BrowserPluginDefinition * plugin, char const * title,
 		char const * directory, char * argv[]);
 static void _common_task_delete(CommonTask * task);
+
 static void _common_task_set_status(CommonTask * task, char const * status);
+
 static void _common_task_close(CommonTask * task);
 static void _common_task_close_channel(CommonTask * task, GIOChannel * channel);
+
+static int _common_task_save_buffer_as(CommonTask * task,
+		char const * filename);
+static int _common_task_save_buffer_as_dialog(CommonTask * task);
 
 /* callbacks */
 static void _common_task_on_close(gpointer data);
@@ -69,6 +80,7 @@ static gboolean _common_task_on_closex(gpointer data);
 static void _common_task_on_child_watch(GPid pid, gint status, gpointer data);
 static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 		GIOCondition condition, gpointer data);
+static void _common_task_on_save(gpointer data);
 
 #ifdef COMMON_RTRIM
 static void _common_rtrim(char * string);
@@ -81,6 +93,16 @@ static const DesktopAccel _common_task_accel[] =
 {
 	{ G_CALLBACK(_common_task_on_close), GDK_CONTROL_MASK, GDK_KEY_W },
 	{ NULL, 0, 0 }
+};
+
+
+/* variables */
+/* tasks */
+static DesktopToolbar _common_task_toolbar[] =
+{
+	{ N_("Save as..."), G_CALLBACK(_common_task_on_save), GTK_STOCK_SAVE_AS,
+		GDK_CONTROL_MASK, GDK_KEY_S, NULL },
+	{ NULL, NULL, NULL, 0, 0, NULL }
 };
 
 
@@ -136,6 +158,10 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 	g_signal_connect_swapped(task->window, "delete-event", G_CALLBACK(
 				_common_task_on_closex), task);
 	vbox = gtk_vbox_new(FALSE, 0);
+	/* toolbar */
+	widget = desktop_toolbar_create(_common_task_toolbar, task, group);
+	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
+	/* view */
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -237,6 +263,85 @@ static void _common_task_close_channel(CommonTask * task, GIOChannel * channel)
 }
 
 
+/* common_task_save_buffer_as */
+static int _common_task_save_buffer_as(CommonTask * task, char const * filename)
+{
+	BrowserPluginHelper * helper = task->helper;
+	struct stat st;
+	GtkWidget * dialog;
+	gboolean res;
+	FILE * fp;
+	GtkTextBuffer * tbuf;
+	GtkTextIter start;
+	GtkTextIter end;
+	gchar * buf;
+	size_t len;
+
+	if(filename == NULL)
+		return _common_task_save_buffer_as_dialog(task);
+	if(stat(filename, &st) == 0)
+	{
+		dialog = gtk_message_dialog_new(GTK_WINDOW(task->window),
+				GTK_DIALOG_MODAL
+				| GTK_DIALOG_DESTROY_WITH_PARENT,
+				GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, "%s",
+#if GTK_CHECK_VERSION(2, 6, 0)
+				_("Question"));
+		gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(
+					dialog), "%s",
+#endif
+				_("This file already exists. Overwrite?"));
+		gtk_window_set_title(GTK_WINDOW(dialog), _("Question"));
+		res = gtk_dialog_run(GTK_DIALOG(dialog));
+		gtk_widget_destroy(dialog);
+		if(res == GTK_RESPONSE_NO)
+			return -1;
+	}
+	if((fp = fopen(filename, "w")) == NULL)
+		return -helper->error(helper->browser, strerror(errno), 1);
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(task->view));
+	/* XXX allocating the complete file is not optimal */
+	gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(tbuf), &start);
+	gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(tbuf), &end);
+	buf = gtk_text_buffer_get_text(GTK_TEXT_BUFFER(tbuf), &start, &end,
+			FALSE);
+	len = strlen(buf);
+	if(fwrite(buf, sizeof(char), len, fp) != len)
+	{
+		g_free(buf);
+		fclose(fp);
+		return -helper->error(helper->browser, strerror(errno), 1);
+	}
+	g_free(buf);
+	fclose(fp);
+	return 0;
+}
+
+
+/* common_task_save_buffer_as_dialog */
+static int _common_task_save_buffer_as_dialog(CommonTask * task)
+{
+	int ret;
+	GtkWidget * dialog;
+	gchar * filename = NULL;
+
+	dialog = gtk_file_chooser_dialog_new(_("Save as..."),
+			GTK_WINDOW(task->window),
+			GTK_FILE_CHOOSER_ACTION_SAVE,
+			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+			GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
+	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
+					dialog));
+	gtk_widget_destroy(dialog);
+	if(filename == NULL)
+		return FALSE;
+	ret = _common_task_save_buffer_as(task, filename);
+	g_free(filename);
+	return ret;
+}
+
+
 /* callbacks */
 /* common_task_on_close */
 static void _common_task_on_close(gpointer data)
@@ -321,6 +426,15 @@ static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 			return FALSE;
 	}
 	return TRUE;
+}
+
+
+/* common_task_on_save */
+static void _common_task_on_save(gpointer data)
+{
+	CommonTask * task = data;
+
+	_common_task_save_buffer_as_dialog(task);
 }
 
 
