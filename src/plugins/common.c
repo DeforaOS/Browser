@@ -375,7 +375,8 @@ static int _common_task_save_buffer_as(CommonTask * task, char const * filename)
 		return -_common_task_error(task, strerror(errno), 1);
 	}
 	g_free(buf);
-	fclose(fp);
+	if(fclose(fp) != 0)
+		return -_common_task_error(task, strerror(errno), 1);
 	return 0;
 }
 
