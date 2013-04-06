@@ -138,23 +138,23 @@ distclean:
 install: $(TARGETS)
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) install) || exit; done
 	$(MKDIR) $(DESTDIR)$(BINDIR)
-	$(INSTALL) -m 0755 -- browser $(DESTDIR)$(BINDIR)/browser
+	$(INSTALL) -m 0755 browser $(DESTDIR)$(BINDIR)/browser
 	$(MKDIR) $(DESTDIR)$(BINDIR)
-	$(INSTALL) -m 0755 -- copy $(DESTDIR)$(BINDIR)/copy
+	$(INSTALL) -m 0755 copy $(DESTDIR)$(BINDIR)/copy
 	$(MKDIR) $(DESTDIR)$(BINDIR)
-	$(INSTALL) -m 0755 -- delete $(DESTDIR)$(BINDIR)/delete
+	$(INSTALL) -m 0755 delete $(DESTDIR)$(BINDIR)/delete
 	$(MKDIR) $(DESTDIR)$(BINDIR)
-	$(INSTALL) -m 0755 -- desktop $(DESTDIR)$(BINDIR)/desktop
+	$(INSTALL) -m 0755 desktop $(DESTDIR)$(BINDIR)/desktop
 	$(MKDIR) $(DESTDIR)$(BINDIR)
-	$(INSTALL) -m 0755 -- desktopctl $(DESTDIR)$(BINDIR)/desktopctl
+	$(INSTALL) -m 0755 desktopctl $(DESTDIR)$(BINDIR)/desktopctl
 	$(MKDIR) $(DESTDIR)$(BINDIR)
-	$(INSTALL) -m 0755 -- move $(DESTDIR)$(BINDIR)/move
+	$(INSTALL) -m 0755 move $(DESTDIR)$(BINDIR)/move
 	$(MKDIR) $(DESTDIR)$(BINDIR)
-	$(INSTALL) -m 0755 -- open $(DESTDIR)$(BINDIR)/open
+	$(INSTALL) -m 0755 open $(DESTDIR)$(BINDIR)/open
 	$(MKDIR) $(DESTDIR)$(BINDIR)
-	$(INSTALL) -m 0755 -- properties $(DESTDIR)$(BINDIR)/properties
+	$(INSTALL) -m 0755 properties $(DESTDIR)$(BINDIR)/properties
 	$(MKDIR) $(DESTDIR)$(BINDIR)
-	$(INSTALL) -m 0755 -- view $(DESTDIR)$(BINDIR)/view
+	$(INSTALL) -m 0755 view $(DESTDIR)$(BINDIR)/view
 
 uninstall:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) uninstall) || exit; done

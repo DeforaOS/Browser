@@ -22,7 +22,7 @@ distclean:
 install:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) install) || exit; done
 	$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/Desktop
-	$(INSTALL) -m 0644 -- Browser.h $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser.h
+	$(INSTALL) -m 0644 Browser.h $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser.h
 
 uninstall:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) uninstall) || exit; done

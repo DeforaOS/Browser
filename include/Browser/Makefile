@@ -15,9 +15,9 @@ distclean: clean
 
 install:
 	$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser
-	$(INSTALL) -m 0644 -- desktop.h $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser/desktop.h
+	$(INSTALL) -m 0644 desktop.h $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser/desktop.h
 	$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser
-	$(INSTALL) -m 0644 -- plugin.h $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser/plugin.h
+	$(INSTALL) -m 0644 plugin.h $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser/plugin.h
 
 uninstall:
 	$(RM) -- $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser/desktop.h

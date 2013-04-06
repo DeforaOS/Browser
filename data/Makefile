@@ -34,9 +34,9 @@ install: $(TARGETS)
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) install) || exit; done
 	./pkgconfig.sh -P "$(DESTDIR)$(PREFIX)" -i -- "Browser.pc"
 	$(MKDIR) $(DESTDIR)$(PREFIX)/share/applications
-	$(INSTALL) -m 0644 -- browser.desktop $(DESTDIR)$(PREFIX)/share/applications/browser.desktop
+	$(INSTALL) -m 0644 browser.desktop $(DESTDIR)$(PREFIX)/share/applications/browser.desktop
 	$(MKDIR) $(DESTDIR)$(PREFIX)/share/applications
-	$(INSTALL) -m 0644 -- desktop-settings.desktop $(DESTDIR)$(PREFIX)/share/applications/desktop-settings.desktop
+	$(INSTALL) -m 0644 desktop-settings.desktop $(DESTDIR)$(PREFIX)/share/applications/desktop-settings.desktop
 
 uninstall:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) uninstall) || exit; done

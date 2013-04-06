@@ -127,23 +127,23 @@ distclean: clean
 
 install: $(TARGETS)
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
-	$(INSTALL) -m 0644 -- cvs.so $(DESTDIR)$(LIBDIR)/Browser/plugins/cvs.so
+	$(INSTALL) -m 0644 cvs.so $(DESTDIR)$(LIBDIR)/Browser/plugins/cvs.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
-	$(INSTALL) -m 0644 -- dirtree.so $(DESTDIR)$(LIBDIR)/Browser/plugins/dirtree.so
+	$(INSTALL) -m 0644 dirtree.so $(DESTDIR)$(LIBDIR)/Browser/plugins/dirtree.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
-	$(INSTALL) -m 0644 -- favorites.so $(DESTDIR)$(LIBDIR)/Browser/plugins/favorites.so
+	$(INSTALL) -m 0644 favorites.so $(DESTDIR)$(LIBDIR)/Browser/plugins/favorites.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
-	$(INSTALL) -m 0644 -- git.so $(DESTDIR)$(LIBDIR)/Browser/plugins/git.so
+	$(INSTALL) -m 0644 git.so $(DESTDIR)$(LIBDIR)/Browser/plugins/git.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
-	$(INSTALL) -m 0644 -- make.so $(DESTDIR)$(LIBDIR)/Browser/plugins/make.so
+	$(INSTALL) -m 0644 make.so $(DESTDIR)$(LIBDIR)/Browser/plugins/make.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
-	$(INSTALL) -m 0644 -- preview.so $(DESTDIR)$(LIBDIR)/Browser/plugins/preview.so
+	$(INSTALL) -m 0644 preview.so $(DESTDIR)$(LIBDIR)/Browser/plugins/preview.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
-	$(INSTALL) -m 0644 -- properties.so $(DESTDIR)$(LIBDIR)/Browser/plugins/properties.so
+	$(INSTALL) -m 0644 properties.so $(DESTDIR)$(LIBDIR)/Browser/plugins/properties.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
-	$(INSTALL) -m 0644 -- subversion.so $(DESTDIR)$(LIBDIR)/Browser/plugins/subversion.so
+	$(INSTALL) -m 0644 subversion.so $(DESTDIR)$(LIBDIR)/Browser/plugins/subversion.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
-	$(INSTALL) -m 0644 -- volumes.so $(DESTDIR)$(LIBDIR)/Browser/plugins/volumes.so
+	$(INSTALL) -m 0644 volumes.so $(DESTDIR)$(LIBDIR)/Browser/plugins/volumes.so
 
 uninstall:
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/cvs.so
