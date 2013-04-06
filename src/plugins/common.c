@@ -54,6 +54,9 @@ typedef struct _CommonTask
 
 /* prototypes */
 /* tasks */
+static CommonTask * _common_task_new(BrowserPluginHelper * helper,
+		BrowserPluginDefinition * plugin, char const * title,
+		char const * directory, char * argv[]);
 static void _common_task_delete(CommonTask * task);
 static void _common_task_set_status(CommonTask * task, char const * status);
 static void _common_task_close(CommonTask * task);
@@ -72,6 +75,95 @@ static void _common_rtrim(char * string);
 
 /* functions */
 /* tasks */
+/* common_task_new */
+static CommonTask * _common_task_new(BrowserPluginHelper * helper,
+		BrowserPluginDefinition * plugin, char const * title,
+		char const * directory, char * argv[])
+{
+	CommonTask * task;
+	GSpawnFlags flags = G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD;
+	gboolean res;
+	GError * error = NULL;
+	PangoFontDescription * font;
+	char buf[256];
+	GtkWidget * vbox;
+	GtkWidget * widget;
+
+	if((task = object_new(sizeof(*task))) == NULL)
+		return NULL;
+	task->helper = helper;
+#ifdef DEBUG
+	argv[0] = "echo";
+#endif
+	res = g_spawn_async_with_pipes(directory, argv, NULL, flags, NULL, NULL,
+			&task->pid, NULL, &task->o_fd, &task->e_fd, &error);
+	if(res != TRUE)
+	{
+		helper->error(helper->browser, error->message, 1);
+		g_error_free(error);
+		object_delete(task);
+		return NULL;
+	}
+	/* widgets */
+	font = pango_font_description_new();
+	pango_font_description_set_family(font, "monospace");
+	task->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_default_size(GTK_WINDOW(task->window), 600, 400);
+#if GTK_CHECK_VERSION(2, 6, 0)
+	if(plugin->icon != NULL)
+		gtk_window_set_icon_name(GTK_WINDOW(task->window),
+				plugin->icon);
+#endif
+	snprintf(buf, sizeof(buf), "%s - %s (%s)", _(plugin->name), title,
+			directory);
+	gtk_window_set_title(GTK_WINDOW(task->window), buf);
+	g_signal_connect_swapped(task->window, "delete-event", G_CALLBACK(
+				_common_task_on_closex), task);
+	vbox = gtk_vbox_new(FALSE, 0);
+	widget = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
+			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	task->view = gtk_text_view_new();
+	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(task->view), FALSE);
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(task->view), FALSE);
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(task->view),
+			GTK_WRAP_WORD_CHAR);
+	gtk_widget_modify_font(task->view, font);
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(widget),
+			task->view);
+	gtk_box_pack_start(GTK_BOX(vbox), widget, TRUE, TRUE, 0);
+	task->statusbar = gtk_statusbar_new();
+	task->statusbar_id = 0;
+	gtk_box_pack_start(GTK_BOX(vbox), task->statusbar, FALSE, TRUE, 0);
+	gtk_container_add(GTK_CONTAINER(task->window), vbox);
+	gtk_widget_show_all(task->window);
+	pango_font_description_free(font);
+	/* events */
+	task->source = g_child_watch_add(task->pid, _common_task_on_child_watch,
+			task);
+	task->o_channel = g_io_channel_unix_new(task->o_fd);
+	if((g_io_channel_set_encoding(task->o_channel, NULL, &error))
+			!= G_IO_STATUS_NORMAL)
+	{
+		helper->error(helper->browser, error->message, 1);
+		g_error_free(error);
+	}
+	task->o_source = g_io_add_watch(task->o_channel, G_IO_IN,
+			_common_task_on_io_can_read, task);
+	task->e_channel = g_io_channel_unix_new(task->e_fd);
+	if((g_io_channel_set_encoding(task->e_channel, NULL, &error))
+			!= G_IO_STATUS_NORMAL)
+	{
+		helper->error(helper->browser, error->message, 1);
+		g_error_free(error);
+	}
+	task->e_source = g_io_add_watch(task->e_channel, G_IO_IN,
+			_common_task_on_io_can_read, task);
+	_common_task_set_status(task, _("Running command..."));
+	return task;
+}
+
+
 /* common_task_delete */
 static void _common_task_delete(CommonTask * task)
 {
