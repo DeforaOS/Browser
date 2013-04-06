@@ -20,6 +20,7 @@
 # include <string.h>
 #endif
 #include <libintl.h>
+#include <gdk/gdkkeysyms.h>
 #include "Browser.h"
 #define _(string) gettext(string)
 #define N_(string) (string)
@@ -63,6 +64,7 @@ static void _common_task_close(CommonTask * task);
 static void _common_task_close_channel(CommonTask * task, GIOChannel * channel);
 
 /* callbacks */
+static void _common_task_on_close(gpointer data);
 static gboolean _common_task_on_closex(gpointer data);
 static void _common_task_on_child_watch(GPid pid, gint status, gpointer data);
 static gboolean _common_task_on_io_can_read(GIOChannel * channel,
@@ -71,6 +73,15 @@ static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 #ifdef COMMON_RTRIM
 static void _common_rtrim(char * string);
 #endif
+
+
+/* constants */
+/* tasks */
+static const DesktopAccel _common_task_accel[] =
+{
+	{ G_CALLBACK(_common_task_on_close), GDK_CONTROL_MASK, GDK_KEY_W },
+	{ NULL, 0, 0 }
+};
 
 
 /* functions */
@@ -84,6 +95,7 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 	GSpawnFlags flags = G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD;
 	gboolean res;
 	GError * error = NULL;
+	GtkAccelGroup * group;
 	PangoFontDescription * font;
 	char buf[256];
 	GtkWidget * vbox;
@@ -107,7 +119,11 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 	/* widgets */
 	font = pango_font_description_new();
 	pango_font_description_set_family(font, "monospace");
+	group = gtk_accel_group_new();
+	desktop_accel_create(_common_task_accel, task, group);
 	task->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_add_accel_group(GTK_WINDOW(task->window), group);
+	g_object_unref(group);
 	gtk_window_set_default_size(GTK_WINDOW(task->window), 600, 400);
 #if GTK_CHECK_VERSION(2, 6, 0)
 	if(plugin->icon != NULL)
@@ -222,14 +238,23 @@ static void _common_task_close_channel(CommonTask * task, GIOChannel * channel)
 
 
 /* callbacks */
-/* common_task_on_closex */
-static gboolean _common_task_on_closex(gpointer data)
+/* common_task_on_close */
+static void _common_task_on_close(gpointer data)
 {
 	CommonTask * task = data;
 
 	gtk_widget_hide(task->window);
 	_common_task_close(task);
 	/* FIXME really implement */
+}
+
+
+/* common_task_on_closex */
+static gboolean _common_task_on_closex(gpointer data)
+{
+	CommonTask * task = data;
+
+	_common_task_on_close(task);
 	return TRUE;
 }
 
