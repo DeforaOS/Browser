@@ -70,6 +70,8 @@ static void _common_task_set_status(CommonTask * task, char const * status);
 static void _common_task_close(CommonTask * task);
 static void _common_task_close_channel(CommonTask * task, GIOChannel * channel);
 
+static void _common_task_copy(CommonTask * task);
+
 static int _common_task_save_buffer_as(CommonTask * task,
 		char const * filename);
 static int _common_task_save_buffer_as_dialog(CommonTask * task);
@@ -78,6 +80,7 @@ static int _common_task_save_buffer_as_dialog(CommonTask * task);
 static void _common_task_on_close(gpointer data);
 static gboolean _common_task_on_closex(gpointer data);
 static void _common_task_on_child_watch(GPid pid, gint status, gpointer data);
+static void _common_task_on_copy(gpointer data);
 static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 		GIOCondition condition, gpointer data);
 static void _common_task_on_save(gpointer data);
@@ -102,6 +105,9 @@ static DesktopToolbar _common_task_toolbar[] =
 {
 	{ N_("Save as..."), G_CALLBACK(_common_task_on_save), GTK_STOCK_SAVE_AS,
 		GDK_CONTROL_MASK, GDK_KEY_S, NULL },
+	{ "", NULL, NULL, 0, 0, NULL },
+	{ N_("Copy"), G_CALLBACK(_common_task_on_copy), GTK_STOCK_COPY,
+		GDK_CONTROL_MASK, GDK_KEY_C, NULL },
 	{ NULL, NULL, NULL, 0, 0, NULL }
 };
 
@@ -263,6 +269,19 @@ static void _common_task_close_channel(CommonTask * task, GIOChannel * channel)
 }
 
 
+/* common_task_copy */
+static void _common_task_copy(CommonTask * task)
+{
+	GtkTextBuffer * tbuf;
+	GtkClipboard * clipboard;
+
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(task->view));
+	clipboard = gtk_widget_get_clipboard(task->view,
+			GDK_SELECTION_CLIPBOARD);
+	gtk_text_buffer_copy_clipboard(tbuf, clipboard);
+}
+
+
 /* common_task_save_buffer_as */
 static int _common_task_save_buffer_as(CommonTask * task, char const * filename)
 {
@@ -385,6 +404,15 @@ static void _common_task_on_child_watch(GPid pid, gint status, gpointer data)
 		_common_task_set_status(task, buf);
 	}
 	g_spawn_close_pid(pid);
+}
+
+
+/* common_task_on_copy */
+static void _common_task_on_copy(gpointer data)
+{
+	CommonTask * task = data;
+
+	_common_task_copy(task);
 }
 
 
