@@ -372,11 +372,15 @@ static int _common_task_save_buffer_as(CommonTask * task, char const * filename)
 	{
 		g_free(buf);
 		fclose(fp);
+		unlink(filename);
 		return -_common_task_error(task, strerror(errno), 1);
 	}
 	g_free(buf);
 	if(fclose(fp) != 0)
+	{
+		unlink(filename);
 		return -_common_task_error(task, strerror(errno), 1);
+	}
 	return 0;
 }
 
