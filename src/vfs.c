@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -150,7 +150,7 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 		{ "Downloads",	"folder-download"	},
 		{ "Music",	"folder-music"		},
 		{ "Pictures",	"folder-pictures"	},
-		{ "public_html","folder-publicshared"	},
+		{ "public_html","folder-publicshare"	},
 		{ "Templates",	"folder-templates"	},
 		{ "Video",	"folder-videos"		},
 		{ "Videos",	"folder-videos"		},
