@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2007-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,31 +33,32 @@ enum { COL_NAME = 0, COL_PIXBUF, COL_COUNT };
 
 
 /* iconlist */
-static int _iconlist_list(char * theme);
-static int _iconlist_do(void);
+static int _iconlist_list(GtkIconTheme * icontheme);
+static int _iconlist_do(GtkIconTheme * icontheme);
 
 static int _iconlist(Prefs * prefs)
 {
+	GtkIconTheme * icontheme;
+
+	if(prefs->theme == NULL)
+		icontheme = gtk_icon_theme_get_default();
+	else
+	{
+		icontheme = gtk_icon_theme_new();
+		gtk_icon_theme_set_custom_theme(icontheme, prefs->theme);
+	}
 	if(prefs->flags & PREFS_l)
-		return _iconlist_list(prefs->theme);
-	return _iconlist_do();
+		return _iconlist_list(icontheme);
+	return _iconlist_do(icontheme);
 }
 
-static int _iconlist_list(char * theme)
+static int _iconlist_list(GtkIconTheme * icontheme)
 {
-	GtkIconTheme * icontheme;
 	GList * list;
 	GList * p;
 	gint * sizes;
 	gint * q;
 
-	if(theme == NULL)
-		icontheme = gtk_icon_theme_get_default();
-	else
-	{
-		icontheme = gtk_icon_theme_new();
-		gtk_icon_theme_set_custom_theme(icontheme, theme);
-	}
 	if((list = gtk_icon_theme_list_icons(icontheme, NULL)) == NULL)
 		return 1;
 	for(p = list; p != NULL; p = p->next)
@@ -80,12 +81,12 @@ static int _iconlist_list(char * theme)
 }
 
 /* iconlist_do */
-static void _do_iconview(GtkWidget * iconview, char const * theme);
+static void _do_iconview(GtkWidget * iconview, GtkIconTheme * icontheme);
 /* callbacks */
 static gboolean _on_closex(GtkWidget * widget);
 static void _on_theme_activate(GtkWidget * widget, gpointer data);
 
-static int _iconlist_do(void)
+static int _iconlist_do(GtkIconTheme * icontheme)
 {
 	GtkWidget * window;
 	GtkWidget * vbox;
@@ -101,7 +102,7 @@ static int _iconlist_do(void)
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(window), "Icon list");
 	gtk_window_set_default_size(GTK_WINDOW(window), 640, 480);
-	g_signal_connect(window, "delete_event", G_CALLBACK(_on_closex), NULL);
+	g_signal_connect(window, "delete-event", G_CALLBACK(_on_closex), NULL);
 	/* vbox */
 	vbox = gtk_vbox_new(FALSE, 0);
 	/* toolbar */
@@ -129,7 +130,7 @@ static int _iconlist_do(void)
 			GTK_SELECTION_MULTIPLE);
 	gtk_icon_view_set_text_column(GTK_ICON_VIEW(iconview), 0);
 	gtk_icon_view_set_pixbuf_column(GTK_ICON_VIEW(iconview), 1);
-	_do_iconview(iconview, NULL);
+	_do_iconview(iconview, icontheme);
 	gtk_container_add(GTK_CONTAINER(scrolled), iconview);
 	gtk_box_pack_start(GTK_BOX(vbox), scrolled, TRUE, TRUE, 0);
 	gtk_container_add(GTK_CONTAINER(window), vbox);
@@ -148,26 +149,28 @@ static gboolean _on_closex(GtkWidget * widget)
 static void _on_theme_activate(GtkWidget * widget, gpointer data)
 {
 	GtkWidget * iconview = data;
-
-	_do_iconview(iconview, gtk_entry_get_text(GTK_ENTRY(widget)));
-}
-
-static void _do_iconview(GtkWidget * iconview, char const * theme)
-{
 	GtkIconTheme * icontheme;
-	GList * list;
-	GList * p;
-	GtkListStore * store;
-	GtkTreeIter iter;
-	GdkPixbuf * pixbuf;
+	char const * theme;
 
-	if(theme == NULL)
+	if((theme = gtk_entry_get_text(GTK_ENTRY(widget))) == NULL
+			|| strlen(theme) == 0)
 		icontheme = gtk_icon_theme_get_default();
 	else
 	{
 		icontheme = gtk_icon_theme_new();
 		gtk_icon_theme_set_custom_theme(icontheme, theme);
 	}
+	_do_iconview(iconview, icontheme);
+}
+
+static void _do_iconview(GtkWidget * iconview, GtkIconTheme * icontheme)
+{
+	GList * list;
+	GList * p;
+	GtkListStore * store;
+	GtkTreeIter iter;
+	GdkPixbuf * pixbuf;
+
 	if((list = gtk_icon_theme_list_icons(icontheme, NULL)) == NULL)
 		return;
 	store = GTK_LIST_STORE(gtk_icon_view_get_model(GTK_ICON_VIEW(
@@ -188,7 +191,7 @@ static void _do_iconview(GtkWidget * iconview, char const * theme)
 /* usage */
 static int _usage(void)
 {
-	fputs("Usage: iconlist\n"
+	fputs("Usage: iconlist [-t theme]\n"
 "       iconlist -l [-t theme]\n", stderr);
 	return 1;
 }
