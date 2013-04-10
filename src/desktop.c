@@ -244,7 +244,8 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 	if((desktop->home = getenv("HOME")) == NULL
 			&& (desktop->home = g_get_home_dir()) == NULL)
 		desktop->home = "/";
-	desktop_message_register(DESKTOP_CLIENT_MESSAGE, _on_message, desktop);
+	desktop_message_register(NULL, DESKTOP_CLIENT_MESSAGE, _on_message,
+			desktop);
 	/* manage root window events */
 #if GTK_CHECK_VERSION(2, 24, 0)
 	gdk_window_get_position(desktop->root, &desktop->window.x,
