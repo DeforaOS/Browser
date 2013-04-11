@@ -1,5 +1,6 @@
 [Desktop Entry]
-Name=Desktop settings
+Name=Desktop
+Comment=Preferences for the desktop
 Exec=desktopctl -S
 Icon=user-desktop
 Type=Application
