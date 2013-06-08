@@ -500,7 +500,7 @@ static gboolean _cvs_is_managed(char const * pathname, char ** revision)
 	/* lookup the filename within the entries */
 	basename = g_path_get_basename(pathname);
 	len = strlen(basename);
-	for(s = entries; s != NULL && s[0] != '\0'; s = strchr(s, '\n'))
+	for(s = entries; s != NULL; s = strchr(s, '\n'))
 	{
 		if((s = strchr(s, '/')) == NULL)
 			break;
