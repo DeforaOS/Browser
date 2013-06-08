@@ -82,6 +82,7 @@ static void _cvs_on_annotate(gpointer data);
 static void _cvs_on_commit(gpointer data);
 static void _cvs_on_diff(gpointer data);
 static void _cvs_on_log(gpointer data);
+static void _cvs_on_status(gpointer data);
 static void _cvs_on_update(gpointer data);
 
 
@@ -145,14 +146,17 @@ static CVS * _cvs_init(BrowserPluginHelper * helper)
 	gtk_box_pack_start(GTK_BOX(cvs->directory), widget, FALSE, TRUE, 0);
 	widget = _init_label(group, _("Tag:"), &cvs->d_tag);
 	gtk_box_pack_start(GTK_BOX(cvs->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("Request diff"),
-			G_CALLBACK(_cvs_on_diff), cvs);
+	widget = _init_button(bgroup, GTK_STOCK_FIND_AND_REPLACE,
+			_("Request diff"), G_CALLBACK(_cvs_on_diff), cvs);
 	gtk_box_pack_start(GTK_BOX(cvs->directory), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("Annotate"),
 			G_CALLBACK(_cvs_on_annotate), cvs);
 	gtk_box_pack_start(GTK_BOX(cvs->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("View log"),
+	widget = _init_button(bgroup, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_cvs_on_log), cvs);
+	gtk_box_pack_start(GTK_BOX(cvs->directory), widget, FALSE, TRUE, 0);
+	widget = _init_button(bgroup, GTK_STOCK_PROPERTIES, _("Status"),
+			G_CALLBACK(_cvs_on_status), cvs);
 	gtk_box_pack_start(GTK_BOX(cvs->directory), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_REFRESH, _("Update"),
 			G_CALLBACK(_cvs_on_update), cvs);
@@ -168,14 +172,17 @@ static CVS * _cvs_init(BrowserPluginHelper * helper)
 	cvs->file = gtk_vbox_new(FALSE, 4);
 	widget = _init_label(group, _("Revision:"), &cvs->f_revision);
 	gtk_box_pack_start(GTK_BOX(cvs->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("Request diff"),
-			G_CALLBACK(_cvs_on_diff), cvs);
+	widget = _init_button(bgroup, GTK_STOCK_FIND_AND_REPLACE,
+			_("Request diff"), G_CALLBACK(_cvs_on_diff), cvs);
 	gtk_box_pack_start(GTK_BOX(cvs->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("Annotate"),
 			G_CALLBACK(_cvs_on_annotate), cvs);
 	gtk_box_pack_start(GTK_BOX(cvs->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("View log"),
+	widget = _init_button(bgroup, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_cvs_on_log), cvs);
+	gtk_box_pack_start(GTK_BOX(cvs->file), widget, FALSE, TRUE, 0);
+	widget = _init_button(bgroup, GTK_STOCK_PROPERTIES, _("Status"),
+			G_CALLBACK(_cvs_on_status), cvs);
 	gtk_box_pack_start(GTK_BOX(cvs->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_REFRESH, _("Update"),
 			G_CALLBACK(_cvs_on_update), cvs);
@@ -672,6 +679,28 @@ static void _cvs_on_log(gpointer data)
 		: g_path_get_basename(cvs->filename);
 	argv[3] = basename;
 	_cvs_add_task(cvs, "cvs log", dirname, argv);
+	g_free(basename);
+	g_free(dirname);
+}
+
+
+/* cvs_on_status */
+static void _cvs_on_status(gpointer data)
+{
+	CVS * cvs = data;
+	struct stat st;
+	gchar * dirname;
+	gchar * basename;
+	char * argv[] = { "cvs", "status", "--", NULL, NULL };
+
+	if(cvs->filename == NULL || lstat(cvs->filename, &st) != 0)
+		return;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(cvs->filename)
+		: g_path_get_dirname(cvs->filename);
+	basename = S_ISDIR(st.st_mode) ? NULL
+		: g_path_get_basename(cvs->filename);
+	argv[3] = basename;
+	_cvs_add_task(cvs, "cvs status", dirname, argv);
 	g_free(basename);
 	g_free(dirname);
 }
