@@ -75,11 +75,13 @@ static gboolean _cvs_is_managed(char const * filename, char ** revision);
 /* useful */
 static int _cvs_add_task(CVS * cvs, char const * title,
 		char const * directory, char * argv[]);
+static int _cvs_confirm(CVS * cvs, char const * filename);
 
 /* callbacks */
 static void _cvs_on_add(gpointer data);
 static void _cvs_on_annotate(gpointer data);
 static void _cvs_on_commit(gpointer data);
+static void _cvs_on_delete(gpointer data);
 static void _cvs_on_diff(gpointer data);
 static void _cvs_on_log(gpointer data);
 static void _cvs_on_status(gpointer data);
@@ -161,6 +163,9 @@ static CVS * _cvs_init(BrowserPluginHelper * helper)
 	widget = _init_button(bgroup, GTK_STOCK_REFRESH, _("Update"),
 			G_CALLBACK(_cvs_on_update), cvs);
 	gtk_box_pack_start(GTK_BOX(cvs->directory), widget, FALSE, TRUE, 0);
+	widget = _init_button(bgroup, GTK_STOCK_DELETE, _("Delete"),
+			G_CALLBACK(_cvs_on_delete), cvs);
+	gtk_box_pack_start(GTK_BOX(cvs->directory), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_JUMP_TO, _("Commit"),
 			G_CALLBACK(_cvs_on_commit), cvs);
 	gtk_box_pack_start(GTK_BOX(cvs->directory), widget, FALSE, TRUE, 0);
@@ -186,6 +191,9 @@ static CVS * _cvs_init(BrowserPluginHelper * helper)
 	gtk_box_pack_start(GTK_BOX(cvs->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_REFRESH, _("Update"),
 			G_CALLBACK(_cvs_on_update), cvs);
+	gtk_box_pack_start(GTK_BOX(cvs->file), widget, FALSE, TRUE, 0);
+	widget = _init_button(bgroup, GTK_STOCK_DELETE, _("Delete"),
+			G_CALLBACK(_cvs_on_delete), cvs);
 	gtk_box_pack_start(GTK_BOX(cvs->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_JUMP_TO, _("Commit"),
 			G_CALLBACK(_cvs_on_commit), cvs);
@@ -547,6 +555,30 @@ static int _cvs_add_task(CVS * cvs, char const * title,
 }
 
 
+/* cvs_confirm */
+static int _cvs_confirm(CVS * cvs, char const * filename)
+{
+	GtkWidget * dialog;
+	int res;
+
+	/* XXX move to BrowserPluginHelper */
+	dialog = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_QUESTION,
+			GTK_BUTTONS_NONE,
+#if GTK_CHECK_VERSION(2, 6, 0)
+			"%s", _("Question"));
+	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
+#endif
+			_("Do you really want to delete %s?"), filename);
+	gtk_dialog_add_buttons(GTK_DIALOG(dialog),
+			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+			GTK_STOCK_DELETE, GTK_RESPONSE_ACCEPT, NULL);
+	gtk_window_set_title(GTK_WINDOW(dialog), _("Question"));
+	res = gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_widget_destroy(dialog);
+	return (res == GTK_RESPONSE_ACCEPT) ? 1 : 0;
+}
+
+
 /* callbacks */
 /* cvs_on_add */
 static gboolean _add_is_binary(char const * type);
@@ -635,6 +667,37 @@ static void _cvs_on_commit(gpointer data)
 		: g_path_get_basename(cvs->filename);
 	argv[3] = basename;
 	_cvs_add_task(cvs, "cvs commit", dirname, argv);
+	g_free(basename);
+	g_free(dirname);
+}
+
+
+/* cvs_on_delete */
+static void _cvs_on_delete(gpointer data)
+{
+	CVS * cvs = data;
+	BrowserPluginHelper * helper = cvs->helper;
+	struct stat st;
+	gchar * dirname;
+	gchar * basename;
+	char * argv[] = { "cvs", "delete", "--", NULL, NULL };
+
+	if(cvs->filename == NULL || lstat(cvs->filename, &st) != 0)
+		return;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(cvs->filename)
+		: g_path_get_dirname(cvs->filename);
+	basename = S_ISDIR(st.st_mode) ? NULL
+		: g_path_get_basename(cvs->filename);
+	if((argv[3] = basename) == NULL)
+		_cvs_add_task(cvs, "cvs delete", dirname, argv);
+	else if(_cvs_confirm(cvs, basename) == 1)
+	{
+		/* delete the file locally before asking CVS to */
+		if(unlink(cvs->filename) != 0)
+			helper->error(helper->browser, strerror(errno), 1);
+		else
+			_cvs_add_task(cvs, "cvs delete", dirname, argv);
+	}
 	g_free(basename);
 	g_free(dirname);
 }
