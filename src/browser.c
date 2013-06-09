@@ -280,6 +280,13 @@ Browser * browser_new(char const * directory)
 	}
 	browser->window = NULL;
 	browser->theme = gtk_icon_theme_get_default();
+#if GTK_CHECK_VERSION(2, 6, 0)
+	/* XXX ignore errors */
+	browser->loading = gtk_icon_theme_load_icon(browser->theme,
+			"image-loading", 96,
+			GTK_ICON_LOOKUP_GENERIC_FALLBACK
+			| GTK_ICON_LOOKUP_FORCE_SIZE, NULL);
+#endif
 
 	/* config */
 	/* set defaults */
@@ -634,6 +641,8 @@ void browser_delete(Browser * browser)
 #if GTK_CHECK_VERSION(2, 6, 0)
 	if(browser->iconview != NULL)
 		g_object_unref(browser->iconview);
+	if(browser->loading != NULL)
+		g_object_unref(browser->loading);
 #endif
 	g_object_unref(browser->store);
 	gtk_widget_destroy(browser->window);
@@ -1188,6 +1197,12 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 			&ddate, &type, path, &icon_24
 #if GTK_CHECK_VERSION(2, 6, 0)
 			, &icon_48, &icon_96);
+	if(type != NULL && strncmp(type, "image/", 6) == 0
+			&& browser->loading != NULL)
+	{
+		g_object_ref(browser->loading);
+		icon_96 = browser->loading;
+	}
 	gtk_list_store_insert_with_values(browser->store, iter, -1,
 #else
 			, NULL, NULL);
@@ -1525,6 +1540,14 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 			, &icon_48, &icon_96
 #endif
 		   );
+#if GTK_CHECK_VERSION(2, 6, 0)
+	if(type != NULL && strncmp(type, "image/", 6) == 0
+			&& browser->loading != NULL)
+	{
+		g_object_ref(browser->loading);
+		icon_96 = browser->loading;
+	}
+#endif
 	gtk_list_store_set(browser->store, iter, BC_UPDATED, 1, BC_PATH, path,
 			BC_DISPLAY_NAME, display, BC_INODE, inode,
 			BC_IS_DIRECTORY, S_ISDIR(st->st_mode),
