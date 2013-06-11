@@ -157,7 +157,7 @@ static SVN * _subversion_init(BrowserPluginHelper * helper)
 	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("Annotate"),
 			G_CALLBACK(_subversion_on_blame), svn);
 	gtk_box_pack_start(GTK_BOX(svn->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("View log"),
+	widget = _init_button(bgroup, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_subversion_on_log), svn);
 	gtk_box_pack_start(GTK_BOX(svn->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_PROPERTIES, _("Status"),
