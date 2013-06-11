@@ -72,6 +72,7 @@ static void _subversion_on_blame(gpointer data);
 static void _subversion_on_commit(gpointer data);
 static void _subversion_on_diff(gpointer data);
 static void _subversion_on_log(gpointer data);
+static void _subversion_on_status(gpointer data);
 static void _subversion_on_update(gpointer data);
 
 
@@ -127,11 +128,15 @@ static SVN * _subversion_init(BrowserPluginHelper * helper)
 	gtk_box_pack_start(GTK_BOX(svn->widget), svn->status, FALSE, TRUE, 0);
 	/* directory */
 	svn->directory = gtk_vbox_new(FALSE, 4);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("Request diff"),
-			G_CALLBACK(_subversion_on_diff), svn);
+	widget = _init_button(bgroup, GTK_STOCK_FIND_AND_REPLACE,
+			_("Request diff"), G_CALLBACK(_subversion_on_diff),
+			svn);
 	gtk_box_pack_start(GTK_BOX(svn->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("View log"),
+	widget = _init_button(bgroup, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_subversion_on_log), svn);
+	gtk_box_pack_start(GTK_BOX(svn->directory), widget, FALSE, TRUE, 0);
+	widget = _init_button(bgroup, GTK_STOCK_PROPERTIES, _("Status"),
+			G_CALLBACK(_subversion_on_status), svn);
 	gtk_box_pack_start(GTK_BOX(svn->directory), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_REFRESH, _("Update"),
 			G_CALLBACK(_subversion_on_update), svn);
@@ -145,14 +150,18 @@ static SVN * _subversion_init(BrowserPluginHelper * helper)
 			0);
 	/* file */
 	svn->file = gtk_vbox_new(FALSE, 4);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("Request diff"),
-			G_CALLBACK(_subversion_on_diff), svn);
+	widget = _init_button(bgroup, GTK_STOCK_FIND_AND_REPLACE,
+			_("Request diff"), G_CALLBACK(_subversion_on_diff),
+			svn);
 	gtk_box_pack_start(GTK_BOX(svn->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("Annotate"),
 			G_CALLBACK(_subversion_on_blame), svn);
 	gtk_box_pack_start(GTK_BOX(svn->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("View log"),
 			G_CALLBACK(_subversion_on_log), svn);
+	gtk_box_pack_start(GTK_BOX(svn->file), widget, FALSE, TRUE, 0);
+	widget = _init_button(bgroup, GTK_STOCK_PROPERTIES, _("Status"),
+			G_CALLBACK(_subversion_on_status), svn);
 	gtk_box_pack_start(GTK_BOX(svn->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_REFRESH, _("Update"),
 			G_CALLBACK(_subversion_on_update), svn);
@@ -412,6 +421,28 @@ static void _subversion_on_log(gpointer data)
 		: g_path_get_basename(svn->filename);
 	argv[3] = basename;
 	_subversion_add_task(svn, "svn log", dirname, argv);
+	g_free(basename);
+	g_free(dirname);
+}
+
+
+/* svn_on_status */
+static void _subversion_on_status(gpointer data)
+{
+	SVN * svn = data;
+	struct stat st;
+	gchar * dirname;
+	gchar * basename;
+	char * argv[] = { "svn", "status", "--", NULL, NULL };
+
+	if(svn->filename == NULL || lstat(svn->filename, &st) != 0)
+		return;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(svn->filename)
+		: g_path_get_dirname(svn->filename);
+	basename = S_ISDIR(st.st_mode) ? NULL
+		: g_path_get_basename(svn->filename);
+	argv[3] = basename;
+	_subversion_add_task(svn, "svn status", dirname, argv);
 	g_free(basename);
 	g_free(dirname);
 }
