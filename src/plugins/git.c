@@ -77,6 +77,7 @@ static void _git_on_commit(gpointer data);
 static void _git_on_diff(gpointer data);
 static void _git_on_log(gpointer data);
 static void _git_on_pull(gpointer data);
+static void _git_on_status(gpointer data);
 
 
 /* public */
@@ -131,11 +132,14 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	gtk_box_pack_start(GTK_BOX(git->widget), git->status, FALSE, TRUE, 0);
 	/* directory */
 	git->directory = gtk_vbox_new(FALSE, 4);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("Request diff"),
-			G_CALLBACK(_git_on_diff), git);
+	widget = _init_button(bgroup, GTK_STOCK_FIND_AND_REPLACE,
+			_("Request diff"), G_CALLBACK(_git_on_diff), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("View log"),
+	widget = _init_button(bgroup, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_git_on_log), git);
+	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
+	widget = _init_button(bgroup, GTK_STOCK_PROPERTIES, _("Status"),
+			G_CALLBACK(_git_on_status), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_REFRESH, _("Pull"),
 			G_CALLBACK(_git_on_pull), git);
@@ -149,14 +153,17 @@ static Git * _git_init(BrowserPluginHelper * helper)
 			0);
 	/* file */
 	git->file = gtk_vbox_new(FALSE, 4);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("Request diff"),
-			G_CALLBACK(_git_on_diff), git);
+	widget = _init_button(bgroup, GTK_STOCK_FIND_AND_REPLACE,
+			_("Request diff"), G_CALLBACK(_git_on_diff), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("Annotate"),
 			G_CALLBACK(_git_on_blame), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("View log"),
+	widget = _init_button(bgroup, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_git_on_log), git);
+	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
+	widget = _init_button(bgroup, GTK_STOCK_PROPERTIES, _("Status"),
+			G_CALLBACK(_git_on_status), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_REFRESH, _("Pull"),
 			G_CALLBACK(_git_on_pull), git);
@@ -471,6 +478,28 @@ static void _git_on_pull(gpointer data)
 		: g_path_get_basename(git->filename);
 	argv[3] = basename;
 	_git_add_task(git, "git pull", dirname, argv);
+	g_free(basename);
+	g_free(dirname);
+}
+
+
+/* git_on_status */
+static void _git_on_status(gpointer data)
+{
+	Git * git = data;
+	struct stat st;
+	gchar * dirname;
+	gchar * basename;
+	char * argv[] = { "git", "status", "--", NULL, NULL };
+
+	if(git->filename == NULL || lstat(git->filename, &st) != 0)
+		return;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(git->filename)
+		: g_path_get_dirname(git->filename);
+	basename = S_ISDIR(st.st_mode) ? NULL
+		: g_path_get_basename(git->filename);
+	argv[3] = basename;
+	_git_add_task(git, "git status", dirname, argv);
 	g_free(basename);
 	g_free(dirname);
 }
