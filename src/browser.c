@@ -1013,11 +1013,17 @@ void browser_open(Browser * browser, char const * path)
 
 
 /* browser_open_with */
+static void _open_with_default(Browser * browser, char const * path,
+		char const * with);
+
 void browser_open_with(Browser * browser, char const * path)
 {
 	GtkWidget * dialog;
+	GtkWidget * vbox;
+	GtkWidget * widget;
 	GtkFileFilter * filter;
 	char * filename = NULL;
+	gboolean active;
 	pid_t pid;
 
 	dialog = gtk_file_chooser_dialog_new(_("Open with..."),
@@ -1027,6 +1033,7 @@ void browser_open_with(Browser * browser, char const * path)
 			GTK_RESPONSE_ACCEPT, NULL);
 	/* set the default folder to BINDIR */
 	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), BINDIR);
+	/* add file filters */
 	filter = gtk_file_filter_new();
 	gtk_file_filter_set_name(filter, _("Executable files"));
 	gtk_file_filter_add_mime_type(filter, "application/x-executable");
@@ -1040,12 +1047,25 @@ void browser_open_with(Browser * browser, char const * path)
 	gtk_file_filter_set_name(filter, _("All files"));
 	gtk_file_filter_add_pattern(filter, "*");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	/* allow overriding the default handler */
+#if GTK_CHECK_VERSION(2, 14, 0)
+	vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+#else
+	vbox = GTK_DIALOG(dialog)->vbox;
+#endif
+	widget = gtk_check_button_new_with_mnemonic(
+			_("_Set as the default handler"));
+	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
+	gtk_widget_show_all(vbox);
 	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
 					dialog));
+	active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 	gtk_widget_destroy(dialog);
 	if(filename == NULL)
 		return;
+	if(active)
+		_open_with_default(browser, path, filename);
 	if((pid = fork()) == -1)
 		browser_error(browser, strerror(errno), 1);
 	else if(pid == 0)
@@ -1057,6 +1077,19 @@ void browser_open_with(Browser * browser, char const * path)
 		exit(2);
 	}
 	g_free(filename);
+}
+
+static void _open_with_default(Browser * browser, char const * path,
+		char const * with)
+{
+	char const * type;
+
+	/* XXX report errors */
+	if((type = mime_type(browser->mime, path)) == NULL)
+		return;
+	if(mime_set_handler(browser->mime, type, "open", with) == 0)
+		/* XXX may fail too */
+		mime_save(browser->mime);
 }
 
 
