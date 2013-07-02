@@ -278,6 +278,7 @@ Browser * browser_new(char const * directory)
 		browser_error(NULL, (directory != NULL) ? directory : ".", 1);
 		return NULL;
 	}
+	browser->source = 0;
 	browser->window = NULL;
 	browser->theme = gtk_icon_theme_get_default();
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -509,7 +510,7 @@ Browser * browser_new(char const * directory)
 		browser->history = g_list_append(browser->history, p);
 		browser->current = browser->history;
 	}
-	g_idle_add(_new_idle, browser);
+	browser->source = g_idle_add(_new_idle, browser);
 
 	gtk_container_add(GTK_CONTAINER(browser->window), vbox);
 	gtk_widget_show_all(browser->window);
@@ -522,6 +523,7 @@ static gboolean _new_idle(gpointer data)
 	Browser * browser = data;
 	char const * location;
 
+	browser->source = 0;
 	_idle_load_plugins(browser);
 	if((location = browser_get_location(browser)) == NULL)
 		browser_go_home(browser);
@@ -626,6 +628,8 @@ static void _delete_plugins(Browser * browser);
 
 void browser_delete(Browser * browser)
 {
+	if(browser->source != 0)
+		g_source_remove(browser->source);
 	_delete_plugins(browser);
 	if(browser->config != NULL)
 		config_delete(browser->config);
