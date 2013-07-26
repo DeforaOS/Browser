@@ -19,6 +19,7 @@
 #ifdef COMMON_RTRIM
 # include <ctype.h>
 #endif
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
