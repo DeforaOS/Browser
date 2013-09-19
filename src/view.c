@@ -265,7 +265,7 @@ static GtkWidget * _new_image(View * view, char const * path)
 {
 	GtkWidget * window;
 	GError * error = NULL;
-	GdkPixbuf * pixbuf;
+	GdkPixbufAnimation * pixbuf;
 	GtkWidget * widget;
 	int pw;
 	int ph;
@@ -276,17 +276,16 @@ static GtkWidget * _new_image(View * view, char const * path)
 	window = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(window),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	if((pixbuf = gdk_pixbuf_new_from_file_at_size(path, -1, -1, &error))
-			== NULL)
+	if((pixbuf = gdk_pixbuf_animation_new_from_file(path, &error)) == NULL)
 	{
 		_view_error(view, error->message, 1);
 		return NULL;
 	}
-	widget = gtk_image_new_from_pixbuf(pixbuf);
+	widget = gtk_image_new_from_animation(pixbuf);
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(window),
 			widget);
-	pw = gdk_pixbuf_get_width(pixbuf) + 4;
-	ph = gdk_pixbuf_get_height(pixbuf) + 4;
+	pw = gdk_pixbuf_animation_get_width(pixbuf) + 4;
+	ph = gdk_pixbuf_animation_get_height(pixbuf) + 4;
 	/* get the current monitor size */
 	screen = gdk_screen_get_default();
 #if GTK_CHECK_VERSION(2, 14, 0)
