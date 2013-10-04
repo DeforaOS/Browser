@@ -62,8 +62,8 @@ GdkPixbuf * vfs_mime_icon(Mime * mime, char const * filename,
 		ret = _mime_icon_folder(mime, filename, lst, st, size);
 	else
 		mime_icons(mime, type, size, &ret, -1);
-	if(ret == NULL)
-		return NULL;
+	if(ret == NULL || lst == NULL)
+		return ret;
 	/* determine the emblem */
 	if(S_ISCHR(lst->st_mode) || S_ISBLK(lst->st_mode))
 		emblem = "emblem-system";
