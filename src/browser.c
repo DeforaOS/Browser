@@ -1217,10 +1217,10 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 	char const * dsize = "";
 	char const * ddate = "";
 	char const * type = NULL;
-	GdkPixbuf * icon_24 = NULL;
+	GdkPixbuf * icon24 = NULL;
 #if GTK_CHECK_VERSION(2, 6, 0)
-	GdkPixbuf * icon_48 = NULL;
-	GdkPixbuf * icon_96 = NULL;
+	GdkPixbuf * icon48 = NULL;
+	GdkPixbuf * icon96 = NULL;
 #endif
 	char uid[16] = "";
 	char gid[16] = "";
@@ -1231,14 +1231,14 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 	snprintf(uid, sizeof(uid), "%lu", (unsigned long)lst->st_uid);
 	snprintf(gid, sizeof(gid), "%lu", (unsigned long)lst->st_gid);
 	_insert_all(browser, lst, st, &display, &inode, &size, &dsize, &pw, &gr,
-			&ddate, &type, path, &icon_24
+			&ddate, &type, path, &icon24
 #if GTK_CHECK_VERSION(2, 6, 0)
-			, &icon_48, &icon_96);
+			, &icon48, &icon96);
 	if(type != NULL && strncmp(type, "image/", 6) == 0
 			&& browser->loading != NULL)
 	{
 		g_object_ref(browser->loading);
-		icon_96 = browser->loading;
+		icon96 = browser->loading;
 	}
 	gtk_list_store_insert_with_values(browser->store, iter, -1,
 #else
@@ -1252,23 +1252,22 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 			BC_IS_EXECUTABLE, st->st_mode & S_IXUSR,
 			BC_IS_MOUNT_POINT,
 			(st->st_dev != browser->refresh_dev) ? TRUE : FALSE,
-			BC_PIXBUF_24, icon_24,
+			BC_PIXBUF_24, icon24,
 #if GTK_CHECK_VERSION(2, 6, 0)
-			BC_PIXBUF_48, icon_48,
-			BC_PIXBUF_96, icon_96,
+			BC_PIXBUF_48, icon48, BC_PIXBUF_96, icon96,
 #endif
 			BC_SIZE, size, BC_DISPLAY_SIZE, dsize,
 			BC_OWNER, (pw != NULL) ? pw->pw_name : uid,
 			BC_GROUP, (gr != NULL) ? gr->gr_name : gid,
 			BC_DATE, lst->st_mtime, BC_DISPLAY_DATE, ddate,
 			BC_MIME_TYPE, (type != NULL) ? type : "", -1);
-	if(icon_24 != NULL)
-		g_object_unref(icon_24);
+	if(icon24 != NULL)
+		g_object_unref(icon24);
 #if GTK_CHECK_VERSION(2, 6, 0)
-	if(icon_48 != NULL)
-		g_object_unref(icon_48);
-	if(icon_96 != NULL)
-		g_object_unref(icon_96);
+	if(icon48 != NULL)
+		g_object_unref(icon48);
+	if(icon96 != NULL)
+		g_object_unref(icon96);
 #endif
 }
 
@@ -1403,6 +1402,7 @@ static gboolean _done_thumbnails(gpointer data)
 	GdkPixbuf * icon;
 	GError * error = NULL;
 	char const * p;
+	char const image[6] = "image/";
 
 	for(i = 0; i < IDLE_LOOP_ICON_CNT; i++)
 	{
@@ -1418,7 +1418,7 @@ static gboolean _done_thumbnails(gpointer data)
 				type = strdup(p);
 		}
 		if(type != NULL && path != NULL
-				&& strncmp(type, "image/", 6) == 0)
+				&& strncmp(type, image, sizeof(image)) == 0)
 		{
 			if((icon = gdk_pixbuf_new_from_file_at_size(path, 96,
 							96, &error)) == NULL)
@@ -1558,10 +1558,10 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 	char const * dsize = "";
 	char const * ddate = "";
 	char const * type = NULL;
-	GdkPixbuf * icon_24 = NULL;
+	GdkPixbuf * icon24 = NULL;
 #if GTK_CHECK_VERSION(2, 6, 0)
-	GdkPixbuf * icon_48 = NULL;
-	GdkPixbuf * icon_96 = NULL;
+	GdkPixbuf * icon48 = NULL;
+	GdkPixbuf * icon96 = NULL;
 #endif
 	char uid[16] = "";
 	char gid[16] = "";
@@ -1572,9 +1572,9 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 	snprintf(uid, sizeof(uid), "%lu", (unsigned long)lst->st_uid);
 	snprintf(gid, sizeof(gid), "%lu", (unsigned long)lst->st_gid);
 	_insert_all(browser, lst, st, &display, &inode, &size, &dsize, &pw, &gr,
-			&ddate, &type, path, &icon_24
+			&ddate, &type, path, &icon24
 #if GTK_CHECK_VERSION(2, 6, 0)
-			, &icon_48, &icon_96
+			, &icon48, &icon96
 #endif
 		   );
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -1582,7 +1582,7 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 			&& browser->loading != NULL)
 	{
 		g_object_ref(browser->loading);
-		icon_96 = browser->loading;
+		icon96 = browser->loading;
 	}
 #endif
 	gtk_list_store_set(browser->store, iter, BC_UPDATED, 1, BC_PATH, path,
@@ -1591,10 +1591,10 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 			BC_IS_EXECUTABLE, st->st_mode & S_IXUSR,
 			BC_IS_MOUNT_POINT,
 			(st->st_dev != browser->refresh_dev) ? TRUE : FALSE,
-			BC_PIXBUF_24, icon_24,
+			BC_PIXBUF_24, icon24,
 #if GTK_CHECK_VERSION(2, 6, 0)
-			BC_PIXBUF_48, icon_48,
-			BC_PIXBUF_96, icon_96,
+			BC_PIXBUF_48, icon48,
+			BC_PIXBUF_96, icon96,
 #endif
 			BC_SIZE, size, BC_DISPLAY_SIZE, dsize,
 			BC_OWNER, (pw != NULL) ? pw->pw_name : uid,
@@ -2120,7 +2120,7 @@ static void _preferences_set_plugins(Browser * browser);
 /* callbacks */
 static void _preferences_on_mime_edit(gpointer data);
 static void _preferences_on_mime_foreach(void * data, char const * name,
-		GdkPixbuf * icon_24, GdkPixbuf * icon_48, GdkPixbuf * icon_96);
+		GdkPixbuf * icon24, GdkPixbuf * icon48, GdkPixbuf * icon96);
 static void _preferences_on_plugin_toggled(GtkCellRendererToggle * renderer,
 		char * path, gpointer data);
 static gboolean _preferences_on_closex(gpointer data);
@@ -2449,7 +2449,7 @@ static void _preferences_on_mime_edit(gpointer data)
 }
 
 static void _preferences_on_mime_foreach(void * data, char const * name,
-		GdkPixbuf * icon_24, GdkPixbuf * icon_48, GdkPixbuf * icon_96)
+		GdkPixbuf * icon24, GdkPixbuf * icon48, GdkPixbuf * icon96)
 {
 	Browser * browser = data;
 	GtkTreeIter iter;
@@ -2460,7 +2460,7 @@ static void _preferences_on_mime_foreach(void * data, char const * name,
 	gtk_list_store_append(browser->pr_mime_store, &iter);
 	gtk_list_store_set(browser->pr_mime_store, &iter,
 #endif
-			BMC_NAME, name, BMC_ICON, icon_24, -1);
+			BMC_NAME, name, BMC_ICON, icon24, -1);
 }
 
 static void _preferences_on_plugin_toggled(GtkCellRendererToggle * renderer,
