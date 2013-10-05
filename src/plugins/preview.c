@@ -41,8 +41,8 @@ typedef struct _BrowserPlugin
 	GtkWidget * widget;
 	GtkWidget * name;
 	GtkWidget * toolbar;
-	GtkWidget * open;
-	GtkWidget * edit;
+	GtkToolItem * open;
+	GtkToolItem * edit;
 	GtkWidget * view_image;
 	GtkWidget * view_text;
 	GtkTextBuffer * view_text_buffer;
@@ -102,13 +102,11 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	preview->open = gtk_tool_button_new_from_stock(GTK_STOCK_OPEN);
 	g_signal_connect_swapped(preview->open, "clicked", G_CALLBACK(
 				_preview_on_open), preview);
-	gtk_toolbar_insert(GTK_TOOLBAR(preview->toolbar),
-			GTK_TOOL_ITEM(preview->open), -1);
+	gtk_toolbar_insert(GTK_TOOLBAR(preview->toolbar), preview->open, -1);
 	preview->edit = gtk_tool_button_new_from_stock(GTK_STOCK_EDIT);
 	g_signal_connect_swapped(preview->edit, "clicked", G_CALLBACK(
 				_preview_on_edit), preview);
-	gtk_toolbar_insert(GTK_TOOLBAR(preview->toolbar),
-			GTK_TOOL_ITEM(preview->edit), -1);
+	gtk_toolbar_insert(GTK_TOOLBAR(preview->toolbar), preview->edit, -1);
 	gtk_box_pack_start(GTK_BOX(vbox), preview->toolbar, FALSE, TRUE, 0);
 	/* name */
 	preview->name = gtk_label_new(NULL);
@@ -210,12 +208,12 @@ static void _refresh_mime(Preview * preview, Mime * mime, char const * type)
 	if(mime_get_handler(mime, type, "open") != NULL)
 	{
 		gtk_widget_show(preview->toolbar);
-		gtk_widget_show(preview->open);
+		gtk_widget_show(GTK_WIDGET(preview->open));
 	}
 	if(mime_get_handler(mime, type, "edit") != NULL)
 	{
 		gtk_widget_show(preview->toolbar);
-		gtk_widget_show(preview->edit);
+		gtk_widget_show(GTK_WIDGET(preview->edit));
 	}
 }
 
@@ -239,8 +237,8 @@ static void _refresh_reset(Preview * preview)
 		g_source_remove(preview->source);
 	preview->source = 0;
 	gtk_widget_hide(preview->toolbar);
-	gtk_widget_hide(preview->open);
-	gtk_widget_hide(preview->edit);
+	gtk_widget_hide(GTK_WIDGET(preview->open));
+	gtk_widget_hide(GTK_WIDGET(preview->edit));
 	gtk_widget_hide(preview->view_image);
 	gtk_widget_hide(preview->view_text);
 }
