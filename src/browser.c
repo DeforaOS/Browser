@@ -1234,12 +1234,6 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 			&ddate, &type, path, &icon24
 #if GTK_CHECK_VERSION(2, 6, 0)
 			, &icon48, &icon96);
-	if(type != NULL && strncmp(type, "image/", 6) == 0
-			&& browser->loading != NULL)
-	{
-		g_object_ref(browser->loading);
-		icon96 = browser->loading;
-	}
 	gtk_list_store_insert_with_values(browser->store, iter, -1,
 #else
 			, NULL, NULL);
@@ -1281,6 +1275,7 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		char const ** ddate, char const ** type, char const * path,
 		GdkPixbuf ** icon24, GdkPixbuf ** icon48, GdkPixbuf ** icon96)
 {
+	const char image[6] = "image/";
 	char const * p;
 	GError * error = NULL;
 
@@ -1308,8 +1303,19 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		*icon48 = vfs_mime_icon(browser->mime, path, *type, lst, st,
 				48);
 	if(icon96 != NULL)
+	{
+#if GTK_CHECK_VERSION(2, 6, 0)
+		if(*type != NULL && strncmp(*type, image, sizeof(image)) == 0
+				&& browser->loading != NULL)
+		{
+			g_object_ref(browser->loading);
+			*icon96 = browser->loading;
+		}
+		else
+#endif
 		*icon96 = vfs_mime_icon(browser->mime, path, *type, lst, st,
 				96);
+	}
 }
 
 static char const * _insert_size(off_t size)
@@ -1401,8 +1407,8 @@ static gboolean _done_thumbnails(gpointer data)
 	char * path;
 	GdkPixbuf * icon;
 	GError * error = NULL;
+	const char image[6] = "image/";
 	char const * p;
-	char const image[6] = "image/";
 
 	for(i = 0; i < IDLE_LOOP_ICON_CNT; i++)
 	{
@@ -1422,16 +1428,19 @@ static gboolean _done_thumbnails(gpointer data)
 		{
 			if((icon = gdk_pixbuf_new_from_file_at_size(path, 96,
 							96, &error)) == NULL)
-			{
-				browser_error(NULL, error->message, 1);
-				g_error_free(error);
-				error = NULL;
-			}
-			else
+				icon = vfs_mime_icon(browser->mime, path, type,
+						NULL, NULL, 96);
+			if(icon != NULL)
 			{
 				gtk_list_store_set(browser->store, iter,
 						BC_PIXBUF_96, icon, -1);
 				g_object_unref(icon);
+			}
+			if(error != NULL)
+			{
+				browser_error(NULL, error->message, 1);
+				g_error_free(error);
+				error = NULL;
 			}
 		}
 		free(type);
@@ -1577,14 +1586,6 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 			, &icon48, &icon96
 #endif
 		   );
-#if GTK_CHECK_VERSION(2, 6, 0)
-	if(type != NULL && strncmp(type, "image/", 6) == 0
-			&& browser->loading != NULL)
-	{
-		g_object_ref(browser->loading);
-		icon96 = browser->loading;
-	}
-#endif
 	gtk_list_store_set(browser->store, iter, BC_UPDATED, 1, BC_PATH, path,
 			BC_DISPLAY_NAME, display, BC_INODE, inode,
 			BC_IS_DIRECTORY, S_ISDIR(st->st_mode),
