@@ -44,6 +44,7 @@ typedef struct _BrowserPlugin
 	GtkWidget * toolbar;
 	GtkToolItem * open;
 	GtkToolItem * edit;
+	GtkToolItem * zoom_100;
 	GtkToolItem * zoom_fit;
 	GtkToolItem * zoom_out;
 	GtkToolItem * zoom_in;
@@ -66,6 +67,7 @@ static void _preview_on_edit(gpointer data);
 static gboolean _preview_on_idle_image(gpointer data);
 static gboolean _preview_on_idle_text(gpointer data);
 static void _preview_on_open(gpointer data);
+static void _preview_on_zoom_100(gpointer data);
 static void _preview_on_zoom_fit(gpointer data);
 static void _preview_on_zoom_in(gpointer data);
 static void _preview_on_zoom_out(gpointer data);
@@ -117,6 +119,11 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 				_preview_on_edit), preview);
 	gtk_toolbar_insert(GTK_TOOLBAR(preview->toolbar), preview->edit, -1);
 	/* zoom */
+	preview->zoom_100 = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_100);
+	g_signal_connect_swapped(preview->zoom_100, "clicked", G_CALLBACK(
+				_preview_on_zoom_100), preview);
+	gtk_toolbar_insert(GTK_TOOLBAR(preview->toolbar), preview->zoom_100,
+			-1);
 	preview->zoom_fit = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_FIT);
 	g_signal_connect_swapped(preview->zoom_fit, "clicked", G_CALLBACK(
 				_preview_on_zoom_fit), preview);
@@ -271,6 +278,7 @@ static void _refresh_reset(Preview * preview)
 	gtk_widget_hide(preview->toolbar);
 	gtk_widget_hide(GTK_WIDGET(preview->open));
 	gtk_widget_hide(GTK_WIDGET(preview->edit));
+	gtk_widget_hide(GTK_WIDGET(preview->zoom_100));
 	gtk_widget_hide(GTK_WIDGET(preview->zoom_fit));
 	gtk_widget_hide(GTK_WIDGET(preview->zoom_out));
 	gtk_widget_hide(GTK_WIDGET(preview->zoom_in));
@@ -300,6 +308,7 @@ static gboolean _preview_on_idle_image(gpointer data)
 	GError * error = NULL;
 
 	preview->source = 0;
+	gtk_widget_show(GTK_WIDGET(preview->zoom_100));
 	gtk_widget_show(GTK_WIDGET(preview->zoom_fit));
 	gtk_widget_show(GTK_WIDGET(preview->zoom_out));
 	gtk_widget_show(GTK_WIDGET(preview->zoom_in));
@@ -320,6 +329,30 @@ static gboolean _preview_on_idle_image(gpointer data)
 	gtk_image_set_from_pixbuf(GTK_IMAGE(preview->view_image_image), pixbuf);
 	g_object_unref(pixbuf);
 	gtk_widget_show(preview->view_image);
+	return FALSE;
+}
+
+
+/* preview_on_idle_image_100 */
+static gboolean _preview_on_idle_image_100(gpointer data)
+{
+	Preview * preview = data;
+	BrowserPluginHelper * helper = preview->helper;
+	GdkPixbufAnimation * pixbuf;
+	GError * error = NULL;
+
+	/* the toolbar and the image are already displayed */
+	preview->source = 0;
+	if((pixbuf = gdk_pixbuf_animation_new_from_file(preview->path, &error))
+			== NULL)
+	{
+		helper->error(helper->browser, error->message, 1);
+		g_error_free(error);
+		return FALSE;
+	}
+	gtk_image_set_from_animation(GTK_IMAGE(preview->view_image_image),
+			pixbuf);
+	g_object_unref(pixbuf);
 	return FALSE;
 }
 
@@ -365,6 +398,18 @@ static void _preview_on_open(gpointer data)
 
 	if(preview->path != NULL)
 		mime_action(mime, "open", preview->path);
+}
+
+
+/* preview_on_zoom_100 */
+static void _preview_on_zoom_100(gpointer data)
+{
+	Preview * preview = data;
+
+	if(preview->source != 0)
+		g_source_remove(preview->source);
+	/* XXX may not always be an image */
+	preview->source = g_idle_add(_preview_on_idle_image_100, preview);
 }
 
 
