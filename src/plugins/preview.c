@@ -48,6 +48,7 @@ typedef struct _BrowserPlugin
 	GtkToolItem * zoom_out;
 	GtkToolItem * zoom_in;
 	GtkWidget * view_image;
+	GtkWidget * view_image_image;
 	GtkWidget * view_text;
 	GtkTextBuffer * view_text_buffer;
 } Preview;
@@ -142,9 +143,16 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	pango_font_description_free(font);
 	gtk_box_pack_start(GTK_BOX(vbox), preview->name, FALSE, TRUE, 0);
 	/* image */
-	preview->view_image = gtk_image_new();
+	preview->view_image = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(preview->view_image),
+			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_widget_set_no_show_all(preview->view_image, TRUE);
-	gtk_box_pack_start(GTK_BOX(vbox), preview->view_image, FALSE, TRUE, 0);
+	preview->view_image_image = gtk_image_new();
+	gtk_widget_show(preview->view_image_image);
+	gtk_scrolled_window_add_with_viewport(
+			GTK_SCROLLED_WINDOW(preview->view_image),
+			preview->view_image_image);
+	gtk_box_pack_start(GTK_BOX(vbox), preview->view_image, TRUE, TRUE, 0);
 	/* text */
 	preview->view_text = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(preview->view_text),
@@ -309,7 +317,7 @@ static gboolean _preview_on_idle_image(gpointer data)
 		g_error_free(error);
 		return FALSE;
 	}
-	gtk_image_set_from_pixbuf(GTK_IMAGE(preview->view_image), pixbuf);
+	gtk_image_set_from_pixbuf(GTK_IMAGE(preview->view_image_image), pixbuf);
 	g_object_unref(pixbuf);
 	gtk_widget_show(preview->view_image);
 	return FALSE;
