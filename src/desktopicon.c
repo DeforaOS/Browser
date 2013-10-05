@@ -234,6 +234,11 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path)
 				DESKTOPICON_ICON_SIZE, DESKTOPICON_ICON_SIZE,
 				&error);
 		string_delete(buf);
+		if(error != NULL)
+		{
+			desktop_error(NULL, error->message, 1);
+			g_error_free(error);
+		}
 	}
 	if(image == NULL)
 		image = gtk_icon_theme_load_icon(desktop_get_theme(desktop),
