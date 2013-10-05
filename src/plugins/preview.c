@@ -16,6 +16,7 @@
 
 
 #include <System.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -210,6 +211,7 @@ static void _preview_refresh(Preview * preview, GList * selection)
 {
 	char * path = (selection != NULL) ? selection->data : NULL;
 	Mime * mime = preview->helper->get_mime(preview->helper->browser);
+	struct stat st;
 	char const image[6] = "image/";
 	char const text[5] = "text/";
 	char const * types[] = { "application/x-perl",
@@ -223,6 +225,9 @@ static void _preview_refresh(Preview * preview, GList * selection)
 	if(path == NULL)
 		return;
 	if(_refresh_name(preview, path) != 0)
+		return;
+	/* ignore directories */
+	if(lstat(path, &st) == 0 && S_ISDIR(st.st_mode))
 		return;
 	if((type = mime_type(mime, path)) == NULL)
 		return;
