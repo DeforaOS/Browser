@@ -2209,16 +2209,16 @@ static void _on_preferences_update_preview(gpointer data)
 		pixbuf = gdk_pixbuf_new_from_file_at_size(filename, 96,
 				96 / ratio, &error);
 #endif
+		if(error != NULL)
+		{
+			desktop_error(NULL, error->message, 1);
+			g_error_free(error);
+		}
 		if(pixbuf != NULL)
 		{
 			gtk_image_set_from_pixbuf(GTK_IMAGE(widget), pixbuf);
 			g_object_unref(pixbuf);
 			active = TRUE;
-		}
-		else if(error != NULL)
-		{
-			desktop_error(NULL, error->message, 1);
-			g_error_free(error);
 		}
 	}
 	g_free(filename);
