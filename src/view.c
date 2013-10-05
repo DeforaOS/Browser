@@ -281,6 +281,11 @@ static GtkWidget * _new_image(View * view, char const * path)
 		_view_error(view, error->message, 1);
 		return NULL;
 	}
+	else if(error != NULL)
+	{
+		_view_error(NULL, error->message, 1);
+		g_error_free(error);
+	}
 	widget = gtk_image_new_from_animation(pixbuf);
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(window),
 			widget);
@@ -418,8 +423,7 @@ static void _error_response(GtkWidget * widget, gint arg, gpointer data)
 
 static int _error_text(char const * message, int ret)
 {
-	fputs(PROGNAME, stderr);
-	perror(message);
+	fprintf(stderr, "%s: %s\n", PROGNAME, message);
 	return ret;
 }
 
