@@ -229,6 +229,7 @@ static void _preview_refresh(Preview * preview, GList * selection)
 	/* ignore directories */
 	if(lstat(path, &st) == 0 && S_ISDIR(st.st_mode))
 		return;
+	/* XXX avoid stat() and use vfs_mime_type() instead */
 	if((type = mime_type(mime, path)) == NULL)
 		return;
 	_refresh_mime(preview, mime, type);
