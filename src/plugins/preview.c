@@ -36,6 +36,7 @@ typedef struct _BrowserPlugin
 
 	char * path;
 	guint source;
+	unsigned int size;
 
 	/* widgets */
 	GtkWidget * widget;
@@ -43,6 +44,9 @@ typedef struct _BrowserPlugin
 	GtkWidget * toolbar;
 	GtkToolItem * open;
 	GtkToolItem * edit;
+	GtkToolItem * zoom_fit;
+	GtkToolItem * zoom_out;
+	GtkToolItem * zoom_in;
 	GtkWidget * view_image;
 	GtkWidget * view_text;
 	GtkTextBuffer * view_text_buffer;
@@ -61,6 +65,9 @@ static void _preview_on_edit(gpointer data);
 static gboolean _preview_on_idle_image(gpointer data);
 static gboolean _preview_on_idle_text(gpointer data);
 static void _preview_on_open(gpointer data);
+static void _preview_on_zoom_fit(gpointer data);
+static void _preview_on_zoom_in(gpointer data);
+static void _preview_on_zoom_out(gpointer data);
 
 
 /* public */
@@ -92,6 +99,7 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	preview->helper = helper;
 	preview->path = NULL;
 	preview->source = 0;
+	preview->size = 96;
 	/* widgets */
 	vbox = gtk_vbox_new(FALSE, 4);
 	preview->widget = vbox;
@@ -107,6 +115,21 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	g_signal_connect_swapped(preview->edit, "clicked", G_CALLBACK(
 				_preview_on_edit), preview);
 	gtk_toolbar_insert(GTK_TOOLBAR(preview->toolbar), preview->edit, -1);
+	/* zoom */
+	preview->zoom_fit = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_FIT);
+	g_signal_connect_swapped(preview->zoom_fit, "clicked", G_CALLBACK(
+				_preview_on_zoom_fit), preview);
+	gtk_toolbar_insert(GTK_TOOLBAR(preview->toolbar), preview->zoom_fit,
+			-1);
+	preview->zoom_out = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_OUT);
+	g_signal_connect_swapped(preview->zoom_out, "clicked", G_CALLBACK(
+				_preview_on_zoom_out), preview);
+	gtk_toolbar_insert(GTK_TOOLBAR(preview->toolbar), preview->zoom_out,
+			-1);
+	preview->zoom_in = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_IN);
+	g_signal_connect_swapped(preview->zoom_in, "clicked", G_CALLBACK(
+				_preview_on_zoom_in), preview);
+	gtk_toolbar_insert(GTK_TOOLBAR(preview->toolbar), preview->zoom_in, -1);
 	gtk_box_pack_start(GTK_BOX(vbox), preview->toolbar, FALSE, TRUE, 0);
 	/* name */
 	preview->name = gtk_label_new(NULL);
@@ -236,9 +259,13 @@ static void _refresh_reset(Preview * preview)
 	if(preview->source != 0)
 		g_source_remove(preview->source);
 	preview->source = 0;
+	preview->size = 96;
 	gtk_widget_hide(preview->toolbar);
 	gtk_widget_hide(GTK_WIDGET(preview->open));
 	gtk_widget_hide(GTK_WIDGET(preview->edit));
+	gtk_widget_hide(GTK_WIDGET(preview->zoom_fit));
+	gtk_widget_hide(GTK_WIDGET(preview->zoom_out));
+	gtk_widget_hide(GTK_WIDGET(preview->zoom_in));
 	gtk_widget_hide(preview->view_image);
 	gtk_widget_hide(preview->view_text);
 }
@@ -265,12 +292,17 @@ static gboolean _preview_on_idle_image(gpointer data)
 	GError * error = NULL;
 
 	preview->source = 0;
+	gtk_widget_show(GTK_WIDGET(preview->zoom_fit));
+	gtk_widget_show(GTK_WIDGET(preview->zoom_out));
+	gtk_widget_show(GTK_WIDGET(preview->zoom_in));
 #if GTK_CHECK_VERSION(2, 6, 0)
-	if((pixbuf = gdk_pixbuf_new_from_file_at_scale(preview->path, 96, 96,
-					TRUE, &error)) == NULL)
-#else
-	if((pixbuf = gdk_pixbuf_new_from_file_at_size(preview->path, 96, 96,
+	if((pixbuf = gdk_pixbuf_new_from_file_at_scale(preview->path,
+					preview->size, preview->size, TRUE,
 					&error)) == NULL)
+#else
+	if((pixbuf = gdk_pixbuf_new_from_file_at_size(preview->path,
+					preview->size, preview->size, &error))
+			== NULL)
 #endif
 	{
 		helper->error(helper->browser, error->message, 1);
@@ -325,4 +357,46 @@ static void _preview_on_open(gpointer data)
 
 	if(preview->path != NULL)
 		mime_action(mime, "open", preview->path);
+}
+
+
+/* preview_on_zoom_fit */
+static void _preview_on_zoom_fit(gpointer data)
+{
+	Preview * preview = data;
+
+	preview->size = 96;
+	if(preview->source != 0)
+		g_source_remove(preview->source);
+	/* XXX may not always be an image */
+	preview->source = g_idle_add(_preview_on_idle_image, preview);
+}
+
+
+/* preview_on_zoom_in */
+static void _preview_on_zoom_in(gpointer data)
+{
+	Preview * preview = data;
+
+	preview->size = preview->size * 2;
+	if(preview->source != 0)
+		g_source_remove(preview->source);
+	/* XXX may not always be an image */
+	preview->source = g_idle_add(_preview_on_idle_image, preview);
+}
+
+
+/* preview_on_zoom_out */
+static void _preview_on_zoom_out(gpointer data)
+{
+	Preview * preview = data;
+
+	preview->size = preview->size / 2;
+	/* stick with a divider of 96 */
+	if(preview->size < 3)
+		preview->size = 3;
+	if(preview->source != 0)
+		g_source_remove(preview->source);
+	/* XXX may not always be an image */
+	preview->source = g_idle_add(_preview_on_idle_image, preview);
 }
