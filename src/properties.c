@@ -335,8 +335,12 @@ static int _properties_error(Properties * properties, char const * message,
 			"%s", message);
 	gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
 	if(properties != NULL && properties->window != NULL)
+	{
+		gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
 		gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(
 					properties->window));
+		gtk_widget_show(properties->window);
+	}
 	g_signal_connect(dialog, "response", G_CALLBACK(_error_response),
 			(ret < 0) ? &_properties_cnt : NULL);
 	gtk_widget_show(dialog);
