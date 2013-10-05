@@ -118,7 +118,7 @@ open.o: open.c
 	$(CC) $(open_CFLAGS) -c open.c
 
 properties.o: properties.c ../include/Browser.h browser.h common.c
-	$(CC) $(properties_CFLAGS) -c properties.c
+	$(CC) -D PREFIX=\"$(PREFIX)\" $(properties_CFLAGS) -c properties.c
 
 vfs.o: vfs.c vfs.h
 	$(CC) $(vfs.o_CFLAGS) -c vfs.c
