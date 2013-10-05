@@ -342,18 +342,8 @@ static int _properties_do_refresh(Properties * properties)
 
 	parent = dirname(properties->filename);
 	if(lstat(properties->filename, &st) != 0)
-	{
-		/* detect if the file was deleted in the meantime */
-		if(errno != ENOENT || lstat(parent, &st) != 0)
-			return _properties_error(properties,
-					properties->filename, 0) + 1;
-		/* consider the parent directory instead */
-		if((parent = strdup(parent)) == NULL)
-			return _properties_error(properties,
-					properties->filename, 0) + 1;
-		free(properties->filename);
-		properties->filename = parent;
-	}
+		return _properties_error(properties, properties->filename, 0)
+			+ 1;
 	_refresh_name(properties->name, properties->filename);
 	_refresh_type(properties, &st);
 	properties->uid = st.st_uid;
