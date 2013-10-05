@@ -147,7 +147,7 @@ static Properties * _properties_new(Mime * mime, char const * plugin,
 		return NULL;
 	if((properties = malloc(sizeof(*properties))) == NULL)
 	{
-		_properties_error(NULL, "malloc", 1);
+		_properties_error(NULL, strerror(errno), 1);
 		return NULL;
 	}
 	properties->mime = mime;
@@ -315,17 +315,15 @@ static int _properties_set_location(Properties * properties,
 
 /* _properties_error */
 static void _error_response(GtkWidget * widget, gint arg, gpointer data);
-static int _error_text(char const * message, char const * error, int ret);
+static int _error_text(char const * message, int ret);
 
 static int _properties_error(Properties * properties, char const * message,
 		int ret)
 {
 	GtkWidget * dialog;
-	char const * error;
 
-	error = strerror(errno);
 	if(properties == NULL)
-		return _error_text(message, error, ret);
+		return _error_text(message, ret);
 	dialog = gtk_message_dialog_new((properties != NULL
 				&& properties->window != NULL)
 			? GTK_WINDOW(properties->window) : NULL, 0,
@@ -334,7 +332,7 @@ static int _properties_error(Properties * properties, char const * message,
 			"%s", _("Error"));
 	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
 #endif
-			"%s: %s", message, error);
+			"%s", message);
 	gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
 	if(properties != NULL && properties->window != NULL)
 		gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(
@@ -357,9 +355,9 @@ static void _error_response(GtkWidget * widget, gint arg, gpointer data)
 		gtk_widget_destroy(widget);
 }
 
-static int _error_text(char const * message, char const * error, int ret)
+static int _error_text(char const * message, int ret)
 {
-	fprintf(stderr, "%s: %s: %s\n", "properties", message, error);
+	fprintf(stderr, "%s: %s\n", "properties", message);
 	return ret;
 }
 
@@ -463,7 +461,7 @@ int main(int argc, char * argv[])
 	char const * plugin = NULL;
 
 	if(setlocale(LC_ALL, "") == NULL)
-		_properties_error(NULL, "setlocale", 1);
+		_properties_error(NULL, strerror(errno), 1);
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 	gtk_init(&argc, &argv);
