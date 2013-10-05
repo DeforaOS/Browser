@@ -276,16 +276,14 @@ static GtkWidget * _new_image(View * view, char const * path)
 	window = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(window),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	if((pixbuf = gdk_pixbuf_animation_new_from_file(path, &error)) == NULL)
+	pixbuf = gdk_pixbuf_animation_new_from_file(path, &error);
+	if(error != NULL)
 	{
-		_view_error(view, error->message, 1);
-		return NULL;
-	}
-	else if(error != NULL)
-	{
-		_view_error(NULL, error->message, 1);
+		_view_error((pixbuf != NULL) ? NULL : view, error->message, 1);
 		g_error_free(error);
 	}
+	if(pixbuf == NULL)
+		return NULL;
 	widget = gtk_image_new_from_animation(pixbuf);
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(window),
 			widget);
