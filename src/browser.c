@@ -1430,17 +1430,17 @@ static gboolean _done_thumbnails(gpointer data)
 							96, &error)) == NULL)
 				icon = vfs_mime_icon(browser->mime, path, type,
 						NULL, NULL, 96);
-			if(icon != NULL)
-			{
-				gtk_list_store_set(browser->store, iter,
-						BC_PIXBUF_96, icon, -1);
-				g_object_unref(icon);
-			}
 			if(error != NULL)
 			{
 				browser_error(NULL, error->message, 1);
 				g_error_free(error);
 				error = NULL;
+			}
+			if(icon != NULL)
+			{
+				gtk_list_store_set(browser->store, iter,
+						BC_PIXBUF_96, icon, -1);
+				g_object_unref(icon);
 			}
 		}
 		free(type);
