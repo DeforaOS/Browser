@@ -326,6 +326,11 @@ static gboolean _preview_on_idle_image(gpointer data)
 		g_error_free(error);
 		return FALSE;
 	}
+	else if(error != NULL)
+	{
+		helper->error(NULL, error->message, 1);
+		g_error_free(error);
+	}
 	gtk_image_set_from_pixbuf(GTK_IMAGE(preview->view_image_image), pixbuf);
 	g_object_unref(pixbuf);
 	gtk_widget_show(preview->view_image);
@@ -349,6 +354,11 @@ static gboolean _preview_on_idle_image_100(gpointer data)
 		helper->error(helper->browser, error->message, 1);
 		g_error_free(error);
 		return FALSE;
+	}
+	else if(error != NULL)
+	{
+		helper->error(NULL, error->message, 1);
+		g_error_free(error);
 	}
 	gtk_image_set_from_animation(GTK_IMAGE(preview->view_image_image),
 			pixbuf);
