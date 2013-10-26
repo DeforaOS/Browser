@@ -1,6 +1,6 @@
 PACKAGE	= Browser
 VERSION	= 0.4.13
-SUBDIRS	= data doc include po src tools
+SUBDIRS	= data doc include po src tests tools
 RM	= rm -f
 LN	= ln -f
 TAR	= tar -czvf
@@ -94,6 +94,10 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/plugins/Makefile \
 		$(PACKAGE)-$(VERSION)/src/plugins/common.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/project.conf \
+		$(PACKAGE)-$(VERSION)/tests/plugins.c \
+		$(PACKAGE)-$(VERSION)/tests/Makefile \
+		$(PACKAGE)-$(VERSION)/tests/tests.sh \
+		$(PACKAGE)-$(VERSION)/tests/project.conf \
 		$(PACKAGE)-$(VERSION)/tools/dirtree.c \
 		$(PACKAGE)-$(VERSION)/tools/iconlist.c \
 		$(PACKAGE)-$(VERSION)/tools/Makefile \
