@@ -53,6 +53,8 @@ typedef struct _BrowserPlugin
 	GtkToolItem * zoom_in;
 	GtkWidget * view_image;
 	GtkWidget * view_image_image;
+	GtkWidget * view_sound;
+	GtkWidget * view_sound_progress;
 	GtkWidget * view_text;
 	GtkTextBuffer * view_text_tbuf;
 } Preview;
@@ -69,9 +71,13 @@ static void _preview_refresh(Preview * preview, GList * selection);
 static void _preview_on_copy(gpointer data);
 static void _preview_on_edit(gpointer data);
 static gboolean _preview_on_idle_image(gpointer data);
+static gboolean _preview_on_idle_sound(gpointer data);
 static gboolean _preview_on_idle_text(gpointer data);
 static void _preview_on_open(gpointer data);
 static void _preview_on_select_all(gpointer data);
+static void _preview_on_sound_pause(gpointer data);
+static void _preview_on_sound_play(gpointer data);
+static void _preview_on_sound_stop(gpointer data);
 static void _preview_on_zoom_100(gpointer data);
 static void _preview_on_zoom_fit(gpointer data);
 static void _preview_on_zoom_in(gpointer data);
@@ -100,6 +106,7 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	Preview * preview;
 	PangoFontDescription * font;
 	GtkWidget * vbox;
+	GtkWidget * hbox;
 	GtkWidget * widget;
 
 	if((preview = object_new(sizeof(*preview))) == NULL)
@@ -184,6 +191,42 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 			GTK_SCROLLED_WINDOW(preview->view_image),
 			preview->view_image_image);
 	gtk_box_pack_start(GTK_BOX(vbox), preview->view_image, TRUE, TRUE, 0);
+	/* sound */
+	preview->view_sound = gtk_vbox_new(FALSE, 4);
+	preview->view_sound_progress = gtk_hscale_new_with_range(0.0, 100.0,
+			0.1);
+	gtk_box_pack_start(GTK_BOX(preview->view_sound),
+			preview->view_sound_progress, FALSE, TRUE, 0);
+	gtk_widget_show(preview->view_sound_progress);
+	hbox = gtk_hbox_new(FALSE, 0);
+	widget = gtk_button_new();
+	gtk_button_set_image(GTK_BUTTON(widget),
+			gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY,
+				GTK_ICON_SIZE_BUTTON));
+	gtk_button_set_relief(GTK_BUTTON(widget), GTK_RELIEF_NONE);
+	g_signal_connect_swapped(widget, "clicked",
+			G_CALLBACK(_preview_on_sound_play), preview);
+	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
+	widget = gtk_button_new();
+	gtk_button_set_image(GTK_BUTTON(widget),
+			gtk_image_new_from_stock(GTK_STOCK_MEDIA_PAUSE,
+				GTK_ICON_SIZE_BUTTON));
+	gtk_button_set_relief(GTK_BUTTON(widget), GTK_RELIEF_NONE);
+	g_signal_connect_swapped(widget, "clicked",
+			G_CALLBACK(_preview_on_sound_pause), preview);
+	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
+	widget = gtk_button_new();
+	gtk_button_set_image(GTK_BUTTON(widget),
+			gtk_image_new_from_stock(GTK_STOCK_MEDIA_STOP,
+				GTK_ICON_SIZE_BUTTON));
+	gtk_button_set_relief(GTK_BUTTON(widget), GTK_RELIEF_NONE);
+	g_signal_connect_swapped(widget, "clicked",
+			G_CALLBACK(_preview_on_sound_stop), preview);
+	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
+	gtk_widget_show_all(hbox);
+	gtk_box_pack_start(GTK_BOX(preview->view_sound), hbox, FALSE, TRUE, 0);
+	gtk_widget_set_no_show_all(preview->view_sound, TRUE);
+	gtk_box_pack_start(GTK_BOX(vbox), preview->view_sound, FALSE, TRUE, 0);
 	/* text */
 	preview->view_text = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(preview->view_text),
@@ -236,6 +279,7 @@ static void _preview_refresh(Preview * preview, GList * selection)
 	Mime * mime = preview->helper->get_mime(preview->helper->browser);
 	struct stat st;
 	char const image[6] = "image/";
+	char const sound[] = "audio/x-wav";
 	char const text[5] = "text/";
 	char const * types[] = { "application/x-perl",
 		"application/x-shellscript",
@@ -258,6 +302,8 @@ static void _preview_refresh(Preview * preview, GList * selection)
 	_refresh_mime(preview, mime, type);
 	if(strncmp(type, image, sizeof(image)) == 0)
 		preview->source = g_idle_add(_preview_on_idle_image, preview);
+	else if(strcmp(type, sound) == 0)
+		preview->source = g_idle_add(_preview_on_idle_sound, preview);
 	else if(strncmp(type, text, sizeof(text)) == 0)
 		preview->source = g_idle_add(_preview_on_idle_text, preview);
 	else
@@ -314,6 +360,7 @@ static void _refresh_reset(Preview * preview)
 	gtk_widget_hide(GTK_WIDGET(preview->zoom_out));
 	gtk_widget_hide(GTK_WIDGET(preview->zoom_in));
 	gtk_widget_hide(preview->view_image);
+	gtk_widget_hide(preview->view_sound);
 	gtk_widget_hide(preview->view_text);
 }
 
@@ -410,6 +457,18 @@ static gboolean _preview_on_idle_image_100(gpointer data)
 }
 
 
+/* preview_on_idle_sound */
+static gboolean _preview_on_idle_sound(gpointer data)
+{
+	Preview * preview = data;
+
+	preview->source = 0;
+	/* FIXME implement */
+	gtk_widget_show(preview->view_sound);
+	return FALSE;
+}
+
+
 /* preview_on_idle_text */
 static gboolean _preview_on_idle_text(gpointer data)
 {
@@ -466,6 +525,27 @@ static void _preview_on_select_all(gpointer data)
 	gtk_text_buffer_get_start_iter(preview->view_text_tbuf, &start);
 	gtk_text_buffer_get_end_iter(preview->view_text_tbuf, &end);
 	gtk_text_buffer_select_range(preview->view_text_tbuf, &start, &end);
+}
+
+
+/* preview_on_sound_pause */
+static void _preview_on_sound_pause(gpointer data)
+{
+	/* FIXME implement */
+}
+
+
+/* preview_on_sound_play */
+static void _preview_on_sound_play(gpointer data)
+{
+	/* FIXME implement */
+}
+
+
+/* preview_on_sound_stop */
+static void _preview_on_sound_stop(gpointer data)
+{
+	/* FIXME implement */
 }
 
 
