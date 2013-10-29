@@ -392,6 +392,9 @@ static void _preview_on_audio_pause(gpointer data)
 /* preview_on_audio_play */
 static void _preview_on_audio_play(gpointer data)
 {
+	Preview * preview = data;
+
+	gtk_range_set_value(GTK_RANGE(preview->view_audio_progress), 0.0);
 	/* FIXME implement */
 }
 
@@ -399,6 +402,9 @@ static void _preview_on_audio_play(gpointer data)
 /* preview_on_audio_stop */
 static void _preview_on_audio_stop(gpointer data)
 {
+	Preview * preview = data;
+
+	gtk_range_set_value(GTK_RANGE(preview->view_audio_progress), 0.0);
 	/* FIXME implement */
 }
 
