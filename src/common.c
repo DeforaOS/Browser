@@ -169,6 +169,8 @@ static int _common_exec(char const * program, char const * flags, GList * args)
 
 #ifdef COMMON_SYMLINK
 /* common_symlink */
+static void _symlink_on_response(GtkWidget * widget, gint arg1, gpointer data);
+
 static int _common_symlink(GtkWidget * window, char const * cur)
 {
 	static char const * newsymlink = NULL;
@@ -177,6 +179,7 @@ static int _common_symlink(GtkWidget * window, char const * cur)
 	char * path;
 	GtkWidget * dialog;
 	GtkWidget * hbox;
+	GtkWidget * entry;
 	GtkWidget * widget;
 	char const * to = NULL;
 
@@ -198,10 +201,20 @@ static int _common_symlink(GtkWidget * window, char const * cur)
 #else
 	hbox = gtk_hbox_new(FALSE, 0);
 #endif
-	widget = gtk_label_new(_("Destination: "));
-	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 4);
-	widget = gtk_entry_new();
-	gtk_box_pack_start(GTK_BOX(hbox), widget, TRUE, TRUE, 4);
+	widget = gtk_label_new(_("Destination:"));
+	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
+	entry = gtk_entry_new();
+	gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
+	/* XXX also support folders */
+	widget = gtk_file_chooser_dialog_new(_("Choose destination..."),
+			(window != NULL) ? GTK_WINDOW(window) : NULL,
+			GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
+			GTK_RESPONSE_CANCEL, GTK_STOCK_OK, GTK_RESPONSE_OK,
+			NULL);
+	g_signal_connect(widget, "response", G_CALLBACK(_symlink_on_response),
+			entry);
+	widget = gtk_file_chooser_button_new_with_dialog(widget);
+	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	gtk_widget_show_all(hbox);
 #if GTK_CHECK_VERSION(2, 14, 0)
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(
@@ -211,11 +224,21 @@ static int _common_symlink(GtkWidget * window, char const * cur)
 			4);
 #endif
 	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_OK)
-		to = gtk_entry_get_text(GTK_ENTRY(widget));
+		to = gtk_entry_get_text(GTK_ENTRY(entry));
 	if(to != NULL && strlen(to) > 0 && symlink(to, path) != 0)
 		ret = 1;
 	gtk_widget_destroy(dialog);
 	free(path);
 	return ret;
+}
+
+static void _symlink_on_response(GtkWidget * widget, gint arg1, gpointer data)
+{
+	GtkWidget * entry = data;
+
+	if(arg1 != GTK_RESPONSE_OK)
+		return;
+	gtk_entry_set_text(GTK_ENTRY(entry), gtk_file_chooser_get_filename(
+				GTK_FILE_CHOOSER(widget)));
 }
 #endif /* COMMON_SYMLINK */
