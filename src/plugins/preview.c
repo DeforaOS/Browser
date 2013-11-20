@@ -79,7 +79,7 @@ static void _preview_on_zoom_out(gpointer data);
 BrowserPluginDefinition plugin =
 {
 	N_("Preview"),
-	NULL,
+	"gtk-find",
 	NULL,
 	_preview_init,
 	_preview_destroy,
