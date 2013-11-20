@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2011-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ static void _template_refresh(Template * template, GList * selection);
 BrowserPluginDefinition plugin =
 {
 	N_("Template"),
-	NULL,
+	"image-missing",
 	NULL,
 	_template_init,
 	_template_destroy,
