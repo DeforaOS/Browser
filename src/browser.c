@@ -2127,6 +2127,7 @@ static void _preferences_on_plugin_toggled(GtkCellRendererToggle * renderer,
 static gboolean _preferences_on_closex(gpointer data);
 static void _preferences_on_response(GtkWidget * widget, gint response,
 		gpointer data);
+static void _preferences_on_apply(gpointer data);
 static void _preferences_on_cancel(gpointer data);
 static void _preferences_on_ok(gpointer data);
 
@@ -2148,6 +2149,7 @@ void browser_show_preferences(Browser * browser)
 			GTK_WINDOW(browser->window),
 			GTK_DIALOG_DESTROY_WITH_PARENT,
 			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+			GTK_STOCK_APPLY, GTK_RESPONSE_APPLY,
 			GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
 	g_signal_connect_swapped(browser->pr_window, "delete-event",
 			G_CALLBACK(_preferences_on_closex), browser);
@@ -2487,22 +2489,19 @@ static gboolean _preferences_on_closex(gpointer data)
 static void _preferences_on_response(GtkWidget * widget, gint response,
 		gpointer data)
 {
-	gtk_widget_hide(widget);
-	if(response == GTK_RESPONSE_OK)
-		_preferences_on_ok(data);
-	else if(response == GTK_RESPONSE_CANCEL)
-		_preferences_on_cancel(data);
+	if(response == GTK_RESPONSE_APPLY)
+		_preferences_on_apply(data);
+	else
+	{
+		gtk_widget_hide(widget);
+		if(response == GTK_RESPONSE_OK)
+			_preferences_on_ok(data);
+		else if(response == GTK_RESPONSE_CANCEL)
+			_preferences_on_cancel(data);
+	}
 }
 
-static void _preferences_on_cancel(gpointer data)
-{
-	Browser * browser = data;
-
-	gtk_widget_hide(browser->pr_window);
-	_preferences_set(browser);
-}
-
-static void _preferences_on_ok(gpointer data)
+static void _preferences_on_apply(gpointer data)
 {
 	Browser * browser = data;
 	GtkTreeModel * model = GTK_TREE_MODEL(browser->pr_plugin_store);
@@ -2514,7 +2513,6 @@ static void _preferences_on_ok(gpointer data)
 	String * sep = "";
 	int res = (value != NULL) ? 0 : 1;
 
-	gtk_widget_hide(browser->pr_window);
 	/* appearance */
 #if GTK_CHECK_VERSION(2, 6, 0)
 	browser->prefs.default_view = gtk_combo_box_get_active(GTK_COMBO_BOX(
@@ -2551,8 +2549,24 @@ static void _preferences_on_ok(gpointer data)
 	if(res == 0)
 		config_set(browser->config, NULL, "plugins", value);
 	string_delete(value);
-	browser_config_save(browser);
 	browser_refresh(browser);
+}
+
+static void _preferences_on_cancel(gpointer data)
+{
+	Browser * browser = data;
+
+	gtk_widget_hide(browser->pr_window);
+	_preferences_set(browser);
+}
+
+static void _preferences_on_ok(gpointer data)
+{
+	Browser * browser = data;
+
+	gtk_widget_hide(browser->pr_window);
+	_preferences_on_apply(browser);
+	browser_config_save(browser);
 }
 
 
