@@ -236,7 +236,7 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path)
 		string_delete(buf);
 		if(error != NULL)
 		{
-			desktop_error(NULL, error->message, 1);
+			desktop_error(NULL, error->message, 1); /* XXX */
 			g_error_free(error);
 		}
 	}
@@ -826,7 +826,7 @@ static void _on_icon_open(gpointer data)
 	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
 			!= TRUE)
 	{
-		desktop_error(desktopicon->desktop, argv[0], 1); /* XXX */
+		desktop_error(desktopicon->desktop, error->message, 1);
 		g_error_free(error);
 	}
 }
@@ -987,8 +987,8 @@ static void _run_url(DesktopIcon * desktopicon)
 		return;
 	if((argv[2] = strdup(url)) == NULL)
 		desktop_error(desktopicon->desktop, strerror(errno), 1);
-	else if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
-			!= TRUE)
+	else if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL,
+				&error) != TRUE)
 	{
 		desktop_error(desktopicon->desktop, error->message, 1);
 		g_error_free(error);
@@ -1023,7 +1023,10 @@ static void _on_icon_open_with(gpointer data)
 	argv[2] = desktopicon->path;
 	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
 			!= TRUE)
-		desktop_error(desktopicon->desktop, argv[0], 1); /* XXX */
+	{
+		desktop_error(desktopicon->desktop, error->message, 1);
+		g_error_free(error);
+	}
 	g_free(filename);
 }
 
@@ -1092,7 +1095,7 @@ static void _on_icon_rename(gpointer data)
 			desktopicon->path, r);
 #else
 	if(rename(desktopicon->path, r) != 0)
-		desktop_error(desktopicon->desktop, r, 1);
+		desktop_error(desktopicon->desktop, strerror(errno), 1);
 #endif
 	string_delete(p);
 	string_delete(q);
@@ -1127,7 +1130,8 @@ static void _on_icon_delete(gpointer data)
 		/* FIXME check if needs UTF-8 conversion */
 		selection = g_list_append(selection, desktopicon->path);
 		if(_common_exec("delete", "-ir", selection) != 0)
-			desktop_error(desktopicon->desktop, "fork", 1);
+			desktop_error(desktopicon->desktop, strerror(errno),
+					1);
 		g_list_free(selection);
 	}
 }
@@ -1144,7 +1148,10 @@ static void _on_icon_properties(gpointer data)
 	argv[3] = desktopicon->path;
 	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
 			!= TRUE)
-		desktop_error(desktopicon->desktop, argv[0], 1); /* XXX */
+	{
+		desktop_error(desktopicon->desktop, error->message, 1);
+		g_error_free(error);
+	}
 }
 
 
@@ -1193,5 +1200,5 @@ static void _on_icon_drag_data_received(GtkWidget * widget,
 	DesktopIcon * desktopicon = data;
 
 	if(_common_drag_data_received(context, seldata, desktopicon->path) != 0)
-		desktop_error(desktopicon->desktop, "fork", 1);
+		desktop_error(desktopicon->desktop, strerror(errno), 1);
 }
