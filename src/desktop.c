@@ -1077,18 +1077,20 @@ static int _current_loop_applications(Desktop * desktop)
 						&& de->d_name[2] == '\0'))
 				continue;
 		len = strlen(de->d_name);
-		if(len < sizeof(ext) || strncmp(&de->d_name[len - sizeof(ext)
-					+ 1], ext, sizeof(ext)) != 0)
+		if(len < sizeof(ext))
 			continue;
-		if((p = realloc(path, desktop->path_cnt + len + 1)) == NULL)
+		if(strncmp(&de->d_name[len - sizeof(ext) + 1], ext,
+					sizeof(ext)) != 0)
+			continue;
+		len = desktop->path_cnt + len + 1;
+		if((p = realloc(path, len)) == NULL)
 		{
 			error_set_print("desktop", 1, "%s: %s", "realloc",
 					strerror(errno));
 			continue;
 		}
 		path = p;
-		snprintf(path, desktop->path_cnt + len + 1, "%s/%s",
-				desktop->path, de->d_name);
+		snprintf(path, len, "%s/%s", desktop->path, de->d_name);
 #ifdef DEBUG
 		fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, path);
 #endif
@@ -1130,18 +1132,20 @@ static int _current_loop_categories(Desktop * desktop)
 						&& de->d_name[2] == '\0'))
 				continue;
 		len = strlen(de->d_name);
-		if(len < sizeof(ext) || strncmp(&de->d_name[len - sizeof(ext)
-					+ 1], ext, sizeof(ext)) != 0)
+		if(len < sizeof(ext))
 			continue;
-		if((p = realloc(path, desktop->path_cnt + len + 1)) == NULL)
+		if(strncmp(&de->d_name[len - sizeof(ext) + 1], ext,
+					sizeof(ext)) != 0)
+			continue;
+		len = desktop->path_cnt + len + 1;
+		if((p = realloc(path, len)) == NULL)
 		{
 			error_set_print("desktop", 1, "%s: %s", "realloc",
 					strerror(errno));
 			continue;
 		}
 		path = p;
-		snprintf(path, desktop->path_cnt + len + 1, "%s/%s",
-				desktop->path, de->d_name);
+		snprintf(path, len, "%s/%s", desktop->path, de->d_name);
 #ifdef DEBUG
 		fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, path);
 #endif
