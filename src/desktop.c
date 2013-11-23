@@ -48,6 +48,9 @@
 
 
 /* constants */
+#ifndef PROGNAME
+# define PROGNAME	"desktop"
+#endif
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
 #endif
@@ -755,7 +758,6 @@ static void _alignment_vertical(Desktop * desktop)
 /* desktop_set_icons */
 static void _icons_delete(Desktop * desktop);
 static int _icons_applications(Desktop * desktop);
-static int _icons_applications_path(Desktop * desktop, char const * path);
 static int _icons_categories(Desktop * desktop);
 static int _icons_files(Desktop * desktop);
 static void _icons_files_add_home(Desktop * desktop);
@@ -807,25 +809,9 @@ static void _icons_delete(Desktop * desktop)
 
 static int _icons_applications(Desktop * desktop)
 {
-	/* FIXME look at XDG_DATA_DIRS */
-	const char path[] = DATADIR "/applications";
-
-	return _icons_applications_path(desktop, path);
-}
-
-static int _icons_applications_path(Desktop * desktop, char const * path)
-{
-	struct stat st;
 	DesktopIcon * desktopicon;
 	GdkPixbuf * icon;
 
-	free(desktop->path);
-	if((desktop->path = strdup(path)) == NULL)
-		return desktop_error(NULL, strerror(errno), 1);
-	desktop->path_cnt = strlen(path) + 1;
-	if(stat(desktop->path, &st) == 0)
-		if(!S_ISDIR(st.st_mode))
-			return desktop_error(NULL, strerror(ENOTDIR), 1);
 	/* FIXME list all applications otherwise? */
 	if(desktop->category != NULL)
 	{
@@ -872,16 +858,17 @@ static int _icons_files(Desktop * desktop)
 	_icons_files_add_home(desktop);
 	desktop->path_cnt = strlen(desktop->home) + 1 + sizeof(path);
 	if((desktop->path = malloc(desktop->path_cnt)) == NULL)
-		return desktop_error(NULL, strerror(ENOTDIR), 1);
+		return -desktop_error(NULL, "malloc", 1);
 	snprintf(desktop->path, desktop->path_cnt, "%s/%s", desktop->home,
 			path);
 	if(stat(desktop->path, &st) == 0)
 	{
 		if(!S_ISDIR(st.st_mode))
-			return desktop_error(NULL, strerror(ENOTDIR), 1);
+			return _desktop_error(NULL, desktop->path,
+					strerror(ENOTDIR), 1);
 	}
 	else if(errno != ENOENT || mkdir(desktop->path, 0777) != 0)
-		return desktop_error(NULL, strerror(errno), 1);
+		return desktop_error(NULL, desktop->path, 1);
 	return 0;
 }
 
@@ -922,7 +909,7 @@ static int _icons_homescreen(Desktop * desktop)
 
 	if((desktopicon = desktopicon_new(desktop, _("Applications"), NULL))
 			== NULL)
-		return desktop_error(NULL, error_get(), 1);
+		return _desktop_serror(NULL, "Applications", 1);
 	desktopicon_set_callback(desktopicon, _icons_set_categories, NULL);
 	desktopicon_set_immutable(desktopicon, TRUE);
 	icon = gtk_icon_theme_load_icon(desktop->theme, "gnome-applications",
@@ -995,6 +982,7 @@ int desktop_set_layout(Desktop * desktop, DesktopLayout layout)
 /* desktop_error */
 int desktop_error(Desktop * desktop, char const * message, int ret)
 {
+	/* FIXME no longer assume errno is properly set */
 	return _desktop_error(desktop, message, strerror(errno), ret);
 }
 
@@ -1002,8 +990,12 @@ int desktop_error(Desktop * desktop, char const * message, int ret)
 /* desktop_refresh */
 static int _current_loop(Desktop * desktop);
 static int _current_loop_applications(Desktop * desktop);
+static int _current_loop_applications_path(Desktop * desktop,
+		char const * path);
+static int _current_loop_applications_do(Desktop * desktop);
 static gint _categories_apps_compare(gconstpointer a, gconstpointer b);
 static int _current_loop_categories(Desktop * desktop);
+static int _current_loop_categories_do(Desktop * desktop);
 static int _current_loop_files(Desktop * desktop);
 static gboolean _current_idle(gpointer data);
 static gboolean _current_done(Desktop * desktop);
@@ -1057,6 +1049,48 @@ static int _current_loop(Desktop * desktop)
 
 static int _current_loop_applications(Desktop * desktop)
 {
+	int ret;
+	char const * path;
+	size_t len;
+
+	if(desktop->path == NULL)
+		return _current_loop_applications_path(desktop, DATADIR);
+	if((ret = _current_loop_applications_do(desktop)) == 0)
+		return 0;
+	/* XXX hack to also look at XDG_DATA_HOME */
+	if((path = getenv("XDG_DATA_HOME")) != NULL && (len = strlen(path)) > 0
+			&& strncmp(desktop->path, path, len) != 0)
+		return _current_loop_applications_path(desktop, path);
+	return ret;
+}
+
+static int _current_loop_applications_path(Desktop * desktop,
+		char const * path)
+{
+	const char applications[] = "/applications";
+	char * p;
+	size_t len;
+	DIR * dir;
+	struct stat st;
+
+	len = strlen(path) + sizeof(applications);
+	if((p = malloc(len)) == NULL)
+		return -desktop_error(NULL, path, 1);
+	snprintf(p, len, "%s%s", path, applications);
+	if((dir = vfs_opendir(p, &st)) == NULL)
+	{
+		free(p);
+		return -desktop_error(NULL, p, 1);
+	}
+	desktop->path = p;
+	desktop->path_cnt = len;
+	desktop->refresh_dir = dir;
+	desktop->refresh_mti = st.st_mtime;
+	return 0;
+}
+
+static int _current_loop_applications_do(Desktop * desktop)
+{
 	struct dirent * de;
 	size_t len;
 	const char ext[] = ".desktop";
@@ -1070,7 +1104,7 @@ static int _current_loop_applications(Desktop * desktop)
 	if(desktop->category == NULL)
 		return -1;
 	if((config = config_new()) == NULL)
-		return -1;
+		return -_desktop_serror(NULL, NULL, 1);
 	while((de = vfs_readdir(desktop->refresh_dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
@@ -1115,6 +1149,14 @@ static int _current_loop_applications(Desktop * desktop)
 }
 
 static int _current_loop_categories(Desktop * desktop)
+{
+	if(desktop->path == NULL)
+		/* XXX hack */
+		return _current_loop_applications_path(desktop, DATADIR);
+	return _current_loop_categories_do(desktop);
+}
+
+static int _current_loop_categories_do(Desktop * desktop)
 {
 	struct dirent * de;
 	size_t len;
@@ -1443,7 +1485,7 @@ void desktop_unselect_all(Desktop * desktop)
 /* private */
 /* functions */
 /* desktop_error */
-static int _error_text(char const * message, int ret);
+static int _error_text(char const * message, char const * error, int ret);
 
 static int _desktop_error(Desktop * desktop, char const * message,
 		char const * error, int ret)
@@ -1451,7 +1493,7 @@ static int _desktop_error(Desktop * desktop, char const * message,
 	GtkWidget * dialog;
 
 	if(desktop == NULL)
-		return _error_text(message, ret);
+		return _error_text(message, error, ret);
 	dialog = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_ERROR,
 			GTK_BUTTONS_CLOSE, "%s",
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -1474,10 +1516,11 @@ static int _desktop_error(Desktop * desktop, char const * message,
 	return ret;
 }
 
-static int _error_text(char const * message, int ret)
+static int _error_text(char const * message, char const * error, int ret)
 {
-	fputs("desktop: ", stderr);
-	perror(message);
+	fprintf(stderr, "%s: %s%s%s\n", PROGNAME,
+			(message != NULL) ? message : "",
+			(message != NULL) ? ": " : "", error);
 	return ret;
 }
 
@@ -1730,10 +1773,7 @@ static int _desktop_icon_add(Desktop * desktop, DesktopIcon * icon)
 
 	if((p = realloc(desktop->icon, sizeof(*p) * (desktop->icon_cnt + 1)))
 			== NULL)
-	{
-		desktop_error(desktop, desktopicon_get_name(icon), 0);
-		return -1;
-	}
+		return -desktop_error(desktop, desktopicon_get_name(icon), 1);
 	desktop->icon = p;
 	desktop->icon[desktop->icon_cnt++] = icon;
 	desktopicon_set_background(icon, &desktop->background);
@@ -2224,7 +2264,7 @@ static void _on_preferences_update_preview(gpointer data)
 #endif
 		if(error != NULL)
 		{
-			desktop_error(NULL, error->message, 1);
+			_desktop_error(NULL, NULL, error->message, 1);
 			g_error_free(error);
 		}
 		if(pixbuf != NULL)
