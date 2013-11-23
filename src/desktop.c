@@ -755,6 +755,7 @@ static void _alignment_vertical(Desktop * desktop)
 /* desktop_set_icons */
 static void _icons_delete(Desktop * desktop);
 static int _icons_applications(Desktop * desktop);
+static int _icons_applications_path(Desktop * desktop, char const * path);
 static int _icons_categories(Desktop * desktop);
 static int _icons_files(Desktop * desktop);
 static void _icons_files_add_home(Desktop * desktop);
@@ -806,7 +807,14 @@ static void _icons_delete(Desktop * desktop)
 
 static int _icons_applications(Desktop * desktop)
 {
+	/* FIXME look at XDG_DATA_DIRS */
 	const char path[] = DATADIR "/applications";
+
+	return _icons_applications_path(desktop, path);
+}
+
+static int _icons_applications_path(Desktop * desktop, char const * path)
+{
 	struct stat st;
 	DesktopIcon * desktopicon;
 	GdkPixbuf * icon;
@@ -814,7 +822,7 @@ static int _icons_applications(Desktop * desktop)
 	free(desktop->path);
 	if((desktop->path = strdup(path)) == NULL)
 		return desktop_error(NULL, strerror(errno), 1);
-	desktop->path_cnt = sizeof(path);
+	desktop->path_cnt = strlen(path) + 1;
 	if(stat(desktop->path, &st) == 0)
 		if(!S_ISDIR(st.st_mode))
 			return desktop_error(NULL, strerror(ENOTDIR), 1);
