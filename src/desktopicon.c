@@ -184,7 +184,8 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 
 
 /* desktopicon_new_application */
-DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path)
+DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
+		char const * datadir)
 {
 	DesktopIcon * desktopicon;
 	Config * config;
@@ -225,9 +226,11 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path)
 		return NULL;
 	}
 	/* image */
+	if(datadir == NULL)
+		datadir = DATADIR;
 	if((len = strlen(icon)) > 4 && (strcmp(&icon[len - 4], ".png") == 0
 				|| strcmp(&icon[len - 4], ".xpm") == 0)
-			&& (buf = string_new_append(DATADIR, "/pixmaps/",
+			&& (buf = string_new_append(datadir, "/pixmaps/",
 					icon, NULL)) != NULL)
 	{
 		image = gdk_pixbuf_new_from_file_at_size(buf,

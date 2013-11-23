@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2010 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2010-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,8 @@ typedef void (*DesktopIconCallback)(Desktop * desktop, gpointer data);
 /* functions */
 DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 		char const * url);
-DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path);
+DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
+		char const * datadir);
 DesktopIcon * desktopicon_new_category(Desktop * desktop, char const * name,
 		char const * icon);
 void desktopicon_delete(DesktopIcon * desktopicon);

@@ -921,7 +921,7 @@ static int _icons_homescreen(Desktop * desktop)
 	for(p = paths; *p != NULL; p++)
 		if(access(*p, R_OK) == 0
 				&& (desktopicon = desktopicon_new_application(
-						desktop, *p)) != NULL)
+						desktop, *p, DATADIR)) != NULL)
 			_desktop_icon_add(desktop, desktopicon);
 #endif
 	return 0;
@@ -1136,7 +1136,9 @@ static int _current_loop_applications_do(Desktop * desktop)
 			continue;
 		if(string_find(q, desktop->category->category) == NULL)
 			continue;
-		if((icon = desktopicon_new_application(desktop, path)) == NULL)
+		/* FIXME forward the corresponding datadir */
+		if((icon = desktopicon_new_application(desktop, path, NULL))
+				== NULL)
 			continue;
 		_desktop_icon_add(desktop, icon);
 		free(path);
@@ -1333,7 +1335,8 @@ static void _done_categories(Desktop * desktop)
 		path = config_get(config, NULL, "path");
 		if((q = config_get(config, section, "Categories")) == NULL)
 		{
-			icon = desktopicon_new_application(desktop, path);
+			icon = desktopicon_new_application(desktop, path,
+					NULL);
 			_desktop_icon_add(desktop, icon);
 			continue;
 		}
@@ -1343,7 +1346,8 @@ static void _done_categories(Desktop * desktop)
 				&& string_find(q, dc->category) == NULL; i++);
 		if(dc->category == NULL)
 		{
-			icon = desktopicon_new_application(desktop, path);
+			icon = desktopicon_new_application(desktop, path,
+					NULL);
 			_desktop_icon_add(desktop, icon);
 			continue;
 		}
