@@ -1,6 +1,7 @@
 [Desktop Entry]
 Name=File manager
 Comment=File manager and image viewer
+TryExec=browser
 Exec=browser
 Icon=system-file-manager
 Type=Application

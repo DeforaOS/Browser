@@ -1,6 +1,7 @@
 [Desktop Entry]
 Name=Desktop
 Comment=Preferences for the desktop
+TryExec=desktopctl
 Exec=desktopctl -S
 Icon=user-desktop
 Type=Application
