@@ -651,6 +651,8 @@ void desktop_delete(Desktop * desktop)
 {
 	size_t i;
 
+	if(desktop->desktop != NULL)
+		gtk_widget_destroy(desktop->desktop);
 	if(desktop->refresh_source != 0)
 		g_source_remove(desktop->refresh_source);
 	for(i = 0; i < desktop->icon_cnt; i++)
