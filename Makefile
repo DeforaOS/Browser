@@ -23,8 +23,8 @@ dist:
 	@$(TAR) $(PACKAGE)-$(VERSION).tar.gz -- \
 		$(PACKAGE)-$(VERSION)/data/Makefile \
 		$(PACKAGE)-$(VERSION)/data/Browser.pc.in \
-		$(PACKAGE)-$(VERSION)/data/browser.desktop \
-		$(PACKAGE)-$(VERSION)/data/desktop-settings.desktop \
+		$(PACKAGE)-$(VERSION)/data/deforaos-browser.desktop \
+		$(PACKAGE)-$(VERSION)/data/deforaos-desktop-settings.desktop \
 		$(PACKAGE)-$(VERSION)/data/pkgconfig.sh \
 		$(PACKAGE)-$(VERSION)/data/project.conf \
 		$(PACKAGE)-$(VERSION)/data/16x16/Makefile \
