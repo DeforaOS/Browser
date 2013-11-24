@@ -44,6 +44,8 @@ typedef struct _BrowserPlugin
 	GtkWidget * widget;
 	GtkWidget * name;
 	GtkWidget * status;
+	/* init */
+	GtkWidget * init;
 	/* directory */
 	GtkWidget * directory;
 	/* file */
@@ -75,6 +77,7 @@ static void _git_on_add(gpointer data);
 static void _git_on_blame(gpointer data);
 static void _git_on_commit(gpointer data);
 static void _git_on_diff(gpointer data);
+static void _git_on_init(gpointer data);
 static void _git_on_log(gpointer data);
 static void _git_on_pull(gpointer data);
 static void _git_on_status(gpointer data);
@@ -130,6 +133,14 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	gtk_label_set_ellipsize(GTK_LABEL(git->status), PANGO_ELLIPSIZE_END);
 	gtk_misc_set_alignment(GTK_MISC(git->status), 0.0, 0.0);
 	gtk_box_pack_start(GTK_BOX(git->widget), git->status, FALSE, TRUE, 0);
+	/* init */
+	git->init = gtk_vbox_new(FALSE, 4);
+	widget = _init_button(bgroup, GTK_STOCK_OK, _("Initialize"), G_CALLBACK(
+				_git_on_init), git);
+	gtk_box_pack_start(GTK_BOX(git->init), widget, FALSE, TRUE, 0);
+	gtk_widget_show_all(git->init);
+	gtk_widget_set_no_show_all(git->init, TRUE);
+	gtk_box_pack_start(GTK_BOX(git->widget), git->init, FALSE, TRUE, 0);
 	/* directory */
 	git->directory = gtk_vbox_new(FALSE, 4);
 	widget = _init_button(bgroup, GTK_STOCK_FIND_AND_REPLACE,
@@ -256,6 +267,7 @@ static void _git_refresh(Git * git, GList * selection)
 	gtk_label_set_text(GTK_LABEL(git->name), p);
 	g_free(p);
 	_refresh_status(git, NULL);
+	gtk_widget_hide(git->init);
 	gtk_widget_hide(git->directory);
 	gtk_widget_hide(git->file);
 	gtk_widget_hide(git->add);
@@ -275,6 +287,7 @@ static void _refresh_dir(Git * git)
 	if(_git_is_managed(git->filename) != TRUE)
 	{
 		_refresh_status(git, _("Not a Git repository"));
+		gtk_widget_show(git->init);
 		return;
 	}
 	gtk_widget_show(git->directory);
@@ -435,6 +448,23 @@ static void _git_on_diff(gpointer data)
 	argv[3] = basename;
 	_git_add_task(git, "git diff", dirname, argv);
 	g_free(basename);
+	g_free(dirname);
+}
+
+
+/* git_on_init */
+static void _git_on_init(gpointer data)
+{
+	Git * git = data;
+	struct stat st;
+	gchar * dirname;
+	char * argv[] = { "git", "init", NULL };
+
+	if(git->filename == NULL || lstat(git->filename, &st) != 0)
+		return;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(git->filename)
+		: g_path_get_dirname(git->filename);
+	_git_add_task(git, "git pull", dirname, argv);
 	g_free(dirname);
 }
 
