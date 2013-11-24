@@ -45,6 +45,9 @@ static char const _license[] =
 #include "common.c"
 
 /* constants */
+#ifndef PROGNAME
+# define PROGNAME	"browser"
+#endif
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
 #endif
@@ -765,7 +768,7 @@ int browser_error(Browser * browser, char const * message, int ret)
 
 static int _browser_error(char const * message, int ret)
 {
-	fprintf(stderr, "%s: %s\n", "browser", message);
+	fprintf(stderr, "%s: %s\n", PROGNAME, message);
 	return ret;
 }
 

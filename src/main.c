@@ -26,6 +26,9 @@
 #define _(string) gettext(string)
 
 /* constants */
+#ifndef PROGNAME
+# define PROGNAME	"browser"
+#endif
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
 #endif
@@ -47,7 +50,7 @@ static int _usage(void);
 /* error */
 static int _error(char const * message, int ret)
 {
-	fputs("browser: ", stderr);
+	fputs(PROGNAME ": ", stderr);
 	perror(message);
 	return ret;
 }
@@ -57,9 +60,10 @@ static int _error(char const * message, int ret)
 static int _usage(void)
 {
 #if GTK_CHECK_VERSION(2, 6, 0)
-	fputs(_("Usage: browser [-D|-I|-L|-T] [directory...]\n"), stderr);
+	fprintf(stderr, _("Usage: %s [-D|-I|-L|-T] [directory...]\n"),
+			PROGNAME);
 #else
-	fputs(_("Usage: browser [-D] [directory...]\n"), stderr);
+	fprintf(stderr, _("Usage: %s [-D] [directory...]\n"), PROGNAME);
 #endif
 	return 1;
 }

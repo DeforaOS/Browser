@@ -39,7 +39,9 @@
 #define _(string) gettext(string)
 
 /* constants */
-#define PROGNAME "browser"
+#ifndef PROGNAME
+# define PROGNAME "browser"
+#endif
 #define COMMON_DND
 #define COMMON_EXEC
 #define COMMON_SYMLINK
