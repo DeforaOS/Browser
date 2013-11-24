@@ -1120,7 +1120,7 @@ static int _current_loop_applications_do(Desktop * desktop)
 		len = desktop->path_cnt + len + 1;
 		if((p = realloc(path, len)) == NULL)
 		{
-			error_set_print("desktop", 1, "%s: %s", "realloc",
+			error_set_print(PROGNAME, 1, "%s: %s", "realloc",
 					strerror(errno));
 			continue;
 		}
@@ -1185,7 +1185,7 @@ static int _current_loop_categories_do(Desktop * desktop)
 		len = desktop->path_cnt + len + 1;
 		if((p = realloc(path, len)) == NULL)
 		{
-			error_set_print("desktop", 1, "%s: %s", "realloc",
+			error_set_print(PROGNAME, 1, "%s: %s", "realloc",
 					strerror(errno));
 			continue;
 		}
@@ -1199,7 +1199,7 @@ static int _current_loop_categories_do(Desktop * desktop)
 		config_reset(config);
 		if(config_load(config, path) != 0)
 		{
-			error_set_print("desktop", 1, "%s: %s", path,
+			error_set_print(PROGNAME, 1, "%s: %s", path,
 					error_get());
 			continue;
 		}
