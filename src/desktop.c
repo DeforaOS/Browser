@@ -1878,7 +1878,11 @@ static void _preferences_background(Desktop * desktop, GtkWidget * notebook)
 	GtkWidget * label;
 	GtkFileFilter * filter;
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
 	vbox2 = gtk_vbox_new(FALSE, 4);
+#endif
 	gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
 	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	hbox = gtk_hbox_new(FALSE, 0);
@@ -1953,7 +1957,11 @@ static void _preferences_icons(Desktop * desktop, GtkWidget * notebook)
 	GtkWidget * label;
 	size_t i;
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
 	vbox2 = gtk_vbox_new(FALSE, 4);
+#endif
 	gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
 	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	/* icons */
@@ -2019,7 +2027,11 @@ static void _preferences_monitors(Desktop * desktop, GtkWidget * notebook)
 	GtkWidget * widget;
 
 	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
 	vbox2 = gtk_vbox_new(FALSE, 4);
+#endif
 	gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
 	/* selector */
 	hbox = gtk_hbox_new(FALSE, 0);
