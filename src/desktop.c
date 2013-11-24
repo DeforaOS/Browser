@@ -117,6 +117,8 @@ struct _Desktop
 	GdkScreen * screen;
 	GdkDisplay * display;
 	GdkWindow * root;
+	GtkWidget * desktop;
+	GdkWindow * back;
 	GtkIconTheme * theme;
 	GtkWidget * menu;
 };
@@ -210,6 +212,7 @@ static void _desktop_show_preferences(Desktop * desktop);
 /* functions */
 /* desktop_new */
 /* callbacks */
+static void _new_events(Desktop * desktop, GdkWindow * window);
 static void _new_icons(Desktop * desktop);
 static gboolean _new_idle(gpointer data);
 static void _idle_background(Desktop * desktop, Config * config);
@@ -225,7 +228,6 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 #if !GTK_CHECK_VERSION(2, 24, 0)
 	int depth;
 #endif
-	GdkEventMask mask;
 
 	if((desktop = object_new(sizeof(*desktop))) == NULL)
 		return NULL;
@@ -249,7 +251,7 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 		desktop->home = "/";
 	desktop_message_register(NULL, DESKTOP_CLIENT_MESSAGE, _on_message,
 			desktop);
-	/* manage root window events */
+	/* query the root window */
 #if GTK_CHECK_VERSION(2, 24, 0)
 	gdk_window_get_position(desktop->root, &desktop->window.x,
 			&desktop->window.y);
@@ -260,15 +262,40 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 			&desktop->window.y, &desktop->window.width,
 			&desktop->window.height, &depth);
 #endif
-	mask = gdk_window_get_events(desktop->root) | GDK_PROPERTY_CHANGE_MASK;
-	if(prefs->popup != 0)
-		mask |= GDK_BUTTON_PRESS_MASK;
-	gdk_window_set_events(desktop->root, mask);
-	gdk_window_add_filter(desktop->root, _on_root_event, desktop);
+#if 0 /* FIXME fully implement (as a hidden option) */
+	/* create the desktop window */
+	desktop->desktop = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_default_size(GTK_WINDOW(desktop->desktop),
+			desktop->window.width, desktop->window.height);
+	gtk_window_set_type_hint(GTK_WINDOW(desktop->desktop),
+			GDK_WINDOW_TYPE_HINT_DESKTOP);
+	gtk_widget_realize(desktop->desktop);
+# if GTK_CHECK_VERSION(2, 14, 0)
+	desktop->back = gtk_widget_get_window(desktop->desktop);
+# else
+	desktop->back = desktop->desktop->window;
+# endif
+#else
+	desktop->desktop = NULL;
+	desktop->back = desktop->root;
+#endif
+	/* manage events on the root window */
+	_new_events(desktop, desktop->root);
 	/* draw the icons and background when idle */
 	_new_icons(desktop);
 	g_idle_add(_new_idle, desktop);
 	return desktop;
+}
+
+static void _new_events(Desktop * desktop, GdkWindow * window)
+{
+	GdkEventMask mask;
+
+	mask = gdk_window_get_events(window) | GDK_PROPERTY_CHANGE_MASK;
+	if(desktop->prefs.popup != 0)
+		mask |= GDK_BUTTON_PRESS_MASK;
+	gdk_window_set_events(window, mask);
+	gdk_window_add_filter(window, _on_root_event, desktop);
 }
 
 static void _new_icons(Desktop * desktop)
@@ -304,6 +331,8 @@ static gboolean _new_idle(gpointer data)
 	if((config = _desktop_get_config(desktop)) == NULL)
 		return FALSE;
 	_idle_background(desktop, config);
+	if(desktop->desktop != NULL)
+		gtk_widget_show(desktop->desktop);
 	_idle_icons(desktop, config);
 	config_delete(config);
 	_desktop_get_workarea(desktop);
@@ -1635,7 +1664,7 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 	if(how == DESKTOP_HOW_NONE)
 		return;
 	/* draw default color */
-	pixmap = gdk_pixmap_new(desktop->root, window.width, window.height, -1);
+	pixmap = gdk_pixmap_new(desktop->back, window.width, window.height, -1);
 	gc = gdk_gc_new(pixmap);
 	gdk_gc_set_rgb_fg_color(gc, color);
 	gdk_draw_rectangle(pixmap, gc, TRUE, 0, 0, window.width, window.height);
@@ -1674,8 +1703,8 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 			g_error_free(error);
 		}
 	}
-	gdk_window_set_back_pixmap(desktop->root, pixmap, FALSE);
-	gdk_window_clear(desktop->root);
+	gdk_window_set_back_pixmap(desktop->back, pixmap, FALSE);
+	gdk_window_clear(desktop->back);
 	gdk_pixmap_unref(pixmap);
 }
 
