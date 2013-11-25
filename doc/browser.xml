@@ -28,10 +28,11 @@
 		</authorgroup>
 		<copyright>
 			<year>2012</year>
+			<year>2013</year>
 			<holder>&firstname; &surname; &lt;&email;&gt;</holder>
 		</copyright>
 		<legalnotice>
-			<para>This manual page was written for the DeforaOS project (and may be
+			<para>This manual page was written for the DeforaOS Project (and may be
 				used by others).</para>
 			<para>Permission is granted to copy, distribute and/or modify this
 				document under the terms of the GNU General Public License,
@@ -49,6 +50,12 @@
 	<refsynopsisdiv>
 		<cmdsynopsis>
 			<command>&name;</command>
+			<group choice="opt">
+				<arg choice="plain"><option>-D</option></arg>
+				<arg choice="plain"><option>-I</option></arg>
+				<arg choice="plain"><option>-L</option></arg>
+				<arg choice="plain"><option>-T</option></arg>
+			</group>
 			<arg rep="repeat"><replaceable>directory</replaceable></arg>
 		</cmdsynopsis>
 	</refsynopsisdiv>
@@ -59,8 +66,35 @@
 	</refsect1>
 	<refsect1 id="options">
 		<title>Options</title>
-		<para>A list of directories to browse can be provided directly on the command
-		line.</para>
+		<para>The following options are available:</para>
+		<variablelist>
+			<varlistentry>
+				<term><option>-D</option></term>
+				<listitem>
+					<para>Start the file manager in detailed view.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-I</option></term>
+				<listitem>
+					<para>Start the file manager in icon view.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-L</option></term>
+				<listitem>
+					<para>Start the file manager in list view.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-T</option></term>
+				<listitem>
+					<para>Start the file manager in thumbnail view.</para>
+				</listitem>
+			</varlistentry>
+		</variablelist>
+		<para>A list of directories to browse can also be provided directly on the
+			command line.</para>
 	</refsect1>
 	<refsect1 id="bugs">
 		<title>Bugs</title>
