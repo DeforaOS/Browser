@@ -60,10 +60,14 @@ static int _error(char const * message, int ret)
 static int _usage(void)
 {
 #if GTK_CHECK_VERSION(2, 6, 0)
-	fprintf(stderr, _("Usage: %s [-D|-I|-L|-T] [directory...]\n"),
-			PROGNAME);
+	fprintf(stderr, _("Usage: %s [-D|-I|-L|-T] [directory...]\n"
+"  -D	Start in detailed view\n"
+"  -I	Start in icon view\n"
+"  -L	Start in list view\n"
+"  -T	Start in thumbnail view\n"), PROGNAME);
 #else
-	fprintf(stderr, _("Usage: %s [-D] [directory...]\n"), PROGNAME);
+	fprintf(stderr, _("Usage: %s [-D] [directory...]\n"
+"  -D	Start in detailed view\n"), PROGNAME);
 #endif
 	return 1;
 }
