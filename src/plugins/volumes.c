@@ -18,7 +18,11 @@
 #include <System.h>
 #include <string.h>
 #include <libintl.h>
-#ifdef __NetBSD__
+#if defined(__FreeBSD__)
+# include <sys/param.h>
+# include <sys/ucred.h>
+# include <sys/mount.h>
+#elif defined(__NetBSD__)
 # include <sys/types.h>
 # include <sys/statvfs.h>
 #endif
@@ -170,8 +174,12 @@ static void _refresh_add(Volumes * volumes, char const * name,
 static void _volumes_refresh(Volumes * volumes, GList * selection)
 {
 	char * path = (selection != NULL) ? selection->data : NULL;
-#ifdef __NetBSD__
+#if defined(ST_NOWAIT)
 	struct statvfs * mnt;
+	int res;
+	int i;
+#elif defined(MNT_NOWAIT)
+	struct statfs * mnt;
 	int res;
 	int i;
 #endif
@@ -188,8 +196,15 @@ static void _volumes_refresh(Volumes * volumes, GList * selection)
 	}
 	/* FIXME no longer clear the list every time */
 	gtk_list_store_clear(volumes->store);
-#ifdef __NetBSD__
-	if((res = getmntinfo(&mnt, ST_WAIT)) <= 0)
+#if defined(ST_NOWAIT)
+	if((res = getmntinfo(&mnt, ST_NOWAIT)) <= 0)
+		return;
+	for(i = 0; i < res; i++)
+		_refresh_add(volumes, NULL, mnt[i].f_mntfromname,
+				mnt[i].f_mntonname, mnt[i].f_fstypename,
+				mnt[i].f_bavail, mnt[i].f_blocks);
+#elif defined(MNT_NOWAIT)
+	if((res = getmntinfo(&mnt, MNT_NOWAIT)) <= 0)
 		return;
 	for(i = 0; i < res; i++)
 		_refresh_add(volumes, NULL, mnt[i].f_mntfromname,
