@@ -22,6 +22,7 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libgen.h>
 #include <errno.h>
 #include "common.c"
 
@@ -61,6 +62,9 @@ static SVN * _subversion_init(BrowserPluginHelper * helper);
 static void _subversion_destroy(SVN * svn);
 static GtkWidget * _subversion_get_widget(SVN * svn);
 static void _subversion_refresh(SVN * svn, GList * selection);
+
+/* accessors */
+static gboolean _subversion_is_managed(char const * filename);
 
 /* useful */
 static int _subversion_add_task(SVN * svn, char const * title,
@@ -263,29 +267,33 @@ static void _subversion_refresh(SVN * svn, GList * selection)
 
 static void _refresh_dir(SVN * svn)
 {
-	char const dir[] = ".svn";
+	char const dir[] = "/.svn";
 	size_t len = strlen(svn->filename);
 	char * p;
 	struct stat st;
 
 	/* consider ".svn" folders like their parent */
-	if((len = strlen(svn->filename)) >= 4 && strcmp(&svn->filename[len - 4],
-				"/.svn") == 0)
+	if((len = strlen(svn->filename)) >= (sizeof(dir) - 1)
+			&& strcmp(&svn->filename[len - 4], dir) == 0)
 		svn->filename[len - 4] = '\0';
-	/* check if it is a SVN repository */
+	/* check if it is an old SVN repository */
 	len = strlen(svn->filename) + sizeof(dir) + 1;
 	if((p = malloc(len)) != NULL)
 	{
-		snprintf(p, len, "%s/%s", svn->filename, dir);
-		if(lstat(p, &st) != 0)
+		snprintf(p, len, "%s%s", svn->filename, dir);
+		if(lstat(p, &st) == 0)
 		{
-			_refresh_status(svn, _("Not a Subversion repository"));
 			free(p);
+			gtk_widget_show(svn->directory);
 			return;
 		}
 	}
 	free(p);
-	gtk_widget_show(svn->directory);
+	/* check if it is a newer SVN repository */
+	if(_subversion_is_managed(svn->filename))
+		gtk_widget_show(svn->directory);
+	else
+		_refresh_status(svn, _("Not a Subversion repository"));
 }
 
 static void _refresh_status(SVN * svn, char const * status)
@@ -293,6 +301,45 @@ static void _refresh_status(SVN * svn, char const * status)
 	if(status == NULL)
 		status = "";
 	gtk_label_set_text(GTK_LABEL(svn->status), status);
+}
+
+
+/* accessors */
+/* subversion_is_managed */
+static gboolean _subversion_is_managed(char const * filename)
+{
+	char * base = strdup(filename);
+	char * dir = base;
+	String * p;
+	struct stat st;
+	int res;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, filename);
+#endif
+	for(; strcmp(dir, ".") != 0; dir = dirname(dir))
+	{
+		if((p = string_new_append(dir, "/.svn", NULL)) == NULL)
+		{
+			free(base);
+			return FALSE;
+		}
+		res = lstat(p, &st);
+#ifdef DEBUG
+		fprintf(stderr, "DEBUG: %s() \"%s\" %d\n", __func__, p, res);
+#endif
+		string_delete(p);
+		if(res == 0)
+		{
+			/* FIXME really implement */
+			free(base);
+			return TRUE;
+		}
+		if(strcmp(dir, "/") == 0)
+			break;
+	}
+	free(base);
+	return FALSE;
 }
 
 
