@@ -41,12 +41,12 @@ enum _VolumesColumn
 #define DC_LAST DC_FREE_DISPLAY
 #define DC_COUNT (DC_LAST + 1)
 
-enum _VolumesPixbuf
+typedef enum _VolumesPixbuf
 {
 	DP_HARDDISK = 0,
 	DP_CDROM,
 	DP_REMOVABLE
-};
+} VolumesPixbuf;
 #define DP_LAST DP_REMOVABLE
 #define DP_COUNT (DP_LAST + 1)
 
@@ -209,7 +209,7 @@ static void _refresh_add(Volumes * volumes, char const * name,
 		char const * filesystem, fsblkcnt_t free, fsblkcnt_t total)
 {
 	GtkTreeIter iter;
-	GdkPixbuf * pixbuf = volumes->icons[0];
+	VolumesPixbuf dp = DP_HARDDISK;
 	char const * ignore[] = { "kernfs", "proc", "procfs", "ptyfs" };
 	char const * cdrom[] = { "/dev/cd" };
 	char const * removable[] = { "/dev/sd" };
@@ -227,13 +227,13 @@ static void _refresh_add(Volumes * volumes, char const * name,
 	for(i = 0; i < sizeof(cdrom) / sizeof(*cdrom); i++)
 		if(strncmp(cdrom[i], device, strlen(cdrom[i])) == 0)
 		{
-			pixbuf = volumes->icons[DP_CDROM];
+			dp = DP_CDROM;
 			break;
 		}
 	for(i = 0; i < sizeof(removable) / sizeof(removable); i++)
 		if(strncmp(removable[i], device, strlen(removable[i])) == 0)
 		{
-			pixbuf = volumes->icons[DP_REMOVABLE];
+			dp = DP_REMOVABLE;
 			break;
 		}
 	if(name == NULL)
@@ -243,14 +243,14 @@ static void _refresh_add(Volumes * volumes, char const * name,
 		else
 			name = mountpoint;
 	}
-	if(total != 0 && total >= free)
+	if(dp != DP_CDROM && total != 0 && total >= free)
 	{
 		fraction = total - free;
 		fraction = fraction / total;
 		snprintf(buf, sizeof(buf), "%.1lf%%", fraction * 100.0);
 	}
 	gtk_list_store_append(volumes->store, &iter);
-	gtk_list_store_set(volumes->store, &iter, DC_PIXBUF, pixbuf,
+	gtk_list_store_set(volumes->store, &iter, DC_PIXBUF, volumes->icons[dp],
 			DC_NAME, name, DC_MOUNTPOINT, mountpoint,
 			DC_FREE, fraction, DC_FREE_DISPLAY, buf, -1);
 }
