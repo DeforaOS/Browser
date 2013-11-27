@@ -281,7 +281,7 @@ static void _refresh_dir(Git * git)
 	size_t len = strlen(git->filename);
 
 	/* consider ".git" folders like their parent */
-	if((len = strlen(git->filename)) >= 4
+	if((len = strlen(git->filename)) >= (sizeof(dir) - 1)
 			&& strcmp(&git->filename[len - 4], dir) == 0)
 		git->filename[len - 4] = '\0';
 	if(_git_is_managed(git->filename) != TRUE)
