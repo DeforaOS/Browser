@@ -110,7 +110,7 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(volumes->window),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	volumes->store = gtk_list_store_new(DC_COUNT, GDK_TYPE_PIXBUF,
-			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_DOUBLE,
+			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT,
 			G_TYPE_STRING);
 	volumes->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				volumes->store));
@@ -127,7 +127,6 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	gtk_tree_view_append_column(GTK_TREE_VIEW(volumes->view), column);
 	/* free space */
 	renderer = gtk_cell_renderer_progress_new();
-	/* FIXME the "value" field seems to be ignored */
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
 			"text", DC_FREE_DISPLAY, "value", DC_FREE, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(volumes->view), column);
@@ -252,7 +251,8 @@ static void _refresh_add(Volumes * volumes, char const * name,
 	gtk_list_store_append(volumes->store, &iter);
 	gtk_list_store_set(volumes->store, &iter, DC_PIXBUF, volumes->icons[dp],
 			DC_NAME, name, DC_MOUNTPOINT, mountpoint,
-			DC_FREE, fraction, DC_FREE_DISPLAY, buf, -1);
+			DC_FREE, (int)(fraction * 100), DC_FREE_DISPLAY, buf,
+			-1);
 }
 
 
