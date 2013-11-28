@@ -263,9 +263,14 @@ static void _refresh_add(Volumes * volumes, char const * name,
 		fraction = fraction / total;
 		snprintf(buf, sizeof(buf), "%.1lf%%", fraction * 100.0);
 	}
+#if GTK_CHECK_VERSION(2, 6, 0)
+	gtk_list_store_insert_with_values(volumes->store, &iter, -1,
+#else
 	gtk_list_store_append(volumes->store, &iter);
-	gtk_list_store_set(volumes->store, &iter, DC_PIXBUF, volumes->icons[dp],
-			DC_NAME, name, DC_MOUNTPOINT, mountpoint,
+	gtk_list_store_set(volumes->store, &iter,
+#endif
+			DC_PIXBUF, volumes->icons[dp], DC_NAME, name,
+			DC_MOUNTPOINT, mountpoint,
 			DC_FREE, (int)(fraction * 100), DC_FREE_DISPLAY, buf,
 			-1);
 }
