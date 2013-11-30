@@ -73,7 +73,8 @@ static void _volumes_refresh(Volumes * volumes, GList * selection);
 
 /* callbacks */
 static gboolean _volumes_on_timeout(gpointer data);
-static void _volumes_on_selection_changed(gpointer data);
+static void _volumes_on_view_row_activated(GtkWidget * widget,
+		GtkTreePath * path, GtkTreeViewColumn * column, gpointer data);
 
 
 /* public */
@@ -136,8 +137,8 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	gtk_tree_view_append_column(GTK_TREE_VIEW(volumes->view), column);
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(volumes->view));
 	gtk_tree_selection_set_mode(treesel, GTK_SELECTION_SINGLE);
-	g_signal_connect_swapped(G_OBJECT(treesel), "changed", G_CALLBACK(
-				_volumes_on_selection_changed), volumes);
+	g_signal_connect(volumes->view, "row-activated", G_CALLBACK(
+				_volumes_on_view_row_activated), volumes);
 	gtk_container_add(GTK_CONTAINER(volumes->window), volumes->view);
 	icontheme = gtk_icon_theme_get_default();
 	gtk_icon_size_lookup(GTK_ICON_SIZE_BUTTON, &width, &height);
@@ -293,17 +294,17 @@ static gboolean _volumes_on_timeout(gpointer data)
 }
 
 
-/* volumes_on_selection_changed */
-static void _volumes_on_selection_changed(gpointer data)
+/* volumes_on_view_row_activated */
+static void _volumes_on_view_row_activated(GtkWidget * widget,
+		GtkTreePath * path, GtkTreeViewColumn * column, gpointer data)
 {
 	Volumes * volumes = data;
-	GtkTreeSelection * treesel;
 	GtkTreeModel * model;
 	GtkTreeIter iter;
 	gchar * location;
 
-	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(volumes->view));
-	if(gtk_tree_selection_get_selected(treesel, &model, &iter) != TRUE)
+	model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
+	if(gtk_tree_model_get_iter(model, &iter, path) != TRUE)
 		return;
 	gtk_tree_model_get(model, &iter, DC_MOUNTPOINT, &location, -1);
 	volumes->helper->set_location(volumes->helper->browser, location);
