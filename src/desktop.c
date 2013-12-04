@@ -1366,9 +1366,9 @@ static void _done_categories(Desktop * desktop)
 		path = config_get(config, NULL, "path");
 		if((q = config_get(config, section, "Categories")) == NULL)
 		{
-			icon = desktopicon_new_application(desktop, path,
-					NULL);
-			_desktop_icon_add(desktop, icon);
+			if((icon = desktopicon_new_application(desktop, path,
+							NULL)) != NULL)
+				_desktop_icon_add(desktop, icon);
 			continue;
 		}
 		for(i = 0; i < _desktop_categories_cnt
@@ -1377,15 +1377,17 @@ static void _done_categories(Desktop * desktop)
 				&& string_find(q, dc->category) == NULL; i++);
 		if(dc->category == NULL)
 		{
-			icon = desktopicon_new_application(desktop, path,
-					NULL);
-			_desktop_icon_add(desktop, icon);
+			if((icon = desktopicon_new_application(desktop, path,
+					NULL)) != NULL)
+				_desktop_icon_add(desktop, icon);
 			continue;
 		}
 		if(dc->show == TRUE)
 			continue;
 		dc->show = TRUE;
-		icon = desktopicon_new_category(desktop, dc->name, dc->icon);
+		if((icon = desktopicon_new_category(desktop, dc->name,
+						dc->icon)) == NULL)
+			continue;
 		desktopicon_set_callback(icon, _done_categories_open, dc);
 		_desktop_icon_add(desktop, icon);
 	}
@@ -1440,7 +1442,7 @@ static int _align_compare(const void * a, const void * b);
 
 void desktop_icons_align(Desktop * desktop)
 {
-	qsort(desktop->icon, desktop->icon_cnt, sizeof(void*), _align_compare);
+	qsort(desktop->icon, desktop->icon_cnt, sizeof(void *), _align_compare);
 	desktop_set_alignment(desktop, desktop->prefs.alignment);
 }
 
