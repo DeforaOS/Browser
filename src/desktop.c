@@ -791,7 +791,7 @@ static void _icons_delete(Desktop * desktop);
 static int _icons_applications(Desktop * desktop);
 static int _icons_categories(Desktop * desktop);
 static int _icons_files(Desktop * desktop);
-static void _icons_files_add_home(Desktop * desktop);
+static int _icons_files_add_home(Desktop * desktop);
 static int _icons_homescreen(Desktop * desktop);
 static void _icons_set_categories(Desktop * desktop, gpointer data);
 static void _icons_set_homescreen(Desktop * desktop, gpointer data);
@@ -844,18 +844,21 @@ static int _icons_applications(Desktop * desktop)
 	GdkPixbuf * icon;
 
 	/* FIXME list all applications otherwise? */
-	if(desktop->category != NULL)
+	if(desktop->category == NULL)
+		return 0;
+	if((desktopicon = desktopicon_new(desktop, _("Back"), NULL)) == NULL)
+		return -_desktop_serror(desktop, "Back", 1);
+	desktopicon_set_callback(desktopicon, _icons_set_categories, NULL);
+	desktopicon_set_first(desktopicon, TRUE);
+	desktopicon_set_immutable(desktopicon, TRUE);
+	icon = gtk_icon_theme_load_icon(desktop->theme, "back",
+			DESKTOPICON_ICON_SIZE, 0, NULL);
+	if(icon != NULL)
+		desktopicon_set_icon(desktopicon, icon);
+	if(_desktop_icon_add(desktop, desktopicon) != 0)
 	{
-		desktopicon = desktopicon_new(desktop, _("Back"), NULL);
-		desktopicon_set_callback(desktopicon, _icons_set_categories,
-				NULL);
-		desktopicon_set_first(desktopicon, TRUE);
-		desktopicon_set_immutable(desktopicon, TRUE);
-		icon = gtk_icon_theme_load_icon(desktop->theme, "back",
-				DESKTOPICON_ICON_SIZE, 0, NULL);
-		if(icon != NULL)
-			desktopicon_set_icon(desktopicon, icon);
-		_desktop_icon_add(desktop, desktopicon);
+		desktopicon_delete(desktopicon);
+		return -1;
 	}
 	return 0;
 }
@@ -867,7 +870,8 @@ static int _icons_categories(Desktop * desktop)
 
 	desktop->category = NULL;
 	_icons_applications(desktop); /* XXX hack */
-	desktopicon = desktopicon_new(desktop, _("Back"), NULL);
+	if((desktopicon = desktopicon_new(desktop, _("Back"), NULL)) == NULL)
+		return -_desktop_serror(desktop, "Back", 1);
 	desktopicon_set_callback(desktopicon, _icons_set_homescreen, NULL);
 	desktopicon_set_first(desktopicon, TRUE);
 	desktopicon_set_immutable(desktopicon, TRUE);
@@ -875,7 +879,11 @@ static int _icons_categories(Desktop * desktop)
 			DESKTOPICON_ICON_SIZE, 0, NULL);
 	if(icon != NULL)
 		desktopicon_set_icon(desktopicon, icon);
-	_desktop_icon_add(desktop, desktopicon);
+	if(_desktop_icon_add(desktop, desktopicon) != 0)
+	{
+		desktopicon_delete(desktopicon);
+		return -1;
+	}
 	return 0;
 }
 
@@ -903,17 +911,16 @@ static int _icons_files(Desktop * desktop)
 	return 0;
 }
 
-static void _icons_files_add_home(Desktop * desktop)
+static int _icons_files_add_home(Desktop * desktop)
 {
 	DesktopIcon * desktopicon;
 	GdkPixbuf * icon;
 
 	if((desktopicon = desktopicon_new(desktop, _("Home"), desktop->home))
 			== NULL)
-		return;
+		return -_desktop_serror(desktop, "Home", 1);
 	desktopicon_set_first(desktopicon, TRUE);
 	desktopicon_set_immutable(desktopicon, TRUE);
-	desktop_icon_add(desktop, desktopicon);
 	icon = gtk_icon_theme_load_icon(desktop->theme, "gnome-home",
 			DESKTOPICON_ICON_SIZE, 0, NULL);
 	if(icon == NULL)
@@ -921,6 +928,12 @@ static void _icons_files_add_home(Desktop * desktop)
 				DESKTOPICON_ICON_SIZE, 0, NULL);
 	if(icon != NULL)
 		desktopicon_set_icon(desktopicon, icon);
+	if(_desktop_icon_add(desktop, desktopicon) != 0)
+	{
+		desktopicon_delete(desktopicon);
+		return -1;
+	}
+	return 0;
 }
 
 static int _icons_homescreen(Desktop * desktop)
@@ -940,7 +953,7 @@ static int _icons_homescreen(Desktop * desktop)
 
 	if((desktopicon = desktopicon_new(desktop, _("Applications"), NULL))
 			== NULL)
-		return _desktop_serror(NULL, "Applications", 1);
+		return _desktop_serror(desktop, "Applications", 1);
 	desktopicon_set_callback(desktopicon, _icons_set_categories, NULL);
 	desktopicon_set_immutable(desktopicon, TRUE);
 	icon = gtk_icon_theme_load_icon(desktop->theme, "gnome-applications",
@@ -1135,7 +1148,7 @@ static int _current_loop_applications_do(Desktop * desktop)
 	if(desktop->category == NULL)
 		return -1;
 	if((config = config_new()) == NULL)
-		return -_desktop_serror(NULL, NULL, 1);
+		return -_desktop_serror(desktop, NULL, 1);
 	while((de = vfs_readdir(desktop->refresh_dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
@@ -1284,7 +1297,7 @@ static int _current_loop_files(Desktop * desktop)
 		return -1;
 	if((p = string_new_append(desktop->path, "/", de->d_name, NULL))
 			== NULL)
-		return -_desktop_serror(NULL, de->d_name, 1);
+		return -_desktop_serror(desktop, de->d_name, 1);
 	if((desktopicon = desktopicon_new(desktop, de->d_name, p)) != NULL)
 		desktop_icon_add(desktop, desktopicon);
 	string_delete(p);
