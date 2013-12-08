@@ -87,7 +87,12 @@ static GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size,
 	int esize;
 	GdkPixbuf * epixbuf;
 	GtkIconTheme * icontheme;
-	int flags = GTK_ICON_LOOKUP_USE_BUILTIN | GTK_ICON_LOOKUP_FORCE_SIZE;
+#if GTK_CHECK_VERSION(2, 14, 0)
+	const int flags = GTK_ICON_LOOKUP_USE_BUILTIN
+		| GTK_ICON_LOOKUP_FORCE_SIZE;
+#else
+	const int flags = GTK_ICON_LOOKUP_USE_BUILTIN;
+#endif
 
 	/* work on a copy */
 	epixbuf = gdk_pixbuf_copy(pixbuf);
@@ -156,7 +161,7 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 		{ "Videos",	"folder-videos"		},
 	};
 	GtkIconTheme * icontheme;
-	int flags = GTK_ICON_LOOKUP_FORCE_SIZE;
+	const int flags = GTK_ICON_LOOKUP_FORCE_SIZE;
 
 	if(lst == NULL && vfs_lstat(filename, &ls) == 0)
 		lst = &ls;
