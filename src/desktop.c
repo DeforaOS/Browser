@@ -1863,6 +1863,8 @@ static void _preferences_background(Desktop * desktop, GtkWidget * notebook);
 static void _preferences_icons(Desktop * desktop, GtkWidget * notebook);
 static void _preferences_monitors(Desktop * desktop, GtkWidget * notebook);
 static void _preferences_set(Desktop * desktop);
+static void _preferences_set_color(Config * config, char const * variable,
+		char const * fallback, GtkWidget * widget);
 static gboolean _on_preferences_closex(gpointer data);
 static void _on_preferences_monitors_changed(gpointer data);
 static void _on_preferences_monitors_refresh(gpointer data);
@@ -2267,12 +2269,14 @@ static void _on_preferences_monitors_refresh(gpointer data)
 static void _on_preferences_response(GtkWidget * widget, gint response,
 		gpointer data)
 {
+	Desktop * desktop = data;
+
 	if(response == GTK_RESPONSE_OK)
-		_on_preferences_ok(data);
+		_on_preferences_ok(desktop);
 	else if(response == GTK_RESPONSE_APPLY)
-		_on_preferences_apply(data);
+		_on_preferences_apply(desktop);
 	else if(response == GTK_RESPONSE_CANCEL)
-		_on_preferences_cancel(data);
+		_on_preferences_cancel(desktop);
 }
 
 static void _on_preferences_ok(gpointer data)
@@ -2280,7 +2284,7 @@ static void _on_preferences_ok(gpointer data)
 	Desktop * desktop = data;
 
 	gtk_widget_hide(desktop->pr_window);
-	_on_preferences_apply(data);
+	_on_preferences_apply(desktop);
 }
 
 static void _on_preferences_apply(gpointer data)
@@ -2336,7 +2340,9 @@ static void _on_preferences_apply(gpointer data)
 	/* XXX code duplication */
 	if((p = string_new_append(desktop->home, "/" DESKTOPRC, NULL)) != NULL)
 	{
-		config_save(config, p);
+		/* FIXME save configuration in _on_preferences_ok() instead */
+		if(config_save(config, p) != 0)
+			error_print(PROGNAME);
 		string_delete(p);
 	}
 	config_delete(config);
@@ -2439,16 +2445,10 @@ static void _preferences_set(Desktop * desktop)
 				}
 		gtk_combo_box_set_active(GTK_COMBO_BOX(desktop->pr_ilayout),
 				how);
-		if((p = config_get(config, "icons", "background")) == NULL)
-			p = black;
-		if(gdk_color_parse(p, &color) == TRUE)
-			gtk_color_button_set_color(GTK_COLOR_BUTTON(
-						desktop->pr_ibcolor), &color);
-		if((p = config_get(config, "icons", "foreground")) == NULL)
-			p = white;
-		if(gdk_color_parse(p, &color) == TRUE)
-			gtk_color_button_set_color(GTK_COLOR_BUTTON(
-						desktop->pr_ifcolor), &color);
+		_preferences_set_color(config, "background", black,
+				desktop->pr_ibcolor);
+		_preferences_set_color(config, "foreground", white,
+				desktop->pr_ifcolor);
 		if((p = config_get(config, "icons", "font")) != NULL)
 			gtk_font_button_set_font_name(GTK_FONT_BUTTON(
 						desktop->pr_ifont), p);
@@ -2486,6 +2486,18 @@ static void _preferences_set(Desktop * desktop)
 					desktop->pr_background));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(
 				desktop->pr_background_extend), extend);
+}
+
+static void _preferences_set_color(Config * config, char const * variable,
+		char const * fallback, GtkWidget * widget)
+{
+	char const * p;
+	GdkColor color = { 0, 0, 0, 0 };
+
+	if((p = config_get(config, "icons", variable)) == NULL)
+		p = fallback;
+	if(gdk_color_parse(p, &color) == TRUE)
+		gtk_color_button_set_color(GTK_COLOR_BUTTON(widget), &color);
 }
 
 
