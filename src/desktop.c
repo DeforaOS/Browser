@@ -2402,7 +2402,6 @@ static void _preferences_set(Desktop * desktop)
 	String const * p;
 	String * q;
 	String const * filename = NULL;
-	GdkColor color = { 0, 0, 0, 0 };
 	const char black[] = "#000000000000";
 	const char white[] = "#ffffffffffff";
 	int how;
@@ -2492,12 +2491,21 @@ static void _preferences_set_color(Config * config, char const * section,
 		GtkWidget * widget)
 {
 	char const * p;
+#if GTK_CHECK_VERSION(3, 4, 0)
+	GdkRGBA color = { 0.0, 0.0, 0.0, 0.0 };
+#else
 	GdkColor color = { 0, 0, 0, 0 };
+#endif
 
 	if((p = config_get(config, section, variable)) == NULL)
 		p = fallback;
+#if GTK_CHECK_VERSION(3, 4, 0)
+	if(p != NULL && gdk_rgba_parse(&color, p) == TRUE)
+		gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(widget), &color);
+#else
 	if(p != NULL && gdk_color_parse(p, &color) == TRUE)
 		gtk_color_button_set_color(GTK_COLOR_BUTTON(widget), &color);
+#endif
 }
 
 
