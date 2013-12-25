@@ -1863,8 +1863,9 @@ static void _preferences_background(Desktop * desktop, GtkWidget * notebook);
 static void _preferences_icons(Desktop * desktop, GtkWidget * notebook);
 static void _preferences_monitors(Desktop * desktop, GtkWidget * notebook);
 static void _preferences_set(Desktop * desktop);
-static void _preferences_set_color(Config * config, char const * variable,
-		char const * fallback, GtkWidget * widget);
+static void _preferences_set_color(Config * config, char const * section,
+		char const * variable, char const * fallback,
+		GtkWidget * widget);
 static gboolean _on_preferences_closex(gpointer data);
 static void _on_preferences_monitors_changed(gpointer data);
 static void _on_preferences_monitors_refresh(gpointer data);
@@ -2418,10 +2419,8 @@ static void _preferences_set(Desktop * desktop)
 	{
 		/* background */
 		filename = config_get(config, "background", "wallpaper");
-		if((p = config_get(config, "background", "color")) != NULL
-				&& gdk_color_parse(p, &color) == TRUE)
-			gtk_color_button_set_color(GTK_COLOR_BUTTON(
-						desktop->pr_color), &color);
+		_preferences_set_color(config, "background", "color", NULL,
+				desktop->pr_color);
 		how = 0;
 		if((p = config_get(config, "background", "how")) != NULL)
 			for(i = 0; i < DESKTOP_HOW_COUNT; i++)
@@ -2445,9 +2444,9 @@ static void _preferences_set(Desktop * desktop)
 				}
 		gtk_combo_box_set_active(GTK_COMBO_BOX(desktop->pr_ilayout),
 				how);
-		_preferences_set_color(config, "background", black,
+		_preferences_set_color(config, "icons", "background", black,
 				desktop->pr_ibcolor);
-		_preferences_set_color(config, "foreground", white,
+		_preferences_set_color(config, "icons", "foreground", white,
 				desktop->pr_ifcolor);
 		if((p = config_get(config, "icons", "font")) != NULL)
 			gtk_font_button_set_font_name(GTK_FONT_BUTTON(
@@ -2488,15 +2487,16 @@ static void _preferences_set(Desktop * desktop)
 				desktop->pr_background_extend), extend);
 }
 
-static void _preferences_set_color(Config * config, char const * variable,
-		char const * fallback, GtkWidget * widget)
+static void _preferences_set_color(Config * config, char const * section,
+		char const * variable, char const * fallback,
+		GtkWidget * widget)
 {
 	char const * p;
 	GdkColor color = { 0, 0, 0, 0 };
 
-	if((p = config_get(config, "icons", variable)) == NULL)
+	if((p = config_get(config, section, variable)) == NULL)
 		p = fallback;
-	if(gdk_color_parse(p, &color) == TRUE)
+	if(p != NULL && gdk_color_parse(p, &color) == TRUE)
 		gtk_color_button_set_color(GTK_COLOR_BUTTON(widget), &color);
 }
 
