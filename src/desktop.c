@@ -1973,6 +1973,20 @@ static void _preferences_background(Desktop * desktop, GtkWidget * notebook)
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
+#if GTK_CHECK_VERSION(2, 24, 0)
+	desktop->pr_background_how = gtk_combo_box_text_new();
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(
+				desktop->pr_background_how), _("Do not draw"));
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(
+				desktop->pr_background_how), _("Centered"));
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(
+				desktop->pr_background_how), _("Scaled"));
+	gtk_combo_box_text_append_text(
+			GTK_COMBO_BOX_TEXT(desktop->pr_background_how),
+			_("Scaled (keep ratio)"));
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(
+				desktop->pr_background_how), _("Tiled"));
+#else
 	desktop->pr_background_how = gtk_combo_box_new_text();
 	gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_background_how),
 			_("Do not draw"));
@@ -1984,6 +1998,7 @@ static void _preferences_background(Desktop * desktop, GtkWidget * notebook)
 			_("Scaled (keep ratio)"));
 	gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_background_how),
 			_("Tiled"));
+#endif
 	gtk_box_pack_start(GTK_BOX(hbox), desktop->pr_background_how, TRUE,
 			TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, TRUE, 0);
@@ -2016,11 +2031,21 @@ static void _preferences_icons(Desktop * desktop, GtkWidget * notebook)
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
+#if GTK_CHECK_VERSION(2, 24, 0)
+	desktop->pr_ilayout = gtk_combo_box_text_new();
+#else
 	desktop->pr_ilayout = gtk_combo_box_new_text();
+#endif
 	for(i = 0; i < sizeof(_desktop_icons) / sizeof(*_desktop_icons);
 			i++)
+#if GTK_CHECK_VERSION(2, 24, 0)
+		gtk_combo_box_text_append_text(
+				GTK_COMBO_BOX_TEXT(desktop->pr_ilayout),
+				_(_desktop_icons[i]));
+#else
 		gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_ilayout),
 				_(_desktop_icons[i]));
+#endif
 	gtk_box_pack_start(GTK_BOX(hbox), desktop->pr_ilayout, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, TRUE, 0);
 	/* monitor */
@@ -2029,7 +2054,11 @@ static void _preferences_icons(Desktop * desktop, GtkWidget * notebook)
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
+#if GTK_CHECK_VERSION(2, 24, 0)
+	desktop->pr_imonitor = gtk_combo_box_text_new();
+#else
 	desktop->pr_imonitor = gtk_combo_box_new_text();
+#endif
 	gtk_box_pack_start(GTK_BOX(hbox), desktop->pr_imonitor, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, TRUE, 0);
 	/* background color */
@@ -2085,7 +2114,11 @@ static void _preferences_monitors(Desktop * desktop, GtkWidget * notebook)
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
+#if GTK_CHECK_VERSION(2, 24, 0)
+	desktop->pr_monitors = gtk_combo_box_text_new();
+#else
 	desktop->pr_monitors = gtk_combo_box_new_text();
+#endif
 	gtk_box_pack_start(GTK_BOX(hbox), desktop->pr_monitors, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, TRUE, 0);
 	/* geometry */
@@ -2194,20 +2227,36 @@ static void _on_preferences_monitors_refresh(gpointer data)
 	model2 = gtk_combo_box_get_model(GTK_COMBO_BOX(desktop->pr_monitors));
 	gtk_list_store_clear(GTK_LIST_STORE(model1));
 	gtk_list_store_clear(GTK_LIST_STORE(model2));
+#if GTK_CHECK_VERSION(2, 24, 0)
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(desktop->pr_imonitor),
+			_("Default monitor"));
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(desktop->pr_monitors),
+			_("Whole screen"));
+#else
 	gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_imonitor),
 			_("Default monitor"));
 	gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_monitors),
 			_("Whole screen"));
+#endif
 #if GTK_CHECK_VERSION(2, 14, 0)
 	n = gdk_screen_get_n_monitors(desktop->screen);
 	for(i = 0; i < n; i++)
 	{
 		snprintf(buf, sizeof(buf), _("Monitor %d"), i);
 		name = gdk_screen_get_monitor_plug_name(desktop->screen, i);
+# if GTK_CHECK_VERSION(2, 24, 0)
+		gtk_combo_box_text_append_text(
+				GTK_COMBO_BOX_TEXT(desktop->pr_imonitor),
+				(name != NULL) ? name : buf);
+		gtk_combo_box_text_append_text(
+				GTK_COMBO_BOX_TEXT(desktop->pr_monitors),
+				(name != NULL) ? name : buf);
+# else
 		gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_imonitor),
 				(name != NULL) ? name : buf);
 		gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_monitors),
 				(name != NULL) ? name : buf);
+# endif
 		g_free(name);
 	}
 #endif
