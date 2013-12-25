@@ -401,7 +401,11 @@ static int _properties_load(Properties * properties, char const * name)
 	if(icon == NULL)
 		icon = gtk_icon_theme_load_icon(properties->theme,
 				"gnome-settings", 24, 0, NULL);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	gtk_box_pack_start(GTK_BOX(hbox), gtk_image_new_from_pixbuf(icon),
 			FALSE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), gtk_label_new(_(bpd->name)), TRUE,
