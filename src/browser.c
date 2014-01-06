@@ -1,6 +1,6 @@
 /* $Id$ */
 static char const _copyright[] =
-"Copyright © 2006-2013 Pierre Pronchery <khorben@defora.org>";
+"Copyright © 2006-2014 Pierre Pronchery <khorben@defora.org>";
 /* This file is part of DeforaOS Desktop Browser */
 static char const _license[] =
 "This program is free software: you can redistribute it and/or modify\n"
@@ -2637,6 +2637,7 @@ void browser_unselect_all(Browser * browser)
 /* functions */
 /* browser_plugin_refresh */
 static void _plugin_refresh_do(Browser * browser, char const * path);
+static void _plugin_refresh_do_list(Browser * browser, GList * list);
 
 static void _browser_plugin_refresh(Browser * browser)
 {
@@ -2645,7 +2646,9 @@ static void _browser_plugin_refresh(Browser * browser)
 	GtkTreeModel * model = GTK_TREE_MODEL(browser->store);
 	GtkTreeIter iter;
 	GList * sel;
-	gchar * path = NULL;
+	GList * s;
+	GList * l;
+	gchar * path;
 
 	location = browser_get_location(browser);
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -2662,12 +2665,19 @@ static void _browser_plugin_refresh(Browser * browser)
 	}
 	else
 		sel = gtk_tree_selection_get_selected_rows(treesel, NULL);
-	if(sel != NULL && sel->data != NULL && sel->next == NULL
-			&& gtk_tree_model_get_iter(model, &iter, sel->data))
+	if(sel != NULL)
 	{
-		gtk_tree_model_get(model, &iter, BC_PATH, &path, -1);
-		_plugin_refresh_do(browser, (path != NULL) ? path : location);
-		g_free(path);
+		for(l = NULL, s = sel; s != NULL; s = s->next)
+		{
+			if(gtk_tree_model_get_iter(model, &iter, s->data)
+					== FALSE)
+				continue;
+			gtk_tree_model_get(model, &iter, BC_PATH, &path, -1);
+			l = g_list_append(l, path);
+		}
+		_plugin_refresh_do_list(browser, l);
+		g_list_foreach(l, (GFunc)g_free, NULL);
+		g_list_free(l);
 	}
 	else if(location != NULL)
 		_plugin_refresh_do(browser, location);
@@ -2690,11 +2700,26 @@ static void _plugin_refresh_do(Browser * browser, char const * path)
 			BPC_BROWSERPLUGIN, &bp, -1);
 	if(bpd->refresh != NULL)
 	{
-		/* FIXME pass the complete selection instead */
 		l = g_list_append(NULL, path);
 		bpd->refresh(bp, l);
 		g_list_free(l);
 	}
+}
+
+static void _plugin_refresh_do_list(Browser * browser, GList * list)
+{
+	GtkTreeModel * model = GTK_TREE_MODEL(browser->pl_store);
+	GtkTreeIter iter;
+	BrowserPluginDefinition * bpd;
+	BrowserPlugin * bp;
+
+	if(gtk_combo_box_get_active_iter(GTK_COMBO_BOX(browser->pl_combo),
+				&iter) != TRUE)
+		return;
+	gtk_tree_model_get(model, &iter, BPC_BROWSERPLUGINDEFINITION, &bpd,
+			BPC_BROWSERPLUGIN, &bp, -1);
+	if(bpd->refresh != NULL)
+		bpd->refresh(bp, list);
 }
 
 
