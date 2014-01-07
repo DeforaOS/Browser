@@ -18,4 +18,5 @@
 ../src/plugins/preview.c
 ../src/plugins/properties.c
 ../src/plugins/subversion.c
+../src/plugins/trash.c
 ../src/plugins/volumes.c
