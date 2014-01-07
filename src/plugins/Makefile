@@ -1,4 +1,4 @@
-TARGETS	= cvs.so dirtree.so favorites.so git.so make.so preview.so properties.so selection.so subversion.so template.so volumes.so
+TARGETS	= cvs.so dirtree.so favorites.so git.so make.so preview.so properties.so selection.so subversion.so template.so trash.so volumes.so
 PREFIX	= /usr/local
 DESTDIR	=
 LIBDIR	= $(PREFIX)/lib
@@ -89,6 +89,13 @@ template_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 template.so: $(template_OBJS)
 	$(CCSHARED) -o template.so $(template_OBJS) $(template_LDFLAGS)
 
+trash_OBJS = trash.o
+trash_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
+trash_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+
+trash.so: $(trash_OBJS)
+	$(CCSHARED) -o trash.so $(trash_OBJS) $(trash_LDFLAGS)
+
 volumes_OBJS = volumes.o
 volumes_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 volumes_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
@@ -126,11 +133,14 @@ subversion.o: subversion.c common.c ../../include/Browser.h
 template.o: template.c ../../include/Browser.h
 	$(CC) $(template_CFLAGS) -c template.c
 
+trash.o: trash.c ../../include/Browser.h
+	$(CC) $(trash_CFLAGS) -c trash.c
+
 volumes.o: volumes.c ../../include/Browser.h
 	$(CC) $(volumes_CFLAGS) -c volumes.c
 
 clean:
-	$(RM) -- $(cvs_OBJS) $(dirtree_OBJS) $(favorites_OBJS) $(git_OBJS) $(make_OBJS) $(preview_OBJS) $(properties_OBJS) $(selection_OBJS) $(subversion_OBJS) $(template_OBJS) $(volumes_OBJS)
+	$(RM) -- $(cvs_OBJS) $(dirtree_OBJS) $(favorites_OBJS) $(git_OBJS) $(make_OBJS) $(preview_OBJS) $(properties_OBJS) $(selection_OBJS) $(subversion_OBJS) $(template_OBJS) $(trash_OBJS) $(volumes_OBJS)
 
 distclean: clean
 	$(RM) -- $(TARGETS)
@@ -153,6 +163,8 @@ install: $(TARGETS)
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
 	$(INSTALL) -m 0644 subversion.so $(DESTDIR)$(LIBDIR)/Browser/plugins/subversion.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
+	$(INSTALL) -m 0644 trash.so $(DESTDIR)$(LIBDIR)/Browser/plugins/trash.so
+	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
 	$(INSTALL) -m 0644 volumes.so $(DESTDIR)$(LIBDIR)/Browser/plugins/volumes.so
 
 uninstall:
@@ -164,6 +176,7 @@ uninstall:
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/preview.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/properties.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/subversion.so
+	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/trash.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/volumes.so
 
 .PHONY: all clean distclean install uninstall
