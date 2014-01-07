@@ -88,6 +88,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/plugins/make.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/preview.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/properties.c \
+		$(PACKAGE)-$(VERSION)/src/plugins/selection.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/subversion.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/template.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/volumes.c \

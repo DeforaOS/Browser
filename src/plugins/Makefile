@@ -1,4 +1,4 @@
-TARGETS	= cvs.so dirtree.so favorites.so git.so make.so preview.so properties.so subversion.so template.so volumes.so
+TARGETS	= cvs.so dirtree.so favorites.so git.so make.so preview.so properties.so selection.so subversion.so template.so volumes.so
 PREFIX	= /usr/local
 DESTDIR	=
 LIBDIR	= $(PREFIX)/lib
@@ -68,6 +68,13 @@ properties_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 properties.so: $(properties_OBJS)
 	$(CCSHARED) -o properties.so $(properties_OBJS) $(properties_LDFLAGS)
 
+selection_OBJS = selection.o
+selection_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
+selection_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+
+selection.so: $(selection_OBJS)
+	$(CCSHARED) -o selection.so $(selection_OBJS) $(selection_LDFLAGS)
+
 subversion_OBJS = subversion.o
 subversion_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 subversion_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
@@ -110,6 +117,9 @@ preview.o: preview.c ../../include/Browser.h
 properties.o: properties.c ../../include/Browser.h
 	$(CC) $(properties_CFLAGS) -c properties.c
 
+selection.o: selection.c ../../include/Browser.h
+	$(CC) $(selection_CFLAGS) -c selection.c
+
 subversion.o: subversion.c common.c ../../include/Browser.h
 	$(CC) $(subversion_CFLAGS) -c subversion.c
 
@@ -120,7 +130,7 @@ volumes.o: volumes.c ../../include/Browser.h
 	$(CC) $(volumes_CFLAGS) -c volumes.c
 
 clean:
-	$(RM) -- $(cvs_OBJS) $(dirtree_OBJS) $(favorites_OBJS) $(git_OBJS) $(make_OBJS) $(preview_OBJS) $(properties_OBJS) $(subversion_OBJS) $(template_OBJS) $(volumes_OBJS)
+	$(RM) -- $(cvs_OBJS) $(dirtree_OBJS) $(favorites_OBJS) $(git_OBJS) $(make_OBJS) $(preview_OBJS) $(properties_OBJS) $(selection_OBJS) $(subversion_OBJS) $(template_OBJS) $(volumes_OBJS)
 
 distclean: clean
 	$(RM) -- $(TARGETS)
