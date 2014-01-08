@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2011-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -116,7 +116,7 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(volumes->window),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	volumes->store = gtk_list_store_new(DC_COUNT, GDK_TYPE_PIXBUF,
-			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT,
+			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_UINT,
 			G_TYPE_STRING, G_TYPE_BOOLEAN);
 	volumes->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				volumes->store));
@@ -200,6 +200,9 @@ static void _volumes_refresh(Volumes * volumes, GList * selection)
 		volumes->source = 0;
 		return;
 	}
+	if(volumes->source == 0)
+		volumes->source = g_timeout_add(5000, _volumes_on_timeout,
+				volumes);
 #if defined(ST_NOWAIT)
 	if((res = getmntinfo(&mnt, ST_NOWAIT)) <= 0)
 		return;
@@ -221,9 +224,6 @@ static void _volumes_refresh(Volumes * volumes, GList * selection)
 	_refresh_add(volumes, NULL, NULL, "/", NULL, 0, 0);
 #endif
 	_refresh_purge(volumes);
-	if(volumes->source == 0)
-		volumes->source = g_timeout_add(1000, _volumes_on_timeout,
-				volumes);
 }
 
 static void _refresh_add(Volumes * volumes, char const * name,
@@ -237,12 +237,13 @@ static void _refresh_add(Volumes * volumes, char const * name,
 	char const * removable[] = { "/dev/sd" };
 	size_t i;
 	double fraction = 0.0;
-	int f;
+	unsigned int f = 0;
 	char buf[16] = "";
 
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\", \"%s\", \"%s\")\n", __func__,
-			name, device, mountpoint, filesystem);
+	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\", \"%s\", \"%s\", %lu, %lu)\n",
+			__func__, name, device, mountpoint, filesystem, free,
+			total);
 #endif
 	for(i = 0; i < sizeof(ignore) / sizeof(*ignore); i++)
 		if(strcmp(ignore[i], filesystem) == 0)
