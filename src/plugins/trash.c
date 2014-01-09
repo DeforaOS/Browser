@@ -317,6 +317,7 @@ static void _trash_list(Trash * trash)
 				TC_DELETED_DISPLAY, u, TC_UPDATED, TRUE, -1);
 		g_free(p);
 	}
+	closedir(dir);
 	_list_purge(trash);
 	config_delete(config);
 	free(path);
