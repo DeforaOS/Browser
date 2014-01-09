@@ -390,7 +390,7 @@ static void _list_reset(Volumes * volumes)
 	gboolean valid;
 
 	for(valid = gtk_tree_model_get_iter_first(model, &iter); valid == TRUE;
-		valid = gtk_tree_model_iter_next(model, &iter))
+			valid = gtk_tree_model_iter_next(model, &iter))
 		gtk_list_store_set(volumes->store, &iter, DC_UPDATED, FALSE,
 				-1);
 }
