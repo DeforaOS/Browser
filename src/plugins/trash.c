@@ -69,9 +69,10 @@ typedef enum _TrashColumn
 	TC_PATH,
 	TC_PATH_ORIGINAL,
 	TC_DELETED,
-	TC_DELETED_DISPLAY
+	TC_DELETED_DISPLAY,
+	TC_UPDATED
 } TrashColumn;
-#define TC_LAST TC_DELETED_DISPLAY
+#define TC_LAST TC_UPDATED
 #define TC_COUNT (TC_LAST + 1)
 
 typedef struct _BrowserPlugin
@@ -166,7 +167,7 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	trash->store = gtk_list_store_new(TC_COUNT, GDK_TYPE_PIXBUF,
 			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_UINT,
-			G_TYPE_STRING);
+			G_TYPE_STRING, G_TYPE_BOOLEAN);
 	trash->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				trash->store));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(trash->view), TRUE);
@@ -235,6 +236,8 @@ static void _trash_refresh(Trash * trash, GList * selection)
 
 /* trash_list */
 static char * _list_path(void);
+static void _list_purge(Trash * trash);
+static void _list_reset(Trash * trash);
 
 static void _trash_list(Trash * trash)
 {
@@ -276,7 +279,7 @@ static void _trash_list(Trash * trash)
 	}
 	sixmonths = time(NULL) - 15552000;
 	/* FIXME refresh only if necessary */
-	gtk_list_store_clear(trash->store);
+	_list_reset(trash);
 	while((de = readdir(dir)) != NULL)
 	{
 		if((len = strlen(de->d_name)) <= sizeof(ext))
@@ -310,10 +313,11 @@ static void _trash_list(Trash * trash)
 			u = "";
 		gtk_list_store_append(trash->store, &iter);
 		gtk_list_store_set(trash->store, &iter, TC_PIXBUF, pixbuf,
-				TC_PATH, p, TC_PATH_ORIGINAL, q,
-				TC_DELETED, t, TC_DELETED_DISPLAY, u, -1);
+				TC_PATH, p, TC_PATH_ORIGINAL, q, TC_DELETED, t,
+				TC_DELETED_DISPLAY, u, TC_UPDATED, TRUE, -1);
 		g_free(p);
 	}
+	_list_purge(trash);
 	config_delete(config);
 	free(path);
 }
@@ -334,6 +338,32 @@ static char * _list_path(void)
 		return NULL;
 	snprintf(ret, len, "%s/%s/%s", homedir, fallback, trash);
 	return ret;
+}
+
+static void _list_purge(Trash * trash)
+{
+	GtkTreeModel * model = GTK_TREE_MODEL(trash->store);
+	GtkTreeIter iter;
+	gboolean valid;
+	gboolean updated;
+
+	for(valid = gtk_tree_model_get_iter_first(model, &iter); valid == TRUE;)
+	{
+		gtk_tree_model_get(model, &iter, TC_UPDATED, &updated, -1);
+		valid = updated ? gtk_tree_model_iter_next(model, &iter)
+			: gtk_list_store_remove(trash->store, &iter);
+	}
+}
+
+static void _list_reset(Trash * trash)
+{
+	GtkTreeModel * model = GTK_TREE_MODEL(trash->store);
+	GtkTreeIter iter;
+	gboolean valid;
+
+	for(valid = gtk_tree_model_get_iter_first(model, &iter); valid == TRUE;
+			valid = gtk_tree_model_iter_next(model, &iter))
+		gtk_list_store_set(trash->store, &iter, TC_UPDATED, FALSE, -1);
 }
 
 
