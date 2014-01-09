@@ -26,6 +26,39 @@
 #define _(string) gettext(string)
 #define N_(string) (string)
 
+#ifndef PLUGIN_NAME
+# define PLUGIN_NAME		"Trash"
+#endif
+#ifndef PLUGIN_ICON
+# define PLUGIN_ICON		"user-trash"
+#endif
+#ifndef PLUGIN_DESCRIPTION
+# define PLUGIN_DESCRIPTION	NULL
+#endif
+
+#ifndef DATA_DELETIONDATE
+# define DATA_DELETIONDATE	"DeletionDate"
+#endif
+#ifndef DATA_EXTENSION
+# define DATA_EXTENSION		".trashinfo"
+#endif
+#ifndef DATA_PATH
+# define DATA_PATH		"Path"
+#endif
+#ifndef DATA_SECTION
+# define DATA_SECTION		"Trash Info"
+#endif
+#ifndef DATA_TRASHINFO
+# define DATA_TRASHINFO		"Trash/info"
+#endif
+
+#ifndef TEXT_DELETED
+# define TEXT_DELETED		"Deleted"
+#endif
+#ifndef TEXT_MOVETOTRASH
+# define TEXT_MOVETOTRASH	"Move to trash"
+#endif
+
 
 /* Trash */
 /* private */
@@ -60,9 +93,9 @@ static gboolean _trash_on_timeout(gpointer data);
 /* variables */
 BrowserPluginDefinition plugin =
 {
-	N_("Trash"),
-	"user-trash",
-	NULL,
+	PLUGIN_NAME,
+	PLUGIN_ICON,
+	PLUGIN_DESCRIPTION,
 	_trash_init,
 	_trash_destroy,
 	_trash_get_widget,
@@ -93,9 +126,9 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 #endif
 	widget = gtk_toolbar_new();
 	/* FIXME handle sensitiveness */
-	toolitem = gtk_tool_button_new(NULL, _("Move to trash"));
+	toolitem = gtk_tool_button_new(NULL, _(TEXT_MOVETOTRASH));
 #if GTK_CHECK_VERSION(2, 8, 0)
-	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), "user-trash");
+	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), PLUGIN_ICON);
 #else
 	/* FIXME implement */
 #endif
@@ -134,7 +167,7 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 	gtk_tree_view_append_column(GTK_TREE_VIEW(trash->view), column);
 	/* timestamp */
 	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes(_("Deleted"),
+	column = gtk_tree_view_column_new_with_attributes(_(TEXT_DELETED),
 			renderer, "text", 4, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(trash->view), column);
 	gtk_container_add(GTK_CONTAINER(widget), trash->view);
@@ -164,7 +197,18 @@ static GtkWidget * _trash_get_widget(Trash * trash)
 /* trash_refresh */
 static void _trash_refresh(Trash * trash, GList * selection)
 {
-	/* FIXME implement (save a copy of the selection) */
+	if(selection == NULL)
+	{
+		/* there is no need to refresh anymore */
+		if(trash->source > 0)
+			g_source_remove(trash->source);
+		trash->source = 0;
+		return;
+	}
+	if(trash->source == 0)
+		/* keep refreshing the view */
+		trash->source = g_idle_add(_trash_on_timeout, trash);
+	/* FIXME complete the implementation (save a copy of the selection) */
 }
 
 
@@ -173,8 +217,8 @@ static char * _refresh_path(void);
 
 static void _trash_refresh_trash(Trash * trash)
 {
-	const char ext[] = ".trashinfo";
-	const char section[] = "Trash Info";
+	const char ext[] = DATA_EXTENSION;
+	const char section[] = DATA_SECTION;
 	BrowserPluginHelper * helper = trash->helper;
 	Config * config;
 	char * path;
@@ -215,7 +259,7 @@ static void _trash_refresh_trash(Trash * trash)
 		config_reset(config);
 		p = g_strdup_printf("%s/%s", path, de->d_name);
 		if(config_load(config, p) != 0
-				|| (q = config_get(config, section, "Path"))
+				|| (q = config_get(config, section, DATA_PATH))
 				== NULL)
 		{
 			g_free(p);
@@ -224,7 +268,7 @@ static void _trash_refresh_trash(Trash * trash)
 		pixbuf = helper->get_icon(helper->browser, q, NULL, NULL, NULL,
 				24);
 		t = -1;
-		if((u = config_get(config, section, "DeletionDate")) != NULL
+		if((u = config_get(config, section, DATA_DELETIONDATE)) != NULL
 				&& strptime(u, "%Y-%m-%dT%H:%M:%S", &tm)
 				!= NULL)
 			/* XXX also format u in a nicer way */
@@ -243,7 +287,7 @@ static void _trash_refresh_trash(Trash * trash)
 static char * _refresh_path(void)
 {
 	const char fallback[] = ".local/share";
-	const char trash[] = "Trash/info";
+	const char trash[] = DATA_TRASHINFO;
 	char * ret;
 	char const * homedir;
 	size_t len;
