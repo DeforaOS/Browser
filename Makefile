@@ -81,6 +81,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/desktopicon.h \
 		$(PACKAGE)-$(VERSION)/src/vfs.h \
 		$(PACKAGE)-$(VERSION)/src/project.conf \
+		$(PACKAGE)-$(VERSION)/src/plugins/backup.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/cvs.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/dirtree.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/favorites.c \

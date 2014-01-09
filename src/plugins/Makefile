@@ -1,4 +1,4 @@
-TARGETS	= cvs.so dirtree.so favorites.so git.so make.so preview.so properties.so selection.so subversion.so template.so trash.so volumes.so
+TARGETS	= backup.so cvs.so dirtree.so favorites.so git.so make.so preview.so properties.so selection.so subversion.so template.so trash.so volumes.so
 PREFIX	= /usr/local
 DESTDIR	=
 LIBDIR	= $(PREFIX)/lib
@@ -18,6 +18,13 @@ INSTALL	= install
 
 
 all: $(TARGETS)
+
+backup_OBJS = backup.o
+backup_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
+backup_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+
+backup.so: $(backup_OBJS)
+	$(CCSHARED) -o backup.so $(backup_OBJS) $(backup_LDFLAGS)
 
 cvs_OBJS = cvs.o
 cvs_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
@@ -103,6 +110,9 @@ volumes_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 volumes.so: $(volumes_OBJS)
 	$(CCSHARED) -o volumes.so $(volumes_OBJS) $(volumes_LDFLAGS)
 
+backup.o: backup.c trash.c ../../include/Browser.h
+	$(CC) $(backup_CFLAGS) -c backup.c
+
 cvs.o: cvs.c common.c ../../include/Browser.h
 	$(CC) $(cvs_CFLAGS) -c cvs.c
 
@@ -140,7 +150,7 @@ volumes.o: volumes.c ../../include/Browser.h
 	$(CC) $(volumes_CFLAGS) -c volumes.c
 
 clean:
-	$(RM) -- $(cvs_OBJS) $(dirtree_OBJS) $(favorites_OBJS) $(git_OBJS) $(make_OBJS) $(preview_OBJS) $(properties_OBJS) $(selection_OBJS) $(subversion_OBJS) $(template_OBJS) $(trash_OBJS) $(volumes_OBJS)
+	$(RM) -- $(backup_OBJS) $(cvs_OBJS) $(dirtree_OBJS) $(favorites_OBJS) $(git_OBJS) $(make_OBJS) $(preview_OBJS) $(properties_OBJS) $(selection_OBJS) $(subversion_OBJS) $(template_OBJS) $(trash_OBJS) $(volumes_OBJS)
 
 distclean: clean
 	$(RM) -- $(TARGETS)
