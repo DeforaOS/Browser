@@ -20,13 +20,20 @@
 #include <string.h>
 #include <errno.h>
 #include <libintl.h>
+#ifndef __GNU__ /* XXX hurd portability */
+# include <sys/mount.h>
+# if defined(__linux__) || defined(__CYGWIN__)
+#  define unmount(a, b) umount(a)
+# endif
+# ifndef unmount
+#  define unmount unmount
+# endif
+#endif
 #if defined(__FreeBSD__)
 # include <sys/param.h>
 # include <sys/ucred.h>
-# include <sys/mount.h>
 #elif defined(__NetBSD__)
 # include <sys/param.h>
-# include <sys/mount.h>
 # include <sys/types.h>
 # include <sys/statvfs.h>
 #endif
@@ -454,13 +461,13 @@ static void _volumes_on_unmount(GtkWidget * widget, gpointer data)
 	gchar * mountpoint;
 
 	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
-#ifdef MNT_FORCE
+#ifndef unmount
+	errno = ENOSYS;
+#else
 	if(unmount(mountpoint, 0) != 0)
+#endif
 		volumes->helper->error(volumes->helper->browser,
 				strerror(errno), 1);
-#else
-	volumes->helper->error(volumes->helper->browser, strerror(ENOTSUP), 1);
-#endif
 	g_free(mountpoint);
 }
 
