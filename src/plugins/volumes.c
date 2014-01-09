@@ -82,6 +82,9 @@ static void _volumes_refresh(Volumes * volumes, GList * selection);
 
 /* callbacks */
 static gboolean _volumes_on_timeout(gpointer data);
+static gboolean _volumes_on_view_button_press(GtkWidget * widget,
+		GdkEventButton * event, gpointer data);
+static gboolean _volumes_on_view_popup_menu(GtkWidget * widget, gpointer data);
 static void _volumes_on_view_row_activated(GtkWidget * widget,
 		GtkTreePath * path, GtkTreeViewColumn * column, gpointer data);
 
@@ -130,6 +133,10 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	volumes->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				volumes->store));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(volumes->view), FALSE);
+	g_signal_connect(volumes->view, "button-press-event", G_CALLBACK(
+				_volumes_on_view_button_press), volumes);
+	g_signal_connect(volumes->view, "popup-menu", G_CALLBACK(
+				_volumes_on_view_popup_menu), volumes);
 	/* icon */
 	renderer = gtk_cell_renderer_pixbuf_new();
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
@@ -371,6 +378,73 @@ static gboolean _volumes_on_timeout(gpointer data)
 		_volumes_refresh(volumes, l); /* XXX */
 	g_list_free(l);
 	return TRUE;
+}
+
+
+/* volumes_on_view_button_press */
+static void _volumes_on_eject(GtkWidget * widget, gpointer data);
+
+static gboolean _volumes_on_view_button_press(GtkWidget * widget,
+		GdkEventButton * event, gpointer data)
+{
+	Volumes * volumes = data;
+	GtkTreeSelection * treesel;
+	GtkTreeModel * model;
+	GtkTreeIter iter;
+	unsigned int flags;
+	gchar * filesystem;
+	GtkWidget * menu;
+
+	if(event->type != GDK_BUTTON_PRESS
+			|| (event->button != 3 && event->button != 0))
+		return FALSE;
+	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
+	if(gtk_tree_selection_get_selected(treesel, &model, &iter) != TRUE)
+		return FALSE;
+	gtk_tree_model_get(model, &iter, DC_FILESYSTEM, &filesystem,
+			DC_FLAGS, &flags, -1);
+	/* check if a popup menu is relevant */
+	if((flags & DF_REMOVABLE) == 0 || filesystem == NULL)
+	{
+		g_free(filesystem);
+		return FALSE;
+	}
+	menu = gtk_menu_new();
+	widget = gtk_image_menu_item_new_with_label(_("Eject"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(widget),
+			gtk_image_new_from_icon_name("media-eject",
+				GTK_ICON_SIZE_MENU));
+	g_object_set_data(G_OBJECT(widget), "filesystem", filesystem);
+	g_signal_connect(widget, "activate", G_CALLBACK(_volumes_on_eject),
+			volumes);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
+	gtk_widget_show_all(menu);
+	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button,
+			event->time);
+	g_free(filesystem);
+	return TRUE;
+}
+
+static void _volumes_on_eject(GtkWidget * widget, gpointer data)
+{
+	gchar const * filesystem;
+
+	filesystem = g_object_get_data(G_OBJECT(widget), "filesystem");
+	/* FIXME really implement */
+}
+
+
+/* volumes_on_view_popup_menu */
+static gboolean _volumes_on_view_popup_menu(GtkWidget * widget, gpointer data)
+{
+	Volumes * volumes = data;
+	GdkEventButton event;
+
+	memset(&event, 0, sizeof(event));
+	event.type = GDK_BUTTON_PRESS;
+	event.button = 0;
+	event.time = gtk_get_current_event_time();
+	return _volumes_on_view_button_press(widget, &event, volumes);
 }
 
 
