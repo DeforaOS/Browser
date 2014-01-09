@@ -191,7 +191,6 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 	gtk_container_add(GTK_CONTAINER(widget), trash->view);
 	gtk_box_pack_start(GTK_BOX(trash->widget), widget, TRUE, TRUE, 0);
 	gtk_widget_show_all(trash->widget);
-	trash->source = g_idle_add(_trash_on_timeout, trash);
 	return trash;
 }
 
@@ -221,12 +220,16 @@ static void _trash_refresh(Trash * trash, GList * selection)
 		if(trash->source > 0)
 			g_source_remove(trash->source);
 		trash->source = 0;
-		return;
 	}
-	if(trash->source == 0)
-		/* keep refreshing the view */
-		trash->source = g_idle_add(_trash_on_timeout, trash);
-	/* FIXME complete the implementation (save a copy of the selection) */
+	else
+	{
+		_trash_list(trash);
+		if(trash->source == 0)
+			/* keep refreshing the view */
+			trash->source = g_timeout_add(5000, _trash_on_timeout,
+					trash);
+		/* FIXME complete the implementation (copy the selection) */
+	}
 }
 
 
@@ -253,6 +256,9 @@ static void _trash_list(Trash * trash)
 	time_t sixmonths;
 	char buf[16];
 
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
 	/* FIXME report errors */
 	if((path = _list_path()) == NULL)
 		return;
@@ -269,6 +275,7 @@ static void _trash_list(Trash * trash)
 		return;
 	}
 	sixmonths = time(NULL) - 15552000;
+	/* FIXME refresh only if necessary */
 	gtk_list_store_clear(trash->store);
 	while((de = readdir(dir)) != NULL)
 	{
@@ -347,9 +354,6 @@ static gboolean _trash_on_timeout(gpointer data)
 {
 	Trash * trash = data;
 
-	trash->source = 0;
 	_trash_list(trash);
-	/* FIXME refresh only if necessary */
-	trash->source = g_timeout_add(5000, _trash_on_timeout, trash);
-	return FALSE;
+	return TRUE;
 }
