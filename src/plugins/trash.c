@@ -63,6 +63,17 @@
 /* Trash */
 /* private */
 /* types */
+typedef enum _TrashColumn
+{
+	TC_PIXBUF = 0,
+	TC_PATH,
+	TC_PATH_ORIGINAL,
+	TC_DELETED,
+	TC_DELETED_DISPLAY
+} TrashColumn;
+#define TC_LAST TC_DELETED_DISPLAY
+#define TC_COUNT (TC_LAST + 1)
+
 typedef struct _BrowserPlugin
 {
 	BrowserPluginHelper * helper;
@@ -82,7 +93,7 @@ static void _trash_destroy(Trash * trash);
 static GtkWidget * _trash_get_widget(Trash * trash);
 static void _trash_refresh(Trash * trash, GList * selection);
 
-static void _trash_refresh_trash(Trash * trash);
+static void _trash_list(Trash * trash);
 
 /* callbacks */
 static void _trash_on_select_all(gpointer data);
@@ -125,7 +136,8 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 	trash->widget = gtk_vbox_new(FALSE, 0);
 #endif
 	widget = gtk_toolbar_new();
-	/* FIXME handle sensitiveness */
+	/* FIXME handle sensitiveness of toolbar buttons */
+	/* move to trash */
 	toolitem = gtk_tool_button_new(NULL, _(TEXT_MOVETOTRASH));
 #if GTK_CHECK_VERSION(2, 8, 0)
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), PLUGIN_ICON);
@@ -140,6 +152,11 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
 				_trash_on_select_all), trash);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	/* restore */
+	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_UNDO);
+	/* FIXME handle the signal */
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	/* delete */
 	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_DELETE);
 	/* FIXME handle the signal */
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
@@ -147,8 +164,9 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	trash->store = gtk_list_store_new(5, GDK_TYPE_PIXBUF, G_TYPE_STRING,
-			G_TYPE_STRING, G_TYPE_UINT, G_TYPE_STRING);
+	trash->store = gtk_list_store_new(TC_COUNT, GDK_TYPE_PIXBUF,
+			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_UINT,
+			G_TYPE_STRING);
 	trash->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				trash->store));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(trash->view), TRUE);
@@ -157,18 +175,18 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 	/* icon */
 	renderer = gtk_cell_renderer_pixbuf_new();
 	column = gtk_tree_view_column_new_with_attributes("", renderer,
-			"pixbuf", 0, NULL);
+			"pixbuf", TC_PIXBUF, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(trash->view), column);
 	/* path to the original file */
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes(_("Filename"),
-			renderer, "text", 2, NULL);
+			renderer, "text", TC_PATH_ORIGINAL, NULL);
 	gtk_tree_view_column_set_resizable(column, TRUE);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(trash->view), column);
 	/* timestamp */
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes(_(TEXT_DELETED),
-			renderer, "text", 4, NULL);
+			renderer, "text", TC_DELETED_DISPLAY, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(trash->view), column);
 	gtk_container_add(GTK_CONTAINER(widget), trash->view);
 	gtk_box_pack_start(GTK_BOX(trash->widget), widget, TRUE, TRUE, 0);
@@ -212,10 +230,10 @@ static void _trash_refresh(Trash * trash, GList * selection)
 }
 
 
-/* trash_refresh_trash */
-static char * _refresh_path(void);
+/* trash_list */
+static char * _list_path(void);
 
-static void _trash_refresh_trash(Trash * trash)
+static void _trash_list(Trash * trash)
 {
 	const char ext[] = DATA_EXTENSION;
 	const char section[] = DATA_SECTION;
@@ -232,9 +250,11 @@ static void _trash_refresh_trash(Trash * trash)
 	struct tm tm;
 	time_t t;
 	char const * u;
+	time_t sixmonths;
+	char buf[16];
 
 	/* FIXME report errors */
-	if((path = _refresh_path()) == NULL)
+	if((path = _list_path()) == NULL)
 		return;
 	if((config = config_new()) == NULL)
 	{
@@ -248,6 +268,7 @@ static void _trash_refresh_trash(Trash * trash)
 		free(path);
 		return;
 	}
+	sixmonths = time(NULL) - 15552000;
 	gtk_list_store_clear(trash->store);
 	while((de = readdir(dir)) != NULL)
 	{
@@ -271,20 +292,26 @@ static void _trash_refresh_trash(Trash * trash)
 		if((u = config_get(config, section, DATA_DELETIONDATE)) != NULL
 				&& strptime(u, "%Y-%m-%dT%H:%M:%S", &tm)
 				!= NULL)
-			/* XXX also format u in a nicer way */
+		{
 			t = mktime(&tm);
+			len = strftime(buf, sizeof(buf), (t < sixmonths)
+					? "%b %e %H:%M" : "%b %e %Y", &tm);
+			buf[len] = '\0';
+			u = buf;
+		}
 		else
 			u = "";
 		gtk_list_store_append(trash->store, &iter);
-		gtk_list_store_set(trash->store, &iter, 0, pixbuf, 1, p, 2, q,
-				3, t, 4, u, -1);
+		gtk_list_store_set(trash->store, &iter, TC_PIXBUF, pixbuf,
+				TC_PATH, p, TC_PATH_ORIGINAL, q,
+				TC_DELETED, t, TC_DELETED_DISPLAY, u, -1);
 		g_free(p);
 	}
 	config_delete(config);
 	free(path);
 }
 
-static char * _refresh_path(void)
+static char * _list_path(void)
 {
 	const char fallback[] = ".local/share";
 	const char trash[] = DATA_TRASHINFO;
@@ -321,7 +348,7 @@ static gboolean _trash_on_timeout(gpointer data)
 	Trash * trash = data;
 
 	trash->source = 0;
-	_trash_refresh_trash(trash);
+	_trash_list(trash);
 	/* FIXME refresh only if necessary */
 	trash->source = g_timeout_add(5000, _trash_on_timeout, trash);
 	return FALSE;
