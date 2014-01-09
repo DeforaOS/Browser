@@ -39,6 +39,7 @@ enum _VolumesColumn
 	DC_PIXBUF = 0,
 	DC_NAME,
 	DC_FILESYSTEM,
+	DC_FLAGS,
 	DC_MOUNTPOINT,
 	DC_FREE,
 	DC_FREE_DISPLAY,
@@ -46,6 +47,12 @@ enum _VolumesColumn
 };
 #define DC_LAST DC_UPDATED
 #define DC_COUNT (DC_LAST + 1)
+
+typedef enum _VolumesFlag
+{
+	DF_READONLY = 1,
+	DF_REMOVABLE
+} VolumesFlag;
 
 typedef enum _VolumesPixbuf
 {
@@ -117,8 +124,9 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(volumes->window),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	volumes->store = gtk_list_store_new(DC_COUNT, GDK_TYPE_PIXBUF,
-			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING,
-			G_TYPE_UINT, G_TYPE_STRING, G_TYPE_BOOLEAN);
+			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_UINT,
+			G_TYPE_STRING, G_TYPE_UINT, G_TYPE_STRING,
+			G_TYPE_BOOLEAN);
 	volumes->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				volumes->store));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(volumes->view), FALSE);
@@ -172,7 +180,8 @@ static GtkWidget * _volumes_get_widget(Volumes * volumes)
 /* volumes_refresh */
 static void _refresh_add(Volumes * volumes, char const * name,
 		char const * device, char const * filesystem,
-		char const * mountpoint, fsblkcnt_t free, fsblkcnt_t total);
+		unsigned int flags, char const * mountpoint,
+		fsblkcnt_t free, fsblkcnt_t total);
 static void _refresh_get_iter(Volumes * volumes, GtkTreeIter * iter,
 		char const * mountpoint);
 static void _refresh_purge(Volumes * volumes);
@@ -190,6 +199,7 @@ static void _volumes_refresh(Volumes * volumes, GList * selection)
 	int res;
 	int i;
 #endif
+	unsigned int flags = 0;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, path);
@@ -209,27 +219,41 @@ static void _volumes_refresh(Volumes * volumes, GList * selection)
 		return;
 	_refresh_reset(volumes);
 	for(i = 0; i < res; i++)
-		_refresh_add(volumes, NULL, mnt[i].f_mntfromname,
-				mnt[i].f_fstypename, mnt[i].f_mntonname,
-				mnt[i].f_bavail, mnt[i].f_blocks);
+	{
+		flags = 0;
+		flags |= (mnt[i].f_flag & ST_RDONLY) ? DF_READONLY : 0;
+		_refresh_add(volumes, (mnt[i].f_flag & ST_ROOTFS)
+				? _("Root filesystem") : NULL,
+				mnt[i].f_mntfromname, mnt[i].f_fstypename,
+				flags, mnt[i].f_mntonname, mnt[i].f_bavail,
+				mnt[i].f_blocks);
+	}
 #elif defined(MNT_NOWAIT)
 	if((res = getmntinfo(&mnt, MNT_NOWAIT)) <= 0)
 		return;
 	_refresh_reset(volumes);
 	for(i = 0; i < res; i++)
-		_refresh_add(volumes, NULL, mnt[i].f_mntfromname,
-				mnt[i].f_fstypename, mnt[i].f_mntonname,
-				mnt[i].f_bavail, mnt[i].f_blocks);
+	{
+		flags = 0;
+		flags |= (mnt[i].f_flags & MNT_RDONLY) ? DF_READONLY : 0;
+		_refresh_add(volumes, (mnt[i].f_flags & MNT_ROOTFS)
+				? _("Root filesystem") : NULL,
+				mnt[i].f_mntfromname, mnt[i].f_fstypename,
+				flags, mnt[i].f_mntonname, mnt[i].f_bavail,
+				mnt[i].f_blocks);
+	}
 #else
 	_refresh_reset(volumes);
-	_refresh_add(volumes, NULL, NULL, NULL, "/", 0, 0);
+	_refresh_add(volumes, _("Root filesystem"), NULL, NULL, flags, "/", 0,
+			0);
 #endif
 	_refresh_purge(volumes);
 }
 
 static void _refresh_add(Volumes * volumes, char const * name,
 		char const * device, char const * filesystem,
-		char const * mountpoint, fsblkcnt_t free, fsblkcnt_t total)
+		unsigned int flags, char const * mountpoint,
+		fsblkcnt_t free, fsblkcnt_t total)
 {
 	GtkTreeIter iter;
 	VolumesPixbuf dp = DP_HARDDISK;
@@ -252,12 +276,14 @@ static void _refresh_add(Volumes * volumes, char const * name,
 	for(i = 0; i < sizeof(cdrom) / sizeof(*cdrom); i++)
 		if(strncmp(cdrom[i], device, strlen(cdrom[i])) == 0)
 		{
+			flags |= DF_REMOVABLE;
 			dp = DP_CDROM;
 			break;
 		}
 	for(i = 0; i < sizeof(removable) / sizeof(removable); i++)
 		if(strncmp(removable[i], device, strlen(removable[i])) == 0)
 		{
+			flags |= DF_REMOVABLE;
 			dp = DP_REMOVABLE;
 			break;
 		}
@@ -278,8 +304,9 @@ static void _refresh_add(Volumes * volumes, char const * name,
 	_refresh_get_iter(volumes, &iter, mountpoint);
 	gtk_list_store_set(volumes->store, &iter,
 			DC_PIXBUF, volumes->icons[dp], DC_NAME, name,
-			DC_FILESYSTEM, filesystem, DC_MOUNTPOINT, mountpoint,
-			DC_FREE, f, DC_FREE_DISPLAY, buf, DC_UPDATED, TRUE, -1);
+			DC_FILESYSTEM, filesystem, DC_FLAGS, flags,
+			DC_MOUNTPOINT, mountpoint, DC_FREE, f,
+			DC_FREE_DISPLAY, buf, DC_UPDATED, TRUE, -1);
 }
 
 static void _refresh_get_iter(Volumes * volumes, GtkTreeIter * iter,
