@@ -16,13 +16,17 @@
 
 
 #include <System.h>
+#include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include <libintl.h>
 #if defined(__FreeBSD__)
 # include <sys/param.h>
 # include <sys/ucred.h>
 # include <sys/mount.h>
 #elif defined(__NetBSD__)
+# include <sys/param.h>
+# include <sys/mount.h>
 # include <sys/types.h>
 # include <sys/statvfs.h>
 #endif
@@ -383,6 +387,7 @@ static gboolean _volumes_on_timeout(gpointer data)
 
 /* volumes_on_view_button_press */
 static void _volumes_on_eject(GtkWidget * widget, gpointer data);
+static void _volumes_on_unmount(GtkWidget * widget, gpointer data);
 
 static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 		GdkEventButton * event, gpointer data)
@@ -392,7 +397,7 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 	GtkTreeModel * model;
 	GtkTreeIter iter;
 	unsigned int flags;
-	gchar * filesystem;
+	gchar * mountpoint;
 	GtkWidget * menu;
 
 	if(event->type != GDK_BUTTON_PRESS
@@ -401,36 +406,62 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
 	if(gtk_tree_selection_get_selected(treesel, &model, &iter) != TRUE)
 		return FALSE;
-	gtk_tree_model_get(model, &iter, DC_FILESYSTEM, &filesystem,
+	gtk_tree_model_get(model, &iter, DC_MOUNTPOINT, &mountpoint,
 			DC_FLAGS, &flags, -1);
-	/* check if a popup menu is relevant */
-	if((flags & DF_REMOVABLE) == 0 || filesystem == NULL)
-	{
-		g_free(filesystem);
+	if(mountpoint == NULL)
 		return FALSE;
-	}
 	menu = gtk_menu_new();
-	widget = gtk_image_menu_item_new_with_label(_("Eject"));
+	widget = gtk_image_menu_item_new_with_label(_("Unmount"));
 	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(widget),
-			gtk_image_new_from_icon_name("media-eject",
+			gtk_image_new_from_icon_name("hdd_unmount",
 				GTK_ICON_SIZE_MENU));
-	g_object_set_data(G_OBJECT(widget), "filesystem", filesystem);
-	g_signal_connect(widget, "activate", G_CALLBACK(_volumes_on_eject),
-			volumes);
+	g_object_set_data(G_OBJECT(widget), "mountpoint", mountpoint);
+	g_signal_connect(widget, "activate", G_CALLBACK(
+				_volumes_on_unmount), volumes);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
+	if((flags & DF_REMOVABLE) != 0)
+	{
+		widget = gtk_image_menu_item_new_with_label(_("Eject"));
+		gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(widget),
+				gtk_image_new_from_icon_name("media-eject",
+					GTK_ICON_SIZE_MENU));
+		g_object_set_data(G_OBJECT(widget), "mountpoint", mountpoint);
+		g_signal_connect(widget, "activate", G_CALLBACK(
+					_volumes_on_eject), volumes);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
+	}
 	gtk_widget_show_all(menu);
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button,
 			event->time);
-	g_free(filesystem);
+#if 0 /* XXX memory leak (for g_object_set_data() above) */
+	g_free(mountpoint);
+#endif
 	return TRUE;
 }
 
 static void _volumes_on_eject(GtkWidget * widget, gpointer data)
 {
-	gchar const * filesystem;
+	gchar * mountpoint;
 
-	filesystem = g_object_get_data(G_OBJECT(widget), "filesystem");
+	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
 	/* FIXME really implement */
+	g_free(mountpoint);
+}
+
+static void _volumes_on_unmount(GtkWidget * widget, gpointer data)
+{
+	Volumes * volumes = data;
+	gchar * mountpoint;
+
+	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
+#ifdef MNT_FORCE
+	if(unmount(mountpoint, 0) != 0)
+		volumes->helper->error(volumes->helper->browser,
+				strerror(errno), 1);
+#else
+	volumes->helper->error(volumes->helper->browser, strerror(ENOTSUP), 1);
+#endif
+	g_free(mountpoint);
 }
 
 
