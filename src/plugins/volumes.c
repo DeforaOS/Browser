@@ -86,10 +86,14 @@ typedef struct _BrowserPlugin
 
 
 /* prototypes */
+/* plug-in */
 static Volumes * _volumes_init(BrowserPluginHelper * helper);
 static void _volumes_destroy(Volumes * volumes);
 static GtkWidget * _volumes_get_widget(Volumes * volumes);
 static void _volumes_refresh(Volumes * volumes, GList * selection);
+
+/* useful */
+static void _volumes_list(Volumes * volumes);
 
 /* callbacks */
 static gboolean _volumes_on_timeout(gpointer data);
@@ -116,6 +120,7 @@ BrowserPluginDefinition plugin =
 
 /* private */
 /* functions */
+/* plug-in */
 /* volumes_init */
 static Volumes * _volumes_init(BrowserPluginHelper * helper)
 {
@@ -182,8 +187,13 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 /* volumes_destroy */
 static void _volumes_destroy(Volumes * volumes)
 {
+	size_t i;
+
 	if(volumes->source != 0)
 		g_source_remove(volumes->source);
+	for(i = 0; i < DP_COUNT; i++)
+		if(volumes->icons[i] != NULL)
+			g_object_unref(volumes->icons[i]);
 	object_delete(volumes);
 }
 
@@ -196,18 +206,41 @@ static GtkWidget * _volumes_get_widget(Volumes * volumes)
 
 
 /* volumes_refresh */
-static void _refresh_add(Volumes * volumes, char const * name,
-		char const * device, char const * filesystem,
-		unsigned int flags, char const * mountpoint,
-		fsblkcnt_t free, fsblkcnt_t total);
-static void _refresh_get_iter(Volumes * volumes, GtkTreeIter * iter,
-		char const * mountpoint);
-static void _refresh_purge(Volumes * volumes);
-static void _refresh_reset(Volumes * volumes);
-
 static void _volumes_refresh(Volumes * volumes, GList * selection)
 {
-	char * path = (selection != NULL) ? selection->data : NULL;
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%p)\n", __func__, (void *)selection);
+#endif
+	if(selection == NULL)
+	{
+		/* stop refreshing */
+		if(volumes->source != 0)
+			g_source_remove(volumes->source);
+		volumes->source = 0;
+	}
+	else
+	{
+		_volumes_list(volumes);
+		if(volumes->source == 0)
+			/* refresh every 5 seconds */
+			volumes->source = g_timeout_add(5000,
+					_volumes_on_timeout, volumes);
+	}
+}
+
+
+/* useful */
+/* volumes_list */
+static void _list_add(Volumes * volumes, char const * name, char const * device,
+		char const * filesystem, unsigned int flags,
+		char const * mountpoint, fsblkcnt_t free, fsblkcnt_t total);
+static void _list_get_iter(Volumes * volumes, GtkTreeIter * iter,
+		char const * mountpoint);
+static void _list_purge(Volumes * volumes);
+static void _list_reset(Volumes * volumes);
+
+static void _volumes_list(Volumes * volumes)
+{
 #if defined(ST_NOWAIT)
 	struct statvfs * mnt;
 	int res;
@@ -220,27 +253,17 @@ static void _volumes_refresh(Volumes * volumes, GList * selection)
 	unsigned int flags = 0;
 
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, path);
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
-	if(path == NULL)
-	{
-		if(volumes->source != 0)
-			g_source_remove(volumes->source);
-		volumes->source = 0;
-		return;
-	}
-	if(volumes->source == 0)
-		volumes->source = g_timeout_add(5000, _volumes_on_timeout,
-				volumes);
 #if defined(ST_NOWAIT)
 	if((res = getmntinfo(&mnt, ST_NOWAIT)) <= 0)
 		return;
-	_refresh_reset(volumes);
+	_list_reset(volumes);
 	for(i = 0; i < res; i++)
 	{
 		flags = 0;
 		flags |= (mnt[i].f_flag & ST_RDONLY) ? DF_READONLY : 0;
-		_refresh_add(volumes, (mnt[i].f_flag & ST_ROOTFS)
+		_list_add(volumes, (mnt[i].f_flag & ST_ROOTFS)
 				? _("Root filesystem") : NULL,
 				mnt[i].f_mntfromname, mnt[i].f_fstypename,
 				flags, mnt[i].f_mntonname, mnt[i].f_bavail,
@@ -249,29 +272,27 @@ static void _volumes_refresh(Volumes * volumes, GList * selection)
 #elif defined(MNT_NOWAIT)
 	if((res = getmntinfo(&mnt, MNT_NOWAIT)) <= 0)
 		return;
-	_refresh_reset(volumes);
+	_list_reset(volumes);
 	for(i = 0; i < res; i++)
 	{
 		flags = 0;
 		flags |= (mnt[i].f_flags & MNT_RDONLY) ? DF_READONLY : 0;
-		_refresh_add(volumes, (mnt[i].f_flags & MNT_ROOTFS)
+		_list_add(volumes, (mnt[i].f_flags & MNT_ROOTFS)
 				? _("Root filesystem") : NULL,
 				mnt[i].f_mntfromname, mnt[i].f_fstypename,
 				flags, mnt[i].f_mntonname, mnt[i].f_bavail,
 				mnt[i].f_blocks);
 	}
 #else
-	_refresh_reset(volumes);
-	_refresh_add(volumes, _("Root filesystem"), NULL, NULL, flags, "/", 0,
-			0);
+	_list_reset(volumes);
+	_list_add(volumes, _("Root filesystem"), NULL, NULL, flags, "/", 0, 0);
 #endif
-	_refresh_purge(volumes);
+	_list_purge(volumes);
 }
 
-static void _refresh_add(Volumes * volumes, char const * name,
-		char const * device, char const * filesystem,
-		unsigned int flags, char const * mountpoint,
-		fsblkcnt_t free, fsblkcnt_t total)
+static void _list_add(Volumes * volumes, char const * name, char const * device,
+		char const * filesystem, unsigned int flags,
+		char const * mountpoint, fsblkcnt_t free, fsblkcnt_t total)
 {
 	GtkTreeIter iter;
 	VolumesPixbuf dp = DP_HARDDISK;
@@ -285,7 +306,7 @@ static void _refresh_add(Volumes * volumes, char const * name,
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\", \"%s\", \"%s\", %lu, %lu)\n",
-			__func__, name, device, mountpoint, filesystem, free,
+			__func__, name, device, filesystem, mountpoint, free,
 			total);
 #endif
 	for(i = 0; i < sizeof(ignore) / sizeof(*ignore); i++)
@@ -319,7 +340,7 @@ static void _refresh_add(Volumes * volumes, char const * name,
 		f = fraction * 100;
 		snprintf(buf, sizeof(buf), "%.1lf%%", fraction * 100.0);
 	}
-	_refresh_get_iter(volumes, &iter, mountpoint);
+	_list_get_iter(volumes, &iter, mountpoint);
 	gtk_list_store_set(volumes->store, &iter,
 			DC_PIXBUF, volumes->icons[dp], DC_NAME, name,
 			DC_FILESYSTEM, filesystem, DC_FLAGS, flags,
@@ -327,7 +348,7 @@ static void _refresh_add(Volumes * volumes, char const * name,
 			DC_FREE_DISPLAY, buf, DC_UPDATED, TRUE, -1);
 }
 
-static void _refresh_get_iter(Volumes * volumes, GtkTreeIter * iter,
+static void _list_get_iter(Volumes * volumes, GtkTreeIter * iter,
 		char const * mountpoint)
 {
 	GtkTreeModel * model = GTK_TREE_MODEL(volumes->store);
@@ -347,7 +368,7 @@ static void _refresh_get_iter(Volumes * volumes, GtkTreeIter * iter,
 	gtk_list_store_append(volumes->store, iter);
 }
 
-static void _refresh_purge(Volumes * volumes)
+static void _list_purge(Volumes * volumes)
 {
 	GtkTreeModel * model = GTK_TREE_MODEL(volumes->store);
 	GtkTreeIter iter;
@@ -362,7 +383,7 @@ static void _refresh_purge(Volumes * volumes)
 	}
 }
 
-static void _refresh_reset(Volumes * volumes)
+static void _list_reset(Volumes * volumes)
 {
 	GtkTreeModel * model = GTK_TREE_MODEL(volumes->store);
 	GtkTreeIter iter;
@@ -380,14 +401,11 @@ static void _refresh_reset(Volumes * volumes)
 static gboolean _volumes_on_timeout(gpointer data)
 {
 	Volumes * volumes = data;
-	GList * l;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
-	if((l = g_list_append(NULL, "/")) != NULL)
-		_volumes_refresh(volumes, l); /* XXX */
-	g_list_free(l);
+	_volumes_list(volumes);
 	return TRUE;
 }
 
