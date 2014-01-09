@@ -83,6 +83,9 @@ typedef struct _BrowserPlugin
 
 	/* widgets */
 	GtkWidget * widget;
+	/* toolbar */
+	GtkToolItem * tb_restore;
+	GtkToolItem * tb_delete;
 	GtkWidget * view;
 	GtkListStore * store;
 } Trash;
@@ -98,6 +101,8 @@ static void _trash_list(Trash * trash);
 
 /* callbacks */
 static void _trash_on_select_all(gpointer data);
+static void _trash_on_selection_changed(GtkTreeSelection * treesel,
+		gpointer data);
 static gboolean _trash_on_timeout(gpointer data);
 
 
@@ -137,8 +142,8 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 	trash->widget = gtk_vbox_new(FALSE, 0);
 #endif
 	widget = gtk_toolbar_new();
-	/* FIXME handle sensitiveness of toolbar buttons */
 	/* move to trash */
+	/* FIXME handle sensitiveness of this button */
 	toolitem = gtk_tool_button_new(NULL, _(TEXT_MOVETOTRASH));
 #if GTK_CHECK_VERSION(2, 8, 0)
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), PLUGIN_ICON);
@@ -154,13 +159,13 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 				_trash_on_select_all), trash);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	/* restore */
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_UNDO);
+	trash->tb_restore = gtk_tool_button_new_from_stock(GTK_STOCK_UNDO);
 	/* FIXME handle the signal */
-	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), trash->tb_restore, -1);
 	/* delete */
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_DELETE);
+	trash->tb_delete = gtk_tool_button_new_from_stock(GTK_STOCK_DELETE);
 	/* FIXME handle the signal */
-	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), trash->tb_delete, -1);
 	gtk_box_pack_start(GTK_BOX(trash->widget), widget, FALSE, TRUE, 0);
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
@@ -173,6 +178,9 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(trash->view), TRUE);
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(trash->view));
 	gtk_tree_selection_set_mode(treesel, GTK_SELECTION_MULTIPLE);
+	g_signal_connect(treesel, "changed", G_CALLBACK(
+				_trash_on_selection_changed), trash);
+	_trash_on_selection_changed(treesel, trash);
 	/* icon */
 	renderer = gtk_cell_renderer_pixbuf_new();
 	column = gtk_tree_view_column_new_with_attributes("", renderer,
@@ -377,6 +385,20 @@ static void _trash_on_select_all(gpointer data)
 
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(trash->view));
 	gtk_tree_selection_select_all(treesel);
+}
+
+
+/* trash_on_selection_changed */
+static void _trash_on_selection_changed(GtkTreeSelection * treesel,
+		gpointer data)
+{
+	Trash * trash = data;
+	gboolean sensitive;
+
+	sensitive = (gtk_tree_selection_count_selected_rows(treesel) > 0)
+		? TRUE : FALSE;
+	gtk_widget_set_sensitive(GTK_WIDGET(trash->tb_restore), sensitive);
+	gtk_widget_set_sensitive(GTK_WIDGET(trash->tb_delete), sensitive);
 }
 
 
