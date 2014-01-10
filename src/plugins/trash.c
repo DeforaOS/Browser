@@ -66,6 +66,7 @@
 typedef enum _TrashColumn
 {
 	TC_PIXBUF = 0,
+	TC_FILENAME,
 	TC_PATH,
 	TC_PATH_ORIGINAL,
 	TC_DELETED,
@@ -92,14 +93,21 @@ typedef struct _BrowserPlugin
 
 
 /* prototypes */
+/* plug-in */
 static Trash * _trash_init(BrowserPluginHelper * helper);
 static void _trash_destroy(Trash * trash);
 static GtkWidget * _trash_get_widget(Trash * trash);
 static void _trash_refresh(Trash * trash, GList * selection);
 
+/* useful */
+static gboolean _trash_confirm(Trash * trash, char const * message);
+static int _trash_delete_selection(Trash * trash);
 static void _trash_list(Trash * trash);
+static int _trash_restore_selection(Trash * trash);
 
 /* callbacks */
+static void _trash_on_delete(gpointer data);
+static void _trash_on_restore(gpointer data);
 static void _trash_on_select_all(gpointer data);
 static void _trash_on_selection_changed(GtkTreeSelection * treesel,
 		gpointer data);
@@ -160,19 +168,21 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	/* restore */
 	trash->tb_restore = gtk_tool_button_new_from_stock(GTK_STOCK_UNDO);
-	/* FIXME handle the signal */
+	g_signal_connect_swapped(trash->tb_restore, "clicked", G_CALLBACK(
+				_trash_on_restore), trash);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), trash->tb_restore, -1);
 	/* delete */
 	trash->tb_delete = gtk_tool_button_new_from_stock(GTK_STOCK_DELETE);
-	/* FIXME handle the signal */
+	g_signal_connect_swapped(trash->tb_delete, "clicked", G_CALLBACK(
+				_trash_on_delete), trash);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), trash->tb_delete, -1);
 	gtk_box_pack_start(GTK_BOX(trash->widget), widget, FALSE, TRUE, 0);
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	trash->store = gtk_list_store_new(TC_COUNT, GDK_TYPE_PIXBUF,
-			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_UINT,
-			G_TYPE_STRING, G_TYPE_BOOLEAN);
+			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING,
+			G_TYPE_UINT, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	trash->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				trash->store));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(trash->view), TRUE);
@@ -242,30 +252,101 @@ static void _trash_refresh(Trash * trash, GList * selection)
 }
 
 
+/* useful */
+/* trash_confirm */
+static gboolean _trash_confirm(Trash * trash, char const * message)
+{
+	GtkWidget * dialog;
+	int res;
+
+	/* XXX move to BrowserPluginHelper */
+	dialog = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_QUESTION,
+			GTK_BUTTONS_NONE,
+#if GTK_CHECK_VERSION(2, 6, 0)
+			"%s", _("Question"));
+	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
+#endif
+			"%s", message);
+	gtk_dialog_add_buttons(GTK_DIALOG(dialog),
+			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+			GTK_STOCK_DELETE, GTK_RESPONSE_ACCEPT, NULL);
+	gtk_window_set_title(GTK_WINDOW(dialog), _("Question"));
+	res = gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_widget_destroy(dialog);
+	return (res == GTK_RESPONSE_ACCEPT) ? 1 : 0;
+}
+
+
+/* trash_delete_selection */
+static int _delete_path(Trash * trash, GtkTreeModel * model,
+		GtkTreePath * path);
+
+static int _trash_delete_selection(Trash * trash)
+{
+	int ret = 0;
+	GtkTreeSelection * treesel;
+	GtkTreeModel * model;
+	GList * rows;
+	GList * l;
+
+	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(trash->view));
+	if((rows = gtk_tree_selection_get_selected_rows(treesel, &model))
+			== NULL)
+		/* nothing is selected */
+		return 0;
+	for(l = rows; l != NULL; l = l->next)
+		ret |= _delete_path(trash, model, l->data);
+	g_list_foreach(rows, (GFunc)gtk_tree_path_free, NULL);
+	g_list_free(rows);
+	_trash_list(trash);
+	return (ret == 0) ? 0 : -1;
+}
+
+static int _delete_path(Trash * trash, GtkTreeModel * model, GtkTreePath * path)
+{
+	int ret = -1;
+	const char ext[] = DATA_EXTENSION;
+	GtkTreeIter iter;
+	gchar * filename;
+	gchar * p;
+	size_t len;
+
+	if(gtk_tree_model_get_iter(model, &iter, path) != TRUE)
+		/* XXX report error */
+		return -1;
+	gtk_tree_model_get(model, &iter, TC_FILENAME, &filename, TC_PATH, &p,
+			-1);
+	if(filename != NULL && (len = strlen(filename)) > sizeof(ext))
+		filename[len - sizeof(ext) + 1] = '\0';
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() \"%s\" \"%s\"\n", __func__, p, filename);
+#endif
+	/* FIXME implement */
+#if 0
+	ret = unlink(path);
+#endif
+	g_free(filename);
+	g_free(p);
+	return ret;
+}
+
+
 /* trash_list */
+static void _list_add(Trash * trash, Config * config, char const * path,
+		char const * filename, const time_t sixmonths);
+static void _list_get_iter(Trash * trash, GtkTreeIter * iter,
+		char const * path);
 static char * _list_path(void);
 static void _list_purge(Trash * trash);
 static void _list_reset(Trash * trash);
 
 static void _trash_list(Trash * trash)
 {
-	const char ext[] = DATA_EXTENSION;
-	const char section[] = DATA_SECTION;
-	BrowserPluginHelper * helper = trash->helper;
 	Config * config;
 	char * path;
 	DIR * dir;
 	struct dirent * de;
-	size_t len;
-	GtkTreeIter iter;
-	GdkPixbuf * pixbuf;
-	char * p;
-	char const * q;
-	struct tm tm;
-	time_t t;
-	char const * u;
 	time_t sixmonths;
-	char buf[16];
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
@@ -285,50 +366,82 @@ static void _trash_list(Trash * trash)
 		free(path);
 		return;
 	}
-	sixmonths = time(NULL) - 15552000;
 	/* FIXME refresh only if necessary */
 	_list_reset(trash);
+	sixmonths = time(NULL) - 15552000;
 	while((de = readdir(dir)) != NULL)
-	{
-		if((len = strlen(de->d_name)) <= sizeof(ext))
-			continue;
-		if(strncmp(&de->d_name[len - sizeof(ext) + 1], ext,
-					sizeof(ext)) != 0)
-			continue;
-		config_reset(config);
-		p = g_strdup_printf("%s/%s", path, de->d_name);
-		if(config_load(config, p) != 0
-				|| (q = config_get(config, section, DATA_PATH))
-				== NULL)
-		{
-			g_free(p);
-			continue;
-		}
-		pixbuf = helper->get_icon(helper->browser, q, NULL, NULL, NULL,
-				24);
-		t = -1;
-		if((u = config_get(config, section, DATA_DELETIONDATE)) != NULL
-				&& strptime(u, "%Y-%m-%dT%H:%M:%S", &tm)
-				!= NULL)
-		{
-			t = mktime(&tm);
-			len = strftime(buf, sizeof(buf), (t < sixmonths)
-					? "%b %e %H:%M" : "%b %e %Y", &tm);
-			buf[len] = '\0';
-			u = buf;
-		}
-		else
-			u = "";
-		gtk_list_store_append(trash->store, &iter);
-		gtk_list_store_set(trash->store, &iter, TC_PIXBUF, pixbuf,
-				TC_PATH, p, TC_PATH_ORIGINAL, q, TC_DELETED, t,
-				TC_DELETED_DISPLAY, u, TC_UPDATED, TRUE, -1);
-		g_free(p);
-	}
+		_list_add(trash, config, path, de->d_name, sixmonths);
 	closedir(dir);
 	_list_purge(trash);
 	config_delete(config);
 	free(path);
+}
+
+static void _list_add(Trash * trash, Config * config, char const * path,
+		char const * filename, const time_t sixmonths)
+{
+	const char ext[] = DATA_EXTENSION;
+	const char section[] = DATA_SECTION;
+	BrowserPluginHelper * helper = trash->helper;
+	size_t len;
+	GtkTreeIter iter;
+	GdkPixbuf * pixbuf;
+	char * p;
+	char const * q;
+	struct tm tm;
+	time_t t = -1;
+	char const * u;
+	char buf[16];
+
+	if((len = strlen(filename)) <= sizeof(ext))
+		return;
+	if(strncmp(&filename[len - sizeof(ext) + 1], ext, sizeof(ext)) != 0)
+		return;
+	config_reset(config);
+	p = g_strdup_printf("%s/%s", path, filename);
+	if(config_load(config, p) != 0
+			|| (q = config_get(config, section, DATA_PATH)) == NULL)
+	{
+		g_free(p);
+		return;
+	}
+	pixbuf = helper->get_icon(helper->browser, q, NULL, NULL, NULL, 24);
+	if((u = config_get(config, section, DATA_DELETIONDATE)) != NULL
+			&& strptime(u, "%Y-%m-%dT%H:%M:%S", &tm) != NULL)
+	{
+		t = mktime(&tm);
+		len = strftime(buf, sizeof(buf), (t >= sixmonths)
+				? "%b %e %H:%M" : "%b %e %Y", &tm);
+		buf[len] = '\0';
+		u = buf;
+	}
+	else
+		u = "";
+	_list_get_iter(trash, &iter, p);
+	gtk_list_store_set(trash->store, &iter, TC_PIXBUF, pixbuf,
+			TC_FILENAME, filename, TC_PATH, p,
+			TC_PATH_ORIGINAL, q, TC_DELETED, t,
+			TC_DELETED_DISPLAY, u, TC_UPDATED, TRUE, -1);
+	g_free(p);
+}
+
+static void _list_get_iter(Trash * trash, GtkTreeIter * iter, char const * path)
+{
+	GtkTreeModel * model = GTK_TREE_MODEL(trash->store);
+	gboolean valid;
+	gchar * p;
+	int res;
+
+	for(valid = gtk_tree_model_get_iter_first(model, iter); valid == TRUE;
+		valid = gtk_tree_model_iter_next(model, iter))
+	{
+		gtk_tree_model_get(model, iter, TC_PATH, &p, -1);
+		res = strcmp(path, p);
+		g_free(p);
+		if(res == 0)
+			return;
+	}
+	gtk_list_store_append(trash->store, iter);
 }
 
 static char * _list_path(void)
@@ -376,7 +489,71 @@ static void _list_reset(Trash * trash)
 }
 
 
+/* trash_restore_selection */
+static int _restore_path(Trash * trash, GtkTreeModel * model,
+		GtkTreePath * path);
+
+static int _trash_restore_selection(Trash * trash)
+{
+	/* FIXME code duplicated from _trash_delete_selection() */
+	int ret = 0;
+	GtkTreeSelection * treesel;
+	GtkTreeModel * model;
+	GList * rows;
+	GList * l;
+
+	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(trash->view));
+	if((rows = gtk_tree_selection_get_selected_rows(treesel, &model))
+			== NULL)
+		/* nothing is selected */
+		return 0;
+	for(l = rows; l != NULL; l = l->next)
+		ret |= _restore_path(trash, model, l->data);
+	g_list_foreach(rows, (GFunc)gtk_tree_path_free, NULL);
+	g_list_free(rows);
+	_trash_list(trash);
+	return (ret == 0) ? 0 : -1;
+}
+
+static int _restore_path(Trash * trash, GtkTreeModel * model,
+		GtkTreePath * path)
+{
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	/* FIXME implement */
+	return -1;
+}
+
+
 /* callbacks */
+/* trash_on_delete */
+static void _trash_on_delete(gpointer data)
+{
+	Trash * trash = data;
+	GtkTreeSelection * treesel;
+
+	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(trash->view));
+	if(gtk_tree_selection_count_selected_rows(treesel) > 0
+			&& _trash_confirm(trash,
+				_("This will delete the file(s) selected.\n"
+					"Do you really want to proceed?")))
+		_trash_delete_selection(trash);
+}
+
+
+/* trash_on_restore */
+static void _trash_on_restore(gpointer data)
+{
+	Trash * trash = data;
+	GtkTreeSelection * treesel;
+
+	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(trash->view));
+	if(gtk_tree_selection_count_selected_rows(treesel) > 0)
+		_trash_restore_selection(trash);
+}
+
+
 /* trash_on_select_all */
 static void _trash_on_select_all(gpointer data)
 {
