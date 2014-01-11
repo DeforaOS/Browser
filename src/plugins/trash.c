@@ -152,11 +152,13 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 	widget = gtk_toolbar_new();
 	/* move to trash */
 	/* FIXME handle sensitiveness of this button */
-	toolitem = gtk_tool_button_new(NULL, _(TEXT_MOVETOTRASH));
 #if GTK_CHECK_VERSION(2, 8, 0)
+	toolitem = gtk_tool_button_new(NULL, _(TEXT_MOVETOTRASH));
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), PLUGIN_ICON);
 #else
-	/* FIXME implement */
+	toolitem = gtk_tool_button_new(gtk_image_new_from_icon_name(PLUGIN_ICON,
+				GTK_ICON_SIZE_SMALL_TOOLBAR),
+			_(TEXT_MOVETOTRASH));
 #endif
 	/* FIXME handle the signal */
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
