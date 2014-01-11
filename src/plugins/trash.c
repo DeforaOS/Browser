@@ -107,6 +107,7 @@ static int _trash_restore_selection(Trash * trash);
 
 /* callbacks */
 static void _trash_on_delete(gpointer data);
+static void _trash_on_move_to_trash(gpointer data);
 static void _trash_on_restore(gpointer data);
 static void _trash_on_select_all(gpointer data);
 static void _trash_on_selection_changed(GtkTreeSelection * treesel,
@@ -160,7 +161,8 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 				GTK_ICON_SIZE_SMALL_TOOLBAR),
 			_(TEXT_MOVETOTRASH));
 #endif
-	/* FIXME handle the signal */
+	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
+				_trash_on_move_to_trash), trash);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	toolitem = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
@@ -541,6 +543,13 @@ static void _trash_on_delete(gpointer data)
 				_("This will delete the file(s) selected.\n"
 					"Do you really want to proceed?")))
 		_trash_delete_selection(trash);
+}
+
+
+/* trash_on_move_to_trash */
+static void _trash_on_move_to_trash(gpointer data)
+{
+	/* FIXME implement */
 }
 
 
