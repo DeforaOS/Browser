@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <libintl.h>
 #include <System.h>
 #include "Browser.h"
+#define _(string) gettext(string)
 
 
 /* Favorites */
@@ -139,10 +141,18 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 	gtk_toolbar_set_icon_size(GTK_TOOLBAR(widget), GTK_ICON_SIZE_MENU);
 	gtk_toolbar_set_style(GTK_TOOLBAR(widget), GTK_TOOLBAR_ICONS);
 	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_ADD);
+#if GTK_CHECK_VERSION(2, 12, 0)
+	gtk_widget_set_tooltip_text(GTK_WIDGET(toolitem),
+			_("Add to bookmarks"));
+#endif
 	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
 				_favorites_on_add), favorites);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_REMOVE);
+#if GTK_CHECK_VERSION(2, 12, 0)
+	gtk_widget_set_tooltip_text(GTK_WIDGET(toolitem),
+			_("Remove from bookmarks"));
+#endif
 	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
 				_favorites_on_remove), favorites);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);

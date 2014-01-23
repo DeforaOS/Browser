@@ -14,6 +14,7 @@
 ../src/plugins/common.c
 ../src/plugins/cvs.c
 ../src/plugins/dirtree.c
+../src/plugins/favorites.c
 ../src/plugins/make.c
 ../src/plugins/preview.c
 ../src/plugins/properties.c
