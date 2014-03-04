@@ -118,7 +118,7 @@ while getopts "ciuP:" name; do
 			uninstall=1
 			;;
 		P)
-			PREFIX="$2"
+			PREFIX="$OPTARG"
 			;;
 		?)
 			_usage
