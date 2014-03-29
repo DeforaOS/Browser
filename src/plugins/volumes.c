@@ -81,7 +81,11 @@ typedef struct _BrowserPlugin
 	GtkWidget * window;
 	GtkListStore * store;
 	GtkWidget * view;
+
+	/* icons */
 	GdkPixbuf * icons[DP_COUNT];
+	gint width;
+	gint height;
 } Volumes;
 
 
@@ -132,8 +136,6 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	char const * icons[DP_COUNT] = { "drive-harddisk", "drive-cdrom",
 		"drive-removable-media" };
 	size_t i;
-	gint width;
-	gint height;
 
 	if((volumes = object_new(sizeof(*volumes))) == NULL)
 		return NULL;
@@ -173,12 +175,16 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	g_signal_connect(volumes->view, "row-activated", G_CALLBACK(
 				_volumes_on_view_row_activated), volumes);
 	gtk_container_add(GTK_CONTAINER(volumes->window), volumes->view);
+	/* icons */
 	icontheme = gtk_icon_theme_get_default();
-	gtk_icon_size_lookup(GTK_ICON_SIZE_BUTTON, &width, &height);
+	volumes->width = 24;
+	volumes->height = 24;
+	gtk_icon_size_lookup(GTK_ICON_SIZE_BUTTON, &volumes->width,
+			&volumes->height);
 	for(i = 0; i < DP_COUNT; i++)
 		volumes->icons[i] = gtk_icon_theme_load_icon(icontheme,
-				icons[i], width, GTK_ICON_LOOKUP_USE_BUILTIN,
-				NULL);
+				icons[i], volumes->width,
+				GTK_ICON_LOOKUP_USE_BUILTIN, NULL);
 	gtk_widget_show_all(volumes->window);
 	return volumes;
 }
@@ -234,6 +240,8 @@ static void _volumes_refresh(Volumes * volumes, GList * selection)
 static void _list_add(Volumes * volumes, char const * name, char const * device,
 		char const * filesystem, unsigned int flags,
 		char const * mountpoint, fsblkcnt_t free, fsblkcnt_t total);
+static GdkPixbuf * _list_get_icon(Volumes * volumes, VolumesPixbuf dp,
+		char const * mountpoint);
 static void _list_get_iter(Volumes * volumes, GtkTreeIter * iter,
 		char const * mountpoint);
 static void _list_purge(Volumes * volumes);
@@ -341,11 +349,58 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 		snprintf(buf, sizeof(buf), "%.1lf%%", fraction * 100.0);
 	}
 	_list_get_iter(volumes, &iter, mountpoint);
-	gtk_list_store_set(volumes->store, &iter,
-			DC_PIXBUF, volumes->icons[dp], DC_NAME, name,
+	gtk_list_store_set(volumes->store, &iter, DC_PIXBUF,
+			_list_get_icon(volumes, dp, mountpoint), DC_NAME, name,
 			DC_FILESYSTEM, filesystem, DC_FLAGS, flags,
 			DC_MOUNTPOINT, mountpoint, DC_FREE, f,
 			DC_FREE_DISPLAY, buf, DC_UPDATED, TRUE, -1);
+}
+
+static GdkPixbuf * _list_get_icon(Volumes * volumes, VolumesPixbuf dp,
+		char const * mountpoint)
+{
+	GdkPixbuf * ret = volumes->icons[dp];
+	const char autorun[] = "/autorun.inf";
+	const char icon[] = "icon=";
+	String * s;
+	FILE * fp;
+	char buf[256];
+	size_t len;
+	GError * error = NULL;
+
+	if(dp != DP_REMOVABLE)
+		/* stick to the default icon */
+		return ret;
+	if((s = string_new_append(mountpoint, autorun, NULL)) == NULL)
+		return ret;
+	fp = fopen(s, "r");
+	string_delete(s);
+	if(fp == NULL)
+		return ret;
+	/* FIXME improve the parser (use the Config class?) */
+	while(fgets(buf, sizeof(buf), fp) != NULL)
+		if((len = strlen(buf)) == sizeof(buf) - 1)
+			continue;
+		else if(strncasecmp(icon, buf, sizeof(icon) - 1) == 0)
+		{
+			buf[len - 2] = '\0';
+			if((s = string_new_append(mountpoint, "/",
+							&buf[sizeof(icon) - 1],
+							NULL)) == NULL)
+				continue;
+			if((ret = gdk_pixbuf_new_from_file_at_scale(s,
+							volumes->width,
+							volumes->height, TRUE,
+							&error)) == NULL)
+			{
+				g_error_free(error);
+				error = NULL;
+				ret = volumes->icons[dp];
+			}
+			string_delete(s);
+		}
+	fclose(fp);
+	return ret;
 }
 
 static void _list_get_iter(Volumes * volumes, GtkTreeIter * iter,
