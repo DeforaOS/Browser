@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2010-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2010-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -557,7 +557,11 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 			G_CALLBACK(_on_icon_button_press), desktopicon);
 	g_signal_connect(G_OBJECT(desktopicon->event), "key-press-event",
 			G_CALLBACK(_on_icon_key_press), desktopicon);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
 	vbox = gtk_vbox_new(FALSE, 4);
+#endif
 	geometry.min_width = DESKTOPICON_MIN_WIDTH;
 	geometry.min_height = DESKTOPICON_MIN_HEIGHT;
 	geometry.max_width = DESKTOPICON_MAX_WIDTH;
@@ -669,7 +673,11 @@ static void _desktopicon_update_transparency(DesktopIcon * desktopicon)
 	gdk_draw_drawable(mask, gc, iconmask, 0, 0, (width - iwidth) / 2,
 			(DESKTOPICON_ICON_SIZE - iheight) / 2, -1, -1);
 	gdk_gc_set_foreground(gc, &white);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_get_preferred_size(desktopicon->label, NULL, &req);
+#else
 	gtk_widget_size_request(desktopicon->label, &req);
+#endif
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\") label is %dx%d\n", __func__,
 			desktopicon->name, req.width, req.height);
@@ -1114,7 +1122,11 @@ static void _on_icon_rename(gpointer data)
 	vbox = GTK_DIALOG(dialog)->vbox;
 #endif
 	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_label_new(_("Rename: "));
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
 	gtk_size_group_add_widget(group, widget);
@@ -1125,7 +1137,11 @@ static void _on_icon_rename(gpointer data)
 	gtk_box_pack_start(GTK_BOX(hbox), widget, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	/* entry */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_label_new(_("To: "));
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
 	gtk_size_group_add_widget(group, widget);
