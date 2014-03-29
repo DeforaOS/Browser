@@ -48,15 +48,27 @@
 #ifndef DATA_SECTION
 # define DATA_SECTION		"Trash Info"
 #endif
+#ifndef DATA_TRASHFILES
+# define DATA_TRASHFILES	"Trash/files"
+#endif
 #ifndef DATA_TRASHINFO
 # define DATA_TRASHINFO		"Trash/info"
 #endif
 
+#ifndef TEXT_DELETE
+# define TEXT_DELETE		"Delete"
+#endif
 #ifndef TEXT_DELETED
 # define TEXT_DELETED		"Deleted"
 #endif
 #ifndef TEXT_MOVETOTRASH
 # define TEXT_MOVETOTRASH	"Move to trash"
+#endif
+#ifndef TEXT_RESTORE
+# define TEXT_RESTORE		"Restore"
+#endif
+#ifndef TEXT_SELECTALL
+# define TEXT_SELECTALL		"Select all"
 #endif
 
 
@@ -98,6 +110,9 @@ static Trash * _trash_init(BrowserPluginHelper * helper);
 static void _trash_destroy(Trash * trash);
 static GtkWidget * _trash_get_widget(Trash * trash);
 static void _trash_refresh(Trash * trash, GList * selection);
+
+/* accessors */
+static char * _trash_get_path(char const * subdir);
 
 /* useful */
 static gboolean _trash_confirm(Trash * trash, char const * message);
@@ -155,6 +170,9 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 	/* FIXME handle sensitiveness of this button */
 #if GTK_CHECK_VERSION(2, 8, 0)
 	toolitem = gtk_tool_button_new(NULL, _(TEXT_MOVETOTRASH));
+# if GTK_CHECK_VERSION(2, 12, 0)
+	gtk_widget_set_tooltip_text(GTK_WIDGET(toolitem), _(TEXT_MOVETOTRASH));
+# endif
 	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), PLUGIN_ICON);
 #else
 	toolitem = gtk_tool_button_new(gtk_image_new_from_icon_name(PLUGIN_ICON,
@@ -167,16 +185,27 @@ static Trash * _trash_init(BrowserPluginHelper * helper)
 	toolitem = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_SELECT_ALL);
+#if GTK_CHECK_VERSION(2, 12, 0)
+	gtk_widget_set_tooltip_text(GTK_WIDGET(toolitem), _(TEXT_SELECTALL));
+#endif
 	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
 				_trash_on_select_all), trash);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	/* restore */
 	trash->tb_restore = gtk_tool_button_new_from_stock(GTK_STOCK_UNDO);
+#if GTK_CHECK_VERSION(2, 12, 0)
+	gtk_widget_set_tooltip_text(GTK_WIDGET(trash->tb_restore),
+			_(TEXT_RESTORE));
+#endif
 	g_signal_connect_swapped(trash->tb_restore, "clicked", G_CALLBACK(
 				_trash_on_restore), trash);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), trash->tb_restore, -1);
 	/* delete */
 	trash->tb_delete = gtk_tool_button_new_from_stock(GTK_STOCK_DELETE);
+#if GTK_CHECK_VERSION(2, 12, 0)
+	gtk_widget_set_tooltip_text(GTK_WIDGET(trash->tb_delete),
+			_(TEXT_DELETE));
+#endif
 	g_signal_connect_swapped(trash->tb_delete, "clicked", G_CALLBACK(
 				_trash_on_delete), trash);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), trash->tb_delete, -1);
@@ -256,6 +285,28 @@ static void _trash_refresh(Trash * trash, GList * selection)
 }
 
 
+/* accessors */
+/* trash_get_path */
+static char * _trash_get_path(char const * subdir)
+{
+	const char fallback[] = ".local/share";
+	char * ret;
+	char const * homedir;
+	size_t len;
+
+	if(subdir == NULL)
+		subdir = "";
+	/* FIXME check $XDG_DATA_HOME first */
+	if((homedir = getenv("HOME")) == NULL)
+		homedir = g_get_home_dir();
+	len = strlen(homedir) + 1 + sizeof(fallback) + 1 + strlen(subdir) + 1;
+	if((ret = malloc(len)) == NULL)
+		return NULL;
+	snprintf(ret, len, "%s/%s/%s", homedir, fallback, subdir);
+	return ret;
+}
+
+
 /* useful */
 /* trash_confirm */
 static gboolean _trash_confirm(Trash * trash, char const * message)
@@ -313,6 +364,7 @@ static int _delete_path(Trash * trash, GtkTreeModel * model, GtkTreePath * path)
 	GtkTreeIter iter;
 	gchar * filename;
 	gchar * p;
+	char * files;
 	size_t len;
 
 	if(gtk_tree_model_get_iter(model, &iter, path) != TRUE)
@@ -322,13 +374,16 @@ static int _delete_path(Trash * trash, GtkTreeModel * model, GtkTreePath * path)
 			-1);
 	if(filename != NULL && (len = strlen(filename)) > sizeof(ext))
 		filename[len - sizeof(ext) + 1] = '\0';
+	files = _trash_get_path(DATA_TRASHFILES);
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() \"%s\" \"%s\"\n", __func__, p, filename);
+	fprintf(stderr, "DEBUG: %s() \"%s\" \"%s\" \"%s\"\n", __func__, p,
+			filename, files);
 #endif
 	/* FIXME implement */
 #if 0
 	ret = unlink(path);
 #endif
+	free(files);
 	g_free(filename);
 	g_free(p);
 	return ret;
@@ -340,7 +395,6 @@ static void _list_add(Trash * trash, Config * config, char const * path,
 		char const * filename, const time_t sixmonths);
 static void _list_get_iter(Trash * trash, GtkTreeIter * iter,
 		char const * path);
-static char * _list_path(void);
 static void _list_purge(Trash * trash);
 static void _list_reset(Trash * trash);
 
@@ -356,7 +410,7 @@ static void _trash_list(Trash * trash)
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
 	/* FIXME report errors */
-	if((path = _list_path()) == NULL)
+	if((path = _trash_get_path(DATA_TRASHINFO)) == NULL)
 		return;
 	if((config = config_new()) == NULL)
 	{
@@ -446,24 +500,6 @@ static void _list_get_iter(Trash * trash, GtkTreeIter * iter, char const * path)
 			return;
 	}
 	gtk_list_store_append(trash->store, iter);
-}
-
-static char * _list_path(void)
-{
-	const char fallback[] = ".local/share";
-	const char trash[] = DATA_TRASHINFO;
-	char * ret;
-	char const * homedir;
-	size_t len;
-
-	/* FIXME check $XDG_DATA_HOME first */
-	if((homedir = getenv("HOME")) == NULL)
-		homedir = g_get_home_dir();
-	len = strlen(homedir) + 1 + sizeof(fallback) + 1 + sizeof(trash);
-	if((ret = malloc(len)) == NULL)
-		return NULL;
-	snprintf(ret, len, "%s/%s/%s", homedir, fallback, trash);
-	return ret;
 }
 
 static void _list_purge(Trash * trash)
