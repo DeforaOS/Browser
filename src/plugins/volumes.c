@@ -48,6 +48,7 @@
 enum _VolumesColumn
 {
 	DC_PIXBUF = 0,
+	DC_DEVICE,
 	DC_NAME,
 	DC_ELLIPSIZE,
 	DC_ELLIPSIZE_SET,
@@ -147,9 +148,10 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(volumes->window),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	volumes->store = gtk_list_store_new(DC_COUNT, GDK_TYPE_PIXBUF,
-			G_TYPE_STRING, G_TYPE_UINT, G_TYPE_BOOLEAN,
+			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_UINT,
+			G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_UINT,
 			G_TYPE_STRING, G_TYPE_UINT, G_TYPE_STRING,
-			G_TYPE_UINT, G_TYPE_STRING, G_TYPE_BOOLEAN);
+			G_TYPE_BOOLEAN);
 	volumes->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				volumes->store));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(volumes->view), TRUE);
@@ -354,9 +356,9 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 		snprintf(buf, sizeof(buf), "%.1lf%%", fraction * 100.0);
 	}
 	_list_get_iter(volumes, &iter, mountpoint);
-	gtk_list_store_set(volumes->store, &iter, DC_PIXBUF,
-			_list_get_icon(volumes, dp, mountpoint), DC_NAME, name,
-			DC_ELLIPSIZE, PANGO_ELLIPSIZE_END,
+	gtk_list_store_set(volumes->store, &iter, DC_DEVICE, device,
+			DC_PIXBUF, _list_get_icon(volumes, dp, mountpoint),
+			DC_NAME, name, DC_ELLIPSIZE, PANGO_ELLIPSIZE_END,
 			DC_ELLIPSIZE_SET, TRUE, DC_FILESYSTEM, filesystem,
 			DC_FLAGS, flags, DC_MOUNTPOINT, mountpoint, DC_FREE, f,
 			DC_FREE_DISPLAY, buf, DC_UPDATED, TRUE, -1);
@@ -483,6 +485,7 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 	GtkTreeSelection * treesel;
 	GtkTreeModel * model;
 	GtkTreeIter iter;
+	gchar * device;
 	unsigned int flags;
 	gchar * mountpoint;
 	GtkWidget * menu;
@@ -493,8 +496,8 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
 	if(gtk_tree_selection_get_selected(treesel, &model, &iter) != TRUE)
 		return FALSE;
-	gtk_tree_model_get(model, &iter, DC_MOUNTPOINT, &mountpoint,
-			DC_FLAGS, &flags, -1);
+	gtk_tree_model_get(model, &iter, DC_DEVICE, &device,
+			DC_MOUNTPOINT, &mountpoint, DC_FLAGS, &flags, -1);
 	if(mountpoint == NULL)
 		return FALSE;
 	menu = gtk_menu_new();
@@ -514,7 +517,7 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 		gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(widget),
 				gtk_image_new_from_icon_name("media-eject",
 					GTK_ICON_SIZE_MENU));
-		g_object_set_data(G_OBJECT(widget), "mountpoint", mountpoint);
+		g_object_set_data(G_OBJECT(widget), "device", device);
 		g_signal_connect(widget, "activate", G_CALLBACK(
 					_volumes_on_eject), volumes);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
@@ -531,6 +534,7 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button,
 			event->time);
 #if 0 /* XXX memory leak (for g_object_set_data() above) */
+	g_free(device);
 	g_free(mountpoint);
 #endif
 	return TRUE;
@@ -540,20 +544,20 @@ static void _volumes_on_eject(GtkWidget * widget, gpointer data)
 {
 	Volumes * volumes = data;
 	BrowserPluginHelper * helper = volumes->helper;
-	gchar * mountpoint;
+	gchar * device;
 	char * argv[] = { "eject", "--", NULL, NULL };
 	GError * error = NULL;
 
-	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
+	device = g_object_get_data(G_OBJECT(widget), "device");
 	/* FIXME use the device node instead */
-	argv[2] = mountpoint;
+	argv[2] = device;
 	if(g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
 				NULL, &error) != TRUE)
 	{
 		helper->error(helper->browser, error->message, 1);
 		g_error_free(error);
 	}
-	g_free(mountpoint);
+	g_free(device);
 }
 
 static void _volumes_on_properties(GtkWidget * widget, gpointer data)
