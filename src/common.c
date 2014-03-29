@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2008-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2008-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -155,7 +155,10 @@ static int _common_exec(char const * program, char const * flags, GList * args)
 	argv[i + 1] = "--";
 	if(g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
 				NULL, &error) != TRUE)
+	{
 		ret = error_set_code(1, "%s", error->message);
+		g_error_free(error);
+	}
 	free(argv[0]);
 	if(flags != NULL)
 		free(argv[i]);
