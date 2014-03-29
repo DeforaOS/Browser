@@ -473,6 +473,7 @@ static gboolean _volumes_on_timeout(gpointer data)
 
 /* volumes_on_view_button_press */
 static void _volumes_on_eject(GtkWidget * widget, gpointer data);
+static void _volumes_on_properties(GtkWidget * widget, gpointer data);
 static void _volumes_on_unmount(GtkWidget * widget, gpointer data);
 
 static gboolean _volumes_on_view_button_press(GtkWidget * widget,
@@ -497,6 +498,7 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 	if(mountpoint == NULL)
 		return FALSE;
 	menu = gtk_menu_new();
+	/* unmount */
 	widget = gtk_image_menu_item_new_with_label(_("Unmount"));
 	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(widget),
 			gtk_image_new_from_icon_name("hdd_unmount",
@@ -505,6 +507,7 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 	g_signal_connect(widget, "activate", G_CALLBACK(
 				_volumes_on_unmount), volumes);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
+	/* eject */
 	if((flags & DF_REMOVABLE) != 0)
 	{
 		widget = gtk_image_menu_item_new_with_label(_("Eject"));
@@ -516,6 +519,14 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 					_volumes_on_eject), volumes);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
 	}
+	/* properties */
+	widget = gtk_separator_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
+	widget = gtk_image_menu_item_new_from_stock(GTK_STOCK_PROPERTIES, NULL);
+	g_object_set_data(G_OBJECT(widget), "mountpoint", mountpoint);
+	g_signal_connect(widget, "activate", G_CALLBACK(_volumes_on_properties),
+			volumes);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
 	gtk_widget_show_all(menu);
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button,
 			event->time);
@@ -527,10 +538,40 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 
 static void _volumes_on_eject(GtkWidget * widget, gpointer data)
 {
+	Volumes * volumes = data;
+	BrowserPluginHelper * helper = volumes->helper;
 	gchar * mountpoint;
+	char * argv[] = { "eject", "--", NULL, NULL };
+	GError * error = NULL;
 
 	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
-	/* FIXME really implement */
+	/* FIXME use the device node instead */
+	argv[2] = mountpoint;
+	if(g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
+				NULL, &error) != TRUE)
+	{
+		helper->error(helper->browser, error->message, 1);
+		g_error_free(error);
+	}
+	g_free(mountpoint);
+}
+
+static void _volumes_on_properties(GtkWidget * widget, gpointer data)
+{
+	Volumes * volumes = data;
+	BrowserPluginHelper * helper = volumes->helper;
+	gchar * mountpoint;
+	char * argv[] = { "properties", "--", NULL, NULL };
+	GError * error = NULL;
+
+	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
+	argv[2] = mountpoint;
+	if(g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
+				NULL, &error) != TRUE)
+	{
+		helper->error(helper->browser, error->message, 1);
+		g_error_free(error);
+	}
 	g_free(mountpoint);
 }
 
