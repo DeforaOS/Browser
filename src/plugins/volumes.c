@@ -49,6 +49,8 @@ enum _VolumesColumn
 {
 	DC_PIXBUF = 0,
 	DC_NAME,
+	DC_ELLIPSIZE,
+	DC_ELLIPSIZE_SET,
 	DC_FILESYSTEM,
 	DC_FLAGS,
 	DC_MOUNTPOINT,
@@ -145,12 +147,12 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(volumes->window),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	volumes->store = gtk_list_store_new(DC_COUNT, GDK_TYPE_PIXBUF,
-			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_UINT,
+			G_TYPE_STRING, G_TYPE_UINT, G_TYPE_BOOLEAN,
 			G_TYPE_STRING, G_TYPE_UINT, G_TYPE_STRING,
-			G_TYPE_BOOLEAN);
+			G_TYPE_UINT, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	volumes->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				volumes->store));
-	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(volumes->view), FALSE);
+	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(volumes->view), TRUE);
 	g_signal_connect(volumes->view, "button-press-event", G_CALLBACK(
 				_volumes_on_view_button_press), volumes);
 	g_signal_connect(volumes->view, "popup-menu", G_CALLBACK(
@@ -162,13 +164,16 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	gtk_tree_view_append_column(GTK_TREE_VIEW(volumes->view), column);
 	/* volume name */
 	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
-			"text", DC_NAME, NULL);
+	column = gtk_tree_view_column_new_with_attributes(_("Mountpoint"),
+			renderer, "text", DC_NAME, "ellipsize", DC_ELLIPSIZE,
+			"ellipsize-set", DC_ELLIPSIZE_SET, NULL);
+	gtk_tree_view_column_set_resizable(column, TRUE);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(volumes->view), column);
 	/* free space */
 	renderer = gtk_cell_renderer_progress_new();
-	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
+	column = gtk_tree_view_column_new_with_attributes(_("Used"), renderer,
 			"text", DC_FREE_DISPLAY, "value", DC_FREE, NULL);
+	gtk_tree_view_column_set_resizable(column, TRUE);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(volumes->view), column);
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(volumes->view));
 	gtk_tree_selection_set_mode(treesel, GTK_SELECTION_SINGLE);
@@ -351,8 +356,9 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 	_list_get_iter(volumes, &iter, mountpoint);
 	gtk_list_store_set(volumes->store, &iter, DC_PIXBUF,
 			_list_get_icon(volumes, dp, mountpoint), DC_NAME, name,
-			DC_FILESYSTEM, filesystem, DC_FLAGS, flags,
-			DC_MOUNTPOINT, mountpoint, DC_FREE, f,
+			DC_ELLIPSIZE, PANGO_ELLIPSIZE_END,
+			DC_ELLIPSIZE_SET, TRUE, DC_FILESYSTEM, filesystem,
+			DC_FLAGS, flags, DC_MOUNTPOINT, mountpoint, DC_FREE, f,
 			DC_FREE_DISPLAY, buf, DC_UPDATED, TRUE, -1);
 }
 
