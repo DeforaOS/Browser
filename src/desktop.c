@@ -219,6 +219,7 @@ static void _idle_background(Desktop * desktop, Config * config);
 static void _idle_icons(Desktop * desktop, Config * config);
 static int _on_message(void * data, uint32_t value1, uint32_t value2,
 		uint32_t value3);
+static void _on_popup(gpointer data);
 static void _on_realize(gpointer data);
 static GdkFilterReturn _on_root_event(GdkXEvent * xevent, GdkEvent * event,
 		gpointer data);
@@ -270,6 +271,8 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 			desktop->window.width, desktop->window.height);
 	gtk_window_set_type_hint(GTK_WINDOW(desktop->desktop),
 			GDK_WINDOW_TYPE_HINT_DESKTOP);
+	g_signal_connect_swapped(desktop->desktop, "popup-menu", G_CALLBACK(
+				_on_popup), desktop);
 	g_signal_connect_swapped(desktop->desktop, "realize", G_CALLBACK(
 				_on_realize), desktop);
 	gtk_widget_show(desktop->desktop);
@@ -461,64 +464,19 @@ static int _on_message(void * data, uint32_t value1, uint32_t value2,
 	return GDK_FILTER_CONTINUE;
 }
 
-static GdkFilterReturn _event_button_press(XButtonEvent * xbev,
-		Desktop * desktop);
-static GdkFilterReturn _event_configure(XConfigureEvent * xevent,
-		Desktop * desktop);
-static GdkFilterReturn _event_property(XPropertyEvent * xevent,
-		Desktop * desktop);
 static void _on_popup_new_folder(gpointer data);
 static void _on_popup_new_text_file(gpointer data);
 static void _on_popup_paste(gpointer data);
 static void _on_popup_preferences(gpointer data);
 static void _on_popup_symlink(gpointer data);
 
-static void _on_realize(gpointer data)
+static void _on_popup(gpointer data)
 {
 	Desktop * desktop = data;
-
-	if(desktop->refresh_source != 0)
-		g_source_remove(desktop->refresh_source);
-	desktop->refresh_source = g_idle_add(_new_idle, desktop);
-}
-
-static GdkFilterReturn _on_root_event(GdkXEvent * xevent, GdkEvent * event,
-		gpointer data)
-{
-	Desktop * desktop = data;
-	XEvent * xev = xevent;
-
-	if(xev->type == ButtonPress)
-		return _event_button_press(xevent, desktop);
-	else if(xev->type == ConfigureNotify)
-		return _event_configure(xevent, desktop);
-	else if(xev->type == PropertyNotify)
-		return _event_property(xevent, desktop);
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() %d\n", __func__, xev->type);
-#endif
-	return GDK_FILTER_CONTINUE;
-}
-
-static GdkFilterReturn _event_button_press(XButtonEvent * xbev,
-		Desktop * desktop)
-{
 	GtkWidget * menuitem;
 	GtkWidget * submenu;
 	GtkWidget * image;
 
-	if(xbev->button != 3 || desktop->menu != NULL)
-	{
-		if(desktop->menu != NULL)
-		{
-			gtk_widget_destroy(desktop->menu);
-			desktop->menu = NULL;
-		}
-		return GDK_FILTER_CONTINUE;
-	}
-	/* ignore if not managing files */
-	if(desktop->prefs.icons != DESKTOP_ICONS_FILES)
-		return GDK_FILTER_CONTINUE;
 	desktop->menu = gtk_menu_new();
 	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_NEW, NULL);
 	submenu = gtk_menu_new();
@@ -561,36 +519,7 @@ static GdkFilterReturn _event_button_press(XButtonEvent * xbev,
 	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);
 	gtk_widget_show_all(desktop->menu);
 	gtk_menu_popup(GTK_MENU(desktop->menu), NULL, NULL, NULL, NULL, 3,
-			xbev->time);
-	return GDK_FILTER_CONTINUE;
-}
-
-static GdkFilterReturn _event_configure(XConfigureEvent * xevent,
-		Desktop * desktop)
-{
-	desktop->window.x = xevent->x;
-	desktop->window.y = xevent->y;
-	desktop->window.width = xevent->width;
-	desktop->window.height = xevent->height;
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() (%dx%d) @ (%d,%d))\n", __func__,
-			desktop->window.width, desktop->window.height,
-			desktop->window.x, desktop->window.y);
-#endif
-	g_idle_add(_new_idle, desktop); /* FIXME run it directly? */
-	return GDK_FILTER_CONTINUE;
-}
-
-static GdkFilterReturn _event_property(XPropertyEvent * xevent,
-		Desktop * desktop)
-{
-	Atom atom;
-
-	atom = gdk_x11_get_xatom_by_name("_NET_WORKAREA");
-	if(xevent->atom != atom)
-		return GDK_FILTER_CONTINUE;
-	_desktop_get_workarea(desktop);
-	return GDK_FILTER_CONTINUE;
+			gtk_get_current_event_time());
 }
 
 static void _on_popup_new_folder(gpointer data)
@@ -656,6 +585,87 @@ static void _on_popup_symlink(gpointer data)
 
 	if(_common_symlink(NULL, desktop->path) != 0)
 		desktop_error(desktop, "symlink", 0);
+}
+
+static void _on_realize(gpointer data)
+{
+	Desktop * desktop = data;
+
+	if(desktop->refresh_source != 0)
+		g_source_remove(desktop->refresh_source);
+	desktop->refresh_source = g_idle_add(_new_idle, desktop);
+}
+
+static GdkFilterReturn _event_button_press(XButtonEvent * xbev,
+		Desktop * desktop);
+static GdkFilterReturn _event_configure(XConfigureEvent * xevent,
+		Desktop * desktop);
+static GdkFilterReturn _event_property(XPropertyEvent * xevent,
+		Desktop * desktop);
+
+static GdkFilterReturn _on_root_event(GdkXEvent * xevent, GdkEvent * event,
+		gpointer data)
+{
+	Desktop * desktop = data;
+	XEvent * xev = xevent;
+
+	if(xev->type == ButtonPress)
+		return _event_button_press(xevent, desktop);
+	else if(xev->type == ConfigureNotify)
+		return _event_configure(xevent, desktop);
+	else if(xev->type == PropertyNotify)
+		return _event_property(xevent, desktop);
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() %d\n", __func__, xev->type);
+#endif
+	return GDK_FILTER_CONTINUE;
+}
+
+static GdkFilterReturn _event_button_press(XButtonEvent * xbev,
+		Desktop * desktop)
+{
+	if(xbev->button != 3 || desktop->menu != NULL)
+	{
+		if(desktop->menu != NULL)
+		{
+			gtk_widget_destroy(desktop->menu);
+			desktop->menu = NULL;
+		}
+		return GDK_FILTER_CONTINUE;
+	}
+	/* ignore if not managing files */
+	if(desktop->prefs.icons != DESKTOP_ICONS_FILES)
+		return GDK_FILTER_CONTINUE;
+	_on_popup(desktop);
+	return GDK_FILTER_CONTINUE;
+}
+
+static GdkFilterReturn _event_configure(XConfigureEvent * xevent,
+		Desktop * desktop)
+{
+	desktop->window.x = xevent->x;
+	desktop->window.y = xevent->y;
+	desktop->window.width = xevent->width;
+	desktop->window.height = xevent->height;
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() (%dx%d) @ (%d,%d))\n", __func__,
+			desktop->window.width, desktop->window.height,
+			desktop->window.x, desktop->window.y);
+#endif
+	g_idle_add(_new_idle, desktop); /* FIXME run it directly? */
+	return GDK_FILTER_CONTINUE;
+}
+
+static GdkFilterReturn _event_property(XPropertyEvent * xevent,
+		Desktop * desktop)
+{
+	Atom atom;
+
+	atom = gdk_x11_get_xatom_by_name("_NET_WORKAREA");
+	if(xevent->atom != atom)
+		return GDK_FILTER_CONTINUE;
+	_desktop_get_workarea(desktop);
+	return GDK_FILTER_CONTINUE;
 }
 
 
