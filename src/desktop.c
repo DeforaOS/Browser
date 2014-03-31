@@ -240,7 +240,7 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 	desktop->prefs.icons = DESKTOP_ICONS_FILES;
 	desktop->prefs.monitor = -1;
 	if(prefs != NULL)
-		memcpy(&desktop->prefs, prefs, sizeof(*prefs));
+		desktop->prefs = *prefs;
 	desktop->font = NULL;
 	/* workarea */
 	desktop->screen = gdk_screen_get_default();
