@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2011-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -125,7 +125,11 @@ static CVS * _cvs_init(BrowserPluginHelper * helper)
 	cvs->filename = NULL;
 	cvs->source = 0;
 	/* widgets */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	cvs->widget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
 	cvs->widget = gtk_vbox_new(FALSE, 4);
+#endif
 	font = pango_font_description_new();
 	pango_font_description_set_weight(font, PANGO_WEIGHT_BOLD);
 	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
@@ -141,7 +145,11 @@ static CVS * _cvs_init(BrowserPluginHelper * helper)
 	gtk_misc_set_alignment(GTK_MISC(cvs->status), 0.0, 0.0);
 	gtk_box_pack_start(GTK_BOX(cvs->widget), cvs->status, FALSE, TRUE, 0);
 	/* directory */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	cvs->directory = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
 	cvs->directory = gtk_vbox_new(FALSE, 4);
+#endif
 	widget = _init_label(group, _("Root:"), &cvs->d_root);
 	gtk_box_pack_start(GTK_BOX(cvs->directory), widget, FALSE, TRUE, 0);
 	widget = _init_label(group, _("Repository:"), &cvs->d_repository);
@@ -174,7 +182,11 @@ static CVS * _cvs_init(BrowserPluginHelper * helper)
 	gtk_box_pack_start(GTK_BOX(cvs->widget), cvs->directory, FALSE, TRUE,
 			0);
 	/* file */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	cvs->file = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
 	cvs->file = gtk_vbox_new(FALSE, 4);
+#endif
 	widget = _init_label(group, _("Revision:"), &cvs->f_revision);
 	gtk_box_pack_start(GTK_BOX(cvs->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(bgroup, GTK_STOCK_FIND_AND_REPLACE,
@@ -221,7 +233,11 @@ static GtkWidget * _init_button(GtkSizeGroup * group, char const * icon,
 	GtkWidget * widget;
 	char const stock[] = "gtk-";
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_button_new_with_label(label);
 	gtk_size_group_add_widget(group, widget);
 	if(icon != NULL)
@@ -244,7 +260,11 @@ static GtkWidget * _init_label(GtkSizeGroup * group, char const * label,
 {
 	GtkWidget * hbox;
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	*widget = gtk_label_new(label);
 	gtk_misc_set_alignment(GTK_MISC(*widget), 0.0, 0.0);
 	gtk_size_group_add_widget(group, *widget);
