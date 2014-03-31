@@ -264,32 +264,31 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 			&desktop->window.y, &desktop->window.width,
 			&desktop->window.height, &depth);
 #endif
-#if 0 /* FIXME fully implement (as a hidden option) */
-	/* create the desktop window */
-	desktop->desktop = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_default_size(GTK_WINDOW(desktop->desktop),
-			desktop->window.width, desktop->window.height);
-	gtk_window_set_type_hint(GTK_WINDOW(desktop->desktop),
-			GDK_WINDOW_TYPE_HINT_DESKTOP);
-	g_signal_connect_swapped(desktop->desktop, "popup-menu", G_CALLBACK(
-				_on_popup), desktop);
-	g_signal_connect_swapped(desktop->desktop, "realize", G_CALLBACK(
-				_on_realize), desktop);
-	gtk_widget_show(desktop->desktop);
-# if GTK_CHECK_VERSION(2, 14, 0)
-	desktop->back = gtk_widget_get_window(desktop->desktop);
-# else
-	desktop->back = desktop->desktop->window;
-# endif
-#else
-	desktop->desktop = NULL;
-	desktop->back = desktop->root;
-	/* XXX avoids a warning about _on_realize() */
-	_on_realize(desktop);
-#endif
+	if(desktop->prefs.window)
+	{
+		/* create the desktop window */
+		desktop->desktop = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+		gtk_window_set_default_size(GTK_WINDOW(desktop->desktop),
+				desktop->window.width, desktop->window.height);
+		gtk_window_set_type_hint(GTK_WINDOW(desktop->desktop),
+				GDK_WINDOW_TYPE_HINT_DESKTOP);
+		g_signal_connect_swapped(desktop->desktop, "popup-menu",
+				G_CALLBACK(_on_popup), desktop);
+		/* draw the icons and background when realized */
+		g_signal_connect_swapped(desktop->desktop, "realize",
+				G_CALLBACK(_on_realize), desktop);
+		gtk_widget_show(desktop->desktop);
+	}
+	else
+	{
+		desktop->desktop = NULL;
+		desktop->back = desktop->root;
+		/* draw the icons and background when idle */
+		desktop->refresh_source = g_idle_add(_new_idle, desktop);
+	}
 	/* manage events on the root window */
 	_new_events(desktop, desktop->root);
-	/* draw the icons and background when idle */
+	/* load the default icons */
 	_new_icons(desktop);
 	return desktop;
 }
@@ -338,8 +337,6 @@ static gboolean _new_idle(gpointer data)
 	if((config = _desktop_get_config(desktop)) == NULL)
 		return FALSE;
 	_idle_background(desktop, config);
-	if(desktop->desktop != NULL)
-		gtk_widget_show(desktop->desktop);
 	_idle_icons(desktop, config);
 	config_delete(config);
 	_desktop_get_workarea(desktop);
@@ -591,6 +588,11 @@ static void _on_realize(gpointer data)
 {
 	Desktop * desktop = data;
 
+# if GTK_CHECK_VERSION(2, 14, 0)
+	desktop->back = gtk_widget_get_window(desktop->desktop);
+# else
+	desktop->back = desktop->desktop->window;
+# endif
 	if(desktop->refresh_source != 0)
 		g_source_remove(desktop->refresh_source);
 	desktop->refresh_source = g_idle_add(_new_idle, desktop);
@@ -652,7 +654,10 @@ static GdkFilterReturn _event_configure(XConfigureEvent * xevent,
 			desktop->window.width, desktop->window.height,
 			desktop->window.x, desktop->window.y);
 #endif
-	g_idle_add(_new_idle, desktop); /* FIXME run it directly? */
+	if(desktop->refresh_source != 0)
+		g_source_remove(desktop->refresh_source);
+	/* FIXME run it directly? */
+	desktop->refresh_source = g_idle_add(_new_idle, desktop);
 	return GDK_FILTER_CONTINUE;
 }
 
@@ -1700,6 +1705,7 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 	GError * error = NULL;
 	gint n = 1;
 	gint i;
+	GtkStyle * style;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\", %u, %s)\n", __func__, filename, how,
@@ -1747,9 +1753,18 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 			g_error_free(error);
 		}
 	}
-	gdk_window_set_back_pixmap(desktop->back, pixmap, FALSE);
-	gdk_window_clear(desktop->back);
-	gdk_pixmap_unref(pixmap);
+	if(desktop->desktop != NULL)
+	{
+		style = gtk_style_new();
+		style->bg_pixmap[GTK_STATE_NORMAL] = pixmap;
+		gtk_widget_set_style(desktop->desktop, style);
+	}
+	else
+	{
+		gdk_window_set_back_pixmap(desktop->back, pixmap, FALSE);
+		gdk_window_clear(desktop->back);
+		gdk_pixmap_unref(pixmap);
+	}
 }
 
 static void _background_centered(GdkRectangle * window, GdkPixmap * pixmap,
@@ -2598,7 +2613,7 @@ static int _error(char const * message, int ret)
 /* usage */
 static int _usage(void)
 {
-	fputs(_("Usage: desktop [-H|-V][-a|-c|-f|-h|-n][-m monitor][-N]\n"
+	fputs(_("Usage: desktop [-H|-V][-a|-c|-f|-h|-n][-m monitor][-N][-w]\n"
 "  -H	Place icons horizontally\n"
 "  -V	Place icons vertically\n"
 "  -a	Display the applications registered\n"
@@ -2607,7 +2622,8 @@ static int _usage(void)
 "  -h	Display the homescreen\n"
 "  -m	Monitor where to display the desktop\n"
 "  -n	Do not display icons on the desktop\n"
-"  -N	Do not intercept mouse clicks on the desktop\n"), stderr);
+"  -N	Do not intercept mouse clicks on the desktop\n"
+"  -w	Draw the desktop as a window\n"), stderr);
 	return 1;
 }
 
@@ -2628,8 +2644,9 @@ int main(int argc, char * argv[])
 	prefs.icons = -1;
 	prefs.monitor = -1;
 	prefs.popup = 1;
+	prefs.window = 0;
 	gtk_init(&argc, &argv);
-	while((o = getopt(argc, argv, "HVacfhm:nN")) != -1)
+	while((o = getopt(argc, argv, "HVacfhm:nNw")) != -1)
 		switch(o)
 		{
 			case 'H':
@@ -2660,6 +2677,9 @@ int main(int argc, char * argv[])
 				break;
 			case 'N':
 				prefs.popup = 0;
+				break;
+			case 'w':
+				prefs.window = 1;
 				break;
 			default:
 				return _usage();
