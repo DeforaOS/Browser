@@ -226,7 +226,7 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 {
 	Desktop * desktop;
 #if !GTK_CHECK_VERSION(2, 24, 0)
-	int depth;
+	gint depth;
 #endif
 
 	if((desktop = object_new(sizeof(*desktop))) == NULL)
