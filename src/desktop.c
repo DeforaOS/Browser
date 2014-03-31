@@ -219,6 +219,7 @@ static void _idle_background(Desktop * desktop, Config * config);
 static void _idle_icons(Desktop * desktop, Config * config);
 static int _on_message(void * data, uint32_t value1, uint32_t value2,
 		uint32_t value3);
+static void _on_realize(gpointer data);
 static GdkFilterReturn _on_root_event(GdkXEvent * xevent, GdkEvent * event,
 		gpointer data);
 
@@ -269,7 +270,9 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 			desktop->window.width, desktop->window.height);
 	gtk_window_set_type_hint(GTK_WINDOW(desktop->desktop),
 			GDK_WINDOW_TYPE_HINT_DESKTOP);
-	gtk_widget_realize(desktop->desktop);
+	g_signal_connect_swapped(desktop->desktop, "realize", G_CALLBACK(
+				_on_realize), desktop);
+	gtk_widget_show(desktop->desktop);
 # if GTK_CHECK_VERSION(2, 14, 0)
 	desktop->back = gtk_widget_get_window(desktop->desktop);
 # else
@@ -278,12 +281,13 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 #else
 	desktop->desktop = NULL;
 	desktop->back = desktop->root;
+	/* XXX avoids a warning about _on_realize() */
+	_on_realize(desktop);
 #endif
 	/* manage events on the root window */
 	_new_events(desktop, desktop->root);
 	/* draw the icons and background when idle */
 	_new_icons(desktop);
-	g_idle_add(_new_idle, desktop);
 	return desktop;
 }
 
@@ -468,6 +472,15 @@ static void _on_popup_new_text_file(gpointer data);
 static void _on_popup_paste(gpointer data);
 static void _on_popup_preferences(gpointer data);
 static void _on_popup_symlink(gpointer data);
+
+static void _on_realize(gpointer data)
+{
+	Desktop * desktop = data;
+
+	if(desktop->refresh_source != 0)
+		g_source_remove(desktop->refresh_source);
+	desktop->refresh_source = g_idle_add(_new_idle, desktop);
+}
 
 static GdkFilterReturn _on_root_event(GdkXEvent * xevent, GdkEvent * event,
 		gpointer data)
@@ -2351,7 +2364,9 @@ static void _on_preferences_apply(gpointer data)
 	char buf[12];
 
 	/* XXX not very efficient */
-	g_idle_add(_new_idle, desktop);
+	if(desktop->refresh_source)
+		g_source_remove(desktop->refresh_source);
+	desktop->refresh_source = g_idle_add(_new_idle, desktop);
 	if((config = _desktop_get_config(desktop)) == NULL)
 		return;
 	/* background */
