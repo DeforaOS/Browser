@@ -212,7 +212,8 @@ static void _desktop_show_preferences(Desktop * desktop);
 /* functions */
 /* desktop_new */
 /* callbacks */
-static void _new_events(Desktop * desktop, GdkWindow * window);
+static void _new_events(Desktop * desktop, GdkWindow * window,
+		GdkEventMask mask);
 static void _new_icons(Desktop * desktop);
 static gboolean _new_idle(gpointer data);
 static void _idle_background(Desktop * desktop, Config * config);
@@ -220,6 +221,7 @@ static void _idle_icons(Desktop * desktop, Config * config);
 static int _on_message(void * data, uint32_t value1, uint32_t value2,
 		uint32_t value3);
 static void _on_popup(gpointer data);
+static void _on_popup_event(gpointer data, XButtonEvent * xbev);
 static void _on_realize(gpointer data);
 static GdkFilterReturn _on_root_event(GdkXEvent * xevent, GdkEvent * event,
 		gpointer data);
@@ -230,6 +232,7 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 #if !GTK_CHECK_VERSION(2, 24, 0)
 	gint depth;
 #endif
+	GdkEventMask mask = GDK_PROPERTY_CHANGE_MASK;
 
 	if((desktop = object_new(sizeof(*desktop))) == NULL)
 		return NULL;
@@ -272,8 +275,10 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 				desktop->window.width, desktop->window.height);
 		gtk_window_set_type_hint(GTK_WINDOW(desktop->desktop),
 				GDK_WINDOW_TYPE_HINT_DESKTOP);
-		g_signal_connect_swapped(desktop->desktop, "popup-menu",
-				G_CALLBACK(_on_popup), desktop);
+		/* support pop-up menus on the desktop window if enabled */
+		if(desktop->prefs.popup)
+			g_signal_connect_swapped(desktop->desktop, "popup-menu",
+					G_CALLBACK(_on_popup), desktop);
 		/* draw the icons and background when realized */
 		g_signal_connect_swapped(desktop->desktop, "realize",
 				G_CALLBACK(_on_realize), desktop);
@@ -285,21 +290,21 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 		desktop->back = desktop->root;
 		/* draw the icons and background when idle */
 		desktop->refresh_source = g_idle_add(_new_idle, desktop);
+		/* support pop-up menus on the root window if enabled */
+		if(desktop->prefs.popup)
+			mask |= GDK_BUTTON_PRESS_MASK;
 	}
 	/* manage events on the root window */
-	_new_events(desktop, desktop->root);
+	_new_events(desktop, desktop->root, mask);
 	/* load the default icons */
 	_new_icons(desktop);
 	return desktop;
 }
 
-static void _new_events(Desktop * desktop, GdkWindow * window)
+static void _new_events(Desktop * desktop, GdkWindow * window,
+		GdkEventMask mask)
 {
-	GdkEventMask mask;
-
-	mask = gdk_window_get_events(window) | GDK_PROPERTY_CHANGE_MASK;
-	if(desktop->prefs.popup != 0)
-		mask |= GDK_BUTTON_PRESS_MASK;
+	mask = gdk_window_get_events(window) | mask;
 	gdk_window_set_events(window, mask);
 	gdk_window_add_filter(window, _on_root_event, desktop);
 }
@@ -470,6 +475,13 @@ static void _on_popup_symlink(gpointer data);
 static void _on_popup(gpointer data)
 {
 	Desktop * desktop = data;
+
+	_on_popup_event(desktop, NULL);
+}
+
+static void _on_popup_event(gpointer data, XButtonEvent * xbev)
+{
+	Desktop * desktop = data;
 	GtkWidget * menuitem;
 	GtkWidget * submenu;
 	GtkWidget * image;
@@ -516,7 +528,8 @@ static void _on_popup(gpointer data)
 	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);
 	gtk_widget_show_all(desktop->menu);
 	gtk_menu_popup(GTK_MENU(desktop->menu), NULL, NULL, NULL, NULL, 3,
-			gtk_get_current_event_time());
+			(xbev != NULL)
+			? xbev->time : gtk_get_current_event_time());
 }
 
 static void _on_popup_new_folder(gpointer data)
@@ -587,12 +600,16 @@ static void _on_popup_symlink(gpointer data)
 static void _on_realize(gpointer data)
 {
 	Desktop * desktop = data;
+	GdkEventMask mask = desktop->prefs.popup ? GDK_BUTTON_PRESS_MASK : 0;
 
 # if GTK_CHECK_VERSION(2, 14, 0)
 	desktop->back = gtk_widget_get_window(desktop->desktop);
 # else
 	desktop->back = desktop->desktop->window;
 # endif
+	/* support pop-up menus on the desktop window if enabled */
+	if(mask != 0)
+		_new_events(desktop, desktop->back, mask);
 	if(desktop->refresh_source != 0)
 		g_source_remove(desktop->refresh_source);
 	desktop->refresh_source = g_idle_add(_new_idle, desktop);
@@ -638,7 +655,7 @@ static GdkFilterReturn _event_button_press(XButtonEvent * xbev,
 	/* ignore if not managing files */
 	if(desktop->prefs.icons != DESKTOP_ICONS_FILES)
 		return GDK_FILTER_CONTINUE;
-	_on_popup(desktop);
+	_on_popup_event(desktop, xbev);
 	return GDK_FILTER_CONTINUE;
 }
 
