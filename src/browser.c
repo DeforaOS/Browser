@@ -796,7 +796,7 @@ int browser_config_load(Browser * browser)
 	if(browser->config == NULL)
 		return 0; /* XXX ignore error */
 	if((filename = _common_config_filename(BROWSER_CONFIG_FILE)) == NULL)
-		return 1;
+		return -1;
 	if(config_load(browser->config, filename) != 0)
 		browser_error(NULL, error_get(), 1);
 	free(filename);
