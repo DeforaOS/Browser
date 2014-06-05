@@ -12,55 +12,55 @@ all: $(TARGETS)
 browser.1: browser.xml
 	./docbook.sh -P "$(PREFIX)" -- "browser.1"
 
-browser.html: browser.xml
+browser.html: browser.css.xml browser.xml manual.css.xml
 	./docbook.sh -P "$(PREFIX)" -- "browser.html"
 
 copy.1: copy.xml
 	./docbook.sh -P "$(PREFIX)" -- "copy.1"
 
-copy.html: copy.xml
+copy.html: copy.css.xml copy.xml manual.css.xml
 	./docbook.sh -P "$(PREFIX)" -- "copy.html"
 
 delete.1: delete.xml
 	./docbook.sh -P "$(PREFIX)" -- "delete.1"
 
-delete.html: delete.xml
+delete.html: delete.css.xml delete.xml manual.css.xml
 	./docbook.sh -P "$(PREFIX)" -- "delete.html"
 
 desktop.1: desktop.xml
 	./docbook.sh -P "$(PREFIX)" -- "desktop.1"
 
-desktop.html: desktop.xml
+desktop.html: desktop.css.xml desktop.xml manual.css.xml
 	./docbook.sh -P "$(PREFIX)" -- "desktop.html"
 
 desktopctl.1: desktopctl.xml
 	./docbook.sh -P "$(PREFIX)" -- "desktopctl.1"
 
-desktopctl.html: desktopctl.xml
+desktopctl.html: desktopctl.css.xml desktopctl.xml manual.css.xml
 	./docbook.sh -P "$(PREFIX)" -- "desktopctl.html"
 
 move.1: move.xml
 	./docbook.sh -P "$(PREFIX)" -- "move.1"
 
-move.html: move.xml
+move.html: manual.css.xml move.css.xml move.xml
 	./docbook.sh -P "$(PREFIX)" -- "move.html"
 
 open.1: open.xml
 	./docbook.sh -P "$(PREFIX)" -- "open.1"
 
-open.html: open.xml
+open.html: manual.css.xml open.css.xml open.xml
 	./docbook.sh -P "$(PREFIX)" -- "open.html"
 
 properties.1: properties.xml
 	./docbook.sh -P "$(PREFIX)" -- "properties.1"
 
-properties.html: properties.xml
+properties.html: manual.css.xml properties.css.xml properties.xml
 	./docbook.sh -P "$(PREFIX)" -- "properties.html"
 
 view.1: view.xml
 	./docbook.sh -P "$(PREFIX)" -- "view.1"
 
-view.html: view.xml
+view.html: manual.css.xml view.css.xml view.xml
 	./docbook.sh -P "$(PREFIX)" -- "view.html"
 
 clean:

@@ -33,16 +33,26 @@ dist:
 		$(PACKAGE)-$(VERSION)/data/16x16/browser-view-list.png \
 		$(PACKAGE)-$(VERSION)/data/16x16/project.conf \
 		$(PACKAGE)-$(VERSION)/doc/Makefile \
-		$(PACKAGE)-$(VERSION)/doc/docbook.sh \
+		$(PACKAGE)-$(VERSION)/doc/browser.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/browser.xml \
+		$(PACKAGE)-$(VERSION)/doc/copy.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/copy.xml \
+		$(PACKAGE)-$(VERSION)/doc/delete.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/delete.xml \
+		$(PACKAGE)-$(VERSION)/doc/desktop.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/desktop.xml \
+		$(PACKAGE)-$(VERSION)/doc/desktopctl.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/desktopctl.xml \
+		$(PACKAGE)-$(VERSION)/doc/docbook.sh \
+		$(PACKAGE)-$(VERSION)/doc/manual.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/mime.conf \
+		$(PACKAGE)-$(VERSION)/doc/move.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/move.xml \
+		$(PACKAGE)-$(VERSION)/doc/open.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/open.xml \
+		$(PACKAGE)-$(VERSION)/doc/properties.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/properties.xml \
+		$(PACKAGE)-$(VERSION)/doc/view.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/view.xml \
 		$(PACKAGE)-$(VERSION)/doc/project.conf \
 		$(PACKAGE)-$(VERSION)/include/Browser.h \
