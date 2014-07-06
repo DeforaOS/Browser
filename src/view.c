@@ -155,9 +155,9 @@ static DesktopAccel _view_accel[] =
 static DesktopToolbar _view_toolbar[] =
 {
 	{ N_("Open with..."), G_CALLBACK(_on_open_with), GTK_STOCK_OPEN,
-		GDK_CONTROL_MASK, GDK_O, NULL },
+		GDK_CONTROL_MASK, GDK_KEY_O, NULL },
 	{ N_("Edit"), G_CALLBACK(_on_edit), GTK_STOCK_EDIT, GDK_CONTROL_MASK,
-		GDK_E, NULL },
+		GDK_KEY_E, NULL },
 	{ NULL, NULL, NULL, 0, 0, NULL }
 };
 #endif /* EMBEDDED */
