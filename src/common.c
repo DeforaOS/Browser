@@ -192,8 +192,7 @@ static int _common_symlink(GtkWidget * window, char const * cur)
 			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 			GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
 	if(window == NULL)
-		gtk_window_set_position(GTK_WINDOW(dialog),
-				GTK_WIN_POS_CENTER_ALWAYS);
+		gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER);
 #if GTK_CHECK_VERSION(3, 0, 0)
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 #else
