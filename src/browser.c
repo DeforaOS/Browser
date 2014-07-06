@@ -1027,7 +1027,7 @@ void browser_open_with(Browser * browser, char const * path)
 {
 	GtkWidget * dialog;
 	GtkWidget * vbox;
-	GtkWidget * widget;
+	GtkWidget * widget = NULL;
 	GtkFileFilter * filter;
 	char * filename = NULL;
 	gboolean active;
@@ -1060,14 +1060,18 @@ void browser_open_with(Browser * browser, char const * path)
 #else
 	vbox = GTK_DIALOG(dialog)->vbox;
 #endif
-	widget = gtk_check_button_new_with_mnemonic(
-			_("_Set as the default handler"));
-	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
-	gtk_widget_show_all(vbox);
+	if(vfs_mime_type(browser->mime, path, 0) != NULL)
+	{
+		widget = gtk_check_button_new_with_mnemonic(
+				_("_Set as the default handler"));
+		gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
+		gtk_widget_show_all(vbox);
+	}
 	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
 					dialog));
-	active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+	active = (widget != NULL && gtk_toggle_button_get_active(
+				GTK_TOGGLE_BUTTON(widget))) ? TRUE : FALSE;
 	gtk_widget_destroy(dialog);
 	if(filename == NULL)
 		return;
