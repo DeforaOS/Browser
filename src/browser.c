@@ -596,15 +596,26 @@ static GtkListStore * _create_store(Browser * browser)
 {
 	GtkListStore * store;
 
-	store = gtk_list_store_new(BC_COUNT, G_TYPE_BOOLEAN, G_TYPE_STRING,
-			G_TYPE_STRING, GDK_TYPE_PIXBUF,
+	store = gtk_list_store_new(BC_COUNT,
+			G_TYPE_BOOLEAN,			/* BC_UPDATED */
+			G_TYPE_STRING,			/* BC_PATH */
+			G_TYPE_STRING,			/* BC_DISPLAY_NAME */
+			GDK_TYPE_PIXBUF,		/* BC_PIXBUF_24 */
 #if GTK_CHECK_VERSION(2, 6, 0)
-			GDK_TYPE_PIXBUF, GDK_TYPE_PIXBUF,
+			GDK_TYPE_PIXBUF,		/* BC_PIXBUF_48 */
+			GDK_TYPE_PIXBUF,		/* BC_PIXBUF_96 */
 #endif
-			G_TYPE_UINT64, G_TYPE_BOOLEAN, G_TYPE_BOOLEAN,
-			G_TYPE_BOOLEAN, G_TYPE_UINT64, G_TYPE_STRING,
-			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_UINT,
-			G_TYPE_STRING, G_TYPE_STRING);
+			G_TYPE_UINT64,			/* BC_INODE */
+			G_TYPE_BOOLEAN,			/* BC_IS_DIRECTORY */
+			G_TYPE_BOOLEAN,			/* BC_IS_EXECUTABLE */
+			G_TYPE_BOOLEAN,			/* BC_IS_MOUNT_POINT */
+			G_TYPE_UINT64,			/* BC_SIZE */
+			G_TYPE_STRING,			/* BC_DISPLAY_SIZE */
+			G_TYPE_STRING,			/* BC_OWNER */
+			G_TYPE_STRING,			/* BC_GROUP */
+			G_TYPE_UINT64,			/* BC_DATE */
+			G_TYPE_STRING,			/* BC_DISPLAY_DATE */
+			G_TYPE_STRING);			/* BC_MIME_TYPE */
 	gtk_tree_sortable_set_default_sort_func(GTK_TREE_SORTABLE(store),
 			_sort_func, browser, NULL);
 	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(store),
