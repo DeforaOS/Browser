@@ -279,7 +279,7 @@ static void _git_refresh(Git * git, GList * selection)
 		g_source_remove(git->source);
 	free(git->filename);
 	git->filename = NULL;
-	if(lstat(path, &st) != 0)
+	if(path == NULL || lstat(path, &st) != 0)
 		return;
 	if((git->filename = strdup(path)) == NULL)
 		return;

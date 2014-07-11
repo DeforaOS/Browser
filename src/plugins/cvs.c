@@ -313,7 +313,7 @@ static void _cvs_refresh(CVS * cvs, GList * selection)
 		g_source_remove(cvs->source);
 	free(cvs->filename);
 	cvs->filename = NULL;
-	if(lstat(path, &st) != 0)
+	if(path == NULL || lstat(path, &st) != 0)
 		return;
 	if((cvs->filename = strdup(path)) == NULL)
 		return;

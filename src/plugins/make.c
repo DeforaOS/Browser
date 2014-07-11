@@ -269,7 +269,7 @@ static void _make_refresh(Make * make, GList * selection)
 		g_source_remove(make->source);
 	free(make->filename);
 	make->filename = NULL;
-	if(lstat(path, &st) != 0)
+	if(path == NULL || lstat(path, &st) != 0)
 		return;
 	if((make->filename = strdup(path)) == NULL)
 		return;

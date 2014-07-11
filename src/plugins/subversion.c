@@ -266,7 +266,7 @@ static void _subversion_refresh(SVN * svn, GList * selection)
 		g_source_remove(svn->source);
 	free(svn->filename);
 	svn->filename = NULL;
-	if(lstat(path, &st) != 0)
+	if(path == NULL || lstat(path, &st) != 0)
 		return;
 	if((svn->filename = strdup(path)) == NULL)
 		return;
