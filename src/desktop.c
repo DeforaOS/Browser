@@ -2420,7 +2420,11 @@ static void _on_preferences_apply(gpointer data)
 				desktop->pr_background));
 	config_set(config, "background", "wallpaper", p);
 	g_free(p);
-#if GTK_CHECK_VERSION(3, 0, 0)
+#if GTK_CHECK_VERSION(3, 4, 0)
+	gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(desktop->pr_color),
+			&color);
+	p = gdk_rgba_to_string(&color);
+#elif GTK_CHECK_VERSION(3, 0, 0)
 	gtk_color_button_get_rgba(GTK_COLOR_BUTTON(desktop->pr_color), &color);
 	p = gdk_rgba_to_string(&color);
 #else
@@ -2440,7 +2444,11 @@ static void _on_preferences_apply(gpointer data)
 	if(i >= 0 && i < DESKTOP_ICONS_COUNT)
 		config_set(config, "icons", "layout", _desktop_icons_config[i]);
 	desktop->prefs.icons = i; /* applied by _new_idle() */
-#if GTK_CHECK_VERSION(3, 0, 0)
+#if GTK_CHECK_VERSION(3, 4, 0)
+	gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(desktop->pr_ibcolor),
+			&color);
+	p = gdk_rgba_to_string(&color);
+#elif GTK_CHECK_VERSION(3, 0, 0)
 	gtk_color_button_get_rgba(GTK_COLOR_BUTTON(desktop->pr_ibcolor),
 			&color);
 	p = gdk_rgba_to_string(&color);
@@ -2451,7 +2459,11 @@ static void _on_preferences_apply(gpointer data)
 #endif
 	config_set(config, "icons", "background", p);
 	g_free(p);
-#if GTK_CHECK_VERSION(3, 0, 0)
+#if GTK_CHECK_VERSION(3, 4, 0)
+	gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(desktop->pr_ifcolor),
+			&color);
+	p = gdk_rgba_to_string(&color);
+#elif GTK_CHECK_VERSION(3, 0, 0)
 	gtk_color_button_get_rgba(GTK_COLOR_BUTTON(desktop->pr_ifcolor),
 			&color);
 	p = gdk_rgba_to_string(&color);
@@ -2632,6 +2644,9 @@ static void _preferences_set_color(Config * config, char const * section,
 #if GTK_CHECK_VERSION(3, 4, 0)
 	if(p != NULL && gdk_rgba_parse(&color, p) == TRUE)
 		gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(widget), &color);
+#elif GTK_CHECK_VERSION(3, 0, 0)
+	if(p != NULL && gdk_rgba_parse(&color, p) == TRUE)
+		gtk_color_button_set_rgba(GTK_COLOR_BUTTON(widget), &color);
 #else
 	if(p != NULL && gdk_color_parse(p, &color) == TRUE)
 		gtk_color_button_set_color(GTK_COLOR_BUTTON(widget), &color);
