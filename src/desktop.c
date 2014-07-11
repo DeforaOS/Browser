@@ -2399,7 +2399,11 @@ static void _on_preferences_apply(gpointer data)
 {
 	Desktop * desktop = data;
 	Config * config;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	GdkRGBA color;
+#else
 	GdkColor color;
+#endif
 	char * p;
 	char const * q;
 	int i;
@@ -2416,8 +2420,13 @@ static void _on_preferences_apply(gpointer data)
 				desktop->pr_background));
 	config_set(config, "background", "wallpaper", p);
 	g_free(p);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_color_button_get_rgba(GTK_COLOR_BUTTON(desktop->pr_color), &color);
+	p = gdk_rgba_to_string(&color);
+#else
 	gtk_color_button_get_color(GTK_COLOR_BUTTON(desktop->pr_color), &color);
 	p = gdk_color_to_string(&color);
+#endif
 	config_set(config, "background", "color", p);
 	g_free(p);
 	i = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_background_how));
@@ -2431,14 +2440,26 @@ static void _on_preferences_apply(gpointer data)
 	if(i >= 0 && i < DESKTOP_ICONS_COUNT)
 		config_set(config, "icons", "layout", _desktop_icons_config[i]);
 	desktop->prefs.icons = i; /* applied by _new_idle() */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_color_button_get_rgba(GTK_COLOR_BUTTON(desktop->pr_ibcolor),
+			&color);
+	p = gdk_rgba_to_string(&color);
+#else
 	gtk_color_button_get_color(GTK_COLOR_BUTTON(desktop->pr_ibcolor),
 			&color);
 	p = gdk_color_to_string(&color);
+#endif
 	config_set(config, "icons", "background", p);
 	g_free(p);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_color_button_get_rgba(GTK_COLOR_BUTTON(desktop->pr_ifcolor),
+			&color);
+	p = gdk_rgba_to_string(&color);
+#else
 	gtk_color_button_get_color(GTK_COLOR_BUTTON(desktop->pr_ifcolor),
 			&color);
 	p = gdk_color_to_string(&color);
+#endif
 	config_set(config, "icons", "foreground", p);
 	g_free(p);
 	q = gtk_font_button_get_font_name(GTK_FONT_BUTTON(desktop->pr_ifont));
