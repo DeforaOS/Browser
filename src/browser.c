@@ -142,7 +142,7 @@ static const DesktopMenu _browser_menu_edit[] =
 	{ "", NULL, NULL, 0, 0 },
 	{ N_("_Delete"), G_CALLBACK(on_edit_delete), GTK_STOCK_DELETE, 0, 0 },
 	{ "", NULL, NULL, 0, 0 },
-	{ N_("Select _all"), G_CALLBACK(on_edit_select_all),
+	{ N_("Select _All"), G_CALLBACK(on_edit_select_all),
 #if GTK_CHECK_VERSION(2, 10, 0)
 		GTK_STOCK_SELECT_ALL,
 #else
