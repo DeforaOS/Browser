@@ -94,6 +94,7 @@ static void _common_task_on_copy(gpointer data);
 static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 		GIOCondition condition, gpointer data);
 static void _common_task_on_save(gpointer data);
+static void _common_task_on_select_all(gpointer data);
 
 #ifdef COMMON_RTRIM
 static void _common_rtrim(char * string);
@@ -118,6 +119,14 @@ static DesktopToolbar _common_task_toolbar[] =
 	{ "", NULL, NULL, 0, 0, NULL },
 	{ N_("Copy"), G_CALLBACK(_common_task_on_copy), GTK_STOCK_COPY,
 		GDK_CONTROL_MASK, GDK_KEY_C, NULL },
+	{ "", NULL, NULL, 0, 0, NULL },
+	{ N_("Select All"), G_CALLBACK(_common_task_on_select_all),
+#if GTK_CHECK_VERSION(2, 10, 0)
+		GTK_STOCK_SELECT_ALL,
+#else
+		"edit-select-all",
+#endif
+		GDK_CONTROL_MASK, GDK_KEY_A, NULL },
 	{ NULL, NULL, NULL, 0, 0, NULL }
 };
 
@@ -532,6 +541,21 @@ static void _common_task_on_save(gpointer data)
 	CommonTask * task = data;
 
 	_common_task_save_buffer_as_dialog(task);
+}
+
+
+/* common_task_on_select_all */
+static void _common_task_on_select_all(gpointer data)
+{
+	CommonTask * task = data;
+	GtkTextBuffer * tbuf;
+	GtkTextIter start;
+	GtkTextIter end;
+
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(task->view));
+	gtk_text_buffer_get_start_iter(tbuf, &start);
+	gtk_text_buffer_get_end_iter(tbuf, &end);
+	gtk_text_buffer_select_range(tbuf, &start, &end);
 }
 
 
