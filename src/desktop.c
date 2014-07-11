@@ -2313,7 +2313,7 @@ static void _on_preferences_monitors_changed(gpointer data)
 	if(width < 0 || height < 0)
 		snprintf(buf, sizeof(buf), "%s", _("Unknown resolution"));
 	else
-		snprintf(buf, sizeof(buf), _("%dx%d mm (%.0lfx%.0lf DPI)"),
+		snprintf(buf, sizeof(buf), _("%dx%d mm (%.0fx%.0f DPI)"),
 				width, height, geometry.width * 25.4 / width,
 				geometry.height * 25.4 / height);
 	gtk_label_set_text(GTK_LABEL(desktop->pr_monitors_size), buf);
