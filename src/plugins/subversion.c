@@ -371,8 +371,8 @@ static int _subversion_add_task(SVN * svn, char const * title,
 	if((p = realloc(svn->tasks, sizeof(*p) * (svn->tasks_cnt + 1))) == NULL)
 		return -helper->error(helper->browser, strerror(errno), 1);
 	svn->tasks = p;
-	if((task = _common_task_new(helper, &plugin, title, directory, argv))
-			== NULL)
+	if((task = _common_task_new(helper, &plugin, title, directory, argv,
+					NULL, NULL)) == NULL)
 		return -helper->error(helper->browser, error_get(), 1);
 	svn->tasks[svn->tasks_cnt++] = task;
 	return 0;

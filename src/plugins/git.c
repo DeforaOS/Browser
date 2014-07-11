@@ -376,8 +376,8 @@ static int _git_add_task(Git * git, char const * title,
 	if((p = realloc(git->tasks, sizeof(*p) * (git->tasks_cnt + 1))) == NULL)
 		return -helper->error(helper->browser, strerror(errno), 1);
 	git->tasks = p;
-	if((task = _common_task_new(helper, &plugin, title, directory, argv))
-			== NULL)
+	if((task = _common_task_new(helper, &plugin, title, directory, argv,
+					NULL, NULL)) == NULL)
 		return -helper->error(helper->browser, error_get(), 1);
 	git->tasks[git->tasks_cnt++] = task;
 	return 0;

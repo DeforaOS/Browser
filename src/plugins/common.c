@@ -32,10 +32,16 @@
 
 /* private */
 /* types */
+typedef void (*CommonTaskCallback)(BrowserPlugin * plugin, int ret);
+
 typedef struct _CommonTask
 {
 	GPid pid;
 	guint source;
+
+	/* callback */
+	CommonTaskCallback callback;
+	void * callback_data;
 
 	/* stdout */
 	gint o_fd;
@@ -63,7 +69,8 @@ typedef struct _CommonTask
 /* tasks */
 static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 		BrowserPluginDefinition * plugin, char const * title,
-		char const * directory, char * argv[]);
+		char const * directory, char * argv[],
+		CommonTaskCallback callback, void * data);
 static void _common_task_delete(CommonTask * task);
 
 static void _common_task_set_status(CommonTask * task, char const * status);
@@ -120,7 +127,8 @@ static DesktopToolbar _common_task_toolbar[] =
 /* common_task_new */
 static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 		BrowserPluginDefinition * plugin, char const * title,
-		char const * directory, char * argv[])
+		char const * directory, char * argv[],
+		CommonTaskCallback callback, void * data)
 {
 	CommonTask * task;
 	GSpawnFlags flags = G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD;
@@ -146,6 +154,9 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 		object_delete(task);
 		return NULL;
 	}
+	/* callback */
+	task->callback = callback;
+	task->callback_data = data;
 	/* widgets */
 	font = pango_font_description_new();
 	pango_font_description_set_family(font, "monospace");
@@ -440,21 +451,27 @@ static gboolean _common_task_on_closex(gpointer data)
 static void _common_task_on_child_watch(GPid pid, gint status, gpointer data)
 {
 	CommonTask * task = data;
+	int res;
 	char buf[256];
 
 	task->source = 0;
 	if(WIFEXITED(status))
 	{
+		res = WEXITSTATUS(status);
 		snprintf(buf, sizeof(buf),
-				_("Command exited with error code %d"),
-				WEXITSTATUS(status));
+				_("Command exited with error code %d"), res);
 		_common_task_set_status(task, buf);
+		if(task->callback != NULL)
+			task->callback(task->callback_data, res);
 	}
 	else if(WIFSIGNALED(status))
 	{
+		res = WTERMSIG(status);
 		snprintf(buf, sizeof(buf), _("Command exited with signal %d"),
-				WTERMSIG(status));
+				res);
 		_common_task_set_status(task, buf);
+		if(task->callback != NULL)
+			task->callback(task->callback_data, res);
 	}
 	g_spawn_close_pid(pid);
 }

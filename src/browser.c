@@ -328,6 +328,7 @@ Browser * browser_new(char const * directory)
 	browser->pl_helper.get_icon = _browser_get_icon;
 	browser->pl_helper.get_mime = _browser_get_mime;
 	browser->pl_helper.get_type = _browser_get_type;
+	browser->pl_helper.refresh = browser_refresh;
 	browser->pl_helper.set_location = browser_set_location;
 
 	/* widgets */

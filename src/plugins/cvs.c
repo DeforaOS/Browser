@@ -73,8 +73,8 @@ static char * _cvs_get_tag(char const * pathname);
 static gboolean _cvs_is_managed(char const * filename, char ** revision);
 
 /* useful */
-static int _cvs_add_task(CVS * cvs, char const * title,
-		char const * directory, char * argv[]);
+static int _cvs_add_task(CVS * cvs, char const * title, char const * directory,
+		char * argv[], CommonTaskCallback callback);
 static int _cvs_confirm(CVS * cvs, char const * filename);
 
 /* callbacks */
@@ -557,8 +557,8 @@ static gboolean _cvs_is_managed(char const * pathname, char ** revision)
 
 /* useful */
 /* cvs_add_task */
-static int _cvs_add_task(CVS * cvs, char const * title,
-		char const * directory, char * argv[])
+static int _cvs_add_task(CVS * cvs, char const * title, char const * directory,
+		char * argv[], CommonTaskCallback callback)
 {
 	BrowserPluginHelper * helper = cvs->helper;
 	CVSTask ** p;
@@ -567,8 +567,8 @@ static int _cvs_add_task(CVS * cvs, char const * title,
 	if((p = realloc(cvs->tasks, sizeof(*p) * (cvs->tasks_cnt + 1))) == NULL)
 		return -helper->error(helper->browser, strerror(errno), 1);
 	cvs->tasks = p;
-	if((task = _common_task_new(helper, &plugin, title, directory, argv))
-			== NULL)
+	if((task = _common_task_new(helper, &plugin, title, directory, argv,
+					callback, cvs)) == NULL)
 		return -helper->error(helper->browser, error_get(), 1);
 	cvs->tasks[cvs->tasks_cnt++] = task;
 	return 0;
@@ -602,6 +602,7 @@ static int _cvs_confirm(CVS * cvs, char const * filename)
 /* callbacks */
 /* cvs_on_add */
 static gboolean _add_is_binary(char const * type);
+static void _add_on_callback(CVS * cvs, int ret);
 
 static void _cvs_on_add(gpointer data)
 {
@@ -623,7 +624,7 @@ static void _cvs_on_add(gpointer data)
 		argv[3] = argv[2];
 		argv[2] = "-kb";
 	}
-	_cvs_add_task(cvs, "cvs add", dirname, argv);
+	_cvs_add_task(cvs, "cvs add", dirname, argv, _add_on_callback);
 	g_free(basename);
 	g_free(dirname);
 }
@@ -647,6 +648,13 @@ static gboolean _add_is_binary(char const * type)
 	return TRUE;
 }
 
+static void _add_on_callback(CVS * cvs, int ret)
+{
+	if(ret == 0)
+		/* refresh upon success */
+		cvs->helper->refresh(cvs->helper->browser);
+}
+
 
 /* cvs_on_annotate */
 static void _cvs_on_annotate(gpointer data)
@@ -664,13 +672,15 @@ static void _cvs_on_annotate(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(cvs->filename);
 	argv[3] = basename;
-	_cvs_add_task(cvs, "cvs annotate", dirname, argv);
+	_cvs_add_task(cvs, "cvs annotate", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
 }
 
 
 /* cvs_on_commit */
+static void _on_commit_callback(CVS * cvs, int ret);
+
 static void _cvs_on_commit(gpointer data)
 {
 	CVS * cvs = data;
@@ -686,9 +696,16 @@ static void _cvs_on_commit(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(cvs->filename);
 	argv[3] = basename;
-	_cvs_add_task(cvs, "cvs commit", dirname, argv);
+	_cvs_add_task(cvs, "cvs commit", dirname, argv, _on_commit_callback);
 	g_free(basename);
 	g_free(dirname);
+}
+
+static void _on_commit_callback(CVS * cvs, int ret)
+{
+	if(ret == 0)
+		/* refresh upon success */
+		cvs->helper->refresh(cvs->helper->browser);
 }
 
 
@@ -709,14 +726,14 @@ static void _cvs_on_delete(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(cvs->filename);
 	if((argv[3] = basename) == NULL)
-		_cvs_add_task(cvs, "cvs delete", dirname, argv);
+		_cvs_add_task(cvs, "cvs delete", dirname, argv, NULL);
 	else if(_cvs_confirm(cvs, basename) == 1)
 	{
 		/* delete the file locally before asking CVS to */
 		if(unlink(cvs->filename) != 0)
 			helper->error(helper->browser, strerror(errno), 1);
 		else
-			_cvs_add_task(cvs, "cvs delete", dirname, argv);
+			_cvs_add_task(cvs, "cvs delete", dirname, argv, NULL);
 	}
 	g_free(basename);
 	g_free(dirname);
@@ -739,7 +756,7 @@ static void _cvs_on_diff(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(cvs->filename);
 	argv[3] = basename;
-	_cvs_add_task(cvs, "cvs diff", dirname, argv);
+	_cvs_add_task(cvs, "cvs diff", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
 }
@@ -761,7 +778,7 @@ static void _cvs_on_log(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(cvs->filename);
 	argv[3] = basename;
-	_cvs_add_task(cvs, "cvs log", dirname, argv);
+	_cvs_add_task(cvs, "cvs log", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
 }
@@ -783,7 +800,7 @@ static void _cvs_on_status(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(cvs->filename);
 	argv[3] = basename;
-	_cvs_add_task(cvs, "cvs status", dirname, argv);
+	_cvs_add_task(cvs, "cvs status", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
 }
@@ -805,7 +822,7 @@ static void _cvs_on_update(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(cvs->filename);
 	argv[3] = basename;
-	_cvs_add_task(cvs, "cvs update", dirname, argv);
+	_cvs_add_task(cvs, "cvs update", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
 }

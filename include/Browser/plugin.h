@@ -40,6 +40,7 @@ typedef struct _BrowserPluginHelper
 	Mime * (*get_mime)(Browser * browser);
 	char const * (*get_type)(Browser * browser, char const * filename,
 			mode_t mode);
+	void (*refresh)(Browser * browser);
 	int (*set_location)(Browser * browser, char const * path);
 } BrowserPluginHelper;
 
