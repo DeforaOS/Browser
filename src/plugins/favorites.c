@@ -240,7 +240,12 @@ static gchar * _favorites_get_filename(void)
 
 	if((home = getenv("HOME")) == NULL)
 		home = g_get_home_dir();
+#if GTK_CHECK_VERSION(3, 0, 0)
+	/* FIXME may depend on the environment (XDG_CONFIG_HOME) */
+	return g_build_filename(home, ".config", "gtk-3.0", "bookmarks", NULL);
+#else
 	return g_build_filename(home, ".gtk-bookmarks", NULL);
+#endif
 }
 
 
