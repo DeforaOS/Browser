@@ -100,11 +100,19 @@ static int _move(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_window_set_title(GTK_WINDOW(move.window), _("Move file(s)"));
 	g_signal_connect(G_OBJECT(move.window), "delete-event", G_CALLBACK(
 			_move_on_closex), NULL);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
 	vbox = gtk_vbox_new(FALSE, 4);
+#endif
 	left = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	right = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	/* current argument */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_label_new(_("Moving: "));
 	bold = pango_font_description_new();
 	pango_font_description_set_weight(bold, PANGO_WEIGHT_BOLD);
@@ -125,7 +133,11 @@ static int _move(Prefs * prefs, unsigned int filec, char * filev[])
 	move.progress = gtk_progress_bar_new();
 	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(move.progress), " ");
 	gtk_box_pack_start(GTK_BOX(vbox), move.progress, TRUE, TRUE, 0);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
 	g_signal_connect_swapped(G_OBJECT(widget), "clicked", G_CALLBACK(
 				_move_on_cancel), NULL);
