@@ -35,7 +35,7 @@ typedef struct _BrowserPlugin
 {
 	BrowserPluginHelper * helper;
 
-	char * location;
+	GList * selection;
 
 	/* widgets */
 	GtkWidget * widget;
@@ -97,7 +97,7 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 	if((favorites = object_new(sizeof(*favorites))) == NULL)
 		return NULL;
 	favorites->helper = helper;
-	favorites->location = NULL;
+	favorites->selection = NULL;
 	icontheme = gtk_icon_theme_get_default();
 	gtk_icon_size_lookup(GTK_ICON_SIZE_BUTTON, &size, &size);
 	favorites->folder = gtk_icon_theme_load_icon(icontheme, "stock_folder",
@@ -165,7 +165,8 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 /* favorites_destroy */
 static void _favorites_destroy(Favorites * favorites)
 {
-	free(favorites->location);
+	g_list_foreach(favorites->selection, (GFunc)g_free, NULL);
+	g_list_free(favorites->selection);
 	object_delete(favorites);
 }
 
@@ -178,6 +179,8 @@ static GtkWidget * _favorites_get_widget(Favorites * favorites)
 
 
 /* favorites_refresh */
+static void _refresh_copy(gchar const * pathname, gpointer data);
+
 static void _favorites_refresh(Favorites * favorites, GList * selection)
 {
 	FILE * fp;
@@ -189,11 +192,10 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 	char const scheme[] = "file:///";
 
 	/* obtain the current selection */
-	free(favorites->location);
-	favorites->location = NULL;
-	if(selection != NULL && selection->next == NULL
-			&& selection->data != NULL)
-		favorites->location = strdup(selection->data);
+	g_list_foreach(favorites->selection, (GFunc)g_free, NULL);
+	g_list_free(favorites->selection);
+	favorites->selection = NULL;
+	g_list_foreach(selection, (GFunc)_refresh_copy, favorites);
 	/* refresh the bookmarks */
 	gtk_list_store_clear(favorites->store);
 	if((filename = _favorites_get_filename()) == NULL)
@@ -229,6 +231,14 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 		g_free(filename);
 	}
 	fclose(fp);
+}
+
+static void _refresh_copy(gchar const * pathname, gpointer data)
+{
+	Favorites * favorites = data;
+
+	favorites->selection = g_list_append(favorites->selection,
+			g_strdup(pathname));
 }
 
 
@@ -280,7 +290,17 @@ static int _favorites_save(Favorites * favorites)
 
 /* callbacks */
 /* favorites_on_add */
+static void _on_add_filename(gchar const * pathname, gpointer data);
+
 static void _favorites_on_add(gpointer data)
+{
+	Favorites * favorites = data;
+
+	g_list_foreach(favorites->selection, (GFunc)_on_add_filename,
+			favorites);
+}
+
+static void _on_add_filename(gchar const * pathname, gpointer data)
 {
 	Favorites * favorites = data;
 	GtkTreeIter iter;
@@ -288,10 +308,9 @@ static void _favorites_on_add(gpointer data)
 	gchar * filename;
 
 	/* XXX ignore non-directories */
-	if(stat(favorites->location, &st) != 0
-			|| !S_ISDIR(st.st_mode))
+	if(stat(pathname, &st) != 0 || !S_ISDIR(st.st_mode))
 		return;
-	if((filename = g_path_get_basename(favorites->location)) == NULL)
+	if((filename = g_path_get_basename(pathname)) == NULL)
 		return;
 #if GTK_CHECK_VERSION(2, 6, 0)
 	gtk_list_store_insert_with_values(favorites->store, &iter, -1,
@@ -299,8 +318,7 @@ static void _favorites_on_add(gpointer data)
 	gtk_list_store_append(favorites->store, &iter);
 	gtk_list_store_set(favorites->store, &iter,
 #endif
-			0, favorites->folder, 1, filename,
-			2, favorites->location, -1);
+			0, favorites->folder, 1, filename, 2, pathname, -1);
 	g_free(filename);
 	_favorites_save(favorites);
 }
