@@ -452,7 +452,11 @@ Browser * browser_new(char const * directory)
 	gtk_box_pack_start(GTK_BOX(vbox), browser->infobar, FALSE, TRUE, 0);
 #endif
 	/* paned */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hpaned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+#else
 	hpaned = gtk_hpaned_new();
+#endif
 	gtk_paned_set_position(GTK_PANED(hpaned), 200);
 	/* plug-ins */
 #if GTK_CHECK_VERSION(3, 0, 0)
