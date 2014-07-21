@@ -343,7 +343,11 @@ Browser * browser_new(char const * directory)
 	gtk_window_set_title(GTK_WINDOW(browser->window), _("File manager"));
 	g_signal_connect_swapped(browser->window, "delete-event", G_CALLBACK(
 				on_closex), browser);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+#else
 	vbox = gtk_vbox_new(FALSE, 0);
+#endif
 	/* menubar */
 #ifndef EMBEDDED
 	tb_menubar = desktop_menubar_create(_browser_menubar, browser, group);
@@ -451,7 +455,11 @@ Browser * browser_new(char const * directory)
 	hpaned = gtk_hpaned_new();
 	gtk_paned_set_position(GTK_PANED(hpaned), 200);
 	/* plug-ins */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	browser->pl_view = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
 	browser->pl_view = gtk_vbox_new(FALSE, 4);
+#endif
 	gtk_container_set_border_width(GTK_CONTAINER(browser->pl_view), 4);
 	browser->pl_store = gtk_list_store_new(BPC_COUNT, G_TYPE_STRING,
 			G_TYPE_BOOLEAN, GDK_TYPE_PIXBUF, G_TYPE_STRING,
@@ -473,7 +481,11 @@ Browser * browser_new(char const * directory)
 			renderer, "text", BPC_NAME_DISPLAY, NULL);
 	gtk_box_pack_start(GTK_BOX(browser->pl_view), browser->pl_combo, FALSE,
 			TRUE, 0);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	browser->pl_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
 	browser->pl_box = gtk_vbox_new(FALSE, 4);
+#endif
 	gtk_box_pack_start(GTK_BOX(browser->pl_view), browser->pl_box, TRUE,
 			TRUE, 0);
 	gtk_paned_add1(GTK_PANED(hpaned), browser->pl_view);
@@ -2175,10 +2187,18 @@ void browser_show_preferences(Browser * browser)
 	/* notebook */
 	notebook = gtk_notebook_new();
 	/* appearance tab */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
 	vbox = gtk_vbox_new(FALSE, 4);
+#endif
 	gtk_container_set_border_width(GTK_CONTAINER(vbox), 4);
 #if GTK_CHECK_VERSION(2, 6, 0)
+# if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+# else
 	hbox = gtk_hbox_new(FALSE, 4);
+# endif
 	widget = gtk_label_new(_("Default view:"));
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 # if GTK_CHECK_VERSION(2, 24, 0)
@@ -2218,7 +2238,11 @@ void browser_show_preferences(Browser * browser)
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox,
 			gtk_label_new_with_mnemonic(_("_Appearance")));
 	/* file associations tab */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	browser->pr_mime_store = gtk_list_store_new(BMC_COUNT, GDK_TYPE_PIXBUF,
 			G_TYPE_STRING);
 	browser->pr_mime_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
@@ -2243,7 +2267,11 @@ void browser_show_preferences(Browser * browser)
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_container_add(GTK_CONTAINER(widget), browser->pr_mime_view);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, TRUE, TRUE, 0);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
 	vbox = gtk_vbox_new(FALSE, 4);
+#endif
 	widget = gtk_button_new_from_stock(GTK_STOCK_EDIT);
 	g_signal_connect_swapped(widget, "clicked",
 			G_CALLBACK(_preferences_on_mime_edit), browser);
@@ -2411,7 +2439,11 @@ static void _preferences_on_mime_edit(gpointer data)
 	gtk_box_set_spacing(GTK_BOX(vbox), 4);
 	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	/* type */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_label_new(_("Type:"));
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
 	gtk_size_group_add_widget(group, widget);
@@ -2420,7 +2452,11 @@ static void _preferences_on_mime_edit(gpointer data)
 	gtk_box_pack_start(GTK_BOX(hbox), widget, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	/* open */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_label_new(_("Open with:"));
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
 	gtk_size_group_add_widget(group, widget);
@@ -2431,7 +2467,11 @@ static void _preferences_on_mime_edit(gpointer data)
 	gtk_box_pack_start(GTK_BOX(hbox), open, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	/* view */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_label_new(_("View with:"));
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
 	gtk_size_group_add_widget(group, widget);
@@ -2442,7 +2482,11 @@ static void _preferences_on_mime_edit(gpointer data)
 	gtk_box_pack_start(GTK_BOX(hbox), view, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	/* edit */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_label_new(_("Edit with:"));
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
 	gtk_size_group_add_widget(group, widget);
