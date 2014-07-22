@@ -526,6 +526,7 @@ static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 		case G_IO_STATUS_ERROR:
 			_common_task_error(task, error->message, 1);
 			g_error_free(error);
+			/* fallback */
 		case G_IO_STATUS_EOF:
 		default: /* should not happen... */
 			_common_task_close_channel(task, channel);
