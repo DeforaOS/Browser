@@ -12,12 +12,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-/* FIXME:
- * - count the files and directories selected
- * - count the total size */
+/* TODO:
+ * - count the files and directories selected */
 
 
 
+#include <sys/stat.h>
 #include <System.h>
 #include <libintl.h>
 #include "Browser.h"
@@ -35,6 +35,7 @@ typedef struct _BrowserPlugin
 	GtkWidget * widget;
 	GtkWidget * view;
 	GtkListStore * store;
+	GtkWidget * status;
 } Selection;
 
 
@@ -96,6 +97,10 @@ static Selection * _selection_init(BrowserPluginHelper * helper)
 	gtk_tree_view_append_column(GTK_TREE_VIEW(selection->view), column);
 	gtk_container_add(GTK_CONTAINER(widget), selection->view);
 	gtk_box_pack_start(GTK_BOX(selection->widget), widget, TRUE, TRUE, 0);
+	selection->status = gtk_label_new(NULL);
+	gtk_misc_set_alignment(GTK_MISC(selection->status), 0.0, 0.5);
+	gtk_box_pack_start(GTK_BOX(selection->widget), selection->status, FALSE,
+			TRUE, 0);
 	gtk_widget_show_all(selection->widget);
 	return selection;
 }
@@ -124,16 +129,29 @@ static void _selection_refresh(Selection * selection, GList * selected)
 	gchar * basename;
 	GtkTreeIter iter;
 	GdkPixbuf * pixbuf;
+	struct stat lst;
+	struct stat st;
+	struct stat * plst;
+	struct stat * pst;
+	size_t cnt;
+	size_t size;
+	char buf[64];
 
 	gtk_list_store_clear(selection->store);
-	for(l = selected; l != NULL; l = l->next)
+	for(l = selected, cnt = 0, size = 0; l != NULL; l = l->next, cnt++)
 	{
-		pixbuf = helper->get_icon(helper->browser, l->data, NULL, NULL,
-				NULL, 16);
+		plst = (lstat(l->data, &lst) == 0) ? &lst : NULL;
+		pst = (stat(l->data, &st) == 0) ? &st : NULL;
+		pixbuf = helper->get_icon(helper->browser, l->data, NULL, plst,
+				pst, 16);
 		basename = g_path_get_basename(l->data);
 		gtk_list_store_append(selection->store, &iter);
 		gtk_list_store_set(selection->store, &iter, 0, pixbuf,
 				1, l->data, 2, basename, -1);
 		g_free(basename);
+		if(plst != NULL)
+			size += lst.st_size;
 	}
+	snprintf(buf, sizeof(buf), "%lu selected (%zu bytes)", cnt, size);
+	gtk_label_set_text(GTK_LABEL(selection->status), buf);
 }
