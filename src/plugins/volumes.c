@@ -271,12 +271,13 @@ static void _volumes_list(Volumes * volumes)
 	struct statvfs * mnt;
 	int res;
 	int i;
+	unsigned int flags;
 #elif defined(MNT_NOWAIT)
 	struct statfs * mnt;
 	int res;
 	int i;
+	unsigned int flags;
 #endif
-	unsigned int flags = 0;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
@@ -287,8 +288,7 @@ static void _volumes_list(Volumes * volumes)
 	_list_reset(volumes);
 	for(i = 0; i < res; i++)
 	{
-		flags = 0;
-		flags |= (mnt[i].f_flag & ST_RDONLY) ? DF_READONLY : 0;
+		flags = (mnt[i].f_flag & ST_RDONLY) ? DF_READONLY : 0;
 		_list_add(volumes, (mnt[i].f_flag & ST_ROOTFS)
 				? _("Root filesystem") : NULL,
 				mnt[i].f_mntfromname, mnt[i].f_fstypename,
@@ -301,8 +301,7 @@ static void _volumes_list(Volumes * volumes)
 	_list_reset(volumes);
 	for(i = 0; i < res; i++)
 	{
-		flags = 0;
-		flags |= (mnt[i].f_flags & MNT_RDONLY) ? DF_READONLY : 0;
+		flags = (mnt[i].f_flags & MNT_RDONLY) ? DF_READONLY : 0;
 		_list_add(volumes, (mnt[i].f_flags & MNT_ROOTFS)
 				? _("Root filesystem") : NULL,
 				mnt[i].f_mntfromname, mnt[i].f_fstypename,
@@ -311,7 +310,7 @@ static void _volumes_list(Volumes * volumes)
 	}
 #else
 	_list_reset(volumes);
-	_list_add(volumes, _("Root filesystem"), NULL, NULL, flags, "/", 0, 0);
+	_list_add(volumes, _("Root filesystem"), NULL, NULL, 0, "/", 0, 0);
 #endif
 	_list_purge(volumes);
 }
