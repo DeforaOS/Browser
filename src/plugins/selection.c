@@ -80,14 +80,19 @@ static Selection * _selection_init(BrowserPluginHelper * helper)
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	selection->store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
+	selection->store = gtk_list_store_new(3, GDK_TYPE_PIXBUF, G_TYPE_STRING,
+			G_TYPE_STRING);
 	selection->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				selection->store));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(selection->view),
 			FALSE);
+	renderer = gtk_cell_renderer_pixbuf_new();
+	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
+			"pixbuf", 0, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(selection->view), column);
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes(_("Filename"),
-			renderer, "text", 1, NULL);
+			renderer, "text", 2, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(selection->view), column);
 	gtk_container_add(GTK_CONTAINER(widget), selection->view);
 	gtk_box_pack_start(GTK_BOX(selection->widget), widget, TRUE, TRUE, 0);
@@ -114,17 +119,21 @@ static GtkWidget * _selection_get_widget(Selection * selection)
 /* selection_refresh */
 static void _selection_refresh(Selection * selection, GList * selected)
 {
+	BrowserPluginHelper * helper = selection->helper;
 	GList * l;
 	gchar * basename;
 	GtkTreeIter iter;
+	GdkPixbuf * pixbuf;
 
 	gtk_list_store_clear(selection->store);
 	for(l = selected; l != NULL; l = l->next)
 	{
+		pixbuf = helper->get_icon(helper->browser, l->data, NULL, NULL,
+				NULL, 16);
 		basename = g_path_get_basename(l->data);
 		gtk_list_store_append(selection->store, &iter);
-		gtk_list_store_set(selection->store, &iter, 0, l->data,
-				1, basename, -1);
+		gtk_list_store_set(selection->store, &iter, 0, pixbuf,
+				1, l->data, 2, basename, -1);
 		g_free(basename);
 	}
 }
