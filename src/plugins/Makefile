@@ -171,6 +171,8 @@ install: $(TARGETS)
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
 	$(INSTALL) -m 0644 properties.so $(DESTDIR)$(LIBDIR)/Browser/plugins/properties.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
+	$(INSTALL) -m 0644 selection.so $(DESTDIR)$(LIBDIR)/Browser/plugins/selection.so
+	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
 	$(INSTALL) -m 0644 subversion.so $(DESTDIR)$(LIBDIR)/Browser/plugins/subversion.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/Browser/plugins
 	$(INSTALL) -m 0644 trash.so $(DESTDIR)$(LIBDIR)/Browser/plugins/trash.so
@@ -185,6 +187,7 @@ uninstall:
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/make.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/preview.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/properties.so
+	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/selection.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/subversion.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/trash.so
 	$(RM) -- $(DESTDIR)$(LIBDIR)/Browser/plugins/volumes.so
