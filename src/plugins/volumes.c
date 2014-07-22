@@ -99,6 +99,9 @@ static void _volumes_destroy(Volumes * volumes);
 static GtkWidget * _volumes_get_widget(Volumes * volumes);
 static void _volumes_refresh(Volumes * volumes, GList * selection);
 
+/* accessors */
+static int _volumes_can_eject(unsigned int flags);
+
 /* useful */
 static void _volumes_list(Volumes * volumes);
 
@@ -239,6 +242,14 @@ static void _volumes_refresh(Volumes * volumes, GList * selection)
 			volumes->source = g_timeout_add(5000,
 					_volumes_on_timeout, volumes);
 	}
+}
+
+
+/* accessors */
+/* volumes_can_eject */
+static int _volumes_can_eject(unsigned int flags)
+{
+	return ((flags & DF_REMOVABLE) != 0) ? 1 : 0;
 }
 
 
@@ -511,7 +522,7 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 				_volumes_on_unmount), volumes);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
 	/* eject */
-	if((flags & DF_REMOVABLE) != 0)
+	if(_volumes_can_eject(flags))
 	{
 		widget = gtk_image_menu_item_new_with_label(_("Eject"));
 		gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(widget),
