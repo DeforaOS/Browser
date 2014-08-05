@@ -35,7 +35,7 @@ cvs.so: $(cvs_OBJS)
 
 dirtree_OBJS = dirtree.o
 dirtree_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
-dirtree_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+dirtree_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) -L .. -Wl,-rpath,$(LIBDIR) -lBrowser
 
 dirtree.so: $(dirtree_OBJS)
 	$(CCSHARED) -o dirtree.so $(dirtree_OBJS) $(dirtree_LDFLAGS)

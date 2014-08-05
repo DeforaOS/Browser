@@ -15,11 +15,10 @@
 
 
 
-#include <System.h>
-#include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
 #include <libintl.h>
+#include <System.h>
 #include "Browser.h"
 #define _(string) gettext(string)
 #define N_(string) (string)
@@ -31,6 +30,7 @@
 typedef struct _BrowserPlugin
 {
 	BrowserPluginHelper * helper;
+	Mime * mime;
 	GtkWidget * widget;
 	guint source;
 	gboolean expanding;
@@ -99,6 +99,7 @@ static Dirtree * _dirtree_init(BrowserPluginHelper * helper)
 	if((dirtree = object_new(sizeof(*dirtree))) == NULL)
 		return NULL;
 	dirtree->helper = helper;
+	dirtree->mime = helper->get_mime(helper->browser);
 	dirtree->source = 0;
 	dirtree->expanding = FALSE;
 	icontheme = gtk_icon_theme_get_default();
@@ -232,6 +233,7 @@ static gboolean _dirtree_refresh_folder(Dirtree * dirtree, GtkTreeIter * parent,
 	gboolean ret = FALSE;
 	DIR * dir;
 	struct dirent * de;
+	struct stat st;
 	GtkTreeModel * model = GTK_TREE_MODEL(dirtree->store);
 	GtkTreeIter iter;
 	GtkTreePath * s;
@@ -240,6 +242,7 @@ static gboolean _dirtree_refresh_folder(Dirtree * dirtree, GtkTreeIter * parent,
 	String * q;
 	gchar * r;
 	gboolean b;
+	GdkPixbuf * pixbuf;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(parent, \"%s\", \"%s\", %s)\n", __func__,
@@ -250,29 +253,34 @@ static gboolean _dirtree_refresh_folder(Dirtree * dirtree, GtkTreeIter * parent,
 			valid == TRUE;
 			valid = gtk_tree_model_iter_next(model, &iter))
 		gtk_tree_store_set(dirtree->store, &iter, 3, FALSE, -1);
-	if((dir = opendir(path)) == NULL)
+	if((dir = browser_vfs_opendir(path, NULL)) == NULL)
 		return FALSE;
 	if(strcmp(path, "/") == 0) /* XXX hack */
 		path = "";
-	while((de = readdir(dir)) != NULL)
+	while((de = browser_vfs_readdir(dir)) != NULL)
 	{
 		/* skip hidden folders except if we traverse it */
 		if(basename != NULL && strcmp(de->d_name, basename) == 0)
 			ret = TRUE;
 		else if(de->d_name[0] == '.')
 			continue;
-		/* XXX d_type is not portable */
-		else if(de->d_type != DT_DIR)
-			continue;
-		q = string_new_append(path, "/", de->d_name, NULL);
+		if((q = string_new_append(path, "/", de->d_name, NULL)) != NULL
+				&& browser_vfs_lstat(q, &st) == 0)
+		{
+			if(!S_ISDIR(st.st_mode))
+				continue;
+			pixbuf = browser_vfs_mime_icon(dirtree->mime, q, NULL,
+					&st, NULL, 24);
+		}
+		else
+			pixbuf = dirtree->folder;
 		/* FIXME check if the node already exists */
 		r = (q != NULL) ? g_filename_display_basename(q) : NULL;
 		gtk_tree_store_insert(dirtree->store, &iter, parent, -1);
-		gtk_tree_store_set(dirtree->store, &iter,
-				DC_ICON, dirtree->folder,
+		gtk_tree_store_set(dirtree->store, &iter, DC_ICON, pixbuf,
 				DC_NAME, (r != NULL) ? r : de->d_name,
 				DC_PATH, q, DC_UPDATED, TRUE, -1);
-		if(recurse)
+		if(recurse && q != NULL)
 			_dirtree_refresh_folder(dirtree, &iter, q, NULL,
 					(basename != NULL) ? TRUE : FALSE);
 		g_free(r);
@@ -284,7 +292,7 @@ static gboolean _dirtree_refresh_folder(Dirtree * dirtree, GtkTreeIter * parent,
 			gtk_tree_path_free(s);
 		}
 	}
-	closedir(dir);
+	browser_vfs_closedir(dir);
 	/* remove all the obsolete nodes */
 	for(valid = gtk_tree_model_iter_children(model, &iter, parent);
 			valid == TRUE; valid = (b == TRUE)
