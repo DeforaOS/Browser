@@ -1,15 +1,19 @@
 SUBDIRS	= plugins
-TARGETS	= browser copy delete desktop desktopctl move open properties vfs.o view
+TARGETS	= libBrowser.a libBrowser.so.0.0 libBrowser.so.0 libBrowser.so browser copy delete desktop desktopctl move open properties view
 PREFIX	= /usr/local
 DESTDIR	=
-BINDIR	= $(PREFIX)/bin
-SBINDIR	= $(PREFIX)/sbin
+LIBDIR	= $(PREFIX)/lib
 CC	= cc
 CPPFLAGSF=
 CPPFLAGS=
 CFLAGSF	= -W `pkg-config --cflags libDesktop`
 CFLAGS	= -Wall -g -O2 -pedantic
 LDFLAGSF= `pkg-config --libs libDesktop` -lintl
+AR	= ar
+RANLIB	= ranlib
+CCSHARED= $(CC) -shared
+BINDIR	= $(PREFIX)/bin
+SBINDIR	= $(PREFIX)/sbin
 RM	= rm -f
 LN	= ln -f
 MKDIR	= mkdir -m 0755 -p
@@ -21,11 +25,24 @@ all: subdirs $(TARGETS)
 subdirs:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE)) || exit; done
 
+libBrowser_OBJS = vfs.o
+libBrowser_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS) -fPIC
+libBrowser_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+
+libBrowser.a: $(libBrowser_OBJS)
+	$(AR) -rc libBrowser.a $(libBrowser_OBJS)
+	$(RANLIB) libBrowser.a
+
+libBrowser.so.0.0 libBrowser.so.0 libBrowser.so: $(libBrowser_OBJS)
+	$(CCSHARED) -o libBrowser.so.0.0 -Wl,-soname,libBrowser.so.0 $(libBrowser_OBJS) $(libBrowser_LDFLAGS)
+	$(LN) -s -- libBrowser.so.0.0 libBrowser.so.0
+	$(LN) -s -- libBrowser.so.0.0 libBrowser.so
+
 browser_OBJS = browser.o callbacks.o main.o
 browser_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
-browser_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) vfs.o
+browser_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) -L . -Wl,-rpath,$(LIBDIR) -lBrowser
 
-browser: $(browser_OBJS) vfs.o
+browser: $(browser_OBJS) libBrowser.a
 	$(CC) -o browser $(browser_OBJS) $(browser_LDFLAGS)
 
 copy_OBJS = copy.o
@@ -44,9 +61,9 @@ delete: $(delete_OBJS)
 
 desktop_OBJS = desktop.o desktopicon.o
 desktop_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS) `pkg-config --cflags x11 xrandr`
-desktop_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) `pkg-config --libs x11 xrandr` vfs.o
+desktop_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) `pkg-config --libs x11 xrandr` -L . -Wl,-rpath,$(LIBDIR) -lBrowser
 
-desktop: $(desktop_OBJS) vfs.o
+desktop: $(desktop_OBJS) libBrowser.a
 	$(CC) -o desktop $(desktop_OBJS) $(desktop_LDFLAGS)
 
 desktopctl_OBJS = desktopctl.o
@@ -72,13 +89,10 @@ open: $(open_OBJS)
 
 properties_OBJS = properties.o
 properties_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
-properties_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) vfs.o
+properties_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) -L . -Wl,-rpath,$(LIBDIR) -lBrowser
 
-properties: $(properties_OBJS) vfs.o
+properties: $(properties_OBJS) libBrowser.a
 	$(CC) -o properties $(properties_OBJS) $(properties_LDFLAGS)
-
-vfs.o_OBJS = vfs.o
-vfs.o_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 
 view_OBJS = view.o
 view_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
@@ -86,6 +100,9 @@ view_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 
 view: $(view_OBJS)
 	$(CC) -o view $(view_OBJS) $(view_LDFLAGS)
+
+vfs.o: vfs.c
+	$(CC) $(libBrowser_CFLAGS) -c vfs.c
 
 browser.o: browser.c callbacks.h common.c browser.h ../config.h
 	$(CC) -D PREFIX=\"$(PREFIX)\" $(browser_CFLAGS) -c browser.c
@@ -120,23 +137,25 @@ open.o: open.c
 properties.o: properties.c ../include/Browser.h browser.h common.c
 	$(CC) -D PREFIX=\"$(PREFIX)\" $(properties_CFLAGS) -c properties.c
 
-vfs.o: vfs.c vfs.h
-	$(CC) $(vfs.o_CFLAGS) -c vfs.c
-
 view.o: view.c
 	$(CC) $(view_CFLAGS) -c view.c
 
 clean:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) clean) || exit; done
-	$(RM) -- $(browser_OBJS) $(copy_OBJS) $(delete_OBJS) $(desktop_OBJS) $(desktopctl_OBJS) $(move_OBJS) $(open_OBJS) $(properties_OBJS) $(vfs.o_OBJS) $(view_OBJS)
+	$(RM) -- $(libBrowser_OBJS) $(browser_OBJS) $(copy_OBJS) $(delete_OBJS) $(desktop_OBJS) $(desktopctl_OBJS) $(move_OBJS) $(open_OBJS) $(properties_OBJS) $(view_OBJS)
 
 distclean:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) distclean) || exit; done
-	$(RM) -- $(browser_OBJS) $(copy_OBJS) $(delete_OBJS) $(desktop_OBJS) $(desktopctl_OBJS) $(move_OBJS) $(open_OBJS) $(properties_OBJS) $(vfs.o_OBJS) $(view_OBJS)
+	$(RM) -- $(libBrowser_OBJS) $(browser_OBJS) $(copy_OBJS) $(delete_OBJS) $(desktop_OBJS) $(desktopctl_OBJS) $(move_OBJS) $(open_OBJS) $(properties_OBJS) $(view_OBJS)
 	$(RM) -- $(TARGETS)
 
 install: $(TARGETS)
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) install) || exit; done
+	$(MKDIR) $(DESTDIR)$(LIBDIR)
+	$(INSTALL) -m 0644 libBrowser.a $(DESTDIR)$(LIBDIR)/libBrowser.a
+	$(INSTALL) -m 0755 libBrowser.so.0.0 $(DESTDIR)$(LIBDIR)/libBrowser.so.0.0
+	$(LN) -s -- libBrowser.so.0.0 $(DESTDIR)$(LIBDIR)/libBrowser.so.0
+	$(LN) -s -- libBrowser.so.0.0 $(DESTDIR)$(LIBDIR)/libBrowser.so
 	$(MKDIR) $(DESTDIR)$(BINDIR)
 	$(INSTALL) -m 0755 browser $(DESTDIR)$(BINDIR)/browser
 	$(MKDIR) $(DESTDIR)$(BINDIR)
@@ -158,6 +177,10 @@ install: $(TARGETS)
 
 uninstall:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) uninstall) || exit; done
+	$(RM) -- $(DESTDIR)$(LIBDIR)/libBrowser.a
+	$(RM) -- $(DESTDIR)$(LIBDIR)/libBrowser.so.0.0
+	$(RM) -- $(DESTDIR)$(LIBDIR)/libBrowser.so.0
+	$(RM) -- $(DESTDIR)$(LIBDIR)/libBrowser.so
 	$(RM) -- $(DESTDIR)$(BINDIR)/browser
 	$(RM) -- $(DESTDIR)$(BINDIR)/copy
 	$(RM) -- $(DESTDIR)$(BINDIR)/delete

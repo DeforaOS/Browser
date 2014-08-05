@@ -60,6 +60,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/include/project.conf \
 		$(PACKAGE)-$(VERSION)/include/Browser/desktop.h \
 		$(PACKAGE)-$(VERSION)/include/Browser/plugin.h \
+		$(PACKAGE)-$(VERSION)/include/Browser/vfs.h \
 		$(PACKAGE)-$(VERSION)/include/Browser/Makefile \
 		$(PACKAGE)-$(VERSION)/include/Browser/project.conf \
 		$(PACKAGE)-$(VERSION)/po/Makefile \
@@ -70,6 +71,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/po/fr.po \
 		$(PACKAGE)-$(VERSION)/po/it.po \
 		$(PACKAGE)-$(VERSION)/po/project.conf \
+		$(PACKAGE)-$(VERSION)/src/vfs.c \
 		$(PACKAGE)-$(VERSION)/src/browser.c \
 		$(PACKAGE)-$(VERSION)/src/callbacks.c \
 		$(PACKAGE)-$(VERSION)/src/main.c \
@@ -81,7 +83,6 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/move.c \
 		$(PACKAGE)-$(VERSION)/src/open.c \
 		$(PACKAGE)-$(VERSION)/src/properties.c \
-		$(PACKAGE)-$(VERSION)/src/vfs.c \
 		$(PACKAGE)-$(VERSION)/src/view.c \
 		$(PACKAGE)-$(VERSION)/src/Makefile \
 		$(PACKAGE)-$(VERSION)/src/browser.h \
@@ -89,7 +90,6 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/common.c \
 		$(PACKAGE)-$(VERSION)/src/desktop.h \
 		$(PACKAGE)-$(VERSION)/src/desktopicon.h \
-		$(PACKAGE)-$(VERSION)/src/vfs.h \
 		$(PACKAGE)-$(VERSION)/src/project.conf \
 		$(PACKAGE)-$(VERSION)/src/plugins/backup.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/cvs.c \

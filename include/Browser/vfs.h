@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
 
 
 
-#ifndef BROWSER_VFS_H
-# define BROWSER_VFS_H
+#ifndef DESKTOP_BROWSER_VFS_H
+# define DESKTOP_BROWSER_VFS_H
 
 # include <sys/stat.h>
 # include <dirent.h>
@@ -26,14 +26,15 @@
 
 /* public */
 /* functions */
-int vfs_closedir(DIR * dir);
-int vfs_lstat(char const * filename, struct stat * st);
-GdkPixbuf * vfs_mime_icon(Mime * mime, char const * filename,
+int browser_vfs_closedir(DIR * dir);
+int browser_vfs_lstat(char const * filename, struct stat * st);
+GdkPixbuf * browser_vfs_mime_icon(Mime * mime, char const * filename,
 		char const * type, struct stat * lst, struct stat * st,
 		int size);
-char const * vfs_mime_type(Mime * mime, char const * filename, mode_t mode);
-DIR * vfs_opendir(char const * filename, struct stat * st);
-struct dirent * vfs_readdir(DIR * dir);
-int vfs_stat(char const * filename, struct stat * st);
+char const * browser_vfs_mime_type(Mime * mime, char const * filename,
+		mode_t mode);
+DIR * browser_vfs_opendir(char const * filename, struct stat * st);
+struct dirent * browser_vfs_readdir(DIR * dir);
+int browser_vfs_stat(char const * filename, struct stat * st);
 
-#endif /* !BROWSER_VFS_H */
+#endif /* !DESKTOP_BROWSER_VFS_H */

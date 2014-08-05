@@ -26,8 +26,7 @@
 #include <libintl.h>
 #include <gtk/gtk.h>
 #include <System.h>
-#include "vfs.h"
-#include "../include/Browser.h"
+#include "../include/Browser/vfs.h"
 #define _Browser _BrowserHidden /* XXX */
 #include "browser.h"
 #undef _Browser
@@ -275,12 +274,31 @@ static void _properties_delete(Properties * properties)
 
 
 /* accessors */
+/* properties_config_get */
+static char const * _properties_config_get(Properties * properties,
+		char const * section, char const * variable)
+{
+	/* FIXME implement */
+	return NULL;
+}
+
+
+/* properties_config_set */
+static int _properties_config_set(Properties * properties, char const * section,
+		char const * variable, char const * value)
+{
+	/* FIXME implement */
+	return -1;
+}
+
+
 /* properties_get_icon */
 static GdkPixbuf * _properties_get_icon(Properties * properties,
 		char const * filename, char const * type, struct stat * lst,
 		struct stat * st, int size)
 {
-	return vfs_mime_icon(properties->mime, filename, type, lst, st, size);
+	return browser_vfs_mime_icon(properties->mime, filename, type, lst, st,
+			size);
 }
 
 
@@ -295,7 +313,7 @@ static Mime * _properties_get_mime(Properties * properties)
 static char const * _properties_get_type(Properties * properties,
 		char const * filename, mode_t mode)
 {
-	return vfs_mime_type(properties->mime, filename, mode);
+	return browser_vfs_mime_type(properties->mime, filename, mode);
 }
 
 

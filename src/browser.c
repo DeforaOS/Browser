@@ -35,7 +35,6 @@ static char const _license[] =
 #include <gdk/gdkkeysyms.h>
 #include <Desktop.h>
 #include "callbacks.h"
-#include "vfs.h"
 #include "browser.h"
 #include "../config.h"
 #define _(string) gettext(string)
@@ -1088,7 +1087,7 @@ void browser_open_with(Browser * browser, char const * path)
 #else
 	vbox = GTK_DIALOG(dialog)->vbox;
 #endif
-	if(vfs_mime_type(browser->mime, path, 0) != NULL)
+	if(browser_vfs_mime_type(browser->mime, path, 0) != NULL)
 	{
 		widget = gtk_check_button_new_with_mnemonic(
 				_("_Set as the default handler"));
@@ -1146,7 +1145,7 @@ void browser_refresh(Browser * browser)
 #endif
 	if((location = browser_get_location(browser)) == NULL)
 		return;
-	if((dir = vfs_opendir(location, &st)) == NULL) /* XXX */
+	if((dir = browser_vfs_opendir(location, &st)) == NULL) /* XXX */
 		browser_error(browser, strerror(errno), 1);
 	else
 		_browser_refresh_do(browser, dir, &st);
@@ -1187,7 +1186,7 @@ static int _refresh_new_loop(Browser * browser)
 	struct stat lst;
 	struct stat st;
 
-	while((de = vfs_readdir(browser->refresh_dir)) != NULL)
+	while((de = browser_vfs_readdir(browser->refresh_dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
 		{
@@ -1206,14 +1205,14 @@ static int _refresh_new_loop(Browser * browser)
 	_loop_status(browser, _("Refreshing folder: "));
 	location = browser_get_location(browser);
 	if((path = g_build_filename(location, de->d_name, NULL)) == NULL
-			|| vfs_lstat(path, &lst) != 0)
+			|| browser_vfs_lstat(path, &lst) != 0)
 	{
 		browser_error(NULL, strerror(errno), 1);
 		if(path != NULL)
 			g_free(path);
 		return 0;
 	}
-	if(S_ISLNK(lst.st_mode) && vfs_stat(path, &st) == 0)
+	if(S_ISLNK(lst.st_mode) && browser_vfs_stat(path, &st) == 0)
 		_loop_insert(browser, &iter, path, de->d_name, &lst, &st, 0);
 	else
 		_loop_insert(browser, &iter, path, de->d_name, &lst, &lst, 0);
@@ -1327,15 +1326,15 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 	*pw = getpwuid(lst->st_uid);
 	*gr = getgrgid(lst->st_gid);
 	*ddate = _insert_date(lst->st_mtime);
-	*type = vfs_mime_type(browser->mime, path, lst->st_mode);
+	*type = browser_vfs_mime_type(browser->mime, path, lst->st_mode);
 	/* load the icons */
 	if(browser->mime == NULL)
 		return;
 	if(icon24 != NULL)
-		*icon24 = vfs_mime_icon(browser->mime, path, *type, lst, st,
+		*icon24 = browser_vfs_mime_icon(browser->mime, path, *type, lst, st,
 				24);
 	if(icon48 != NULL)
-		*icon48 = vfs_mime_icon(browser->mime, path, *type, lst, st,
+		*icon48 = browser_vfs_mime_icon(browser->mime, path, *type, lst, st,
 				48);
 	if(icon96 != NULL)
 	{
@@ -1348,7 +1347,7 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		}
 		else
 #endif
-		*icon96 = vfs_mime_icon(browser->mime, path, *type, lst, st,
+		*icon96 = browser_vfs_mime_icon(browser->mime, path, *type, lst, st,
 				96);
 	}
 }
@@ -1418,7 +1417,7 @@ static void _refresh_done(Browser * browser)
 	GtkTreeIter * iter = &browser->refresh_iter;
 #endif
 
-	vfs_closedir(browser->refresh_dir);
+	browser_vfs_closedir(browser->refresh_dir);
 	browser->refresh_dir = NULL;
 #if GTK_CHECK_VERSION(2, 6, 0)
 	if(gtk_tree_model_get_iter_first(model, iter) == TRUE)
@@ -1461,8 +1460,8 @@ static gboolean _done_thumbnails(gpointer data)
 		{
 			if((icon = gdk_pixbuf_new_from_file_at_size(path, 96,
 							96, &error)) == NULL)
-				icon = vfs_mime_icon(browser->mime, path, type,
-						NULL, NULL, 96);
+				icon = browser_vfs_mime_icon(browser->mime,
+						path, type, NULL, NULL, 96);
 			if(error != NULL)
 			{
 				browser_error(NULL, error->message, 1);
@@ -1499,7 +1498,7 @@ static gboolean _done_timeout(gpointer data)
 		browser->refresh_id = 0;
 		return FALSE;
 	}
-	if(vfs_stat(location, &st) != 0)
+	if(browser_vfs_stat(location, &st) != 0)
 	{
 		browser->refresh_id = 0;
 		browser_error(NULL, strerror(errno), 1);
@@ -1546,7 +1545,7 @@ static int _current_loop(Browser * browser)
 	gboolean valid;
 	uint64_t inode;
 
-	while((de = vfs_readdir(browser->refresh_dir)) != NULL)
+	while((de = browser_vfs_readdir(browser->refresh_dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
 		{
@@ -1565,7 +1564,7 @@ static int _current_loop(Browser * browser)
 	_loop_status(browser, _("Refreshing folder: "));
 	location = browser_get_location(browser);
 	if((path = g_build_filename(location, de->d_name, NULL)) == NULL
-			|| vfs_lstat(path, &lst) != 0)
+			|| browser_vfs_lstat(path, &lst) != 0)
 	{
 		browser_error(NULL, strerror(errno), 1);
 		if(path != NULL)
@@ -1579,7 +1578,7 @@ static int _current_loop(Browser * browser)
 		if(inode == lst.st_ino)
 			break;
 	}
-	if(S_ISLNK(lst.st_mode) && vfs_stat(path, &st) == 0)
+	if(S_ISLNK(lst.st_mode) && browser_vfs_stat(path, &st) == 0)
 		p = &st;
 	if(valid != TRUE)
 		_loop_insert(browser, &iter, path, de->d_name, &lst, p, 1);
@@ -1713,13 +1712,13 @@ int browser_set_location(Browser * browser, char const * path)
 			mime_action(browser->mime, "open", realpath);
 	}
 	else if(g_file_test(realpath, G_FILE_TEST_IS_DIR)
-			&& (dir = vfs_opendir(realpath, &st)) != NULL)
+			&& (dir = browser_vfs_opendir(realpath, &st)) != NULL)
 	{
 		if(_location_directory(browser, realpath, dir, &st) == 0)
 			gtk_widget_set_sensitive(GTK_WIDGET(browser->tb_updir),
 					strcmp(browser->current->data, "/"));
 		else
-			vfs_closedir(dir);
+			browser_vfs_closedir(dir);
 	}
 	else
 		/* XXX errno may not be set */
@@ -2801,7 +2800,7 @@ static void _browser_refresh_do(Browser * browser, DIR * dir, struct stat * st)
 		g_source_remove(browser->refresh_id);
 	browser->refresh_id = 0;
 	if(browser->refresh_dir != NULL)
-		vfs_closedir(browser->refresh_dir);
+		browser_vfs_closedir(browser->refresh_dir);
 	browser->refresh_dir = dir;
 	browser->refresh_mti = st->st_mtime;
 	browser->refresh_cnt = 0;

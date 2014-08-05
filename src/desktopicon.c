@@ -26,8 +26,8 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 #include <System.h>
-#include "vfs.h"
 #include "../include/Browser/desktop.h"
+#include "../include/Browser/vfs.h"
 #include "desktopicon.h"
 #include "../config.h"
 #define _(string) gettext(string)
@@ -141,8 +141,8 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 		isdir = S_ISDIR(s->st_mode) ? TRUE : FALSE;
 		isexec = (isdir == FALSE) && (s->st_mode & S_IXUSR)
 			? TRUE : FALSE;
-		mimetype = vfs_mime_type(mime, path, s->st_mode);
-		image = vfs_mime_icon(mime, path, mimetype, &lst, NULL,
+		mimetype = browser_vfs_mime_type(mime, path, s->st_mode);
+		image = browser_vfs_mime_icon(mime, path, mimetype, &lst, NULL,
 				DESKTOPICON_ICON_SIZE);
 	}
 	if(name == NULL)

@@ -21,6 +21,7 @@
 # include <sys/stat.h>
 # include <gtk/gtk.h>
 # include <Desktop.h>
+# include "vfs.h"
 
 
 /* Browser */

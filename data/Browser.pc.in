@@ -8,3 +8,4 @@ Description: DeforaOS Desktop Browser plug-ins
 Version: @VERSION@
 Requires: libDesktop
 Cflags: -I${includedir}
+Libs: -L${libdir} @RPATH@ -lBrowser

@@ -18,9 +18,12 @@ install:
 	$(INSTALL) -m 0644 desktop.h $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser/desktop.h
 	$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser
 	$(INSTALL) -m 0644 plugin.h $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser/plugin.h
+	$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser
+	$(INSTALL) -m 0644 vfs.h $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser/vfs.h
 
 uninstall:
 	$(RM) -- $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser/desktop.h
 	$(RM) -- $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser/plugin.h
+	$(RM) -- $(DESTDIR)$(INCLUDEDIR)/Desktop/Browser/vfs.h
 
 .PHONY: all clean distclean install uninstall

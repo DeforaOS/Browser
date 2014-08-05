@@ -37,7 +37,7 @@
 #include <X11/extensions/Xrandr.h>
 #include <System.h>
 #include "../include/Browser/desktop.h"
-#include "vfs.h"
+#include "../include/Browser/vfs.h"
 #include "desktop.h"
 #include "../config.h"
 #define _(string) gettext(string)
@@ -1110,7 +1110,8 @@ void desktop_refresh(Desktop * desktop)
 		return;
 	}
 	desktop->refresh_source = 0;
-	if((desktop->refresh_dir = vfs_opendir(desktop->path, &st)) == NULL)
+	if((desktop->refresh_dir = browser_vfs_opendir(desktop->path, &st))
+			== NULL)
 	{
 		desktop_error(NULL, desktop->path, 0);
 		return;
@@ -1166,7 +1167,7 @@ static int _current_loop_applications_path(Desktop * desktop,
 	if((p = malloc(len)) == NULL)
 		return -desktop_error(NULL, path, 1);
 	snprintf(p, len, "%s%s", path, applications);
-	if((dir = vfs_opendir(p, &st)) == NULL)
+	if((dir = browser_vfs_opendir(p, &st)) == NULL)
 	{
 		free(p);
 		return -desktop_error(NULL, p, 1);
@@ -1194,7 +1195,7 @@ static int _current_loop_applications_do(Desktop * desktop)
 		return -1;
 	if((config = config_new()) == NULL)
 		return -_desktop_serror(desktop, NULL, 1);
-	while((de = vfs_readdir(desktop->refresh_dir)) != NULL)
+	while((de = browser_vfs_readdir(desktop->refresh_dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
 			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
@@ -1259,7 +1260,7 @@ static int _current_loop_categories_do(Desktop * desktop)
 	char const * q;
 	char const * r;
 
-	while((de = vfs_readdir(desktop->refresh_dir)) != NULL)
+	while((de = browser_vfs_readdir(desktop->refresh_dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
 			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
@@ -1328,7 +1329,7 @@ static int _current_loop_files(Desktop * desktop)
 	String * p;
 	DesktopIcon * desktopicon;
 
-	while((de = vfs_readdir(desktop->refresh_dir)) != NULL)
+	while((de = browser_vfs_readdir(desktop->refresh_dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
 			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
@@ -1400,7 +1401,7 @@ static gboolean _current_done(Desktop * desktop)
 		else
 			desktopicon_set_updated(desktop->icon[i++], FALSE);
 	if(desktop->refresh_dir != NULL)
-		vfs_closedir(desktop->refresh_dir);
+		browser_vfs_closedir(desktop->refresh_dir);
 	desktop->refresh_dir = NULL;
 	desktop_icons_align(desktop);
 	desktop->refresh_source = g_timeout_add(1000, _done_timeout, desktop);

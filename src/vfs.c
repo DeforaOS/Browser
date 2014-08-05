@@ -18,32 +18,32 @@
 #include <stdlib.h>
 #include <string.h>
 #include <libgen.h>
-#include "vfs.h"
+#include "../include/Browser/vfs.h"
 
 
 /* public */
 /* functions */
-/* vfs_lstat */
-int vfs_lstat(char const * filename, struct stat * st)
+/* browser_vfs_lstat */
+int browser_vfs_lstat(char const * filename, struct stat * st)
 {
 	return lstat(filename, st);
 }
 
 
-/* vfs_closedir */
-int vfs_closedir(DIR * dir)
+/* browser_vfs_closedir */
+int browser_vfs_closedir(DIR * dir)
 {
 	return closedir(dir);
 }
 
 
-/* vfs_mime_icon */
+/* browser_vfs_mime_icon */
 static GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size,
 		char const * emblem);
 static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 		struct stat * lst, struct stat * st, int size);
 
-GdkPixbuf * vfs_mime_icon(Mime * mime, char const * filename,
+GdkPixbuf * browser_vfs_mime_icon(Mime * mime, char const * filename,
 		char const * type, struct stat * lst, struct stat * st,
 		int size)
 {
@@ -53,7 +53,7 @@ GdkPixbuf * vfs_mime_icon(Mime * mime, char const * filename,
 	char const * emblem;
 
 	if(type == NULL)
-		type = vfs_mime_type(mime, filename, S_ISLNK(mode) ? 0 : mode);
+		type = browser_vfs_mime_type(mime, filename, S_ISLNK(mode) ? 0 : mode);
 	if(S_ISDIR(mode))
 		ret = _mime_icon_folder(mime, filename, lst, st, size);
 	else if(S_ISLNK(mode) && ((st != NULL && S_ISDIR(st->st_mode))
@@ -163,15 +163,17 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 	GtkIconTheme * icontheme;
 	const int flags = GTK_ICON_LOOKUP_FORCE_SIZE;
 
-	if(lst == NULL && vfs_lstat(filename, &ls) == 0)
+	if(lst == NULL && browser_vfs_lstat(filename, &ls) == 0)
 		lst = &ls;
-	if(st == NULL && vfs_stat(filename, &s) == 0)
+	if(st == NULL && browser_vfs_stat(filename, &s) == 0)
 		st = &s;
 	/* check if the folder is a mountpoint */
 	if((p = strdup(filename)) != NULL
 			&& st != NULL
-			&& vfs_lstat(dirname(p), &ps) == 0
+			&& browser_vfs_lstat(dirname(p), &ps) == 0
 			&& st->st_dev != ps.st_dev)
+		icon = "mount-point";
+	else if(strcmp(filename, "/") == 0)
 		icon = "mount-point";
 	if(p != NULL && icon == NULL)
 		for(i = 0; i < sizeof(name_icon) / sizeof(*name_icon); i++)
@@ -194,22 +196,23 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 }
 
 
-/* vfs_mime_type */
-char const * vfs_mime_type(Mime * mime, char const * filename, mode_t mode)
+/* browser_vfs_mime_type */
+char const * browser_vfs_mime_type(Mime * mime, char const * filename,
+		mode_t mode)
 {
 	char const * ret = NULL;
 	struct stat st;
 	struct stat pst;
 	char * p = NULL;
 
-	if(mode == 0 && filename != NULL && vfs_lstat(filename, &st) == 0)
+	if(mode == 0 && filename != NULL && browser_vfs_lstat(filename, &st) == 0)
 		mode = st.st_mode;
 	if(S_ISDIR(mode))
 	{
 		/* look for mountpoints */
 		if(filename != NULL && (p = strdup(filename)) != NULL
-				&& vfs_lstat(filename, &st) == 0
-				&& vfs_lstat(dirname(p), &pst) == 0
+				&& browser_vfs_lstat(filename, &st) == 0
+				&& browser_vfs_lstat(dirname(p), &pst) == 0
 				&& st.st_dev != pst.st_dev)
 			ret = "inode/mountpoint";
 		else
@@ -237,8 +240,8 @@ char const * vfs_mime_type(Mime * mime, char const * filename, mode_t mode)
 }
 
 
-/* vfs_opendir */
-DIR * vfs_opendir(char const * filename, struct stat * st)
+/* browser_vfs_opendir */
+DIR * browser_vfs_opendir(char const * filename, struct stat * st)
 {
 	DIR * dir;
 	int fd;
@@ -261,22 +264,22 @@ DIR * vfs_opendir(char const * filename, struct stat * st)
 #endif
 	if(st != NULL && fstat(fd, st) != 0)
 	{
-		vfs_closedir(dir);
+		browser_vfs_closedir(dir);
 		return NULL;
 	}
 	return dir;
 }
 
 
-/* vfs_readdir */
-struct dirent * vfs_readdir(DIR * dir)
+/* browser_vfs_readdir */
+struct dirent * browser_vfs_readdir(DIR * dir)
 {
 	return readdir(dir);
 }
 
 
-/* vfs_stat */
-int vfs_stat(char const * filename, struct stat * st)
+/* browser_vfs_stat */
+int browser_vfs_stat(char const * filename, struct stat * st)
 {
 	return stat(filename, st);
 }
