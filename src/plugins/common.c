@@ -180,8 +180,9 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 		gtk_window_set_icon_name(GTK_WINDOW(task->window),
 				plugin->icon);
 #endif
-	snprintf(buf, sizeof(buf), "%s - %s (%s)", _(plugin->name), title,
-			directory);
+	snprintf(buf, sizeof(buf), "%s%s%s (%s)", _(plugin->name),
+			(title != NULL) ? " - " : "",
+			(title != NULL) ? title : "", directory);
 	gtk_window_set_title(GTK_WINDOW(task->window), buf);
 	g_signal_connect_swapped(task->window, "delete-event", G_CALLBACK(
 				_common_task_on_closex), task);
