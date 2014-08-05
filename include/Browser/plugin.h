@@ -34,6 +34,10 @@ typedef struct _BrowserPlugin BrowserPlugin;
 typedef struct _BrowserPluginHelper
 {
 	Browser * browser;
+	char const * (*config_get)(Browser * browser, char const * section,
+			char const * variable);
+	int (*config_set)(Browser * browser, char const * section,
+			char const * variable, char const * value);
 	int (*error)(Browser * browser, char const * message, int ret);
 	GdkPixbuf * (*get_icon)(Browser * browser, char const * filename,
 			char const * type, struct stat * lst, struct stat * st,

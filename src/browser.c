@@ -224,6 +224,10 @@ unsigned int browser_cnt = 0;
 
 /* prototypes */
 /* accessors */
+static char const * _browser_config_get(Browser * browser, char const * section,
+		char const * variable);
+static int _browser_config_set(Browser * browser, char const * section,
+		char const * variable, char const * value);
 static gboolean _browser_plugin_is_enabled(Browser * browser,
 		char const * plugin);
 static GdkPixbuf * _browser_get_icon(Browser * browser, char const * filename,
@@ -323,6 +327,8 @@ Browser * browser_new(char const * directory)
 
 	/* plug-ins */
 	browser->pl_helper.browser = browser;
+	browser->pl_helper.config_get = _browser_config_get;
+	browser->pl_helper.config_set = _browser_config_set;
 	browser->pl_helper.error = browser_error;
 	browser->pl_helper.get_icon = _browser_get_icon;
 	browser->pl_helper.get_mime = _browser_get_mime;
@@ -2696,6 +2702,111 @@ void browser_unselect_all(Browser * browser)
 
 /* private */
 /* functions */
+/* accessors */
+/* browser_config_get */
+static char const * _browser_config_get(Browser * browser, char const * section,
+		char const * variable)
+{
+	char const * ret;
+	String * s = NULL;
+
+	if(section != NULL && (s = string_new_append("plugin::", section, NULL))
+			== NULL)
+	{
+		browser_error(NULL, error_get(), 1);
+		return NULL;
+	}
+	ret = config_get(browser->config, s, variable);
+	string_delete(s);
+	return ret;
+}
+
+
+/* browser_config_set */
+static int _browser_config_set(Browser * browser, char const * section,
+		char const * variable, char const * value)
+{
+	int ret;
+	String * s = NULL;
+	char * filename;
+
+	if(section != NULL && (s = string_new_append("plugin::", section, NULL))
+			== NULL)
+		return -browser_error(NULL, error_get(), 1);
+	if((ret = config_set(browser->config, s, variable, value)) == 0
+			&& (filename = _common_config_filename(
+					BROWSER_CONFIG_FILE)) != NULL)
+	{
+		if(config_save(browser->config, filename) != 0)
+			browser_error(NULL, error_get(), 1);
+		free(filename);
+	}
+	string_delete(s);
+	return ret;
+}
+
+
+/* browser_plugin_is_enabled */
+static gboolean _browser_plugin_is_enabled(Browser * browser,
+		char const * plugin)
+{
+	GtkTreeModel * model = GTK_TREE_MODEL(browser->pl_store);
+	GtkTreeIter iter;
+	gchar * p;
+	gboolean valid;
+	int res;
+
+	for(valid = gtk_tree_model_get_iter_first(model, &iter); valid == TRUE;
+			valid = gtk_tree_model_iter_next(model, &iter))
+	{
+		gtk_tree_model_get(model, &iter, BPC_NAME, &p, -1);
+		res = strcmp(p, plugin);
+		g_free(p);
+		if(res == 0)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+
+/* browser_get_icon */
+static GdkPixbuf * _browser_get_icon(Browser * browser, char const * filename,
+		char const * type, struct stat * lst, struct stat * st,
+		int size)
+{
+	return browser_vfs_mime_icon(browser->mime, filename, type, lst, st, size);
+}
+
+
+/* browser_get_mime */
+static Mime * _browser_get_mime(Browser * browser)
+{
+	return browser->mime;
+}
+
+
+/* browser_get_type */
+static char const * _browser_get_type(Browser * browser, char const * filename,
+		mode_t mode)
+{
+	return browser_vfs_mime_type(browser->mime, filename, mode);
+}
+
+
+/* browser_set_status */
+static void _browser_set_status(Browser * browser, char const * status)
+{
+	GtkStatusbar * sb = GTK_STATUSBAR(browser->statusbar);
+
+	if(browser->statusbar_id != 0)
+		gtk_statusbar_remove(sb, gtk_statusbar_get_context_id(sb, ""),
+				browser->statusbar_id);
+	browser->statusbar_id = gtk_statusbar_push(sb,
+			gtk_statusbar_get_context_id(sb, ""), status);
+}
+
+
+/* useful */
 /* browser_plugin_refresh */
 static void _plugin_refresh_do(Browser * browser, char const * path);
 static void _plugin_refresh_do_list(Browser * browser, GList * list);
@@ -2891,66 +3002,6 @@ static void _refresh_path(Browser * browser)
 		}
 	}
 	g_free(p);
-}
-
-
-/* browser_plugin_is_enabled */
-static gboolean _browser_plugin_is_enabled(Browser * browser,
-		char const * plugin)
-{
-	GtkTreeModel * model = GTK_TREE_MODEL(browser->pl_store);
-	GtkTreeIter iter;
-	gchar * p;
-	gboolean valid;
-	int res;
-
-	for(valid = gtk_tree_model_get_iter_first(model, &iter); valid == TRUE;
-			valid = gtk_tree_model_iter_next(model, &iter))
-	{
-		gtk_tree_model_get(model, &iter, BPC_NAME, &p, -1);
-		res = strcmp(p, plugin);
-		g_free(p);
-		if(res == 0)
-			return TRUE;
-	}
-	return FALSE;
-}
-
-
-/* browser_get_icon */
-static GdkPixbuf * _browser_get_icon(Browser * browser, char const * filename,
-		char const * type, struct stat * lst, struct stat * st,
-		int size)
-{
-	return vfs_mime_icon(browser->mime, filename, type, lst, st, size);
-}
-
-
-/* browser_get_mime */
-static Mime * _browser_get_mime(Browser * browser)
-{
-	return browser->mime;
-}
-
-
-/* browser_get_type */
-static char const * _browser_get_type(Browser * browser, char const * filename,
-		mode_t mode)
-{
-	return vfs_mime_type(browser->mime, filename, mode);
-}
-
-
-/* browser_set_status */
-static void _browser_set_status(Browser * browser, char const * status)
-{
-	GtkStatusbar * sb = GTK_STATUSBAR(browser->statusbar);
-
-	if(browser->statusbar_id != 0)
-		gtk_statusbar_remove(sb, gtk_statusbar_get_context_id(sb, ""),
-				browser->statusbar_id);
-	browser->statusbar_id = gtk_statusbar_push(sb,
-			gtk_statusbar_get_context_id(sb, ""), status);
 }
 
 

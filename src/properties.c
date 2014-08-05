@@ -82,6 +82,10 @@ static Properties * _properties_new(Mime * mime, char const * plugin,
 static void _properties_delete(Properties * properties);
 
 /* accessors */
+static char const * _properties_config_get(Properties * properties,
+		char const * section, char const * variable);
+static int _properties_config_set(Properties * properties, char const * section,
+		char const * variable, char const * value);
 static GdkPixbuf * _properties_get_icon(Properties * properties,
 		char const * filename, char const * type, struct stat * lst,
 		struct stat * st, int size);
@@ -152,6 +156,8 @@ static Properties * _properties_new(Mime * mime, char const * plugin,
 	properties->mime = mime;
 	properties->filename = strdup(filename);
 	properties->helper.browser = properties;
+	properties->helper.config_get = _properties_config_get;
+	properties->helper.config_set = _properties_config_set;
 	properties->helper.error = _properties_error;
 	properties->helper.get_icon = _properties_get_icon;
 	properties->helper.get_mime = _properties_get_mime;
