@@ -38,6 +38,9 @@
 #include "common.c"
 
 /* constants */
+#ifndef PROGNAME
+# define PROGNAME	"properties"
+#endif
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
 #endif
@@ -385,7 +388,7 @@ static void _error_response(GtkWidget * widget, gint arg, gpointer data)
 
 static int _error_text(char const * message, int ret)
 {
-	fprintf(stderr, "%s: %s\n", "properties", message);
+	fprintf(stderr, "%s: %s\n", PROGNAME, message);
 	return ret;
 }
 
@@ -477,7 +480,7 @@ static gboolean _properties_on_closex(gpointer data)
 /* usage */
 static int _usage(void)
 {
-	fputs(_("Usage: properties [-p plug-in] file...\n"), stderr);
+	fprintf(stderr, _("Usage: %s [-p plug-in] file...\n"), PROGNAME);
 	return 1;
 }
 
