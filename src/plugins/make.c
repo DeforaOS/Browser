@@ -365,19 +365,35 @@ static int _make_add_task(Make * make, char const * title,
 /* make_target */
 static int _make_target(Make * make, char const * filename, char const * target)
 {
+	BrowserPluginHelper * helper = make->helper;
 	int ret;
 	struct stat st;
 	gchar * dirname;
-	char * argv[] = { MAKE, NULL, NULL };
+	char * argv[3] = { NULL, NULL, NULL };
+	char const * p;
 
 	if(filename == NULL || lstat(filename, &st) != 0)
 		return 0;
 	dirname = S_ISDIR(st.st_mode) ? g_strdup(filename)
 		: g_path_get_dirname(filename);
 	if(target != NULL && (argv[1] = strdup(target)) == NULL)
+	{
 		/* FIXME report the error */
+		g_free(dirname);
 		return -1;
+	}
+	if((p = helper->config_get(helper->browser, "make", "make")) == NULL)
+		p = MAKE;
+	if((argv[0] = strdup(p)) == NULL)
+	{
+		/* FIXME report the error */
+		free(argv[1]);
+		g_free(dirname);
+		return -1;
+	}
 	ret = _make_add_task(make, target, dirname, argv);
+	free(argv[0]);
+	free(argv[1]);
 	g_free(dirname);
 	return ret;
 }
