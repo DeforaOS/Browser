@@ -238,6 +238,7 @@ static char const * _browser_get_type(Browser * browser, char const * filename,
 		mode_t mode);
 static void _browser_set_status(Browser * browser, char const * status);
 
+/* useful */
 static void _browser_plugin_refresh(Browser * browser);
 static void _browser_refresh_do(Browser * browser, DIR * dir, struct stat * st);
 
