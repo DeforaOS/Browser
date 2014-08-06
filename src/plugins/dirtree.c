@@ -40,7 +40,7 @@ typedef struct _BrowserPlugin
 	GtkWidget * view;
 } Dirtree;
 
-enum _DirtreeColumn
+typedef enum _DirtreeColumn
 {
 	DC_ICON = 0,
 	DC_NAME,
