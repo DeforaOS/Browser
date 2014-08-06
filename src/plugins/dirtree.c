@@ -124,7 +124,7 @@ static Dirtree * _dirtree_init(BrowserPluginHelper * helper)
 	dirtree->sorted = gtk_tree_model_sort_new_with_model(GTK_TREE_MODEL(
 				dirtree->store));
 	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(dirtree->sorted),
-			1, GTK_SORT_ASCENDING);
+			DC_NAME, GTK_SORT_ASCENDING);
 	/* view */
 	dirtree->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				dirtree->sorted));
