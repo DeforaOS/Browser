@@ -44,6 +44,15 @@ typedef struct _BrowserPlugin
 	GdkPixbuf * folder;
 } Favorites;
 
+typedef enum _FavoritesColumn
+{
+	FC_ICON = 0,
+	FC_NAME,
+	FC_PATH
+} FavoritesColumn;
+#define FC_LAST FC_PATH
+#define FC_COUNT (FC_LAST + 1)
+
 
 /* prototypes */
 /* plug-in */
@@ -115,7 +124,7 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	favorites->store = gtk_list_store_new(3, GDK_TYPE_PIXBUF,
+	favorites->store = gtk_list_store_new(FC_COUNT, GDK_TYPE_PIXBUF,
 			G_TYPE_STRING, G_TYPE_STRING);
 	favorites->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				favorites->store));
@@ -124,12 +133,12 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 	/* columns */
 	renderer = gtk_cell_renderer_pixbuf_new();
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
-			"pixbuf", 0, NULL);
+			"pixbuf", FC_ICON, NULL);
 	gtk_tree_view_column_set_expand(column, FALSE);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(favorites->view), column);
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
-			"text", 1, NULL);
+			"text", FC_NAME, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(favorites->view), column);
 	/* selection */
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(favorites->view));
@@ -231,7 +240,8 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 		gtk_list_store_append(favorites->store, &iter);
 		gtk_list_store_set(favorites->store, &iter,
 #endif
-				0, favorites->folder, 1, filename, 2, buf, -1);
+				FC_ICON, favorites->folder, FC_NAME, filename,
+				FC_PATH, buf, -1);
 		g_free(filename);
 	}
 	fclose(fp);
@@ -282,7 +292,7 @@ static int _favorites_save(Favorites * favorites)
 	for(valid = gtk_tree_model_get_iter_first(model, &iter); valid == TRUE;
 			valid = gtk_tree_model_iter_next(model, &iter))
 	{
-		gtk_tree_model_get(model, &iter, 2, &p, -1);
+		gtk_tree_model_get(model, &iter, FC_PATH, &p, -1);
 		if(p == NULL)
 			continue;
 		fprintf(fp, "%s%s\n", "file://", p);
@@ -322,7 +332,8 @@ static void _on_add_filename(gchar const * pathname, gpointer data)
 	gtk_list_store_append(favorites->store, &iter);
 	gtk_list_store_set(favorites->store, &iter,
 #endif
-			0, favorites->folder, 1, filename, 2, pathname, -1);
+			FC_ICON, favorites->folder, FC_NAME, filename,
+			FC_PATH, pathname, -1);
 	g_free(filename);
 	_favorites_save(favorites);
 }
@@ -354,7 +365,7 @@ static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 	gchar * location;
 
 	gtk_tree_model_get_iter(model, &iter, path);
-	gtk_tree_model_get(model, &iter, 2, &location, -1);
+	gtk_tree_model_get(model, &iter, FC_PATH, &location, -1);
 	favorites->helper->set_location(favorites->helper->browser, location);
 	g_free(location);
 }
