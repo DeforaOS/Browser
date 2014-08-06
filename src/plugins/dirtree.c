@@ -231,6 +231,7 @@ static gboolean _dirtree_refresh_folder(Dirtree * dirtree, GtkTreeIter * parent,
 		char const * path, char const * basename, gboolean recurse)
 {
 	gboolean ret = FALSE;
+	gint size;
 	DIR * dir;
 	struct dirent * de;
 	struct stat st;
@@ -257,6 +258,7 @@ static gboolean _dirtree_refresh_folder(Dirtree * dirtree, GtkTreeIter * parent,
 		return FALSE;
 	if(strcmp(path, "/") == 0) /* XXX hack */
 		path = "";
+	gtk_icon_size_lookup(GTK_ICON_SIZE_BUTTON, &size, &size);
 	while((de = browser_vfs_readdir(dir)) != NULL)
 	{
 		/* skip hidden folders except if we traverse it */
@@ -270,7 +272,7 @@ static gboolean _dirtree_refresh_folder(Dirtree * dirtree, GtkTreeIter * parent,
 			if(!S_ISDIR(st.st_mode))
 				continue;
 			pixbuf = browser_vfs_mime_icon(dirtree->mime, q, NULL,
-					&st, NULL, 24);
+					&st, NULL, size);
 		}
 		else
 			pixbuf = dirtree->folder;
