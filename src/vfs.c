@@ -53,7 +53,8 @@ GdkPixbuf * browser_vfs_mime_icon(Mime * mime, char const * filename,
 	char const * emblem;
 
 	if(type == NULL)
-		type = browser_vfs_mime_type(mime, filename, S_ISLNK(mode) ? 0 : mode);
+		type = browser_vfs_mime_type(mime, filename,
+				S_ISLNK(mode) ? 0 : mode);
 	if(S_ISDIR(mode))
 		ret = _mime_icon_folder(mime, filename, lst, st, size);
 	else if(S_ISLNK(mode) && ((st != NULL && S_ISDIR(st->st_mode))
