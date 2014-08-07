@@ -95,6 +95,7 @@ static Dirtree * _dirtree_init(BrowserPluginHelper * helper)
 	GtkTreeSelection * treesel;
 	GtkTreeIter iter;
 	gint size;
+	GdkPixbuf * pixbuf;
 
 	if((dirtree = object_new(sizeof(*dirtree))) == NULL)
 		return NULL;
@@ -118,8 +119,11 @@ static Dirtree * _dirtree_init(BrowserPluginHelper * helper)
 	dirtree->store = gtk_tree_store_new(DC_COUNT, GDK_TYPE_PIXBUF,
 			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	gtk_tree_store_insert(dirtree->store, &iter, NULL, -1);
-	gtk_tree_store_set(dirtree->store, &iter, DC_ICON, dirtree->folder,
-			DC_NAME, "/", DC_PATH, "/", DC_UPDATED, TRUE, -1);
+	if((pixbuf = browser_vfs_mime_icon(dirtree->mime, "/", NULL, NULL, NULL,
+					size)) == NULL)
+		pixbuf = dirtree->folder;
+	gtk_tree_store_set(dirtree->store, &iter, DC_ICON, pixbuf, DC_NAME, "/",
+			DC_PATH, "/", DC_UPDATED, TRUE, -1);
 	/* sorted store */
 	dirtree->sorted = gtk_tree_model_sort_new_with_model(GTK_TREE_MODEL(
 				dirtree->store));
