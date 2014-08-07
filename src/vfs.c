@@ -172,9 +172,7 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 	if((p = strdup(filename)) != NULL
 			&& st != NULL
 			&& browser_vfs_lstat(dirname(p), &ps) == 0
-			&& st->st_dev != ps.st_dev)
-		icon = "mount-point";
-	else if(strcmp(filename, "/") == 0)
+			&& (st->st_dev != ps.st_dev || st->st_ino == ps.st_ino))
 		icon = "mount-point";
 	if(p != NULL && icon == NULL)
 		for(i = 0; i < sizeof(name_icon) / sizeof(*name_icon); i++)
