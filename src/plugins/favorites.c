@@ -18,7 +18,6 @@
 
 
 
-#include <sys/stat.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -34,6 +33,7 @@
 typedef struct _BrowserPlugin
 {
 	BrowserPluginHelper * helper;
+	Mime * mime;
 
 	GList * selection;
 
@@ -106,6 +106,7 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 	if((favorites = object_new(sizeof(*favorites))) == NULL)
 		return NULL;
 	favorites->helper = helper;
+	favorites->mime = helper->get_mime(helper->browser);
 	favorites->selection = NULL;
 	icontheme = gtk_icon_theme_get_default();
 	gtk_icon_size_lookup(GTK_ICON_SIZE_BUTTON, &size, &size);
@@ -198,11 +199,13 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 {
 	FILE * fp;
 	gchar * filename;
+	gint size;
 	char buf[512];
 	size_t len;
 	int c;
 	GtkTreeIter iter;
 	char const scheme[] = "file:///";
+	GdkPixbuf * pixbuf;
 
 	/* obtain the current selection */
 	g_list_foreach(favorites->selection, (GFunc)g_free, NULL);
@@ -217,6 +220,7 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 	g_free(filename);
 	if(fp == NULL)
 		return;
+	gtk_icon_size_lookup(GTK_ICON_SIZE_BUTTON, &size, &size);
 	while(fgets(buf, sizeof(buf), fp) != NULL)
 	{
 		if((len = strlen(buf)) == 0)
@@ -234,13 +238,16 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 		buf[len - 1] = '\0';
 		memmove(buf, &buf[7], len - 7);
 		filename = g_path_get_basename(buf);
+		if((pixbuf = browser_vfs_mime_icon(favorites->mime, buf, NULL,
+						NULL, NULL, size)) == NULL)
+			pixbuf = favorites->folder;
 #if GTK_CHECK_VERSION(2, 6, 0)
 		gtk_list_store_insert_with_values(favorites->store, &iter, -1,
 #else
 		gtk_list_store_append(favorites->store, &iter);
 		gtk_list_store_set(favorites->store, &iter,
 #endif
-				FC_ICON, favorites->folder, FC_NAME, filename,
+				FC_ICON, pixbuf, FC_NAME, filename,
 				FC_PATH, buf, -1);
 		g_free(filename);
 	}
@@ -320,20 +327,26 @@ static void _on_add_filename(gchar const * pathname, gpointer data)
 	GtkTreeIter iter;
 	struct stat st;
 	gchar * filename;
+	gint size;
+	GdkPixbuf * pixbuf;
 
 	/* XXX ignore non-directories */
-	if(stat(pathname, &st) != 0 || !S_ISDIR(st.st_mode))
+	if(browser_vfs_stat(pathname, &st) != 0 || !S_ISDIR(st.st_mode))
 		return;
 	if((filename = g_path_get_basename(pathname)) == NULL)
 		return;
+	gtk_icon_size_lookup(GTK_ICON_SIZE_BUTTON, &size, &size);
+	if((pixbuf = browser_vfs_mime_icon(favorites->mime, pathname, NULL,
+					NULL, &st, size)) == NULL)
+		pixbuf = favorites->folder;
 #if GTK_CHECK_VERSION(2, 6, 0)
 	gtk_list_store_insert_with_values(favorites->store, &iter, -1,
 #else
 	gtk_list_store_append(favorites->store, &iter);
 	gtk_list_store_set(favorites->store, &iter,
 #endif
-			FC_ICON, favorites->folder, FC_NAME, filename,
-			FC_PATH, pathname, -1);
+			FC_ICON, pixbuf, FC_NAME, filename, FC_PATH, pathname,
+			-1);
 	g_free(filename);
 	_favorites_save(favorites);
 }
