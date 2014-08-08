@@ -100,21 +100,12 @@ static GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size,
 	g_object_unref(pixbuf);
 	pixbuf = epixbuf;
 	/* determine the size of the emblem */
-	switch(size)
-	{
-		case 24:
-			esize = 12;
-			break;
-		case 48:
-			esize = 24;
-			break;
-		case 96:
-			esize = 32;
-			break;
-		default:
-			esize = 12;
-			break;
-	}
+	if(size >= 96)
+		esize = 32;
+	else if(size >= 48)
+		esize = 24;
+	else
+		esize = 12;
 	/* obtain the emblem's icon */
 	icontheme = gtk_icon_theme_get_default();
 	if((epixbuf = gtk_icon_theme_load_icon(icontheme, emblem, esize, flags,
