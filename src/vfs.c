@@ -212,7 +212,8 @@ char const * browser_vfs_mime_type(Mime * mime, char const * filename,
 		if(filename != NULL && (p = strdup(filename)) != NULL
 				&& browser_vfs_lstat(filename, &st) == 0
 				&& browser_vfs_lstat(dirname(p), &pst) == 0
-				&& st.st_dev != pst.st_dev)
+				&& (st.st_dev != pst.st_dev
+					|| st.st_ino == pst.st_ino))
 			ret = "inode/mountpoint";
 		else
 			ret = "inode/directory";
