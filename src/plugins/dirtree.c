@@ -283,8 +283,14 @@ static gboolean _dirtree_refresh_folder(Dirtree * dirtree, GtkTreeIter * parent,
 			pixbuf = dirtree->folder;
 		/* FIXME check if the node already exists */
 		r = (q != NULL) ? g_filename_display_basename(q) : NULL;
+#if GTK_CHECK_VERSION(2, 10, 0)
+		gtk_tree_store_insert_with_values(dirtree->store, &iter, parent,
+				-1,
+#else
 		gtk_tree_store_insert(dirtree->store, &iter, parent, -1);
-		gtk_tree_store_set(dirtree->store, &iter, DC_ICON, pixbuf,
+		gtk_tree_store_set(dirtree->store, &iter,
+#endif
+				DC_ICON, pixbuf,
 				DC_NAME, (r != NULL) ? r : de->d_name,
 				DC_PATH, q, DC_UPDATED, TRUE, -1);
 		if(recurse && q != NULL)
