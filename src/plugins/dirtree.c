@@ -257,7 +257,8 @@ static gboolean _dirtree_refresh_folder(Dirtree * dirtree, GtkTreeIter * parent,
 	for(valid = gtk_tree_model_iter_children(model, &iter, parent);
 			valid == TRUE;
 			valid = gtk_tree_model_iter_next(model, &iter))
-		gtk_tree_store_set(dirtree->store, &iter, 3, FALSE, -1);
+		gtk_tree_store_set(dirtree->store, &iter, DC_UPDATED, FALSE,
+				-1);
 	if((dir = browser_vfs_opendir(path, NULL)) == NULL)
 		return FALSE;
 	if(strcmp(path, "/") == 0) /* XXX hack */
