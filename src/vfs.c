@@ -241,6 +241,8 @@ DIR * browser_vfs_opendir(char const * filename, struct stat * st)
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\", %p)\n", __func__, filename, st);
 #endif
+	if(st == NULL)
+		return opendir(filename);
 #if defined(__sun__)
 	if((fd = open(filename, O_RDONLY)) < 0
 			|| (dir = fdopendir(fd)) == NULL)
@@ -254,7 +256,7 @@ DIR * browser_vfs_opendir(char const * filename, struct stat * st)
 		return NULL;
 	fd = dirfd(dir);
 #endif
-	if(st != NULL && fstat(fd, st) != 0)
+	if(fstat(fd, st) != 0)
 	{
 		browser_vfs_closedir(dir);
 		return NULL;
