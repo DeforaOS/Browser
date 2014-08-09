@@ -1,4 +1,3 @@
-SUBDIRS	= plugins
 TARGETS	= libBrowser.a libBrowser.so.0.0 libBrowser.so.0 libBrowser.so browser copy delete desktop desktopctl move open properties view
 PREFIX	= /usr/local
 DESTDIR	=
@@ -20,10 +19,7 @@ MKDIR	= mkdir -m 0755 -p
 INSTALL	= install
 
 
-all: subdirs $(TARGETS)
-
-subdirs:
-	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE)) || exit; done
+all: $(TARGETS)
 
 libBrowser_OBJS = vfs.o
 libBrowser_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS) -fPIC
@@ -141,16 +137,12 @@ view.o: view.c
 	$(CC) $(view_CFLAGS) -c view.c
 
 clean:
-	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) clean) || exit; done
 	$(RM) -- $(libBrowser_OBJS) $(browser_OBJS) $(copy_OBJS) $(delete_OBJS) $(desktop_OBJS) $(desktopctl_OBJS) $(move_OBJS) $(open_OBJS) $(properties_OBJS) $(view_OBJS)
 
-distclean:
-	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) distclean) || exit; done
-	$(RM) -- $(libBrowser_OBJS) $(browser_OBJS) $(copy_OBJS) $(delete_OBJS) $(desktop_OBJS) $(desktopctl_OBJS) $(move_OBJS) $(open_OBJS) $(properties_OBJS) $(view_OBJS)
+distclean: clean
 	$(RM) -- $(TARGETS)
 
 install: $(TARGETS)
-	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) install) || exit; done
 	$(MKDIR) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) -m 0644 libBrowser.a $(DESTDIR)$(LIBDIR)/libBrowser.a
 	$(INSTALL) -m 0755 libBrowser.so.0.0 $(DESTDIR)$(LIBDIR)/libBrowser.so.0.0
@@ -176,7 +168,6 @@ install: $(TARGETS)
 	$(INSTALL) -m 0755 view $(DESTDIR)$(BINDIR)/view
 
 uninstall:
-	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) uninstall) || exit; done
 	$(RM) -- $(DESTDIR)$(LIBDIR)/libBrowser.a
 	$(RM) -- $(DESTDIR)$(LIBDIR)/libBrowser.so.0.0
 	$(RM) -- $(DESTDIR)$(LIBDIR)/libBrowser.so.0
@@ -191,4 +182,4 @@ uninstall:
 	$(RM) -- $(DESTDIR)$(BINDIR)/properties
 	$(RM) -- $(DESTDIR)$(BINDIR)/view
 
-.PHONY: all subdirs clean distclean install uninstall
+.PHONY: all clean distclean install uninstall

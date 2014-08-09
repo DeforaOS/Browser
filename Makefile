@@ -1,6 +1,6 @@
 PACKAGE	= Browser
 VERSION	= 0.4.13
-SUBDIRS	= data doc include po src tests tools
+SUBDIRS	= data doc include po src src/plugins tests tools
 RM	= rm -f
 LN	= ln -f
 TAR	= tar -czvf
