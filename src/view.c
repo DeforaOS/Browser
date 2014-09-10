@@ -292,8 +292,8 @@ static GtkWidget * _new_image(View * view, char const * path)
 	GtkWidget * window;
 	GError * error = NULL;
 	GdkPixbufAnimation * pixbuf;
-	int pw;
-	int ph;
+	int width;
+	int height;
 	GdkScreen * screen;
 	gint monitor;
 	GdkRectangle rect;
@@ -312,8 +312,11 @@ static GtkWidget * _new_image(View * view, char const * path)
 	view->view = gtk_image_new_from_animation(pixbuf);
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(window),
 			view->view);
-	pw = gdk_pixbuf_animation_get_width(pixbuf) + 4;
-	ph = gdk_pixbuf_animation_get_height(pixbuf) + 4;
+	/* get the current window size */
+	gtk_window_get_size(GTK_WINDOW(view->window), &width, &height);
+	/* add the size of the image */
+	width += gdk_pixbuf_animation_get_width(pixbuf);
+	height += gdk_pixbuf_animation_get_height(pixbuf);
 	/* get the current monitor size */
 	screen = gdk_screen_get_default();
 #if GTK_CHECK_VERSION(2, 14, 0)
@@ -325,8 +328,9 @@ static GtkWidget * _new_image(View * view, char const * path)
 #endif
 	gdk_screen_get_monitor_geometry(screen, monitor, &rect);
 	/* set an upper bound to the size of the window */
-	gtk_window_set_default_size(GTK_WINDOW(view->window), min(pw,
-				rect.width), min(ph, rect.height));
+	gtk_window_set_default_size(GTK_WINDOW(view->window),
+			min(width, rect.width),
+			min(height, rect.height));
 	return window;
 }
 
