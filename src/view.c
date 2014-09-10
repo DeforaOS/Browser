@@ -62,6 +62,8 @@ typedef struct _View
 
 	/* widgets */
 	GtkWidget * window;
+	GtkWidget * toolbar;
+	GtkWidget * view;
 	GtkWidget * ab_window;
 } View;
 
@@ -99,9 +101,11 @@ static void _on_file_close(gpointer data);
 static void _on_help_contents(gpointer data);
 static void _on_help_about(gpointer data);
 #endif
+static void _on_copy(gpointer data);
 static void _on_edit(gpointer data);
 static void _on_open_with(gpointer data);
 static void _on_properties(gpointer data);
+static void _on_select_all(gpointer data);
 
 
 /* constants */
@@ -246,11 +250,11 @@ static View * _view_new(char const * pathname)
 #else
 	desktop_accel_create(_view_accel, view, group);
 #endif
-	widget = desktop_toolbar_create(_view_toolbar, view, group);
+	view->toolbar = desktop_toolbar_create(_view_toolbar, view, group);
 	if(mime_get_handler(_mime, type, "edit") == NULL)
 		gtk_widget_set_sensitive(GTK_WIDGET(_view_toolbar[1].widget),
 				FALSE);
-	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), view->toolbar, FALSE, FALSE, 0);
 	if(strncmp(type, image, sizeof(image) - 1) == 0)
 	{
 		if((widget = _new_image(view, pathname)) == NULL)
@@ -288,7 +292,6 @@ static GtkWidget * _new_image(View * view, char const * path)
 	GtkWidget * window;
 	GError * error = NULL;
 	GdkPixbufAnimation * pixbuf;
-	GtkWidget * widget;
 	int pw;
 	int ph;
 	GdkScreen * screen;
@@ -306,9 +309,9 @@ static GtkWidget * _new_image(View * view, char const * path)
 	}
 	if(pixbuf == NULL)
 		return NULL;
-	widget = gtk_image_new_from_animation(pixbuf);
+	view->view = gtk_image_new_from_animation(pixbuf);
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(window),
-			widget);
+			view->view);
 	pw = gdk_pixbuf_animation_get_width(pixbuf) + 4;
 	ph = gdk_pixbuf_animation_get_height(pixbuf) + 4;
 	/* get the current monitor size */
@@ -329,8 +332,8 @@ static GtkWidget * _new_image(View * view, char const * path)
 
 static GtkWidget * _new_text(View * view, char const * path)
 {
-	GtkWidget * widget;
-	GtkWidget * text;
+	GtkToolItem * toolitem;
+	GtkWidget * window;
 	PangoFontDescription * desc;
 	FILE * fp;
 	GtkTextBuffer * tbuf;
@@ -338,31 +341,53 @@ static GtkWidget * _new_text(View * view, char const * path)
 	char buf[BUFSIZ];
 	size_t len;
 
-	widget = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
+	toolitem = gtk_separator_tool_item_new();
+	gtk_toolbar_insert(GTK_TOOLBAR(view->toolbar), toolitem, 3);
+	/* copy */
+	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_COPY);
+	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(_on_copy),
+			view);
+	gtk_toolbar_insert(GTK_TOOLBAR(view->toolbar), toolitem, 3);
+	/* select all */
+#if GTK_CHECK_VERSION(2, 10, 0)
+	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_SELECT_ALL);
+#else
+	toolitem = gtk_tool_button_new(gtk_image_new_from_icon_name(
+				"edit-select-all", gtk_toolbar_get_icon_size(
+					GTK_TOOLBAR(view->toolbar))),
+			_("Select All"));
+#endif
+	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
+			_on_select_all), view);
+	gtk_toolbar_insert(GTK_TOOLBAR(view->toolbar), toolitem, 4);
+	/* view */
+	window = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(window),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	text = gtk_text_view_new();
-	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(text), FALSE);
-	gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
-	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD_CHAR);
+	view->view = gtk_text_view_new();
+	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(view->view), FALSE);
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(view->view), FALSE);
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(view->view),
+			GTK_WRAP_WORD_CHAR);
 	desc = pango_font_description_new();
 	pango_font_description_set_family(desc, "monospace");
-	gtk_widget_modify_font(text, desc);
+	gtk_widget_modify_font(view->view, desc);
 	pango_font_description_free(desc);
-	gtk_container_add(GTK_CONTAINER(widget), text);
+	gtk_container_add(GTK_CONTAINER(window), view->view);
+	/* FIXME read asynchronously */
 	if((fp = fopen(path, "r")) == NULL)
 	{
 		_view_error(view, strerror(errno), 0);
-		return widget;
+		return window;
 	}
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view->view));
 	while((len = fread(buf, sizeof(char), sizeof(buf), fp)) > 0)
 	{
 		gtk_text_buffer_get_end_iter(tbuf, &iter);
 		gtk_text_buffer_insert(tbuf, &iter, buf, len);
 	}
 	fclose(fp);
-	return widget;
+	return window;
 }
 
 
@@ -613,6 +638,20 @@ static gboolean _about_on_closex(gpointer data)
 #endif /* EMBEDDED */
 
 
+/* on_copy */
+static void _on_copy(gpointer data)
+{
+	View * view = data;
+	GtkClipboard * clipboard;
+	GtkTextBuffer * tbuf;
+
+	clipboard = gtk_widget_get_clipboard(view->view,
+			GDK_SELECTION_CLIPBOARD);
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view->view));
+	gtk_text_buffer_copy_clipboard(tbuf, clipboard);
+}
+
+
 /* on_edit */
 static void _on_edit(gpointer data)
 {
@@ -638,6 +677,21 @@ static void _on_properties(gpointer data)
 	View * view = data;
 
 	_view_open_with(view, BINDIR "/properties");
+}
+
+
+/* on_select_all */
+static void _on_select_all(gpointer data)
+{
+	View * view = data;
+	GtkTextBuffer * tbuf;
+	GtkTextIter start;
+	GtkTextIter end;
+
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view->view));
+	gtk_text_buffer_get_start_iter(tbuf, &start);
+	gtk_text_buffer_get_end_iter(tbuf, &end);
+	gtk_text_buffer_select_range(tbuf, &start, &end);
 }
 
 
