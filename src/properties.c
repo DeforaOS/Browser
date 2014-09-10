@@ -55,7 +55,6 @@
 /* properties */
 /* private */
 /* types */
-#define _Properties _Browser
 typedef struct _Properties
 {
 	/* internal */
