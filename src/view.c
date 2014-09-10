@@ -42,6 +42,9 @@ static char const _license[] =
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
 #endif
+#ifndef BINDIR
+# define BINDIR		PREFIX "/bin"
+#endif
 #ifndef DATADIR
 # define DATADIR	PREFIX "/share"
 #endif
@@ -80,7 +83,8 @@ static void _view_delete(View * view);
 
 /* useful */
 static int _view_error(View * view, char const * message, int ret);
-static void _view_run(View * view, char const * program);
+static void _view_open_with(View * view, char const * program);
+static void _view_open_with_dialog(View * view);
 
 /* callbacks */
 #ifdef EMBEDDED
@@ -444,11 +448,16 @@ static int _error_text(char const * message, int ret)
 }
 
 
-/* view_run */
-static void _view_run(View * view, char const * program)
+/* view_open_with */
+static void _view_open_with(View * view, char const * program)
 {
 	pid_t pid;
 
+	if(program == NULL)
+	{
+		_view_open_with_dialog(view);
+		return;
+	}
 	if((pid = fork()) == -1)
 		_view_error(view, "fork", 0);
 	else if(pid == 0)
@@ -459,6 +468,42 @@ static void _view_run(View * view, char const * program)
 		_view_error(NULL, program, 0);
 		exit(2);
 	}
+}
+
+
+/* view_open_with_dialog */
+static void _view_open_with_dialog(View * view)
+{
+	GtkWidget * dialog;
+	GtkFileFilter * filter;
+	char * filename = NULL;
+
+	dialog = gtk_file_chooser_dialog_new(_("Open with..."),
+			GTK_WINDOW(view->window),
+			GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
+			GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN,
+			GTK_RESPONSE_ACCEPT, NULL);
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("Executable files"));
+	gtk_file_filter_add_mime_type(filter, "application/x-executable");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("Shell scripts"));
+	gtk_file_filter_add_mime_type(filter, "application/x-shellscript");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("All files"));
+	gtk_file_filter_add_pattern(filter, "*");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
+					dialog));
+	gtk_widget_destroy(dialog);
+	if(filename == NULL)
+		return;
+	_view_open_with(view, filename);
+	g_free(filename);
 }
 
 
@@ -582,36 +627,8 @@ static void _on_edit(gpointer data)
 static void _on_open_with(gpointer data)
 {
 	View * view = data;
-	GtkWidget * dialog;
-	GtkFileFilter * filter;
-	char * filename = NULL;
 
-	dialog = gtk_file_chooser_dialog_new(_("Open with..."),
-			GTK_WINDOW(view->window),
-			GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
-			GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN,
-			GTK_RESPONSE_ACCEPT, NULL);
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("Executable files"));
-	gtk_file_filter_add_mime_type(filter, "application/x-executable");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("Shell scripts"));
-	gtk_file_filter_add_mime_type(filter, "application/x-shellscript");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("All files"));
-	gtk_file_filter_add_pattern(filter, "*");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
-		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
-					dialog));
-	gtk_widget_destroy(dialog);
-	if(filename == NULL)
-		return;
-	_view_run(view, filename);
-	g_free(filename);
+	_view_open_with_dialog(view);
 }
 
 
@@ -620,7 +637,7 @@ static void _on_properties(gpointer data)
 {
 	View * view = data;
 
-	_view_run(view, "properties");
+	_view_open_with(view, BINDIR "/properties");
 }
 
 
