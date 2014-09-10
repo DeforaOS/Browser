@@ -45,6 +45,8 @@ typedef struct _BrowserPlugin
 	GtkWidget * toolbar;
 	GtkToolItem * open;
 	GtkToolItem * edit;
+	GtkToolItem * copy;
+	GtkToolItem * select_all;
 	GtkToolItem * zoom_100;
 	GtkToolItem * zoom_fit;
 	GtkToolItem * zoom_out;
@@ -52,7 +54,7 @@ typedef struct _BrowserPlugin
 	GtkWidget * view_image;
 	GtkWidget * view_image_image;
 	GtkWidget * view_text;
-	GtkTextBuffer * view_text_buffer;
+	GtkTextBuffer * view_text_tbuf;
 } Preview;
 
 
@@ -64,10 +66,12 @@ static GtkWidget * _preview_get_widget(Preview * preview);
 static void _preview_refresh(Preview * preview, GList * selection);
 
 /* callbacks */
+static void _preview_on_copy(gpointer data);
 static void _preview_on_edit(gpointer data);
 static gboolean _preview_on_idle_image(gpointer data);
 static gboolean _preview_on_idle_text(gpointer data);
 static void _preview_on_open(gpointer data);
+static void _preview_on_select_all(gpointer data);
 static void _preview_on_zoom_100(gpointer data);
 static void _preview_on_zoom_fit(gpointer data);
 static void _preview_on_zoom_in(gpointer data);
@@ -119,6 +123,25 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	g_signal_connect_swapped(preview->edit, "clicked", G_CALLBACK(
 				_preview_on_edit), preview);
 	gtk_toolbar_insert(GTK_TOOLBAR(preview->toolbar), preview->edit, -1);
+	/* copy */
+	preview->copy = gtk_tool_button_new_from_stock(GTK_STOCK_COPY);
+	g_signal_connect_swapped(preview->copy, "clicked", G_CALLBACK(
+				_preview_on_copy), preview);
+	gtk_toolbar_insert(GTK_TOOLBAR(preview->toolbar), preview->copy, -1);
+	/* select all */
+#if GTK_CHECK_VERSION(2, 10, 0)
+	preview->select_all = gtk_tool_button_new_from_stock(
+			GTK_STOCK_SELECT_ALL);
+#else
+	widget = gtk_image_new_from_icon_name("edit-select-all",
+			gtk_toolbar_get_icon_size(GTK_TOOLBAR(
+					preview->toolbar)));
+	preview->select_all = gtk_tool_button_new(widget, "Select all");
+#endif
+	g_signal_connect_swapped(preview->select_all, "clicked", G_CALLBACK(
+				_preview_on_select_all), preview);
+	gtk_toolbar_insert(GTK_TOOLBAR(preview->toolbar), preview->select_all,
+			-1);
 	/* zoom */
 	preview->zoom_100 = gtk_tool_button_new_from_stock(GTK_STOCK_ZOOM_100);
 	g_signal_connect_swapped(preview->zoom_100, "clicked", G_CALLBACK(
@@ -169,7 +192,7 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	font = pango_font_description_new();
 	pango_font_description_set_family(font, "monospace");
 	widget = gtk_text_view_new();
-	preview->view_text_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(
+	preview->view_text_tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(
 				widget));
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(widget), FALSE);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(widget), FALSE);
@@ -284,6 +307,8 @@ static void _refresh_reset(Preview * preview)
 	gtk_widget_hide(preview->toolbar);
 	gtk_widget_hide(GTK_WIDGET(preview->open));
 	gtk_widget_hide(GTK_WIDGET(preview->edit));
+	gtk_widget_hide(GTK_WIDGET(preview->copy));
+	gtk_widget_hide(GTK_WIDGET(preview->select_all));
 	gtk_widget_hide(GTK_WIDGET(preview->zoom_100));
 	gtk_widget_hide(GTK_WIDGET(preview->zoom_fit));
 	gtk_widget_hide(GTK_WIDGET(preview->zoom_out));
@@ -294,6 +319,18 @@ static void _refresh_reset(Preview * preview)
 
 
 /* callbacks */
+/* preview_on_copy */
+static void _preview_on_copy(gpointer data)
+{
+	Preview * preview = data;
+	GtkClipboard * clipboard;
+
+	clipboard = gtk_widget_get_clipboard(preview->view_text,
+			GDK_SELECTION_CLIPBOARD);
+	gtk_text_buffer_copy_clipboard(preview->view_text_tbuf, clipboard);
+}
+
+
 /* preview_on_edit */
 static void _preview_on_edit(gpointer data)
 {
@@ -383,7 +420,9 @@ static gboolean _preview_on_idle_text(gpointer data)
 	ssize_t s;
 
 	preview->source = 0;
-	gtk_text_buffer_set_text(preview->view_text_buffer, "", 0);
+	gtk_widget_show(GTK_WIDGET(preview->copy));
+	gtk_widget_show(GTK_WIDGET(preview->select_all));
+	gtk_text_buffer_set_text(preview->view_text_tbuf, "", 0);
 	if((fd = open(preview->path, O_RDONLY)) < 0)
 	{
 		helper->error(helper->browser, strerror(errno), 1);
@@ -398,7 +437,7 @@ static gboolean _preview_on_idle_text(gpointer data)
 			buf[sizeof(buf) - 2] = '.';
 			buf[sizeof(buf) - 1] = '.';
 		}
-		gtk_text_buffer_set_text(preview->view_text_buffer, buf, s);
+		gtk_text_buffer_set_text(preview->view_text_tbuf, buf, s);
 	}
 	close(fd);
 	gtk_widget_show(preview->view_text);
@@ -414,6 +453,19 @@ static void _preview_on_open(gpointer data)
 
 	if(preview->path != NULL)
 		mime_action(mime, "open", preview->path);
+}
+
+
+/* preview_on_select_all */
+static void _preview_on_select_all(gpointer data)
+{
+	Preview * preview = data;
+	GtkTextIter start;
+	GtkTextIter end;
+
+	gtk_text_buffer_get_start_iter(preview->view_text_tbuf, &start);
+	gtk_text_buffer_get_end_iter(preview->view_text_tbuf, &end);
+	gtk_text_buffer_select_range(preview->view_text_tbuf, &start, &end);
 }
 
 
