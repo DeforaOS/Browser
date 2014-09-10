@@ -92,10 +92,9 @@ static void _on_file_open_with(gpointer data);
 static void _on_file_close(gpointer data);
 static void _on_help_contents(gpointer data);
 static void _on_help_about(gpointer data);
-#else
+#endif
 static void _on_edit(gpointer data);
 static void _on_open_with(gpointer data);
-#endif
 
 
 /* constants */
@@ -151,6 +150,7 @@ static DesktopAccel _view_accel[] =
 	{ G_CALLBACK(_on_close), GDK_CONTROL_MASK, GDK_KEY_W },
 	{ NULL, 0, 0 }
 };
+#endif /* EMBEDDED */
 
 static DesktopToolbar _view_toolbar[] =
 {
@@ -160,7 +160,6 @@ static DesktopToolbar _view_toolbar[] =
 		GDK_KEY_E, NULL },
 	{ NULL, NULL, NULL, 0, 0, NULL }
 };
-#endif /* EMBEDDED */
 
 
 /* variables */
@@ -225,13 +224,14 @@ static View * _view_new(char const * pathname)
 	widget = desktop_menubar_create(
 			(mime_get_handler(_mime, type, "edit") != NULL)
 			? _view_menubar_edit : _view_menubar, view, group);
+	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, FALSE, 0);
 #else
 	desktop_accel_create(_view_accel, view, group);
+#endif
 	widget = desktop_toolbar_create(_view_toolbar, view, group);
 	if(mime_get_handler(_mime, type, "edit") == NULL)
 		gtk_widget_set_sensitive(GTK_WIDGET(_view_toolbar[1].widget),
 				FALSE);
-#endif
 	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, FALSE, 0);
 	if(strncmp(type, image, sizeof(image) - 1) == 0)
 	{
@@ -469,46 +469,8 @@ static void _on_file_edit(gpointer data)
 static void _on_file_open_with(gpointer data)
 {
 	View * view = data;
-	GtkWidget * dialog;
-	GtkFileFilter * filter;
-	char * filename = NULL;
-	pid_t pid;
 
-	dialog = gtk_file_chooser_dialog_new(_("Open with..."),
-			GTK_WINDOW(view->window),
-			GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
-			GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN,
-			GTK_RESPONSE_ACCEPT, NULL);
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("Executable files"));
-	gtk_file_filter_add_mime_type(filter, "application/x-executable");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("Shell scripts"));
-	gtk_file_filter_add_mime_type(filter, "application/x-shellscript");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-	filter = gtk_file_filter_new();
-	gtk_file_filter_set_name(filter, _("All files"));
-	gtk_file_filter_add_pattern(filter, "*");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
-		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
-					dialog));
-	gtk_widget_destroy(dialog);
-	if(filename == NULL)
-		return;
-	if((pid = fork()) == -1)
-		_view_error(view, "fork", 0);
-	else if(pid == 0)
-	{
-		if(close(0) != 0)
-			_view_error(NULL, "stdin", 0);
-		execlp(filename, filename, view->pathname, NULL);
-		_view_error(NULL, filename, 0);
-		exit(2);
-	}
-	g_free(filename);
+	_on_open_with(view);
 }
 
 
@@ -562,9 +524,10 @@ static gboolean _about_on_closex(gpointer data)
 	gtk_widget_hide(view->ab_window);
 	return TRUE;
 }
+#endif /* EMBEDDED */
 
 
-#else
+/* on_edit */
 static void _on_edit(gpointer data)
 {
 	View * view = data;
@@ -574,11 +537,51 @@ static void _on_edit(gpointer data)
 }
 
 
+/* on_open_with */
 static void _on_open_with(gpointer data)
 {
-	/* FIXME implement */
+	View * view = data;
+	GtkWidget * dialog;
+	GtkFileFilter * filter;
+	char * filename = NULL;
+	pid_t pid;
+
+	dialog = gtk_file_chooser_dialog_new(_("Open with..."),
+			GTK_WINDOW(view->window),
+			GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
+			GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN,
+			GTK_RESPONSE_ACCEPT, NULL);
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("Executable files"));
+	gtk_file_filter_add_mime_type(filter, "application/x-executable");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("Shell scripts"));
+	gtk_file_filter_add_mime_type(filter, "application/x-shellscript");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("All files"));
+	gtk_file_filter_add_pattern(filter, "*");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
+					dialog));
+	gtk_widget_destroy(dialog);
+	if(filename == NULL)
+		return;
+	if((pid = fork()) == -1)
+		_view_error(view, "fork", 0);
+	else if(pid == 0)
+	{
+		if(close(0) != 0)
+			_view_error(NULL, "stdin", 0);
+		execlp(filename, filename, view->pathname, NULL);
+		_view_error(NULL, filename, 0);
+		exit(2);
+	}
+	g_free(filename);
 }
-#endif /* EMBEDDED */
 
 
 /* usage */
