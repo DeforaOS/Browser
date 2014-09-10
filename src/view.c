@@ -584,7 +584,7 @@ static void _on_open_with(gpointer data)
 /* usage */
 static int _usage(void)
 {
-	fputs(_("Usage: view file...\n"), stderr);
+	fprintf(stderr, _("Usage: %s file...\n"), PROGNAME);
 	return 1;
 }
 
