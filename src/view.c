@@ -80,6 +80,7 @@ static void _view_delete(View * view);
 
 /* useful */
 static int _view_error(View * view, char const * message, int ret);
+static void _view_run(View * view, char const * program);
 
 /* callbacks */
 #ifdef EMBEDDED
@@ -89,12 +90,14 @@ static gboolean _on_closex(gpointer data);
 #ifndef EMBEDDED
 static void _on_file_edit(gpointer data);
 static void _on_file_open_with(gpointer data);
+static void _on_file_properties(gpointer data);
 static void _on_file_close(gpointer data);
 static void _on_help_contents(gpointer data);
 static void _on_help_about(gpointer data);
 #endif
 static void _on_edit(gpointer data);
 static void _on_open_with(gpointer data);
+static void _on_properties(gpointer data);
 
 
 /* constants */
@@ -113,6 +116,9 @@ static DesktopMenu _view_menu_file_edit[] =
 	{ N_("_Edit"), G_CALLBACK(_on_file_edit), GTK_STOCK_EDIT,
 		GDK_CONTROL_MASK, GDK_KEY_E },
 	{ N_("Open _with..."), G_CALLBACK(_on_file_open_with), NULL, 0, 0 },
+	{ "", NULL, NULL, 0, 0 },
+	{ N_("_Properties"), G_CALLBACK(_on_file_properties),
+		GTK_STOCK_PROPERTIES, GDK_MOD1_MASK, GDK_KEY_Return },
 	{ "", NULL, NULL, 0, 0 },
 	{ N_("_Close"), G_CALLBACK(_on_file_close), GTK_STOCK_CLOSE,
 		GDK_CONTROL_MASK, GDK_KEY_W },
@@ -158,6 +164,14 @@ static DesktopToolbar _view_toolbar[] =
 		GDK_CONTROL_MASK, GDK_KEY_O, NULL },
 	{ N_("Edit"), G_CALLBACK(_on_edit), GTK_STOCK_EDIT, GDK_CONTROL_MASK,
 		GDK_KEY_E, NULL },
+	{ "", NULL, NULL, 0, 0, NULL },
+	{ N_("Properties"), G_CALLBACK(_on_properties), GTK_STOCK_PROPERTIES,
+#ifndef EMBEDDED
+		0, 0,
+#else
+		GDK_MOD1_MASK, GDK_KEY_Return,
+#endif
+		NULL },
 	{ NULL, NULL, NULL, 0, 0, NULL }
 };
 
@@ -430,6 +444,24 @@ static int _error_text(char const * message, int ret)
 }
 
 
+/* view_run */
+static void _view_run(View * view, char const * program)
+{
+	pid_t pid;
+
+	if((pid = fork()) == -1)
+		_view_error(view, "fork", 0);
+	else if(pid == 0)
+	{
+		if(close(0) != 0)
+			_view_error(NULL, "stdin", 0);
+		execlp(program, program, view->pathname, NULL);
+		_view_error(NULL, program, 0);
+		exit(2);
+	}
+}
+
+
 /* callbacks */
 #ifdef EMBEDDED
 /* on_close */
@@ -471,6 +503,15 @@ static void _on_file_open_with(gpointer data)
 	View * view = data;
 
 	_on_open_with(view);
+}
+
+
+/* on_file_properties */
+static void _on_file_properties(gpointer data)
+{
+	View * view = data;
+
+	_on_properties(view);
 }
 
 
@@ -544,7 +585,6 @@ static void _on_open_with(gpointer data)
 	GtkWidget * dialog;
 	GtkFileFilter * filter;
 	char * filename = NULL;
-	pid_t pid;
 
 	dialog = gtk_file_chooser_dialog_new(_("Open with..."),
 			GTK_WINDOW(view->window),
@@ -570,17 +610,17 @@ static void _on_open_with(gpointer data)
 	gtk_widget_destroy(dialog);
 	if(filename == NULL)
 		return;
-	if((pid = fork()) == -1)
-		_view_error(view, "fork", 0);
-	else if(pid == 0)
-	{
-		if(close(0) != 0)
-			_view_error(NULL, "stdin", 0);
-		execlp(filename, filename, view->pathname, NULL);
-		_view_error(NULL, filename, 0);
-		exit(2);
-	}
+	_view_run(view, filename);
 	g_free(filename);
+}
+
+
+/* on_properties */
+static void _on_properties(gpointer data)
+{
+	View * view = data;
+
+	_view_run(view, "properties");
 }
 
 
