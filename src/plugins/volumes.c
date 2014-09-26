@@ -72,14 +72,16 @@ enum _VolumesColumn
 
 typedef enum _VolumesFlag
 {
-	DF_READONLY = 1,
-	DF_REMOVABLE
+	DF_NETWORK	= 0x1,
+	DF_READONLY	= 0x2,
+	DF_REMOVABLE	= 0x4
 } VolumesFlag;
 
 typedef enum _VolumesPixbuf
 {
-	DP_HARDDISK = 0,
-	DP_CDROM,
+	DP_CDROM = 0,
+	DP_HARDDISK,
+	DP_NETWORK,
 	DP_REMOVABLE
 } VolumesPixbuf;
 #define DP_LAST DP_REMOVABLE
@@ -147,8 +149,8 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	GtkTreeViewColumn * column;
 	GtkTreeSelection * treesel;
 	GtkIconTheme * icontheme;
-	char const * icons[DP_COUNT] = { "drive-harddisk", "drive-cdrom",
-		"drive-removable-media" };
+	char const * icons[DP_COUNT] = { "drive-cdrom", "drive-harddisk",
+		"network-server", "drive-removable-media" };
 	size_t i;
 
 	if((volumes = object_new(sizeof(*volumes))) == NULL)
@@ -296,7 +298,8 @@ static void _volumes_list(Volumes * volumes)
 	_list_reset(volumes);
 	for(i = 0; i < res; i++)
 	{
-		flags = (mnt[i].f_flag & ST_RDONLY) ? DF_READONLY : 0;
+		flags = (mnt[i].f_flag & ST_LOCAL) ? 0 : DF_NETWORK;
+		flags |= (mnt[i].f_flag & ST_RDONLY) ? DF_READONLY : 0;
 		_list_add(volumes, (mnt[i].f_flag & ST_ROOTFS)
 				? _("Root filesystem") : NULL,
 				mnt[i].f_mntfromname, mnt[i].f_fstypename,
@@ -328,7 +331,7 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 		char const * mountpoint, fsblkcnt_t free, fsblkcnt_t total)
 {
 	GtkTreeIter iter;
-	VolumesPixbuf dp = DP_HARDDISK;
+	VolumesPixbuf dp;
 	char const * ignore[] = { "kernfs", "proc", "procfs", "ptyfs" };
 	char const * cdrom[] = { "/dev/cd" };
 	char const * removable[] = { "/dev/sd" };
@@ -342,6 +345,7 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 			__func__, name, device, filesystem, mountpoint, free,
 			total);
 #endif
+	dp = (flags & DF_NETWORK) ? DP_NETWORK : DP_HARDDISK;
 	for(i = 0; i < sizeof(ignore) / sizeof(*ignore); i++)
 		if(strcmp(ignore[i], filesystem) == 0)
 			return;
