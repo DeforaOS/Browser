@@ -876,8 +876,8 @@ static void _on_icon_open(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
 	Mime * mime;
-	char * argv[] = { "browser", "browser", "--", NULL, NULL };
-	GSpawnFlags flags = G_SPAWN_SEARCH_PATH | G_SPAWN_FILE_AND_ARGV_ZERO;
+	char * argv[] = { BINDIR "/browser", "browser", "--", NULL, NULL };
+	GSpawnFlags flags = G_SPAWN_FILE_AND_ARGV_ZERO;
 	GError * error = NULL;
 
 	if(desktopicon->path == NULL && desktopicon->callback != NULL)
