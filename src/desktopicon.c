@@ -42,6 +42,9 @@
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
 #endif
+#ifndef BINDIR
+# define BINDIR		PREFIX "/bin"
+#endif
 #ifndef DATADIR
 # define DATADIR	PREFIX "/share"
 #endif
@@ -1217,8 +1220,9 @@ static void _on_icon_delete(gpointer data)
 static void _on_icon_properties(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
-	char * argv[] = { "properties", "properties", "--", NULL, NULL };
-	GSpawnFlags flags = G_SPAWN_SEARCH_PATH | G_SPAWN_FILE_AND_ARGV_ZERO;
+	char * argv[] = { BINDIR "/properties", "properties", "--", NULL,
+		NULL };
+	GSpawnFlags flags = G_SPAWN_FILE_AND_ARGV_ZERO;
 	GError * error = NULL;
 
 	argv[3] = desktopicon->path;
