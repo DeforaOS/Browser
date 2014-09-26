@@ -312,7 +312,8 @@ static void _volumes_list(Volumes * volumes)
 	_list_reset(volumes);
 	for(i = 0; i < res; i++)
 	{
-		flags = (mnt[i].f_flags & MNT_RDONLY) ? DF_READONLY : 0;
+		flags = (mnt[i].f_flags & MNT_LOCAL) ? 0 : DF_NETWORK;
+		flags |= (mnt[i].f_flags & MNT_RDONLY) ? DF_READONLY : 0;
 		_list_add(volumes, (mnt[i].f_flags & MNT_ROOTFS)
 				? _("Root filesystem") : NULL,
 				mnt[i].f_mntfromname, mnt[i].f_fstypename,
