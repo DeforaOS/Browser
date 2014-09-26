@@ -74,7 +74,8 @@ typedef enum _VolumesFlag
 {
 	DF_NETWORK	= 0x1,
 	DF_READONLY	= 0x2,
-	DF_REMOVABLE	= 0x4
+	DF_REMOVABLE	= 0x4,
+	DF_SHARED	= 0x8
 } VolumesFlag;
 
 typedef enum _VolumesPixbuf
@@ -303,6 +304,8 @@ static void _volumes_list(Volumes * volumes)
 	for(i = 0; i < res; i++)
 	{
 		flags = (mnt[i].f_flag & ST_LOCAL) ? 0 : DF_NETWORK;
+		flags |= (mnt[i].f_flag & (ST_EXRDONLY | ST_EXPORTED))
+			? DF_SHARED : 0;
 		flags |= (mnt[i].f_flag & ST_RDONLY) ? DF_READONLY : 0;
 		_list_add(volumes, (mnt[i].f_flag & ST_ROOTFS)
 				? _("Root filesystem") : NULL,
@@ -400,7 +403,10 @@ static GdkPixbuf * _list_get_icon(Volumes * volumes, VolumesPixbuf dp,
 
 	if(dp == DP_REMOVABLE)
 		pixbuf = _list_get_icon_removable(volumes, dp, mountpoint);
-	if(flags & DF_READONLY)
+	if(flags & DF_SHARED)
+		return _list_get_icon_emblem(pixbuf, volumes->width,
+				"emblem-shared");
+	else if(flags & DF_READONLY)
 		return _list_get_icon_emblem(pixbuf, volumes->width,
 				"emblem-readonly");
 	return pixbuf;
