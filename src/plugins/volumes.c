@@ -269,6 +269,10 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 		char const * filesystem, unsigned int flags,
 		char const * mountpoint, fsblkcnt_t free, fsblkcnt_t total);
 static GdkPixbuf * _list_get_icon(Volumes * volumes, VolumesPixbuf dp,
+		unsigned int flags, char const * mountpoint);
+static GdkPixbuf * _list_get_icon_emblem(GdkPixbuf * pixbuf, int size,
+		char const * emblem);
+static GdkPixbuf * _list_get_icon_removable(Volumes * volumes, VolumesPixbuf dp,
 		char const * mountpoint);
 static void _list_get_iter(Volumes * volumes, GtkTreeIter * iter,
 		char const * mountpoint);
@@ -333,6 +337,7 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 {
 	GtkTreeIter iter;
 	VolumesPixbuf dp;
+	GdkPixbuf * pixbuf;
 	char const * ignore[] = { "kernfs", "proc", "procfs", "ptyfs" };
 	char const * cdrom[] = { "/dev/cd" };
 	char const * removable[] = { "/dev/sd" };
@@ -379,15 +384,72 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 		snprintf(buf, sizeof(buf), "%.1lf%%", fraction * 100.0);
 	}
 	_list_get_iter(volumes, &iter, mountpoint);
+	pixbuf = _list_get_icon(volumes, dp, flags, mountpoint);
 	gtk_list_store_set(volumes->store, &iter, DC_DEVICE, device,
-			DC_PIXBUF, _list_get_icon(volumes, dp, mountpoint),
-			DC_NAME, name, DC_ELLIPSIZE, PANGO_ELLIPSIZE_END,
+			DC_PIXBUF, pixbuf, DC_NAME, name,
+			DC_ELLIPSIZE, PANGO_ELLIPSIZE_END,
 			DC_ELLIPSIZE_SET, TRUE, DC_FILESYSTEM, filesystem,
 			DC_FLAGS, flags, DC_MOUNTPOINT, mountpoint, DC_FREE, f,
 			DC_FREE_DISPLAY, buf, DC_UPDATED, TRUE, -1);
 }
 
 static GdkPixbuf * _list_get_icon(Volumes * volumes, VolumesPixbuf dp,
+		unsigned int flags, char const * mountpoint)
+{
+	GdkPixbuf * pixbuf = volumes->icons[dp];
+
+	if(dp == DP_REMOVABLE)
+		pixbuf = _list_get_icon_removable(volumes, dp, mountpoint);
+	if(flags & DF_READONLY)
+		return _list_get_icon_emblem(pixbuf, volumes->width,
+				"emblem-readonly");
+	return pixbuf;
+}
+
+static GdkPixbuf * _list_get_icon_emblem(GdkPixbuf * pixbuf, int size,
+		char const * emblem)
+{
+	/* FIXME duplicated from _mime_icon_emblem() in src/vfs.c */
+	int esize;
+	GdkPixbuf * epixbuf;
+	GtkIconTheme * icontheme;
+#if GTK_CHECK_VERSION(2, 14, 0)
+	const int flags = GTK_ICON_LOOKUP_USE_BUILTIN
+		| GTK_ICON_LOOKUP_FORCE_SIZE;
+#else
+	const int flags = GTK_ICON_LOOKUP_USE_BUILTIN;
+#endif
+
+	/* work on a copy */
+	epixbuf = gdk_pixbuf_copy(pixbuf);
+	g_object_unref(pixbuf);
+	pixbuf = epixbuf;
+	/* determine the size of the emblem */
+	if(size >= 96)
+		esize = 32;
+	else if(size >= 48)
+		esize = 24;
+	else
+		esize = 12;
+	/* obtain the emblem's icon */
+	icontheme = gtk_icon_theme_get_default();
+	if((epixbuf = gtk_icon_theme_load_icon(icontheme, emblem, esize, flags,
+					NULL)) == NULL)
+		return pixbuf;
+	/* blit the emblem */
+#if 0 /* XXX does not show anything (bottom right) */
+	gdk_pixbuf_composite(epixbuf, pixbuf, size - esize, size - esize,
+			esize, esize, 0, 0, 1.0, 1.0, GDK_INTERP_NEAREST,
+			255);
+#else /* blitting at the top left instead */
+	gdk_pixbuf_composite(epixbuf, pixbuf, 0, 0, esize, esize, 0, 0,
+			1.0, 1.0, GDK_INTERP_NEAREST, 255);
+#endif
+	g_object_unref(epixbuf);
+	return pixbuf;
+}
+
+static GdkPixbuf * _list_get_icon_removable(Volumes * volumes, VolumesPixbuf dp,
 		char const * mountpoint)
 {
 	GdkPixbuf * ret = volumes->icons[dp];
@@ -399,9 +461,6 @@ static GdkPixbuf * _list_get_icon(Volumes * volumes, VolumesPixbuf dp,
 	size_t len;
 	GError * error = NULL;
 
-	if(dp != DP_REMOVABLE)
-		/* stick to the default icon */
-		return ret;
 	if((s = string_new_append(mountpoint, autorun, NULL)) == NULL)
 		return ret;
 	fp = fopen(s, "r");
