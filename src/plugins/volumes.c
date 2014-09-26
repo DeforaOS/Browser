@@ -421,9 +421,7 @@ static GdkPixbuf * _list_get_icon_emblem(GdkPixbuf * pixbuf, int size,
 #endif
 
 	/* work on a copy */
-	epixbuf = gdk_pixbuf_copy(pixbuf);
-	g_object_unref(pixbuf);
-	pixbuf = epixbuf;
+	pixbuf = gdk_pixbuf_copy(pixbuf);
 	/* determine the size of the emblem */
 	if(size >= 96)
 		esize = 32;
