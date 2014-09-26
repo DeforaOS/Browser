@@ -38,8 +38,16 @@
 # include <sys/statvfs.h>
 #endif
 #include "Browser.h"
+#include "../../config.h"
 #define _(string) gettext(string)
 #define N_(string) (string)
+
+#ifndef PREFIX
+# define PREFIX	"/usr/local"
+#endif
+#ifndef BINDIR
+# define BINDIR	PREFIX "/bin"
+#endif
 
 
 /* Volumes */
@@ -576,8 +584,9 @@ static void _volumes_on_properties(GtkWidget * widget, gpointer data)
 	Volumes * volumes = data;
 	BrowserPluginHelper * helper = volumes->helper;
 	gchar * mountpoint;
-	char * argv[] = { "properties", "--", NULL, NULL };
-	const unsigned int flags = G_SPAWN_SEARCH_PATH;
+	char * argv[] = { BINDIR "/properties", "properties", "--", NULL,
+		NULL };
+	const unsigned int flags = G_SPAWN_FILE_AND_ARGV_ZERO;
 	GError * error = NULL;
 
 	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
