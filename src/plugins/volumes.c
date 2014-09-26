@@ -556,13 +556,14 @@ static void _volumes_on_eject(GtkWidget * widget, gpointer data)
 	BrowserPluginHelper * helper = volumes->helper;
 	gchar * device;
 	char * argv[] = { "eject", "--", NULL, NULL };
+	const unsigned int flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
 
 	device = g_object_get_data(G_OBJECT(widget), "device");
 	/* FIXME use the device node instead */
 	argv[2] = device;
-	if(g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
-				NULL, &error) != TRUE)
+	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
+			!= TRUE)
 	{
 		helper->error(helper->browser, error->message, 1);
 		g_error_free(error);
@@ -576,12 +577,13 @@ static void _volumes_on_properties(GtkWidget * widget, gpointer data)
 	BrowserPluginHelper * helper = volumes->helper;
 	gchar * mountpoint;
 	char * argv[] = { "properties", "--", NULL, NULL };
+	const unsigned int flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
 
 	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
 	argv[2] = mountpoint;
-	if(g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
-				NULL, &error) != TRUE)
+	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
+			!= TRUE)
 	{
 		helper->error(helper->browser, error->message, 1);
 		g_error_free(error);
