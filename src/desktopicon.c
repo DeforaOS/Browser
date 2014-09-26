@@ -877,7 +877,7 @@ static void _on_icon_open(gpointer data)
 	DesktopIcon * desktopicon = data;
 	Mime * mime;
 	char * argv[] = { BINDIR "/browser", "browser", "--", NULL, NULL };
-	GSpawnFlags flags = G_SPAWN_FILE_AND_ARGV_ZERO;
+	const unsigned int flags = G_SPAWN_FILE_AND_ARGV_ZERO;
 	GError * error = NULL;
 
 	if(desktopicon->path == NULL && desktopicon->callback != NULL)
@@ -990,7 +990,7 @@ static void _run_application(DesktopIcon * desktopicon)
 static void _run_binary(DesktopIcon * desktopicon)
 {
 	char * argv[] = { NULL, NULL };
-	GSpawnFlags flags = 0;
+	const unsigned int flags = 0;
 	GError * error = NULL;
 
 	argv[0] = desktopicon->path;
@@ -1027,7 +1027,7 @@ static void _run_directory(DesktopIcon * desktopicon)
 	char const * directory;
 	/* XXX open with the default file manager instead */
 	char * argv[] = { "browser", "--", NULL, NULL };
-	GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
+	const unsigned int flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
 
 	/* XXX this may not might the correct key */
@@ -1051,7 +1051,7 @@ static void _run_url(DesktopIcon * desktopicon)
 	char const * url;
 	/* XXX open with the default web browser instead */
 	char * argv[] = { "surfer", "--", NULL, NULL };
-	GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
+	const unsigned int flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
 
 	if((url = config_get(desktopicon->config, section, "URL")) == NULL)
@@ -1075,7 +1075,8 @@ static void _on_icon_open_with(gpointer data)
 	GtkWidget * dialog;
 	char * filename = NULL;
 	char * argv[] = { NULL, NULL, NULL, NULL };
-	GSpawnFlags flags = G_SPAWN_SEARCH_PATH | G_SPAWN_FILE_AND_ARGV_ZERO;
+	const unsigned int flags = G_SPAWN_SEARCH_PATH
+		| G_SPAWN_FILE_AND_ARGV_ZERO;
 	GError * error = NULL;
 
 	dialog = gtk_file_chooser_dialog_new(_("Open with..."),
@@ -1222,7 +1223,7 @@ static void _on_icon_properties(gpointer data)
 	DesktopIcon * desktopicon = data;
 	char * argv[] = { BINDIR "/properties", "properties", "--", NULL,
 		NULL };
-	GSpawnFlags flags = G_SPAWN_FILE_AND_ARGV_ZERO;
+	const unsigned int flags = G_SPAWN_FILE_AND_ARGV_ZERO;
 	GError * error = NULL;
 
 	argv[3] = desktopicon->path;
