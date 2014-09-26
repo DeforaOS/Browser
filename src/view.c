@@ -480,23 +480,28 @@ static int _error_text(char const * message, int ret)
 /* view_open_with */
 static void _view_open_with(View * view, char const * program)
 {
-	pid_t pid;
+	char * argv[] = { NULL, NULL, NULL };
+	const unsigned int flags = 0;
+	GError * error = NULL;
 
 	if(program == NULL)
 	{
 		_view_open_with_dialog(view);
 		return;
 	}
-	if((pid = fork()) == -1)
-		_view_error(view, "fork", 0);
-	else if(pid == 0)
+	if((argv[0] = strdup(program)) == NULL)
 	{
-		if(close(0) != 0)
-			_view_error(NULL, "stdin", 0);
-		execlp(program, program, view->pathname, NULL);
-		_view_error(NULL, program, 0);
-		exit(2);
+		_view_error(view, strerror(errno), 1);
+		return;
 	}
+	argv[1] = view->pathname;
+	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
+			!= TRUE)
+	{
+		_view_error(view, error->message, 1);
+		g_error_free(error);
+	}
+	free(argv[0]);
 }
 
 
