@@ -52,6 +52,8 @@ GdkPixbuf * browser_vfs_mime_icon(Mime * mime, char const * filename,
 	struct stat s;
 	char const * emblem;
 
+	if(filename == NULL)
+		return NULL;
 	if(type == NULL)
 		type = browser_vfs_mime_type(mime, filename,
 				S_ISLNK(mode) ? 0 : mode);
