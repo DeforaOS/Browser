@@ -26,6 +26,10 @@ it.mo: Browser.pot it.po
 
 clean:
 	$(RM) -- $(Browser.pot_OBJS) $(de.mo_OBJS) $(es.mo_OBJS) $(fr.mo_OBJS) $(it.mo_OBJS)
+	./gettext.sh -c -P "$(PREFIX)" -- "Browser.pot"
+	./gettext.sh -c -P "$(PREFIX)" -- "de.mo"
+	./gettext.sh -c -P "$(PREFIX)" -- "es.mo"
+	./gettext.sh -c -P "$(PREFIX)" -- "fr.mo"
 	./gettext.sh -c -P "$(PREFIX)" -- "it.mo"
 
 distclean: clean

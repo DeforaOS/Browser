@@ -65,6 +65,23 @@ view.html: manual.css.xml view.css.xml view.xml
 
 clean:
 	$(RM) -- $(browser.1_OBJS) $(browser.html_OBJS) $(copy.1_OBJS) $(copy.html_OBJS) $(delete.1_OBJS) $(delete.html_OBJS) $(desktop.1_OBJS) $(desktop.html_OBJS) $(desktopctl.1_OBJS) $(desktopctl.html_OBJS) $(move.1_OBJS) $(move.html_OBJS) $(open.1_OBJS) $(open.html_OBJS) $(properties.1_OBJS) $(properties.html_OBJS) $(view.1_OBJS) $(view.html_OBJS)
+	./docbook.sh -c -P "$(PREFIX)" -- "browser.1"
+	./docbook.sh -c -P "$(PREFIX)" -- "browser.html"
+	./docbook.sh -c -P "$(PREFIX)" -- "copy.1"
+	./docbook.sh -c -P "$(PREFIX)" -- "copy.html"
+	./docbook.sh -c -P "$(PREFIX)" -- "delete.1"
+	./docbook.sh -c -P "$(PREFIX)" -- "delete.html"
+	./docbook.sh -c -P "$(PREFIX)" -- "desktop.1"
+	./docbook.sh -c -P "$(PREFIX)" -- "desktop.html"
+	./docbook.sh -c -P "$(PREFIX)" -- "desktopctl.1"
+	./docbook.sh -c -P "$(PREFIX)" -- "desktopctl.html"
+	./docbook.sh -c -P "$(PREFIX)" -- "move.1"
+	./docbook.sh -c -P "$(PREFIX)" -- "move.html"
+	./docbook.sh -c -P "$(PREFIX)" -- "open.1"
+	./docbook.sh -c -P "$(PREFIX)" -- "open.html"
+	./docbook.sh -c -P "$(PREFIX)" -- "properties.1"
+	./docbook.sh -c -P "$(PREFIX)" -- "properties.html"
+	./docbook.sh -c -P "$(PREFIX)" -- "view.1"
 	./docbook.sh -c -P "$(PREFIX)" -- "view.html"
 
 distclean: clean
