@@ -57,11 +57,11 @@ GdkPixbuf * browser_vfs_mime_icon(Mime * mime, char const * filename,
 	if(type == NULL)
 		type = browser_vfs_mime_type(mime, filename,
 				S_ISLNK(mode) ? 0 : mode);
-	if(S_ISDIR(mode))
+	if(st == NULL && browser_vfs_stat(filename, &s) == 0)
+		st = &s;
+	if(S_ISDIR(mode) || (st != NULL && S_ISDIR(st->st_mode)))
 		ret = _mime_icon_folder(mime, filename, lst, st, size);
-	else if(S_ISLNK(mode) && ((st != NULL && S_ISDIR(st->st_mode))
-				|| (stat(filename, &s) == 0
-					&& S_ISDIR(s.st_mode))))
+	else if(S_ISLNK(mode) && (st != NULL && S_ISDIR(st->st_mode)))
 		ret = _mime_icon_folder(mime, filename, lst, st, size);
 	else
 		mime_icons(mime, type, size, &ret, -1);
@@ -159,8 +159,6 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 
 	if(lst == NULL && browser_vfs_lstat(filename, &ls) == 0)
 		lst = &ls;
-	if(st == NULL && browser_vfs_stat(filename, &s) == 0)
-		st = &s;
 	/* check if the folder is a mountpoint */
 	if((p = strdup(filename)) != NULL
 			&& st != NULL
