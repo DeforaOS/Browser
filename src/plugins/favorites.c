@@ -327,7 +327,7 @@ static void _on_add_filename(gchar const * pathname, gpointer data)
 	GtkTreeIter iter;
 	struct stat st;
 	gchar * filename;
-	gint size;
+	gint size = 24;
 	GdkPixbuf * pixbuf;
 
 	/* XXX ignore non-directories */
