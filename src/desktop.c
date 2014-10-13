@@ -149,18 +149,18 @@ typedef enum _DesktopHows
 
 static DesktopCategory _desktop_categories[] =
 {
-	{ FALSE, "Audio;",	"Audio",	"gnome-mime-audio",	},
-	{ FALSE, "Development;","Development",	"applications-development"},
-	{ FALSE, "Education;",	"Education",	"applications-science"	},
-	{ FALSE, "Game;",	"Games",	"applications-games"	},
-	{ FALSE, "Graphics;",	"Graphics",	"applications-graphics"	},
-	{ FALSE, "AudioVideo;",	"Multimedia",	"applications-multimedia"},
-	{ FALSE, "Network;",	"Network",	"applications-internet" },
-	{ FALSE, "Office;",	"Office",	"applications-office"	},
-	{ FALSE, "Settings;",	"Settings",	"gnome-settings"	},
-	{ FALSE, "System;",	"System",	"applications-system"	},
-	{ FALSE, "Utility;",	"Utilities",	"applications-utilities"},
-	{ FALSE, "Video;",	"Video",	"video"			}
+	{ FALSE, "Audio",	"Audio",	"gnome-mime-audio",	},
+	{ FALSE, "Development",	"Development",	"applications-development"},
+	{ FALSE, "Education",	"Education",	"applications-science"	},
+	{ FALSE, "Game",	"Games",	"applications-games"	},
+	{ FALSE, "Graphics",	"Graphics",	"applications-graphics"	},
+	{ FALSE, "AudioVideo",	"Multimedia",	"applications-multimedia"},
+	{ FALSE, "Network",	"Network",	"applications-internet" },
+	{ FALSE, "Office",	"Office",	"applications-office"	},
+	{ FALSE, "Settings",	"Settings",	"gnome-settings"	},
+	{ FALSE, "System",	"System",	"applications-system"	},
+	{ FALSE, "Utility",	"Utilities",	"applications-utilities"},
+	{ FALSE, "Video",	"Video",	"video"			}
 };
 static const size_t _desktop_categories_cnt = sizeof(_desktop_categories)
 	/ sizeof(*_desktop_categories);
@@ -1414,6 +1414,7 @@ static void _done_categories(Desktop * desktop)
 	Config * config;
 	const char section[] = "Desktop Entry";
 	char const * q;
+	char const * r;
 	size_t i;
 	DesktopCategory * dc;
 	char const * path;
@@ -1430,11 +1431,16 @@ static void _done_categories(Desktop * desktop)
 				_desktop_icon_add(desktop, icon);
 			continue;
 		}
-		for(i = 0; i < _desktop_categories_cnt
-				&& (dc = &_desktop_categories[i]) != NULL
-				&& dc->category != NULL
-				&& string_find(q, dc->category) == NULL; i++);
-		if(dc->category == NULL)
+		for(i = 0; i < _desktop_categories_cnt; i++)
+		{
+			dc = &_desktop_categories[i];
+			if((r = string_find(q, dc->category)) == NULL)
+				continue;
+			r += string_length(dc->category);
+			if(*r == '\0' || *r == ';')
+				break;
+		}
+		if(i == _desktop_categories_cnt)
 		{
 			if((icon = desktopicon_new_application(desktop, path,
 					NULL)) != NULL)
