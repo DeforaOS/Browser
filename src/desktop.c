@@ -1267,7 +1267,7 @@ static int _current_loop_applications_do(Desktop * desktop)
 	}
 	free(path);
 	config_delete(config);
-	return -1;
+	return 1;
 }
 
 static int _current_loop_categories(Desktop * desktop)
