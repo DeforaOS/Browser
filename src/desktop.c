@@ -988,9 +988,9 @@ static int _icons_homescreen(Desktop * desktop)
 #ifdef EMBEDDED
 	char const * paths[] =
 	{
-		DATADIR "/applications/phone-contacts.desktop",
-		DATADIR "/applications/phone-dialer.desktop",
-		DATADIR "/applications/phone-messages.desktop",
+		DATADIR "/applications/deforaos-phone-contacts.desktop",
+		DATADIR "/applications/deforaos-phone-dialer.desktop",
+		DATADIR "/applications/deforaos-phone-messages.desktop",
 		NULL
 	};
 	char const ** p;
