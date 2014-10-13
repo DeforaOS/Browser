@@ -877,7 +877,6 @@ static int _icons_applications(Desktop * desktop)
 	DesktopIcon * desktopicon;
 	GdkPixbuf * icon;
 
-	/* FIXME list all applications otherwise? */
 	if(desktop->category == NULL)
 		return 0;
 	if((desktopicon = desktopicon_new(desktop, _("Back"), NULL)) == NULL)
@@ -903,7 +902,6 @@ static int _icons_categories(Desktop * desktop)
 	GdkPixbuf * icon;
 
 	desktop->category = NULL;
-	_icons_applications(desktop); /* XXX hack */
 	if((desktopicon = desktopicon_new(desktop, _("Back"), NULL)) == NULL)
 		return -_desktop_serror(desktop, "Back", 1);
 	desktopicon_set_callback(desktopicon, _icons_set_homescreen, NULL);
@@ -1083,10 +1081,9 @@ int desktop_error(Desktop * desktop, char const * message, int ret)
 
 
 /* desktop_refresh */
-static void _refresh_applications(Desktop * desktop);
 static void _refresh_categories(Desktop * desktop);
 static void _refresh_files(Desktop * desktop);
-static void _refresh_none(Desktop * desktop);
+static void _refresh_homescreen(Desktop * desktop);
 
 void desktop_refresh(Desktop * desktop)
 {
@@ -1098,8 +1095,6 @@ void desktop_refresh(Desktop * desktop)
 	switch(desktop->prefs.icons)
 	{
 		case DESKTOP_ICONS_APPLICATIONS:
-			_refresh_applications(desktop);
-			break;
 		case DESKTOP_ICONS_CATEGORIES:
 			_refresh_categories(desktop);
 			break;
@@ -1108,17 +1103,9 @@ void desktop_refresh(Desktop * desktop)
 			break;
 		case DESKTOP_ICONS_HOMESCREEN:
 		case DESKTOP_ICONS_NONE:
-			_refresh_none(desktop);
+			_refresh_homescreen(desktop);
 			break;
 	}
-}
-
-static void _refresh_applications(Desktop * desktop)
-{
-	g_slist_foreach(desktop->apps, (GFunc)config_delete, NULL);
-	g_slist_free(desktop->apps);
-	desktop->apps = NULL;
-	desktop->refresh_source = g_idle_add(_desktop_on_refresh, desktop);
 }
 
 static void _refresh_categories(Desktop * desktop)
@@ -1146,7 +1133,7 @@ static void _refresh_files(Desktop * desktop)
 	desktop->refresh_source = g_idle_add(_desktop_on_refresh, desktop);
 }
 
-static void _refresh_none(Desktop * desktop)
+static void _refresh_homescreen(Desktop * desktop)
 {
 	/* for cleanup */
 	desktop->refresh_source = g_idle_add(_desktop_on_refresh, desktop);
@@ -2522,7 +2509,7 @@ static int _refresh_loop(Desktop * desktop)
 			return _refresh_loop_files(desktop);
 		case DESKTOP_ICONS_HOMESCREEN:
 		case DESKTOP_ICONS_NONE:
-			return 0; /* nothing to do */
+			return 1; /* nothing to do */
 	}
 	return -1;
 }
