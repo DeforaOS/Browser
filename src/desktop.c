@@ -2336,7 +2336,6 @@ static void _refresh_done_categories(Desktop * desktop);
 static void _refresh_done_categories_open(Desktop * desktop, gpointer data);
 static gboolean _refresh_done_timeout(gpointer data);
 static int _refresh_loop(Desktop * desktop);
-static int _refresh_loop_applications(Desktop * desktop);
 static gint _categories_apps_compare(gconstpointer a, gconstpointer b);
 static int _refresh_loop_categories(Desktop * desktop);
 static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
@@ -2517,7 +2516,6 @@ static int _refresh_loop(Desktop * desktop)
 	switch(desktop->prefs.icons)
 	{
 		case DESKTOP_ICONS_APPLICATIONS:
-			return _refresh_loop_applications(desktop);
 		case DESKTOP_ICONS_CATEGORIES:
 			return _refresh_loop_categories(desktop);
 		case DESKTOP_ICONS_FILES:
@@ -2527,12 +2525,6 @@ static int _refresh_loop(Desktop * desktop)
 			return 0; /* nothing to do */
 	}
 	return -1;
-}
-
-static int _refresh_loop_applications(Desktop * desktop)
-{
-	/* XXX */
-	return _refresh_loop_categories(desktop);
 }
 
 static int _refresh_loop_categories(Desktop * desktop)
