@@ -132,7 +132,6 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 	GdkPixbuf * ret = NULL;
 	char const * icon = NULL;
 	struct stat ls;
-	struct stat s;
 	struct stat ps;
 	char * p;
 	size_t i;
