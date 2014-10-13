@@ -705,6 +705,8 @@ void desktop_delete(Desktop * desktop)
 	free(desktop->icon);
 	if(desktop->mime != NULL)
 		mime_delete(desktop->mime);
+	g_slist_foreach(desktop->apps, (GFunc)config_delete, NULL);
+	g_slist_free(desktop->apps);
 	free(desktop->path);
 	if(desktop->font != NULL)
 		pango_font_description_free(desktop->font);
