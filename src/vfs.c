@@ -160,6 +160,7 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 		lst = &ls;
 	/* check if the folder is a mountpoint */
 	if((p = strdup(filename)) != NULL
+			&& (lst == NULL || !S_ISLNK(lst->st_mode))
 			&& st != NULL
 			&& browser_vfs_lstat(dirname(p), &ps) == 0
 			&& (st->st_dev != ps.st_dev || st->st_ino == ps.st_ino))
