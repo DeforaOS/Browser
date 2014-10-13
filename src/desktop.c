@@ -2325,17 +2325,17 @@ static void _preferences_set_color(Config * config, char const * section,
 
 /* callbacks */
 /* desktop_on_refresh */
-static void _current_cleanup(Desktop * desktop);
-static int _current_loop(Desktop * desktop);
-static int _current_loop_applications(Desktop * desktop);
-static int _current_loop_applications_path(Desktop * desktop,
+static void _refresh_cleanup(Desktop * desktop);
+static int _refresh_loop(Desktop * desktop);
+static int _refresh_loop_applications(Desktop * desktop);
+static int _refresh_loop_applications_path(Desktop * desktop,
 		char const * path);
-static int _current_loop_applications_do(Desktop * desktop);
+static int _refresh_loop_applications_do(Desktop * desktop);
 static gint _categories_apps_compare(gconstpointer a, gconstpointer b);
-static int _current_loop_categories(Desktop * desktop);
-static int _current_loop_categories_do(Desktop * desktop);
-static int _current_loop_files(Desktop * desktop);
-static gboolean _current_done(Desktop * desktop);
+static int _refresh_loop_categories(Desktop * desktop);
+static int _refresh_loop_categories_do(Desktop * desktop);
+static int _refresh_loop_files(Desktop * desktop);
+static gboolean _refresh_done(Desktop * desktop);
 static void _done_categories(Desktop * desktop);
 static void _done_categories_open(Desktop * desktop, gpointer data);
 
@@ -2348,13 +2348,13 @@ static gboolean _desktop_on_refresh(gpointer data)
 	Desktop * desktop = data;
 	unsigned int i;
 
-	for(i = 0; i < 16 && _current_loop(desktop) == 0; i++);
+	for(i = 0; i < 16 && _refresh_loop(desktop) == 0; i++);
 	if(i == 16)
 		return TRUE;
-	return _current_done(desktop);
+	return _refresh_done(desktop);
 }
 
-static void _current_cleanup(Desktop * desktop)
+static void _refresh_cleanup(Desktop * desktop)
 {
 	size_t i;
 
@@ -2367,16 +2367,16 @@ static void _current_cleanup(Desktop * desktop)
 			desktopicon_set_updated(desktop->icon[i++], FALSE);
 }
 
-static int _current_loop(Desktop * desktop)
+static int _refresh_loop(Desktop * desktop)
 {
 	switch(desktop->prefs.icons)
 	{
 		case DESKTOP_ICONS_APPLICATIONS:
-			return _current_loop_applications(desktop);
+			return _refresh_loop_applications(desktop);
 		case DESKTOP_ICONS_CATEGORIES:
-			return _current_loop_categories(desktop);
+			return _refresh_loop_categories(desktop);
 		case DESKTOP_ICONS_FILES:
-			return _current_loop_files(desktop);
+			return _refresh_loop_files(desktop);
 		case DESKTOP_ICONS_HOMESCREEN:
 		case DESKTOP_ICONS_NONE:
 			break; /* nothing to do */
@@ -2384,24 +2384,24 @@ static int _current_loop(Desktop * desktop)
 	return -1;
 }
 
-static int _current_loop_applications(Desktop * desktop)
+static int _refresh_loop_applications(Desktop * desktop)
 {
 	int ret;
 	char const * path;
 	size_t len;
 
 	if(desktop->path == NULL)
-		return _current_loop_applications_path(desktop, DATADIR);
-	if((ret = _current_loop_applications_do(desktop)) == 0)
+		return _refresh_loop_applications_path(desktop, DATADIR);
+	if((ret = _refresh_loop_applications_do(desktop)) == 0)
 		return 0;
 	/* XXX hack to also look at XDG_DATA_HOME */
 	if((path = getenv("XDG_DATA_HOME")) != NULL && (len = strlen(path)) > 0
 			&& strncmp(desktop->path, path, len) != 0)
-		return _current_loop_applications_path(desktop, path);
+		return _refresh_loop_applications_path(desktop, path);
 	return ret;
 }
 
-static int _current_loop_applications_path(Desktop * desktop,
+static int _refresh_loop_applications_path(Desktop * desktop,
 		char const * path)
 {
 	const char applications[] = "/applications";
@@ -2426,7 +2426,7 @@ static int _current_loop_applications_path(Desktop * desktop,
 	return 0;
 }
 
-static int _current_loop_applications_do(Desktop * desktop)
+static int _refresh_loop_applications_do(Desktop * desktop)
 {
 	struct dirent * de;
 	size_t len;
@@ -2487,15 +2487,15 @@ static int _current_loop_applications_do(Desktop * desktop)
 	return 1;
 }
 
-static int _current_loop_categories(Desktop * desktop)
+static int _refresh_loop_categories(Desktop * desktop)
 {
 	if(desktop->path == NULL)
 		/* XXX hack */
-		return _current_loop_applications_path(desktop, DATADIR);
-	return _current_loop_categories_do(desktop);
+		return _refresh_loop_applications_path(desktop, DATADIR);
+	return _refresh_loop_categories_do(desktop);
 }
 
-static int _current_loop_categories_do(Desktop * desktop)
+static int _refresh_loop_categories_do(Desktop * desktop)
 {
 	struct dirent * de;
 	size_t len;
@@ -2570,7 +2570,7 @@ static gint _categories_apps_compare(gconstpointer a, gconstpointer b)
 	return string_compare(cap, cbp);
 }
 
-static int _current_loop_files(Desktop * desktop)
+static int _refresh_loop_files(Desktop * desktop)
 {
 	struct dirent * de;
 	String * p;
@@ -2617,7 +2617,7 @@ static int _loop_lookup(Desktop * desktop, char const * name)
 	return 0;
 }
 
-static gboolean _current_done(Desktop * desktop)
+static gboolean _refresh_done(Desktop * desktop)
 {
 	switch(desktop->prefs.icons)
 	{
@@ -2627,7 +2627,7 @@ static gboolean _current_done(Desktop * desktop)
 		default:
 			break;
 	}
-	_current_cleanup(desktop);
+	_refresh_cleanup(desktop);
 	if(desktop->refresh_dir != NULL)
 		browser_vfs_closedir(desktop->refresh_dir);
 	desktop->refresh_dir = NULL;
