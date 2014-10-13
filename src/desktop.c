@@ -832,18 +832,18 @@ static void _alignment_vertical(Desktop * desktop)
 
 
 /* desktop_set_icons */
-static void _icons_delete(Desktop * desktop);
 static int _icons_applications(Desktop * desktop);
 static int _icons_categories(Desktop * desktop);
 static int _icons_files(Desktop * desktop);
 static int _icons_files_add_home(Desktop * desktop);
 static int _icons_homescreen(Desktop * desktop);
+static void _icons_reset(Desktop * desktop);
 static void _icons_set_categories(Desktop * desktop, gpointer data);
 static void _icons_set_homescreen(Desktop * desktop, gpointer data);
 
 void desktop_set_icons(Desktop * desktop, DesktopIcons icons)
 {
-	_icons_delete(desktop);
+	_icons_reset(desktop);
 	desktop->prefs.icons = icons;
 	switch(icons)
 	{
@@ -864,23 +864,6 @@ void desktop_set_icons(Desktop * desktop, DesktopIcons icons)
 			break;
 	}
 	desktop_refresh(desktop);
-}
-
-static void _icons_delete(Desktop * desktop)
-{
-	size_t i;
-
-	if(desktop->path != NULL)
-		free(desktop->path);
-	desktop->path = NULL;
-	desktop->path_cnt = 0;
-	for(i = 0; i < desktop->icon_cnt; i++)
-	{
-		desktopicon_set_immutable(desktop->icon[i], FALSE);
-		desktopicon_set_updated(desktop->icon[i], FALSE);
-	}
-	for(i = 0; i < _desktop_categories_cnt; i++)
-		_desktop_categories[i].show = FALSE;
 }
 
 static int _icons_applications(Desktop * desktop)
@@ -1016,6 +999,23 @@ static int _icons_homescreen(Desktop * desktop)
 	return 0;
 }
 
+static void _icons_reset(Desktop * desktop)
+{
+	size_t i;
+
+	if(desktop->path != NULL)
+		free(desktop->path);
+	desktop->path = NULL;
+	desktop->path_cnt = 0;
+	for(i = 0; i < desktop->icon_cnt; i++)
+	{
+		desktopicon_set_immutable(desktop->icon[i], FALSE);
+		desktopicon_set_updated(desktop->icon[i], FALSE);
+	}
+	for(i = 0; i < _desktop_categories_cnt; i++)
+		_desktop_categories[i].show = FALSE;
+}
+
 static void _icons_set_categories(Desktop * desktop, gpointer data)
 {
 #ifdef DEBUG
@@ -1077,6 +1077,7 @@ int desktop_error(Desktop * desktop, char const * message, int ret)
 
 
 /* desktop_refresh */
+static void _current_cleanup(Desktop * desktop);
 static int _current_loop(Desktop * desktop);
 static int _current_loop_applications(Desktop * desktop);
 static int _current_loop_applications_path(Desktop * desktop,
@@ -1104,20 +1105,49 @@ void desktop_refresh(Desktop * desktop)
 #endif
 	if(desktop->refresh_source != 0)
 		g_source_remove(desktop->refresh_source);
-	if(desktop->path == NULL)
+	switch(desktop->prefs.icons)
 	{
-		desktop->refresh_source = g_idle_add(_current_idle, desktop);
-		return;
+		case DESKTOP_ICONS_CATEGORIES:
+			g_slist_foreach(desktop->apps, (GFunc)config_delete,
+					NULL);
+			g_slist_free(desktop->apps);
+			desktop->apps = NULL;
+			/* fallback */
+		case DESKTOP_ICONS_APPLICATIONS:
+		case DESKTOP_ICONS_HOMESCREEN:
+		case DESKTOP_ICONS_NONE:
+			desktop->refresh_source = g_idle_add(_current_idle,
+					desktop);
+			break;
+		case DESKTOP_ICONS_FILES:
+			if(desktop->path == NULL)
+				break;
+			if((desktop->refresh_dir = browser_vfs_opendir(
+							desktop->path, &st))
+					== NULL)
+			{
+				desktop_error(NULL, desktop->path, 1);
+				desktop->refresh_source = 0;
+				break;
+			}
+			desktop->refresh_mti = st.st_mtime;
+			desktop->refresh_source = g_idle_add(_current_idle,
+					desktop);
+			break;
 	}
-	desktop->refresh_source = 0;
-	if((desktop->refresh_dir = browser_vfs_opendir(desktop->path, &st))
-			== NULL)
-	{
-		desktop_error(NULL, desktop->path, 0);
-		return;
-	}
-	desktop->refresh_mti = st.st_mtime;
-	desktop->refresh_source = g_idle_add(_current_idle, desktop);
+}
+
+static void _current_cleanup(Desktop * desktop)
+{
+	size_t i;
+
+	for(i = 0; i < desktop->icon_cnt;)
+		if(desktopicon_get_immutable(desktop->icon[i]) == TRUE)
+			i++;
+		else if(desktopicon_get_updated(desktop->icon[i]) != TRUE)
+			_desktop_icon_remove(desktop, desktop->icon[i]);
+		else
+			desktopicon_set_updated(desktop->icon[i++], FALSE);
 }
 
 static int _current_loop(Desktop * desktop)
@@ -1383,8 +1413,6 @@ static gboolean _current_idle(gpointer data)
 
 static gboolean _current_done(Desktop * desktop)
 {
-	size_t i = 0;
-
 	switch(desktop->prefs.icons)
 	{
 		case DESKTOP_ICONS_CATEGORIES:
@@ -1393,13 +1421,7 @@ static gboolean _current_done(Desktop * desktop)
 		default:
 			break;
 	}
-	while(i < desktop->icon_cnt)
-		if(desktopicon_get_immutable(desktop->icon[i]) == TRUE)
-			i++;
-		else if(desktopicon_get_updated(desktop->icon[i]) != TRUE)
-			_desktop_icon_remove(desktop, desktop->icon[i]);
-		else
-			desktopicon_set_updated(desktop->icon[i++], FALSE);
+	_current_cleanup(desktop);
 	if(desktop->refresh_dir != NULL)
 		browser_vfs_closedir(desktop->refresh_dir);
 	desktop->refresh_dir = NULL;
