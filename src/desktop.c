@@ -15,7 +15,8 @@
 /* TODO:
  * - let the user define the desktop folder (possibly default to FDO's)
  * - set the font for the icons instantly
- * - track multiple selection on delete/properties */
+ * - track multiple selection on delete/properties
+ * - avoid code duplication with DeforaOS Panel ("main" applet) */
 
 
 
@@ -1114,6 +1115,9 @@ void desktop_refresh(Desktop * desktop)
 
 static void _refresh_applications(Desktop * desktop)
 {
+	g_slist_foreach(desktop->apps, (GFunc)config_delete, NULL);
+	g_slist_free(desktop->apps);
+	desktop->apps = NULL;
 	desktop->refresh_source = g_idle_add(_desktop_on_refresh, desktop);
 }
 
@@ -1144,7 +1148,8 @@ static void _refresh_files(Desktop * desktop)
 
 static void _refresh_none(Desktop * desktop)
 {
-	desktop->refresh_source = 0;
+	/* for cleanup */
+	desktop->refresh_source = g_idle_add(_desktop_on_refresh, desktop);
 }
 
 
@@ -2326,17 +2331,26 @@ static void _preferences_set_color(Config * config, char const * section,
 /* callbacks */
 /* desktop_on_refresh */
 static void _refresh_cleanup(Desktop * desktop);
+static void _refresh_done_applications(Desktop * desktop);
 static void _refresh_done_categories(Desktop * desktop);
 static void _refresh_done_categories_open(Desktop * desktop, gpointer data);
 static gboolean _refresh_done_timeout(gpointer data);
 static int _refresh_loop(Desktop * desktop);
 static int _refresh_loop_applications(Desktop * desktop);
-static int _refresh_loop_applications_path(Desktop * desktop,
-		char const * path);
-static int _refresh_loop_applications_do(Desktop * desktop);
 static gint _categories_apps_compare(gconstpointer a, gconstpointer b);
 static int _refresh_loop_categories(Desktop * desktop);
-static int _refresh_loop_categories_do(Desktop * desktop);
+static int _refresh_loop_categories_dirs(Desktop * desktop);
+static void _refresh_loop_categories_dirs_path(Desktop * desktop,
+		char const * path, char const * apppath);
+static void _refresh_loop_categories_dirs_xdg(Desktop * desktop,
+		void (*callback)(Desktop * desktop, char const * path,
+			char const * apppath));
+static void _refresh_loop_categories_dirs_xdg_home(Desktop * desktop,
+		void (*callback)(Desktop * desktop, char const * path,
+			char const * apppath));
+static void _refresh_loop_categories_dirs_xdg_path(Desktop * desktop,
+		void (*callback)(Desktop * desktop, char const * path,
+			char const * apppath), char const * path);
 static int _refresh_loop_files(Desktop * desktop);
 static int _refresh_loop_lookup(Desktop * desktop, char const * name);
 static gboolean _refresh_done(Desktop * desktop);
@@ -2369,6 +2383,9 @@ static gboolean _refresh_done(Desktop * desktop)
 {
 	switch(desktop->prefs.icons)
 	{
+		case DESKTOP_ICONS_APPLICATIONS:
+			_refresh_done_applications(desktop);
+			break;
 		case DESKTOP_ICONS_CATEGORIES:
 			_refresh_done_categories(desktop);
 			break;
@@ -2383,6 +2400,39 @@ static gboolean _refresh_done(Desktop * desktop)
 	desktop->refresh_source = g_timeout_add(1000, _refresh_done_timeout,
 			desktop);
 	return FALSE;
+}
+
+static void _refresh_done_applications(Desktop * desktop)
+{
+	GSList * p;
+	Config * config;
+	const char section[] = "Desktop Entry";
+	char const * q;
+	char const * r;
+	DesktopCategory * dc = desktop->category;
+	char const * path;
+	DesktopIcon * icon;
+
+	for(p = desktop->apps; p != NULL; p = p->next)
+	{
+		config = p->data;
+		path = config_get(config, NULL, "path");
+		if(dc != NULL)
+		{
+			if((q = config_get(config, section, "Categories"))
+					== NULL)
+				continue;
+			if((r = string_find(q, dc->category)) == NULL)
+				continue;
+			r += string_length(dc->category);
+			if(*r != '\0' && *r != ';')
+				continue;
+		}
+		if((icon = desktopicon_new_application(desktop, path, NULL))
+				== NULL)
+			continue;
+		_desktop_icon_add(desktop, icon);
+	}
 }
 
 static void _refresh_done_categories(Desktop * desktop)
@@ -2475,135 +2525,62 @@ static int _refresh_loop(Desktop * desktop)
 			return _refresh_loop_files(desktop);
 		case DESKTOP_ICONS_HOMESCREEN:
 		case DESKTOP_ICONS_NONE:
-			break; /* nothing to do */
+			return 0; /* nothing to do */
 	}
 	return -1;
 }
 
 static int _refresh_loop_applications(Desktop * desktop)
 {
-	int ret;
-	char const * path;
-	size_t len;
-
-	if(desktop->path == NULL)
-		return _refresh_loop_applications_path(desktop, DATADIR);
-	if((ret = _refresh_loop_applications_do(desktop)) == 0)
-		return 0;
-	/* XXX hack to also look at XDG_DATA_HOME */
-	if((path = getenv("XDG_DATA_HOME")) != NULL && (len = strlen(path)) > 0
-			&& strncmp(desktop->path, path, len) != 0)
-		return _refresh_loop_applications_path(desktop, path);
-	return ret;
-}
-
-static int _refresh_loop_applications_path(Desktop * desktop,
-		char const * path)
-{
-	const char applications[] = "/applications";
-	char * p;
-	size_t len;
-	DIR * dir;
-	struct stat st;
-
-	len = strlen(path) + sizeof(applications);
-	if((p = malloc(len)) == NULL)
-		return -desktop_error(NULL, path, 1);
-	snprintf(p, len, "%s%s", path, applications);
-	if((dir = browser_vfs_opendir(p, &st)) == NULL)
-	{
-		free(p);
-		return -desktop_error(NULL, p, 1);
-	}
-	desktop->path = p;
-	desktop->path_cnt = len;
-	desktop->refresh_dir = dir;
-	desktop->refresh_mti = st.st_mtime;
-	return 0;
-}
-
-static int _refresh_loop_applications_do(Desktop * desktop)
-{
-	struct dirent * de;
-	size_t len;
-	const char ext[] = ".desktop";
-	const char section[] = "Desktop Entry";
-	char * path = NULL;
-	char * p;
-	Config * config;
-	char const * q;
-	DesktopIcon * icon;
-
-	if(desktop->category == NULL)
-		return -1;
-	if((config = config_new()) == NULL)
-		return -_desktop_serror(desktop, NULL, 1);
-	while((de = browser_vfs_readdir(desktop->refresh_dir)) != NULL)
-	{
-		if(de->d_name[0] == '.')
-			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
-						&& de->d_name[2] == '\0'))
-				continue;
-		len = strlen(de->d_name);
-		if(len < sizeof(ext))
-			continue;
-		if(strncmp(&de->d_name[len - sizeof(ext) + 1], ext,
-					sizeof(ext)) != 0)
-			continue;
-		len = desktop->path_cnt + len + 1;
-		if((p = realloc(path, len)) == NULL)
-		{
-			error_set_print(PROGNAME, 1, "%s: %s", "realloc",
-					strerror(errno));
-			continue;
-		}
-		path = p;
-		snprintf(path, len, "%s/%s", desktop->path, de->d_name);
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, path);
-#endif
-		config_reset(config);
-		if(config_load(config, path) != 0)
-			continue;
-		if((q = config_get(config, section, "Categories")) == NULL)
-			continue;
-		if(string_find(q, desktop->category->category) == NULL)
-			continue;
-		/* FIXME forward the corresponding datadir */
-		if((icon = desktopicon_new_application(desktop, path, NULL))
-				== NULL)
-			continue;
-		_desktop_icon_add(desktop, icon);
-		free(path);
-		config_delete(config);
-		return 0;
-	}
-	free(path);
-	config_delete(config);
-	return 1;
+	/* XXX */
+	return _refresh_loop_categories(desktop);
 }
 
 static int _refresh_loop_categories(Desktop * desktop)
 {
-	if(desktop->path == NULL)
-		/* XXX hack */
-		return _refresh_loop_applications_path(desktop, DATADIR);
-	return _refresh_loop_categories_do(desktop);
+	return _refresh_loop_categories_dirs(desktop);
 }
 
-static int _refresh_loop_categories_do(Desktop * desktop)
+static int _refresh_loop_categories_dirs(Desktop * desktop)
 {
+	_refresh_loop_categories_dirs_xdg(desktop,
+			_refresh_loop_categories_dirs_path);
+	return 1;
+}
+
+static void _refresh_loop_categories_dirs_path(Desktop * desktop,
+		char const * path, char const * apppath)
+{
+	DIR * dir;
+	int fd;
+	struct stat st;
 	struct dirent * de;
 	size_t len;
 	const char ext[] = ".desktop";
 	const char section[] = "Desktop Entry";
-	char * path = NULL;
+	char * name = NULL;
 	char * p;
 	Config * config = NULL;
-	char const * q;
-	char const * r;
+	String const * q;
+	String const * r;
 
-	while((de = browser_vfs_readdir(desktop->refresh_dir)) != NULL)
+#if defined(__sun__)
+	if((fd = open(apppath, O_RDONLY)) < 0
+			|| fstat(fd, &st) != 0
+			|| (dir = fdopendir(fd)) == NULL)
+#else
+	if((dir = opendir(apppath)) == NULL
+			|| (fd = dirfd(dir)) < 0
+			|| fstat(fd, &st) != 0)
+#endif
+	{
+		if(errno != ENOENT)
+			desktop_error(NULL, apppath, 1);
+		return;
+	}
+	if(st.st_mtime > desktop->refresh_mti)
+		desktop->refresh_mti = st.st_mtime;
+	while((de = readdir(dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
 			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
@@ -2615,40 +2592,119 @@ static int _refresh_loop_categories_do(Desktop * desktop)
 		if(strncmp(&de->d_name[len - sizeof(ext) + 1], ext,
 					sizeof(ext)) != 0)
 			continue;
-		len = desktop->path_cnt + len + 1;
-		if((p = realloc(path, len)) == NULL)
+		if((p = realloc(name, strlen(apppath) + len + 2)) == NULL)
 		{
-			error_set_print(PROGNAME, 1, "%s: %s", "realloc",
-					strerror(errno));
+			desktop_error(NULL, apppath, 1);
 			continue;
 		}
-		path = p;
-		snprintf(path, len, "%s/%s", desktop->path, de->d_name);
+		name = p;
+		snprintf(name, strlen(apppath) + len + 2, "%s/%s", apppath,
+				de->d_name);
 #ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, path);
+		fprintf(stderr, "DEBUG: %s() name=\"%s\" path=\"%s\"\n",
+				__func__, name, path);
 #endif
-		if(config == NULL && (config = config_new()) == NULL)
-			continue; /* XXX report error */
-		config_reset(config);
-		if(config_load(config, path) != 0)
+		if(config == NULL)
+			config = config_new();
+		else
+			config_reset(config);
+		if(config == NULL || config_load(config, name) != 0)
 		{
-			error_set_print(PROGNAME, 1, "%s: %s", path,
-					error_get());
+			desktop_error(NULL, NULL, 1); /* XXX */
 			continue;
 		}
 		q = config_get(config, section, "Name");
 		r = config_get(config, section, "Exec");
 		if(q == NULL || r == NULL)
 			continue;
-		config_set(config, NULL, "path", path);
+		/* remember the path */
+		config_set(config, NULL, "path", name);
 		desktop->apps = g_slist_insert_sorted(desktop->apps, config,
 				_categories_apps_compare);
-		free(path);
 		config = NULL;
-		return 0;
 	}
-	free(path);
-	return -1;
+	free(name);
+	closedir(dir);
+	if(config != NULL)
+		config_delete(config);
+}
+
+static void _refresh_loop_categories_dirs_xdg(Desktop * desktop,
+		void (*callback)(Desktop * desktop, char const * path,
+			char const * apppath))
+{
+	char const * path;
+	char * p;
+	size_t i;
+	size_t j;
+
+	if((path = getenv("XDG_DATA_DIRS")) == NULL || strlen(path) == 0)
+		/* FIXME use DATADIR */
+		path = "/usr/local/share:/usr/share";
+	if((p = strdup(path)) == NULL)
+	{
+		desktop_error(NULL, "strdup", 1);
+		return;
+	}
+	for(i = 0, j = 0;; i++)
+		if(p[i] == '\0')
+		{
+			_refresh_loop_categories_dirs_xdg_path(desktop,
+					callback, &p[j]);
+			break;
+		}
+		else if(p[i] == ':')
+		{
+			p[i] = '\0';
+			_refresh_loop_categories_dirs_xdg_path(desktop,
+					callback, &p[j]);
+			j = i + 1;
+		}
+	free(p);
+	_refresh_loop_categories_dirs_xdg_home(desktop, callback);
+}
+
+static void _refresh_loop_categories_dirs_xdg_home(Desktop * desktop,
+		void (*callback)(Desktop * desktop, char const * path,
+			char const * apppath))
+{
+	char const fallback[] = ".local/share";
+	char const * path;
+	char const * homedir;
+	size_t len;
+	char * p;
+
+	/* use $XDG_DATA_HOME if set and not empty */
+	if((path = getenv("XDG_DATA_HOME")) != NULL && strlen(path) > 0)
+	{
+		_refresh_loop_categories_dirs_xdg_path(desktop, callback, path);
+		return;
+	}
+	/* fallback to "$HOME/.local/share" */
+	if((homedir = getenv("HOME")) == NULL)
+		homedir = g_get_home_dir();
+	len = strlen(homedir) + 1 + sizeof(fallback);
+	if((p = malloc(len)) == NULL)
+	{
+		desktop_error(NULL, homedir, 1);
+		return;
+	}
+	snprintf(p, len, "%s/%s", homedir, fallback);
+	_refresh_loop_categories_dirs_xdg_path(desktop, callback, p);
+	free(p);
+}
+
+static void _refresh_loop_categories_dirs_xdg_path(Desktop * desktop,
+		void (*callback)(Desktop * desktop, char const * path,
+			char const * apppath), char const * path)
+{
+	const char applications[] = "/applications";
+	char * apppath;
+
+	if((apppath = string_new_append(path, applications, NULL)) == NULL)
+		desktop_error(NULL, path, 1);
+	callback(desktop, path, apppath);
+	string_delete(apppath);
 }
 
 static gint _categories_apps_compare(gconstpointer a, gconstpointer b)
