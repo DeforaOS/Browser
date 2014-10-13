@@ -2339,16 +2339,15 @@ static int _refresh_loop(Desktop * desktop);
 static int _refresh_loop_applications(Desktop * desktop);
 static gint _categories_apps_compare(gconstpointer a, gconstpointer b);
 static int _refresh_loop_categories(Desktop * desktop);
-static int _refresh_loop_categories_dirs(Desktop * desktop);
-static void _refresh_loop_categories_dirs_path(Desktop * desktop,
-		char const * path, char const * apppath);
-static void _refresh_loop_categories_dirs_xdg(Desktop * desktop,
+static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
+		char const * apppath);
+static void _refresh_loop_categories_xdg(Desktop * desktop,
 		void (*callback)(Desktop * desktop, char const * path,
 			char const * apppath));
-static void _refresh_loop_categories_dirs_xdg_home(Desktop * desktop,
+static void _refresh_loop_categories_xdg_home(Desktop * desktop,
 		void (*callback)(Desktop * desktop, char const * path,
 			char const * apppath));
-static void _refresh_loop_categories_dirs_xdg_path(Desktop * desktop,
+static void _refresh_loop_categories_xdg_path(Desktop * desktop,
 		void (*callback)(Desktop * desktop, char const * path,
 			char const * apppath), char const * path);
 static int _refresh_loop_files(Desktop * desktop);
@@ -2538,18 +2537,12 @@ static int _refresh_loop_applications(Desktop * desktop)
 
 static int _refresh_loop_categories(Desktop * desktop)
 {
-	return _refresh_loop_categories_dirs(desktop);
-}
-
-static int _refresh_loop_categories_dirs(Desktop * desktop)
-{
-	_refresh_loop_categories_dirs_xdg(desktop,
-			_refresh_loop_categories_dirs_path);
+	_refresh_loop_categories_xdg(desktop, _refresh_loop_categories_path);
 	return 1;
 }
 
-static void _refresh_loop_categories_dirs_path(Desktop * desktop,
-		char const * path, char const * apppath)
+static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
+		char const * apppath)
 {
 	DIR * dir;
 	int fd;
@@ -2629,7 +2622,7 @@ static void _refresh_loop_categories_dirs_path(Desktop * desktop,
 		config_delete(config);
 }
 
-static void _refresh_loop_categories_dirs_xdg(Desktop * desktop,
+static void _refresh_loop_categories_xdg(Desktop * desktop,
 		void (*callback)(Desktop * desktop, char const * path,
 			char const * apppath))
 {
@@ -2649,22 +2642,22 @@ static void _refresh_loop_categories_dirs_xdg(Desktop * desktop,
 	for(i = 0, j = 0;; i++)
 		if(p[i] == '\0')
 		{
-			_refresh_loop_categories_dirs_xdg_path(desktop,
-					callback, &p[j]);
+			_refresh_loop_categories_xdg_path(desktop, callback,
+					&p[j]);
 			break;
 		}
 		else if(p[i] == ':')
 		{
 			p[i] = '\0';
-			_refresh_loop_categories_dirs_xdg_path(desktop,
-					callback, &p[j]);
+			_refresh_loop_categories_xdg_path(desktop, callback,
+					&p[j]);
 			j = i + 1;
 		}
 	free(p);
-	_refresh_loop_categories_dirs_xdg_home(desktop, callback);
+	_refresh_loop_categories_xdg_home(desktop, callback);
 }
 
-static void _refresh_loop_categories_dirs_xdg_home(Desktop * desktop,
+static void _refresh_loop_categories_xdg_home(Desktop * desktop,
 		void (*callback)(Desktop * desktop, char const * path,
 			char const * apppath))
 {
@@ -2677,7 +2670,7 @@ static void _refresh_loop_categories_dirs_xdg_home(Desktop * desktop,
 	/* use $XDG_DATA_HOME if set and not empty */
 	if((path = getenv("XDG_DATA_HOME")) != NULL && strlen(path) > 0)
 	{
-		_refresh_loop_categories_dirs_xdg_path(desktop, callback, path);
+		_refresh_loop_categories_xdg_path(desktop, callback, path);
 		return;
 	}
 	/* fallback to "$HOME/.local/share" */
@@ -2690,11 +2683,11 @@ static void _refresh_loop_categories_dirs_xdg_home(Desktop * desktop,
 		return;
 	}
 	snprintf(p, len, "%s/%s", homedir, fallback);
-	_refresh_loop_categories_dirs_xdg_path(desktop, callback, p);
+	_refresh_loop_categories_xdg_path(desktop, callback, p);
 	free(p);
 }
 
-static void _refresh_loop_categories_dirs_xdg_path(Desktop * desktop,
+static void _refresh_loop_categories_xdg_path(Desktop * desktop,
 		void (*callback)(Desktop * desktop, char const * path,
 			char const * apppath), char const * path)
 {
