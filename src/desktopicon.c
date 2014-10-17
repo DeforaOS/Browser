@@ -299,25 +299,25 @@ static int _new_application_access_path(char const * path,
 static GdkPixbuf * _new_application_icon(Desktop * desktop, char const * icon,
 		char const * datadir)
 {
+	const char pixmaps[] = "/pixmaps/";
+	const int width = DESKTOPICON_ICON_SIZE;
+	const int height = DESKTOPICON_ICON_SIZE;
 	String * buf;
+	GdkPixbuf * pixbuf = NULL;
 	GError * error = NULL;
-	GdkPixbuf * image;
 
-	/* image */
 	if(icon[0] == '/')
-		image = gdk_pixbuf_new_from_file_at_size(icon,
-				DESKTOPICON_ICON_SIZE, DESKTOPICON_ICON_SIZE,
+		pixbuf = gdk_pixbuf_new_from_file_at_size(icon, width, height,
 				&error);
 	else if(strchr(icon, '.') != NULL)
 	{
 		if(datadir == NULL)
 			datadir = DATADIR;
-		if((buf = string_new_append(datadir, "/pixmaps/", icon, NULL))
+		if((buf = string_new_append(datadir, pixmaps, icon, NULL))
 				!= NULL)
 		{
-			image = gdk_pixbuf_new_from_file_at_size(buf,
-					DESKTOPICON_ICON_SIZE,
-					DESKTOPICON_ICON_SIZE, &error);
+			pixbuf = gdk_pixbuf_new_from_file_at_size(buf, width,
+					height, &error);
 			string_delete(buf);
 		}
 	}
@@ -326,12 +326,12 @@ static GdkPixbuf * _new_application_icon(Desktop * desktop, char const * icon,
 		desktop_error(NULL, error->message, 1); /* XXX */
 		g_error_free(error);
 	}
-	if(image == NULL)
-		image = gtk_icon_theme_load_icon(desktop_get_theme(desktop),
+	if(pixbuf == NULL)
+		pixbuf = gtk_icon_theme_load_icon(desktop_get_theme(desktop),
 				icon, DESKTOPICON_ICON_SIZE, 0, NULL);
-	if(image == NULL)
-		image = desktop_get_file(desktop);
-	return image;
+	if(pixbuf == NULL)
+		pixbuf = desktop_get_file(desktop);
+	return pixbuf;
 }
 
 
