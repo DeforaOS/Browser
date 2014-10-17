@@ -190,6 +190,8 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 static int _new_application_access(char const * path, int mode);
 static int _new_application_access_path(char const * path,
 		char const * filename, int mode);
+static GdkPixbuf * _new_application_icon(Desktop * desktop, char const * icon,
+		char const * datadir);
 
 DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
 		char const * datadir)
@@ -200,8 +202,6 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
 	char const * name;
 	char const * icon;
 	char const * p;
-	String * buf;
-	GError * error = NULL;
 	GdkPixbuf * image = NULL;
 
 #ifdef DEBUG
@@ -231,34 +231,7 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
 		config_delete(config);
 		return NULL;
 	}
-	/* image */
-	if(icon[0] == '/')
-		image = gdk_pixbuf_new_from_file_at_size(icon,
-				DESKTOPICON_ICON_SIZE, DESKTOPICON_ICON_SIZE,
-				&error);
-	else if(strchr(icon, '.') != NULL)
-	{
-		if(datadir == NULL)
-			datadir = DATADIR;
-		if((buf = string_new_append(datadir, "/pixmaps/", icon, NULL))
-				!= NULL)
-		{
-			image = gdk_pixbuf_new_from_file_at_size(buf,
-					DESKTOPICON_ICON_SIZE,
-					DESKTOPICON_ICON_SIZE, &error);
-			string_delete(buf);
-		}
-	}
-	if(error != NULL)
-	{
-		desktop_error(NULL, error->message, 1); /* XXX */
-		g_error_free(error);
-	}
-	if(image == NULL)
-		image = gtk_icon_theme_load_icon(desktop_get_theme(desktop),
-				icon, DESKTOPICON_ICON_SIZE, 0, NULL);
-	if(image == NULL)
-		image = desktop_get_file(desktop);
+	image = _new_application_icon(desktop, icon, datadir);
 	desktopicon = _desktopicon_new_do(desktop, image, p);
 	if(image != NULL)
 		g_object_unref(image);
@@ -321,6 +294,44 @@ static int _new_application_access_path(char const * path,
 	ret = access(p, mode);
 	free(p);
 	return ret;
+}
+
+static GdkPixbuf * _new_application_icon(Desktop * desktop, char const * icon,
+		char const * datadir)
+{
+	String * buf;
+	GError * error = NULL;
+	GdkPixbuf * image;
+
+	/* image */
+	if(icon[0] == '/')
+		image = gdk_pixbuf_new_from_file_at_size(icon,
+				DESKTOPICON_ICON_SIZE, DESKTOPICON_ICON_SIZE,
+				&error);
+	else if(strchr(icon, '.') != NULL)
+	{
+		if(datadir == NULL)
+			datadir = DATADIR;
+		if((buf = string_new_append(datadir, "/pixmaps/", icon, NULL))
+				!= NULL)
+		{
+			image = gdk_pixbuf_new_from_file_at_size(buf,
+					DESKTOPICON_ICON_SIZE,
+					DESKTOPICON_ICON_SIZE, &error);
+			string_delete(buf);
+		}
+	}
+	if(error != NULL)
+	{
+		desktop_error(NULL, error->message, 1); /* XXX */
+		g_error_free(error);
+	}
+	if(image == NULL)
+		image = gtk_icon_theme_load_icon(desktop_get_theme(desktop),
+				icon, DESKTOPICON_ICON_SIZE, 0, NULL);
+	if(image == NULL)
+		image = desktop_get_file(desktop);
+	return image;
 }
 
 
