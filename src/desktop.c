@@ -2401,7 +2401,6 @@ static void _refresh_done_applications(Desktop * desktop)
 	for(p = desktop->apps; p != NULL; p = p->next)
 	{
 		config = p->data;
-		path = config_get(config, NULL, "path");
 		if(dc != NULL)
 		{
 			if((q = config_get(config, section, "Categories"))
@@ -2413,7 +2412,9 @@ static void _refresh_done_applications(Desktop * desktop)
 			if(*r != '\0' && *r != ';')
 				continue;
 		}
-		if((icon = desktopicon_new_application(desktop, path, NULL))
+		path = config_get(config, NULL, "path");
+		q = config_get(config, NULL, "datadir");
+		if((icon = desktopicon_new_application(desktop, path, q))
 				== NULL)
 			continue;
 		_desktop_icon_add(desktop, icon);
@@ -2591,6 +2592,7 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 			continue;
 		/* remember the path */
 		config_set(config, NULL, "path", name);
+		config_set(config, NULL, "datadir", path);
 		desktop->apps = g_slist_insert_sorted(desktop->apps, config,
 				_categories_apps_compare);
 		config = NULL;

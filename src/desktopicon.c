@@ -226,13 +226,8 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
 	}
 	if((icon = config_get(config, section, "Icon")) == NULL)
 		icon = "application-x-executable";
-	if((p = config_get(config, section, "Name")) == NULL)
-	{
-		config_delete(config);
-		return NULL;
-	}
 	image = _new_application_icon(desktop, icon, datadir);
-	desktopicon = _desktopicon_new_do(desktop, image, p);
+	desktopicon = _desktopicon_new_do(desktop, image, name);
 	if(image != NULL)
 		g_object_unref(image);
 	if(desktopicon == NULL)
@@ -306,6 +301,9 @@ static GdkPixbuf * _new_application_icon(Desktop * desktop, char const * icon,
 	GdkPixbuf * pixbuf = NULL;
 	GError * error = NULL;
 
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\")\n", __func__, icon, datadir);
+#endif
 	if(icon[0] == '/')
 		pixbuf = gdk_pixbuf_new_from_file_at_size(icon, width, height,
 				&error);
