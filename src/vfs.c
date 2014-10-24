@@ -15,6 +15,9 @@
 
 
 
+#if defined(__sun)
+# include <fcntl.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <libgen.h>
@@ -243,7 +246,7 @@ DIR * browser_vfs_opendir(char const * filename, struct stat * st)
 #endif
 	if(st == NULL)
 		return opendir(filename);
-#if defined(__sun__)
+#if defined(__sun)
 	if((fd = open(filename, O_RDONLY)) < 0
 			|| (dir = fdopendir(fd)) == NULL)
 	{

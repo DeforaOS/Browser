@@ -2537,7 +2537,7 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 	String const * q;
 	String const * r;
 
-#if defined(__sun__)
+#if defined(__sun)
 	if((fd = open(apppath, O_RDONLY)) < 0
 			|| fstat(fd, &st) != 0
 			|| (dir = fdopendir(fd)) == NULL)
