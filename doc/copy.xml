@@ -66,8 +66,8 @@
 		<cmdsynopsis>
 			<command>&name;</command>
 			<group choice="plain">
-				<arg choice="opt"><option>-R</option></arg>
-				<arg choice="opt"><option>-r</option></arg>
+				<arg choice="plain"><option>-R</option></arg>
+				<arg choice="plain"><option>-r</option></arg>
 			</group>
 			<group choice="opt">
 				<arg choice="plain"><option>-H</option></arg>
