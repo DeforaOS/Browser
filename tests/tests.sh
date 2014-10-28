@@ -15,6 +15,7 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+
 #variables
 #executables
 DATE="date"
@@ -33,7 +34,7 @@ _fail()
 	"./$test" "$@") >> "$target" 2>&1
 	res=$?
 	if [ $res -ne 0 ]; then
-		echo " FAILED (error $res)" 1>&2
+		echo " FAIL (error $res)" 1>&2
 	else
 		echo " PASS" 1>&2
 	fi
@@ -52,7 +53,7 @@ _test()
 	"./$test" "$@") >> "$target" 2>&1
 	res=$?
 	if [ $res -ne 0 ]; then
-		echo " FAILED" 1>&2
+		echo " FAIL" 1>&2
 		FAILED="$FAILED $test(error $res)"
 		return 2
 	else
@@ -65,7 +66,7 @@ _test()
 #usage
 _usage()
 {
-	echo "Usage: tests.sh [-c][-P prefix]" 1>&2
+	echo "Usage: tests.sh [-c][-P prefix] target" 1>&2
 	return 1
 }
 
@@ -78,7 +79,7 @@ while getopts "cP:" name; do
 			clean=1
 			;;
 		P)
-			#XXX ignored
+			#XXX ignored for compatibility
 			;;
 		?)
 			_usage
@@ -93,7 +94,7 @@ if [ $# -ne 1 ]; then
 fi
 target="$1"
 
-[ "$clean" -ne 0 ]			&& exit 0
+[ $clean -ne 0 ] && exit 0
 
 $DATE > "$target"
 FAILED=
