@@ -25,7 +25,7 @@
 #define DATA_SECTION		"Backup Info"
 #define DATA_TRASHINFO		"Backup/info"
 
-#define TEXT_DELETE		"Archive"
+#define TEXT_DELETE		"Delete"
 #define TEXT_DELETED		"Archived"
 #define TEXT_MOVETOTRASH	"Archive"
 
