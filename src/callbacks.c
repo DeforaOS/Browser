@@ -1190,7 +1190,7 @@ static void _paste_selection(Browser * browser)
 	if(browser->selection_cut != 1)
 	{
 		/* copy the selection */
-		if(_common_exec("copy", "-ir", browser->selection) != 0)
+		if(_common_exec("copy", "-iR", browser->selection) != 0)
 			browser_error(browser, strerror(errno), 1);
 		browser->selection = g_list_remove(browser->selection, p);
 		free(p);
