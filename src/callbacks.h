@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2006-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2006-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,25 +75,5 @@ void on_view_as(gpointer data);
 
 /* address bar */
 void on_path_activate(gpointer data);
-
-/* view */
-void on_detail_default(GtkTreeView * view, GtkTreePath * path,
-		GtkTreeViewColumn * column, gpointer data);
-#if GTK_CHECK_VERSION(2, 6, 0)
-void on_icon_default(GtkIconView * view, GtkTreePath * path, gpointer data);
-#endif
-void on_filename_edited(GtkCellRendererText * renderer, gchar * path,
-		gchar * filename, gpointer data);
-#if GTK_CHECK_VERSION(2, 8, 0)
-void on_view_drag_data_get(GtkWidget * widget, GdkDragContext * dc,
-		GtkSelectionData * seldata, guint info, guint time,
-		gpointer data);
-void on_view_drag_data_received(GtkWidget * widget, GdkDragContext * context,
-		gint x, gint y, GtkSelectionData * seldata, guint info,
-		guint time, gpointer data);
-#endif
-gboolean on_view_popup(GtkWidget * widget, gpointer data);
-gboolean on_view_press(GtkWidget * widget, GdkEventButton * event,
-		gpointer data);
 
 #endif /* !BROWSER_CALLBACKS_H */

@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2006-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2006-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,31 +34,6 @@
 
 
 /* types */
-typedef enum _BrowserColumn
-{
-	BC_UPDATED = 0,
-	BC_PATH,
-	BC_DISPLAY_NAME,
-	BC_PIXBUF_24,
-# if GTK_CHECK_VERSION(2, 6, 0)
-	BC_PIXBUF_48,
-	BC_PIXBUF_96,
-# endif
-	BC_INODE,
-	BC_IS_DIRECTORY,
-	BC_IS_EXECUTABLE,
-	BC_IS_MOUNT_POINT,
-	BC_SIZE,
-	BC_DISPLAY_SIZE,
-	BC_OWNER,
-	BC_GROUP,
-	BC_DATE,
-	BC_DISPLAY_DATE,
-	BC_MIME_TYPE
-} BrowserColumn;
-# define BC_LAST BC_MIME_TYPE
-# define BC_COUNT (BC_LAST + 1)
-
 typedef enum _BrowserView
 {
 	BV_DETAILS = 0,
@@ -206,6 +181,8 @@ void browser_refresh(Browser * browser);
 
 /* selection */
 void browser_select_all(Browser * browser);
+GList * browser_selection_copy(Browser * browser);
+void browser_selection_paste(Browser * browser);
 void browser_unselect_all(Browser * browser);
 
 /* interface */
