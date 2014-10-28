@@ -507,6 +507,7 @@ static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 	GIOStatus status;
 	GtkTextBuffer * tbuf;
 	GtkTextIter iter;
+	GtkTextTag * tag;
 
 	if(condition != G_IO_IN)
 		return FALSE;
@@ -518,7 +519,11 @@ static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 	{
 		tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(task->view));
 		gtk_text_buffer_get_end_iter(tbuf, &iter);
-		gtk_text_buffer_insert(tbuf, &iter, buf, cnt);
+		tag = (channel == task->e_channel)
+			? gtk_text_buffer_create_tag(tbuf, NULL, "foreground",
+					"red", NULL) : NULL;
+		gtk_text_buffer_insert_with_tags(tbuf, &iter, buf, cnt, tag,
+				NULL);
 	}
 	switch(status)
 	{
