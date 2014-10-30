@@ -113,6 +113,83 @@ typedef enum _BrowserPluginColumn
 #define BPC_LAST BPC_WIDGET
 #define BPC_COUNT (BPC_LAST + 1)
 
+struct _Browser
+{
+	guint source;
+
+	/* config */
+	Config * config;
+	BrowserPrefs prefs;
+
+	/* mime */
+	Mime * mime;
+
+	/* history */
+	GList * history;
+	GList * current;
+
+	/* refresh */
+	guint refresh_id;
+	DIR * refresh_dir;
+	dev_t refresh_dev;
+	ino_t refresh_ino;
+	time_t refresh_mti;
+	unsigned int refresh_cnt;
+	unsigned int refresh_hid;
+	GtkTreeIter refresh_iter;
+
+	/* selection */
+	GList * selection;
+	gboolean selection_cut;
+
+	/* helper */
+	BrowserPluginHelper pl_helper;
+
+	/* widgets */
+	GtkIconTheme * theme;
+#if GTK_CHECK_VERSION(2, 6, 0)
+	GdkPixbuf * loading;
+#endif
+	GtkWidget * window;
+#if GTK_CHECK_VERSION(2, 18, 0)
+	GtkWidget * infobar;
+	GtkWidget * infobar_label;
+#endif
+	GtkToolItem * tb_back;
+	GtkToolItem * tb_updir;
+	GtkToolItem * tb_forward;
+	GtkWidget * tb_path;
+	GtkWidget * scrolled;
+	GtkWidget * detailview;
+#if GTK_CHECK_VERSION(2, 6, 0)
+	GtkWidget * iconview;
+	BrowserView view;
+#endif
+	GtkListStore * store;
+	GtkWidget * statusbar;
+	guint statusbar_id;
+	/* plug-ins */
+	GtkWidget * pl_view;
+	GtkListStore * pl_store;
+	GtkWidget * pl_combo;
+	GtkWidget * pl_box;
+	/* preferences */
+	GtkWidget * pr_window;
+#if GTK_CHECK_VERSION(2, 6, 0)
+	GtkWidget * pr_view;
+#endif
+	GtkWidget * pr_alternate;
+	GtkWidget * pr_confirm;
+	GtkWidget * pr_sort;
+	GtkWidget * pr_hidden;
+	GtkListStore * pr_mime_store;
+	GtkWidget * pr_mime_view;
+	GtkListStore * pr_plugin_store;
+	GtkWidget * pr_plugin_view;
+	/* about */
+	GtkWidget * ab_window;
+};
+
 
 /* constants */
 static char const * _authors[] =
@@ -924,6 +1001,57 @@ int browser_config_save(Browser * browser)
 }
 
 
+/* browser_copy */
+void browser_copy(Browser * browser)
+{
+	GtkWidget * entry;
+
+	entry = gtk_bin_get_child(GTK_BIN(browser->tb_path));
+	if(gtk_window_get_focus(GTK_WINDOW(browser->window)) == entry)
+	{
+		gtk_editable_copy_clipboard(GTK_EDITABLE(entry));
+		return;
+	}
+	g_list_foreach(browser->selection, (GFunc)free, NULL);
+	g_list_free(browser->selection);
+	browser->selection = browser_selection_copy(browser);
+	browser->selection_cut = 0;
+}
+
+
+/* browser_cut */
+void browser_cut(Browser * browser)
+{
+	GtkWidget * entry;
+
+	entry = gtk_bin_get_child(GTK_BIN(browser->tb_path));
+	if(gtk_window_get_focus(GTK_WINDOW(browser->window)) == entry)
+	{
+		gtk_editable_cut_clipboard(GTK_EDITABLE(entry));
+		return;
+	}
+	g_list_foreach(browser->selection, (GFunc)free, NULL);
+	g_list_free(browser->selection);
+	browser->selection = browser_selection_copy(browser);
+	browser->selection_cut = 1;
+}
+
+
+/* browser_paste */
+void browser_paste(Browser * browser)
+{
+	GtkWidget * entry;
+
+	entry = gtk_bin_get_child(GTK_BIN(browser->tb_path));
+	if(gtk_window_get_focus(GTK_WINDOW(browser->window)) == entry)
+	{
+		gtk_editable_paste_clipboard(GTK_EDITABLE(entry));
+		return;
+	}
+	browser_selection_paste(browser);
+}
+
+
 /* browser_focus_location */
 void browser_focus_location(Browser * browser)
 {
@@ -940,10 +1068,27 @@ char const * browser_get_location(Browser * browser)
 }
 
 
+/* browser_get_path_entry */
+char const * browser_get_path_entry(Browser * browser)
+{
+	GtkWidget * widget;
+
+	widget = gtk_bin_get_child(GTK_BIN(browser->tb_path));
+	return gtk_entry_get_text(GTK_ENTRY(widget));
+}
+
+
 /* browser_get_view */
 BrowserView browser_get_view(Browser * browser)
 {
 	return browser->view;
+}
+
+
+/* browser_get_window */
+GtkWidget * browser_get_window(Browser * browser)
+{
+	return browser->window;
 }
 
 
@@ -1754,6 +1899,47 @@ GList * browser_selection_copy(Browser * browser)
 	g_list_foreach(sel, (GFunc)gtk_tree_path_free, NULL);
 	g_list_free(sel); /* XXX can probably be optimized for re-use */
 	return p;
+}
+
+
+/* browser_selection_delete */
+void browser_selection_delete(Browser * browser)
+{
+	GtkWidget * dialog;
+	unsigned long cnt = 0;
+	int res = GTK_RESPONSE_YES;
+	GList * selection;
+	GList * p;
+
+	if((selection = browser_selection_copy(browser)) == NULL)
+		return;
+	for(p = selection; p != NULL; p = p->next)
+		if(p->data != NULL)
+			cnt++;
+	if(cnt == 0)
+		return;
+	if(browser->prefs.confirm_before_delete == TRUE)
+	{
+		dialog = gtk_message_dialog_new(GTK_WINDOW(browser->window),
+				GTK_DIALOG_MODAL
+				| GTK_DIALOG_DESTROY_WITH_PARENT,
+				GTK_MESSAGE_WARNING, GTK_BUTTONS_YES_NO,
+#if GTK_CHECK_VERSION(2, 6, 0)
+				"%s", _("Warning"));
+		gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(
+					dialog),
+#endif
+				_("Are you sure you want to delete %lu"
+					" file(s)?"), cnt);
+		gtk_window_set_title(GTK_WINDOW(dialog), _("Warning"));
+		res = gtk_dialog_run(GTK_DIALOG(dialog));
+		gtk_widget_destroy(dialog);
+	}
+	if(res == GTK_RESPONSE_YES
+			&& _common_exec("delete", "-ir", selection) != 0)
+		browser_error(browser, strerror(errno), 1);
+	g_list_foreach(selection, (GFunc)free, NULL);
+	g_list_free(selection);
 }
 
 

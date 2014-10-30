@@ -134,11 +134,13 @@ void on_file_new_folder(gpointer data)
 void on_file_new_symlink(gpointer data)
 {
 	Browser * browser = data;
+	GtkWidget * window;
 	char const * location;
 
 	if((location = browser_get_location(browser)) == NULL)
 		return;
-	if(_common_symlink(browser->window, location) != 0)
+	window = browser_get_window(browser);
+	if(_common_symlink(window, location) != 0)
 		browser_error(browser, strerror(errno), 1);
 }
 
@@ -176,41 +178,8 @@ void on_edit_cut(gpointer data)
 void on_edit_delete(gpointer data)
 {
 	Browser * browser = data;
-	GtkWidget * dialog;
-	unsigned long cnt = 0;
-	int res = GTK_RESPONSE_YES;
-	GList * selection;
-	GList * p;
 
-	if((selection = browser_selection_copy(browser)) == NULL)
-		return;
-	for(p = selection; p != NULL; p = p->next)
-		if(p->data != NULL)
-			cnt++;
-	if(cnt == 0)
-		return;
-	if(browser->prefs.confirm_before_delete == TRUE)
-	{
-		dialog = gtk_message_dialog_new(GTK_WINDOW(browser->window),
-				GTK_DIALOG_MODAL
-				| GTK_DIALOG_DESTROY_WITH_PARENT,
-				GTK_MESSAGE_WARNING, GTK_BUTTONS_YES_NO,
-#if GTK_CHECK_VERSION(2, 6, 0)
-				"%s", _("Warning"));
-		gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(
-					dialog),
-#endif
-				_("Are you sure you want to delete %lu"
-					" file(s)?"), cnt);
-		gtk_window_set_title(GTK_WINDOW(dialog), _("Warning"));
-		res = gtk_dialog_run(GTK_DIALOG(dialog));
-		gtk_widget_destroy(dialog);
-	}
-	if(res == GTK_RESPONSE_YES
-			&& _common_exec("delete", "-ir", selection) != 0)
-		browser_error(browser, strerror(errno), 1);
-	g_list_foreach(selection, (GFunc)free, NULL);
-	g_list_free(selection);
+	browser_selection_delete(browser);
 }
 
 
@@ -325,18 +294,8 @@ void on_back(gpointer data)
 void on_copy(gpointer data)
 {
 	Browser * browser = data;
-	GtkWidget * entry;
 
-	entry = gtk_bin_get_child(GTK_BIN(browser->tb_path));
-	if(gtk_window_get_focus(GTK_WINDOW(browser->window)) == entry)
-	{
-		gtk_editable_copy_clipboard(GTK_EDITABLE(entry));
-		return;
-	}
-	g_list_foreach(browser->selection, (GFunc)free, NULL);
-	g_list_free(browser->selection);
-	browser->selection = browser_selection_copy(browser);
-	browser->selection_cut = 0;
+	browser_copy(browser);
 }
 
 
@@ -344,18 +303,8 @@ void on_copy(gpointer data)
 void on_cut(gpointer data)
 {
 	Browser * browser = data;
-	GtkWidget * entry;
 
-	entry = gtk_bin_get_child(GTK_BIN(browser->tb_path));
-	if(gtk_window_get_focus(GTK_WINDOW(browser->window)) == entry)
-	{
-		gtk_editable_cut_clipboard(GTK_EDITABLE(entry));
-		return;
-	}
-	g_list_foreach(browser->selection, (GFunc)free, NULL);
-	g_list_free(browser->selection);
-	browser->selection = browser_selection_copy(browser);
-	browser->selection_cut = 1;
+	browser_cut(browser);
 }
 
 
@@ -381,15 +330,8 @@ void on_home(gpointer data)
 void on_paste(gpointer data)
 {
 	Browser * browser = data;
-	GtkWidget * entry;
 
-	entry = gtk_bin_get_child(GTK_BIN(browser->tb_path));
-	if(gtk_window_get_focus(GTK_WINDOW(browser->window)) == entry)
-	{
-		gtk_editable_paste_clipboard(GTK_EDITABLE(entry));
-		return;
-	}
-	browser_selection_paste(browser);
+	browser_paste(browser);
 }
 
 
@@ -476,10 +418,8 @@ void on_view_as(gpointer data)
 void on_path_activate(gpointer data)
 {
 	Browser * browser = data;
-	GtkWidget * widget;
 	gchar const * p;
 
-	widget = gtk_bin_get_child(GTK_BIN(browser->tb_path));
-	p = gtk_entry_get_text(GTK_ENTRY(widget));
+	p = browser_get_path_entry(browser);
 	browser_set_location(browser, p);
 }

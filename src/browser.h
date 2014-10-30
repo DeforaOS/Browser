@@ -62,83 +62,6 @@ typedef struct _BrowserPrefs
 	gboolean show_hidden_files;
 } BrowserPrefs;
 
-struct _Browser
-{
-	guint source;
-
-	/* config */
-	Config * config;
-	BrowserPrefs prefs;
-
-	/* mime */
-	Mime * mime;
-
-	/* history */
-	GList * history;
-	GList * current;
-
-	/* refresh */
-	guint refresh_id;
-	DIR * refresh_dir;
-	dev_t refresh_dev;
-	ino_t refresh_ino;
-	time_t refresh_mti;
-	unsigned int refresh_cnt;
-	unsigned int refresh_hid;
-	GtkTreeIter refresh_iter;
-
-	/* selection */
-	GList * selection;
-	gboolean selection_cut;
-
-	/* helper */
-	BrowserPluginHelper pl_helper;
-
-	/* widgets */
-	GtkIconTheme * theme;
-#if GTK_CHECK_VERSION(2, 6, 0)
-	GdkPixbuf * loading;
-#endif
-	GtkWidget * window;
-#if GTK_CHECK_VERSION(2, 18, 0)
-	GtkWidget * infobar;
-	GtkWidget * infobar_label;
-#endif
-	GtkToolItem * tb_back;
-	GtkToolItem * tb_updir;
-	GtkToolItem * tb_forward;
-	GtkWidget * tb_path;
-	GtkWidget * scrolled;
-	GtkWidget * detailview;
-#if GTK_CHECK_VERSION(2, 6, 0)
-	GtkWidget * iconview;
-	BrowserView view;
-#endif
-	GtkListStore * store;
-	GtkWidget * statusbar;
-	guint statusbar_id;
-	/* plug-ins */
-	GtkWidget * pl_view;
-	GtkListStore * pl_store;
-	GtkWidget * pl_combo;
-	GtkWidget * pl_box;
-	/* preferences */
-	GtkWidget * pr_window;
-#if GTK_CHECK_VERSION(2, 6, 0)
-	GtkWidget * pr_view;
-#endif
-	GtkWidget * pr_alternate;
-	GtkWidget * pr_confirm;
-	GtkWidget * pr_sort;
-	GtkWidget * pr_hidden;
-	GtkListStore * pr_mime_store;
-	GtkWidget * pr_mime_view;
-	GtkListStore * pr_plugin_store;
-	GtkWidget * pr_plugin_view;
-	/* about */
-	GtkWidget * ab_window;
-};
-
 
 /* variables */
 extern unsigned int browser_cnt;
@@ -151,7 +74,9 @@ void browser_delete(Browser * browser);
 
 /* accessors */
 char const * browser_get_location(Browser * browser);
+char const * browser_get_path_entry(Browser * browser);
 BrowserView browser_get_view(Browser * browser);
+GtkWidget * browser_get_window(Browser * browser);
 
 int browser_set_location(Browser * browser, char const * path);
 void browser_set_view(Browser * browser, BrowserView view);
@@ -163,6 +88,11 @@ int browser_error(Browser * browser, char const * message, int ret);
 
 int browser_config_load(Browser * browser);
 int browser_config_save(Browser * browser);
+
+/* clipboard */
+void browser_copy(Browser * browser);
+void browser_cut(Browser * browser);
+void browser_paste(Browser * browser);
 
 void browser_focus_location(Browser * browser);
 
@@ -182,6 +112,7 @@ void browser_refresh(Browser * browser);
 /* selection */
 void browser_select_all(Browser * browser);
 GList * browser_selection_copy(Browser * browser);
+void browser_selection_delete(Browser * browser);
 void browser_selection_paste(Browser * browser);
 void browser_unselect_all(Browser * browser);
 
