@@ -145,7 +145,7 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 	} name_icon[] =
 	{
 		{ "DCIM",	"folder-pictures"	},
-		{ "Desktop",	"gnome-fs-desktop"	},
+		{ "Desktop",	"user-desktop"		},
 		{ "Documents",	"folder-documents"	},
 		{ "Download",	"folder-download"	},
 		{ "Downloads",	"folder-download"	},
