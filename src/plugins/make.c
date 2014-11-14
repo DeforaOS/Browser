@@ -13,8 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /* TODO:
- * - detect the targets supported
- * - let the make binary used be configurable */
+ * - detect the targets supported */
 
 
 
@@ -48,6 +47,8 @@ typedef struct _BrowserPlugin
 	GtkWidget * directory;
 	/* file */
 	GtkWidget * file;
+	/* additional actions */
+	GtkWidget * configure;
 
 	/* tasks */
 	MakeTask ** tasks;
@@ -56,7 +57,8 @@ typedef struct _BrowserPlugin
 
 
 /* constants */
-#define MAKE		"make"
+#define MAKE_CONFIGURE	"configure"
+#define MAKE_MAKE	"make"
 
 
 /* prototypes */
@@ -66,17 +68,20 @@ static GtkWidget * _make_get_widget(Make * make);
 static void _make_refresh(Make * make, GList * selection);
 
 /* accessors */
-static gboolean _make_is_managed(char const * filename);
+static gboolean _make_can_configure(char const * pathname);
+static gboolean _make_is_managed(char const * pathname);
 
 /* useful */
 static int _make_add_task(Make * make, char const * title,
 		char const * directory, char * argv[]);
+static gboolean _make_find(char const * directory, char const * filename);
 static int _make_target(Make * make, char const * filename,
 		char const * target);
 
 /* callbacks */
 static void _make_on_all(gpointer data);
 static void _make_on_clean(gpointer data);
+static void _make_on_configure(gpointer data);
 static void _make_on_dist(gpointer data);
 static void _make_on_distclean(gpointer data);
 static void _make_on_install(gpointer data);
@@ -194,6 +199,11 @@ static Make * _make_init(BrowserPluginHelper * helper)
 	gtk_widget_set_no_show_all(make->file, TRUE);
 	gtk_box_pack_start(GTK_BOX(make->widget), make->file, FALSE, TRUE, 0);
 	/* additional actions */
+	make->configure = _init_button(bgroup, "applications-development",
+			_("Run configure"), G_CALLBACK(_make_on_configure),
+			make);
+	gtk_box_pack_start(GTK_BOX(make->widget), make->configure, FALSE, TRUE,
+			0);
 	gtk_widget_show_all(make->widget);
 	pango_font_description_free(font);
 	/* tasks */
@@ -279,10 +289,13 @@ static void _make_refresh(Make * make, GList * selection)
 	_refresh_status(make, NULL);
 	gtk_widget_hide(make->directory);
 	gtk_widget_hide(make->file);
+	gtk_widget_hide(make->configure);
 	if(S_ISDIR(st.st_mode))
 		_refresh_dir(make);
 	else
 		_refresh_file(make);
+	if(_make_can_configure(make->filename))
+		gtk_widget_show(make->configure);
 }
 
 static void _refresh_dir(Make * make)
@@ -315,29 +328,43 @@ static void _refresh_status(Make * make, char const * status)
 }
 
 
-/* make_is_managed */
-static gboolean _make_is_managed(char const * pathname)
+/* accessors */
+/* make_can_configure */
+static gboolean _make_can_configure(char const * pathname)
 {
-	gboolean managed = FALSE;
+	gboolean ret;
+	char const project_conf[] = "project.conf";
 	struct stat st;
 	gchar * dirname;
-	char const * makefile[] = { "Makefile", "makefile", "GNUmakefile" };
-	size_t i;
-	gchar * p;
 
 	if(stat(pathname, &st) != 0)
 		return FALSE;
 	dirname = S_ISDIR(st.st_mode) ? g_strdup(pathname)
 		: g_path_get_dirname(pathname);
-	for(i = 0; managed == FALSE && i < sizeof(makefile) / sizeof(*makefile);
-			i++)
-	{
-		p = g_strdup_printf("%s/%s", dirname, makefile[i]);
-		managed = (lstat(p, &st) == 0) ? TRUE : FALSE;
-		g_free(p);
-	}
+	ret = _make_find(dirname, project_conf);
 	g_free(dirname);
-	return managed;
+	return ret;
+}
+
+
+/* make_is_managed */
+static gboolean _make_is_managed(char const * pathname)
+{
+	gboolean ret = FALSE;
+	char const * makefile[] = { "Makefile", "makefile", "GNUmakefile" };
+	struct stat st;
+	gchar * dirname;
+	size_t i;
+
+	if(stat(pathname, &st) != 0)
+		return FALSE;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(pathname)
+		: g_path_get_dirname(pathname);
+	for(i = 0; i < sizeof(makefile) / sizeof(*makefile); i++)
+		if((ret = _make_find(dirname, makefile[i])) == TRUE)
+			break;
+	g_free(dirname);
+	return ret;
 }
 
 
@@ -356,9 +383,25 @@ static int _make_add_task(Make * make, char const * title,
 	make->tasks = p;
 	if((task = _common_task_new(helper, &plugin, title, directory, argv,
 					NULL, NULL)) == NULL)
+	{
+		fprintf(stderr, "DEBUG: HERE! :(((\n");
 		return -helper->error(helper->browser, error_get(), 1);
+	}
 	make->tasks[make->tasks_cnt++] = task;
 	return 0;
+}
+
+
+/* make_find */
+static gboolean _make_find(char const * directory, char const * filename)
+{
+	gboolean ret = FALSE;
+	gchar * p;
+
+	p = g_build_path("/", directory, filename, NULL);
+	ret = (access(p, R_OK) == 0) ? TRUE : FALSE;
+	g_free(p);
+	return ret;
 }
 
 
@@ -383,7 +426,7 @@ static int _make_target(Make * make, char const * filename, char const * target)
 		return -1;
 	}
 	if((p = helper->config_get(helper->browser, "make", "make")) == NULL)
-		p = MAKE;
+		p = MAKE_MAKE;
 	if((argv[0] = strdup(p)) == NULL)
 	{
 		/* FIXME report the error */
@@ -415,6 +458,36 @@ static void _make_on_clean(gpointer data)
 	Make * make = data;
 
 	_make_target(make, make->filename, "clean");
+}
+
+
+/* _make_on_configure */
+static void _make_on_configure(gpointer data)
+{
+	Make * make = data;
+	BrowserPluginHelper * helper = make->helper;
+	struct stat st;
+	gchar * dirname;
+	char * argv[2] = { NULL, NULL };
+	char const * p;
+
+	if(make->filename == NULL || lstat(make->filename, &st) != 0)
+		return;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(make->filename)
+		: g_path_get_dirname(make->filename);
+	if((p = helper->config_get(helper->browser, "make", "configure"))
+			== NULL)
+		p = MAKE_CONFIGURE;
+	if((argv[0] = strdup(p)) == NULL)
+	{
+		/* FIXME report the error */
+		g_free(dirname);
+		return;
+	}
+	_make_add_task(make, "configure", dirname, argv);
+	free(argv[0]);
+	g_free(dirname);
+	return;
 }
 
 
