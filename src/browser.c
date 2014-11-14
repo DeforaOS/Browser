@@ -2602,7 +2602,8 @@ static GdkPixbuf * _browser_get_icon(Browser * browser, char const * filename,
 		char const * type, struct stat * lst, struct stat * st,
 		int size)
 {
-	return browser_vfs_mime_icon(browser->mime, filename, type, lst, st, size);
+	return browser_vfs_mime_icon(browser->mime, filename, type, lst, st,
+			size);
 }
 
 
