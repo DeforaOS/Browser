@@ -49,6 +49,7 @@ typedef struct _BrowserPlugin
 	GtkWidget * file;
 	/* additional actions */
 	GtkWidget * configure;
+	GtkWidget * gnuconfigure;
 
 	/* tasks */
 	MakeTask ** tasks;
@@ -69,12 +70,14 @@ static void _make_refresh(Make * make, GList * selection);
 
 /* accessors */
 static gboolean _make_can_configure(char const * pathname);
+static gboolean _make_can_gnu_configure(char const * pathname);
 static gboolean _make_is_managed(char const * pathname);
 
 /* useful */
 static int _make_add_task(Make * make, char const * title,
 		char const * directory, char * argv[]);
-static gboolean _make_find(char const * directory, char const * filename);
+static gboolean _make_find(char const * directory, char const * filename,
+		int mode);
 static int _make_target(Make * make, char const * filename,
 		char const * target);
 
@@ -84,6 +87,7 @@ static void _make_on_clean(gpointer data);
 static void _make_on_configure(gpointer data);
 static void _make_on_dist(gpointer data);
 static void _make_on_distclean(gpointer data);
+static void _make_on_gnu_configure(gpointer data);
 static void _make_on_install(gpointer data);
 static void _make_on_target(gpointer data);
 static void _make_on_uninstall(gpointer data);
@@ -204,6 +208,11 @@ static Make * _make_init(BrowserPluginHelper * helper)
 			make);
 	gtk_box_pack_start(GTK_BOX(make->widget), make->configure, FALSE, TRUE,
 			0);
+	make->gnuconfigure = _init_button(bgroup, "applications-development",
+			_("Run ./configure"), G_CALLBACK(
+				_make_on_gnu_configure), make);
+	gtk_box_pack_start(GTK_BOX(make->widget), make->gnuconfigure, FALSE,
+			TRUE, 0);
 	gtk_widget_show_all(make->widget);
 	pango_font_description_free(font);
 	/* tasks */
@@ -290,12 +299,15 @@ static void _make_refresh(Make * make, GList * selection)
 	gtk_widget_hide(make->directory);
 	gtk_widget_hide(make->file);
 	gtk_widget_hide(make->configure);
+	gtk_widget_hide(make->gnuconfigure);
 	if(S_ISDIR(st.st_mode))
 		_refresh_dir(make);
 	else
 		_refresh_file(make);
 	if(_make_can_configure(make->filename))
 		gtk_widget_show(make->configure);
+	if(_make_can_gnu_configure(make->filename))
+		gtk_widget_show(make->gnuconfigure);
 }
 
 static void _refresh_dir(Make * make)
@@ -341,7 +353,25 @@ static gboolean _make_can_configure(char const * pathname)
 		return FALSE;
 	dirname = S_ISDIR(st.st_mode) ? g_strdup(pathname)
 		: g_path_get_dirname(pathname);
-	ret = _make_find(dirname, project_conf);
+	ret = _make_find(dirname, project_conf, R_OK);
+	g_free(dirname);
+	return ret;
+}
+
+
+/* make_can_gnu_configure */
+static gboolean _make_can_gnu_configure(char const * pathname)
+{
+	gboolean ret;
+	char const configure[] = "configure";
+	struct stat st;
+	gchar * dirname;
+
+	if(stat(pathname, &st) != 0)
+		return FALSE;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(pathname)
+		: g_path_get_dirname(pathname);
+	ret = _make_find(dirname, configure, R_OK | X_OK);
 	g_free(dirname);
 	return ret;
 }
@@ -361,7 +391,7 @@ static gboolean _make_is_managed(char const * pathname)
 	dirname = S_ISDIR(st.st_mode) ? g_strdup(pathname)
 		: g_path_get_dirname(pathname);
 	for(i = 0; i < sizeof(makefile) / sizeof(*makefile); i++)
-		if((ret = _make_find(dirname, makefile[i])) == TRUE)
+		if((ret = _make_find(dirname, makefile[i], R_OK)) == TRUE)
 			break;
 	g_free(dirname);
 	return ret;
@@ -393,13 +423,14 @@ static int _make_add_task(Make * make, char const * title,
 
 
 /* make_find */
-static gboolean _make_find(char const * directory, char const * filename)
+static gboolean _make_find(char const * directory, char const * filename,
+		int mode)
 {
 	gboolean ret = FALSE;
 	gchar * p;
 
 	p = g_build_path("/", directory, filename, NULL);
-	ret = (access(p, R_OK) == 0) ? TRUE : FALSE;
+	ret = (access(p, mode) == 0) ? TRUE : FALSE;
 	g_free(p);
 	return ret;
 }
@@ -506,6 +537,24 @@ static void _make_on_distclean(gpointer data)
 	Make * make = data;
 
 	_make_target(make, make->filename, "distclean");
+}
+
+
+/* make_on_gnu_configure */
+static void _make_on_gnu_configure(gpointer data)
+{
+	Make * make = data;
+	struct stat st;
+	gchar * dirname;
+	char * argv[2] = { "./configure", NULL };
+
+	if(make->filename == NULL || lstat(make->filename, &st) != 0)
+		return;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(make->filename)
+		: g_path_get_dirname(make->filename);
+	_make_add_task(make, "./configure", dirname, argv);
+	g_free(dirname);
+	return;
 }
 
 
