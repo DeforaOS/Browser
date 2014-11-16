@@ -49,6 +49,7 @@ typedef struct _BrowserPlugin
 	GtkWidget * file;
 	/* additional actions */
 	GtkWidget * configure;
+	GtkWidget * autogensh;
 	GtkWidget * gnuconfigure;
 
 	/* tasks */
@@ -69,6 +70,7 @@ static GtkWidget * _make_get_widget(Make * make);
 static void _make_refresh(Make * make, GList * selection);
 
 /* accessors */
+static gboolean _make_can_autogensh(char const * pathname);
 static gboolean _make_can_configure(char const * pathname);
 static gboolean _make_can_gnu_configure(char const * pathname);
 static gboolean _make_is_managed(char const * pathname);
@@ -83,6 +85,7 @@ static int _make_target(Make * make, char const * filename,
 
 /* callbacks */
 static void _make_on_all(gpointer data);
+static void _make_on_autogensh(gpointer data);
 static void _make_on_clean(gpointer data);
 static void _make_on_configure(gpointer data);
 static void _make_on_dist(gpointer data);
@@ -208,6 +211,11 @@ static Make * _make_init(BrowserPluginHelper * helper)
 			make);
 	gtk_box_pack_start(GTK_BOX(make->widget), make->configure, FALSE, TRUE,
 			0);
+	make->autogensh = _init_button(bgroup, "applications-development",
+			_("Run ./autogen.sh"), G_CALLBACK(_make_on_autogensh),
+			make);
+	gtk_box_pack_start(GTK_BOX(make->widget), make->autogensh, FALSE, TRUE,
+			0);
 	make->gnuconfigure = _init_button(bgroup, "applications-development",
 			_("Run ./configure"), G_CALLBACK(
 				_make_on_gnu_configure), make);
@@ -299,6 +307,7 @@ static void _make_refresh(Make * make, GList * selection)
 	gtk_widget_hide(make->directory);
 	gtk_widget_hide(make->file);
 	gtk_widget_hide(make->configure);
+	gtk_widget_hide(make->autogensh);
 	gtk_widget_hide(make->gnuconfigure);
 	if(S_ISDIR(st.st_mode))
 		_refresh_dir(make);
@@ -306,6 +315,8 @@ static void _make_refresh(Make * make, GList * selection)
 		_refresh_file(make);
 	if(_make_can_configure(make->filename))
 		gtk_widget_show(make->configure);
+	if(_make_can_autogensh(make->filename))
+		gtk_widget_show(make->autogensh);
 	if(_make_can_gnu_configure(make->filename))
 		gtk_widget_show(make->gnuconfigure);
 }
@@ -341,6 +352,24 @@ static void _refresh_status(Make * make, char const * status)
 
 
 /* accessors */
+/* make_can_autogensh */
+static gboolean _make_can_autogensh(char const * pathname)
+{
+	gboolean ret;
+	char const autogensh[] = "autogen.sh";
+	struct stat st;
+	gchar * dirname;
+
+	if(stat(pathname, &st) != 0)
+		return FALSE;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(pathname)
+		: g_path_get_dirname(pathname);
+	ret = _make_find(dirname, autogensh, R_OK | X_OK);
+	g_free(dirname);
+	return ret;
+}
+
+
 /* make_can_configure */
 static gboolean _make_can_configure(char const * pathname)
 {
@@ -477,6 +506,24 @@ static void _make_on_all(gpointer data)
 	Make * make = data;
 
 	_make_target(make, make->filename, NULL);
+}
+
+
+/* make_on_autogensh */
+static void _make_on_autogensh(gpointer data)
+{
+	Make * make = data;
+	struct stat st;
+	gchar * dirname;
+	char * argv[2] = { "./autogen.sh", NULL };
+
+	if(make->filename == NULL || lstat(make->filename, &st) != 0)
+		return;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(make->filename)
+		: g_path_get_dirname(make->filename);
+	_make_add_task(make, "./autogen.sh", dirname, argv);
+	g_free(dirname);
+	return;
 }
 
 
