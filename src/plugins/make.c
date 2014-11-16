@@ -413,10 +413,7 @@ static int _make_add_task(Make * make, char const * title,
 	make->tasks = p;
 	if((task = _common_task_new(helper, &plugin, title, directory, argv,
 					NULL, NULL)) == NULL)
-	{
-		fprintf(stderr, "DEBUG: HERE! :(((\n");
 		return -helper->error(helper->browser, error_get(), 1);
-	}
 	make->tasks[make->tasks_cnt++] = task;
 	return 0;
 }
