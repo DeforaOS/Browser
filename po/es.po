@@ -18,11 +18,11 @@ msgstr ""
 
 #: ../src/browser.c:220
 msgid "_New window"
-msgstr ""
+msgstr "_Nueva ventana"
 
 #: ../src/browser.c:222
 msgid "New _folder"
-msgstr ""
+msgstr "Nueva carpeta"
 
 #: ../src/browser.c:224
 msgid "New _symbolic link..."
