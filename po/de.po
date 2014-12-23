@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Browser 0.4.13\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-11-16 00:57+0100\n"
+"POT-Creation-Date: 2014-12-23 03:29+0100\n"
 "PO-Revision-Date: 2010-03-29 23:28+0200\n"
 "Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
 "Language-Team: German\n"
@@ -157,7 +157,7 @@ msgstr "Eigenschaften"
 msgid "Error while loading configuration"
 msgstr ""
 
-#: ../src/browser.c:453 ../src/browser.c:3879
+#: ../src/browser.c:453 ../src/browser.c:3880
 msgid "File manager"
 msgstr ""
 
@@ -257,8 +257,8 @@ msgstr ""
 msgid "TB"
 msgstr ""
 
-#: ../src/browser.c:1928 ../src/browser.c:1934 ../src/browser.c:3480
-#: ../src/browser.c:3484 ../src/desktopicon.c:1022 ../src/desktopicon.c:1027
+#: ../src/browser.c:1928 ../src/browser.c:1934 ../src/browser.c:3481
+#: ../src/browser.c:3485 ../src/desktopicon.c:1022 ../src/desktopicon.c:1027
 #: ../src/desktopicon.c:1209 ../src/desktopicon.c:1214
 msgid "Warning"
 msgstr "Achtung"
@@ -336,68 +336,68 @@ msgstr ""
 msgid "Edit with:"
 msgstr ""
 
-#: ../src/browser.c:2902 ../src/plugins/trash.c:234
+#: ../src/browser.c:2903 ../src/plugins/trash.c:234
 msgid "Filename"
 msgstr ""
 
-#: ../src/browser.c:2906
+#: ../src/browser.c:2907
 msgid "Size"
 msgstr "Größe"
 
-#: ../src/browser.c:2908
+#: ../src/browser.c:2909
 msgid "Owner"
 msgstr "Inhaber"
 
-#: ../src/browser.c:2909
+#: ../src/browser.c:2910
 msgid "Group"
 msgstr "Gruppe"
 
-#: ../src/browser.c:2910
+#: ../src/browser.c:2911
 msgid "Date"
 msgstr "Datum"
 
-#: ../src/browser.c:2911
+#: ../src/browser.c:2912
 msgid "MIME type"
 msgstr ""
 
-#: ../src/browser.c:3311
+#: ../src/browser.c:3312
 msgid "Open in new _window"
 msgstr "Offnen in neue Fenster"
 
-#: ../src/browser.c:3339
+#: ../src/browser.c:3340
 msgid "_Unmount"
 msgstr ""
 
-#: ../src/browser.c:3374 ../src/desktopicon.c:847 ../src/view.c:115
+#: ../src/browser.c:3375 ../src/desktopicon.c:847 ../src/view.c:115
 #: ../src/view.c:126
 msgid "Open _with..."
 msgstr "Offnen _mit..."
 
-#: ../src/browser.c:3483 ../src/desktopicon.c:1026
+#: ../src/browser.c:3484 ../src/desktopicon.c:1026
 msgid "Are you sure you want to execute this file?"
 msgstr ""
 
-#: ../src/browser.c:3541
+#: ../src/browser.c:3542
 msgid "New"
 msgstr "Neu"
 
-#: ../src/browser.c:3546 ../src/browser.c:3550 ../src/desktop.c:499
+#: ../src/browser.c:3547 ../src/browser.c:3551 ../src/desktop.c:499
 msgid "Folder"
 msgstr "Ordner"
 
-#: ../src/browser.c:3557 ../src/desktop.c:507
+#: ../src/browser.c:3558 ../src/desktop.c:507
 msgid "Symbolic link..."
 msgstr ""
 
-#: ../src/browser.c:3561 ../src/desktop.c:511
+#: ../src/browser.c:3562 ../src/desktop.c:511
 msgid "Text file"
 msgstr ""
 
-#: ../src/browser.c:3596 ../src/desktop.c:560
+#: ../src/browser.c:3597 ../src/desktop.c:560
 msgid "New text file.txt"
 msgstr ""
 
-#: ../src/browser.c:3851
+#: ../src/browser.c:3852
 msgid "Refreshing folder..."
 msgstr "Aktualisierung..."
 
@@ -918,39 +918,47 @@ msgstr ""
 msgid "Remove from bookmarks"
 msgstr ""
 
-#: ../src/plugins/make.c:97
+#: ../src/plugins/make.c:104
 msgid "Make"
 msgstr ""
 
-#: ../src/plugins/make.c:152 ../src/plugins/make.c:180
+#: ../src/plugins/make.c:159 ../src/plugins/make.c:187
 msgid "Build"
 msgstr ""
 
-#: ../src/plugins/make.c:155 ../src/plugins/make.c:183
+#: ../src/plugins/make.c:162 ../src/plugins/make.c:190
 msgid "Clean"
 msgstr ""
 
-#: ../src/plugins/make.c:158 ../src/plugins/make.c:186
+#: ../src/plugins/make.c:165 ../src/plugins/make.c:193
 msgid "Dist"
 msgstr ""
 
-#: ../src/plugins/make.c:161 ../src/plugins/make.c:189
+#: ../src/plugins/make.c:168 ../src/plugins/make.c:196
 msgid "Distclean"
 msgstr ""
 
-#: ../src/plugins/make.c:164 ../src/plugins/make.c:192
+#: ../src/plugins/make.c:171 ../src/plugins/make.c:199
 msgid "Install"
 msgstr ""
 
-#: ../src/plugins/make.c:167 ../src/plugins/make.c:195
+#: ../src/plugins/make.c:174 ../src/plugins/make.c:202
 msgid "Uninstall"
 msgstr ""
 
-#: ../src/plugins/make.c:203
+#: ../src/plugins/make.c:210
 msgid "Run configure"
 msgstr ""
 
-#: ../src/plugins/make.c:305 ../src/plugins/make.c:314
+#: ../src/plugins/make.c:215
+msgid "Run ./autogen.sh"
+msgstr ""
+
+#: ../src/plugins/make.c:220
+msgid "Run ./configure"
+msgstr ""
+
+#: ../src/plugins/make.c:328 ../src/plugins/make.c:337
 msgid "No Makefile found"
 msgstr ""
 
