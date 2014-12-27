@@ -1,4 +1,5 @@
-TARGETS	= plugins tests.log
+TARGETS	= $(OBJDIR)plugins $(OBJDIR)tests.log
+OBJDIR	=
 PREFIX	= /usr/local
 DESTDIR	=
 BINDIR	= $(PREFIX)/bin
@@ -17,18 +18,18 @@ INSTALL	= install
 
 all: $(TARGETS)
 
-plugins_OBJS = plugins.o
+plugins_OBJS = $(OBJDIR)plugins.o
 plugins_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 plugins_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 
-plugins: $(plugins_OBJS)
-	$(CC) -o plugins $(plugins_OBJS) $(plugins_LDFLAGS)
+$(OBJDIR)plugins: $(plugins_OBJS)
+	$(CC) -o $(OBJDIR)plugins $(plugins_OBJS) $(plugins_LDFLAGS)
 
-tests.log: plugins tests.sh
-	./tests.sh -P "$(PREFIX)" -- "tests.log"
+$(OBJDIR)tests.log: plugins tests.sh
+	./tests.sh -P "$(PREFIX)" -- "$(OBJDIR)tests.log"
 
-plugins.o: plugins.c
-	$(CC) $(plugins_CFLAGS) -c plugins.c
+$(OBJDIR)plugins.o: plugins.c
+	$(CC) $(plugins_CFLAGS) -o $(OBJDIR)plugins.o -c plugins.c
 
 clean:
 	$(RM) -- $(plugins_OBJS) $(tests.log_OBJS)

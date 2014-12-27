@@ -1,4 +1,5 @@
-TARGETS	= dirtree iconlist
+TARGETS	= $(OBJDIR)dirtree $(OBJDIR)iconlist
+OBJDIR	=
 PREFIX	= /usr/local
 DESTDIR	=
 BINDIR	= $(PREFIX)/bin
@@ -17,25 +18,25 @@ INSTALL	= install
 
 all: $(TARGETS)
 
-dirtree_OBJS = dirtree.o
+dirtree_OBJS = $(OBJDIR)dirtree.o
 dirtree_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 dirtree_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 
-dirtree: $(dirtree_OBJS)
-	$(CC) -o dirtree $(dirtree_OBJS) $(dirtree_LDFLAGS)
+$(OBJDIR)dirtree: $(dirtree_OBJS)
+	$(CC) -o $(OBJDIR)dirtree $(dirtree_OBJS) $(dirtree_LDFLAGS)
 
-iconlist_OBJS = iconlist.o
+iconlist_OBJS = $(OBJDIR)iconlist.o
 iconlist_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 iconlist_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 
-iconlist: $(iconlist_OBJS)
-	$(CC) -o iconlist $(iconlist_OBJS) $(iconlist_LDFLAGS)
+$(OBJDIR)iconlist: $(iconlist_OBJS)
+	$(CC) -o $(OBJDIR)iconlist $(iconlist_OBJS) $(iconlist_LDFLAGS)
 
-dirtree.o: dirtree.c
-	$(CC) $(dirtree_CFLAGS) -c dirtree.c
+$(OBJDIR)dirtree.o: dirtree.c
+	$(CC) $(dirtree_CFLAGS) -o $(OBJDIR)dirtree.o -c dirtree.c
 
-iconlist.o: iconlist.c
-	$(CC) $(iconlist_CFLAGS) -c iconlist.c
+$(OBJDIR)iconlist.o: iconlist.c
+	$(CC) $(iconlist_CFLAGS) -o $(OBJDIR)iconlist.o -c iconlist.c
 
 clean:
 	$(RM) -- $(dirtree_OBJS) $(iconlist_OBJS)

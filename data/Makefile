@@ -2,7 +2,8 @@ SUBDIRS	= 16x16
 MKDIR	= mkdir -m 0755 -p
 INSTALL	= install
 RM	= rm -f
-TARGETS	= Browser.pc
+TARGETS	= $(OBJDIR)Browser.pc
+OBJDIR	=
 PREFIX	= /usr/local
 DESTDIR	=
 RM	= rm -f
@@ -16,8 +17,8 @@ all: subdirs $(TARGETS)
 subdirs:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE)) || exit; done
 
-Browser.pc: Browser.pc.in ../config.sh
-	./pkgconfig.sh -P "$(PREFIX)" -- "Browser.pc"
+$(OBJDIR)Browser.pc: Browser.pc.in ../config.sh
+	./pkgconfig.sh -P "$(PREFIX)" -- "$(OBJDIR)Browser.pc"
 
 clean:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) clean) || exit; done
@@ -32,7 +33,7 @@ distclean:
 
 install: $(TARGETS)
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) install) || exit; done
-	./pkgconfig.sh -P "$(DESTDIR)$(PREFIX)" -i -- "Browser.pc"
+	./pkgconfig.sh -P "$(DESTDIR)$(PREFIX)" -i -- "$(OBJDIR)Browser.pc"
 	$(MKDIR) $(DESTDIR)$(PREFIX)/share/applications
 	$(INSTALL) -m 0644 deforaos-browser.desktop $(DESTDIR)$(PREFIX)/share/applications/deforaos-browser.desktop
 	$(MKDIR) $(DESTDIR)$(PREFIX)/share/applications
