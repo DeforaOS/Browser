@@ -96,6 +96,9 @@ static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 static void _common_task_on_save(gpointer data);
 static void _common_task_on_select_all(gpointer data);
 
+#ifdef COMMON_PROMPT
+static GtkResponseType _common_prompt(char const * message, char ** entry);
+#endif
 #ifdef COMMON_RTRIM
 static void _common_rtrim(char * string);
 #endif
@@ -564,6 +567,42 @@ static void _common_task_on_select_all(gpointer data)
 	gtk_text_buffer_get_end_iter(tbuf, &end);
 	gtk_text_buffer_select_range(tbuf, &start, &end);
 }
+
+
+#ifdef COMMON_PROMPT
+static GtkResponseType _common_prompt(char const * message, char ** entry)
+{
+	GtkResponseType ret;
+	GtkWidget * dialog;
+	GtkWidget * vbox;
+	GtkWidget * widget;
+
+	/* FIXME make it transient */
+	dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
+			GTK_MESSAGE_QUESTION, GTK_BUTTONS_OK_CANCEL,
+# if GTK_CHECK_VERSION(2, 6, 0)
+			"%s", "Question");
+	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
+# endif
+			"%s", message);
+# if GTK_CHECK_VERSION(2, 14, 0)
+	vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+# else
+	vbox = GTK_DIALOG(dialog)->vbox;
+# endif
+	widget = gtk_entry_new();
+	gtk_box_pack_start(GTK_BOX(vbox), widget, TRUE, TRUE, 0);
+	gtk_widget_show_all(vbox);
+	if((ret = gtk_dialog_run(GTK_DIALOG(dialog))) == GTK_RESPONSE_OK)
+	{
+		if((*entry = g_strdup(gtk_entry_get_text(GTK_ENTRY(widget))))
+				== NULL)
+			ret = GTK_RESPONSE_NONE;
+	}
+	gtk_widget_destroy(dialog);
+	return ret;
+}
+#endif
 
 
 #ifdef COMMON_RTRIM

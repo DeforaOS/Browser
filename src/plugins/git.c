@@ -24,6 +24,7 @@
 #include <string.h>
 #include <libgen.h>
 #include <errno.h>
+#define COMMON_PROMPT
 #include "common.c"
 
 
@@ -75,6 +76,7 @@ static int _git_add_task(Git * git, char const * title,
 /* callbacks */
 static void _git_on_add(gpointer data);
 static void _git_on_blame(gpointer data);
+static void _git_on_clone(gpointer data);
 static void _git_on_commit(gpointer data);
 static void _git_on_diff(gpointer data);
 static void _git_on_init(gpointer data);
@@ -145,6 +147,9 @@ static Git * _git_init(BrowserPluginHelper * helper)
 #endif
 	widget = _init_button(bgroup, GTK_STOCK_OK, _("Initialize"), G_CALLBACK(
 				_git_on_init), git);
+	gtk_box_pack_start(GTK_BOX(git->init), widget, FALSE, TRUE, 0);
+	widget = _init_button(bgroup, GTK_STOCK_OK, _("Clone..."), G_CALLBACK(
+				_git_on_clone), git);
 	gtk_box_pack_start(GTK_BOX(git->init), widget, FALSE, TRUE, 0);
 	gtk_widget_show_all(git->init);
 	gtk_widget_set_no_show_all(git->init, TRUE);
@@ -425,6 +430,27 @@ static void _git_on_blame(gpointer data)
 	_git_add_task(git, "git blame", dirname, argv);
 	g_free(basename);
 	g_free(dirname);
+}
+
+
+/* git_on_clone */
+static void _git_on_clone(gpointer data)
+{
+	Git * git = data;
+	struct stat st;
+	char * argv[] = { "git", "clone", "--", NULL, NULL, NULL };
+	char * dirname;
+	char * p;
+
+	if(_common_prompt("Clone repository from:", &p) != GTK_RESPONSE_OK)
+		return;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(git->filename)
+		: g_path_get_dirname(git->filename);
+	argv[3] = p;
+	argv[4] = git->filename;
+	_git_add_task(git, "git clone", dirname, argv);
+	g_free(dirname);
+	free(p);
 }
 
 
