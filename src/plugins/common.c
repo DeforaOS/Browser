@@ -585,12 +585,14 @@ static GtkResponseType _common_prompt(char const * message, char ** entry)
 	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
 # endif
 			"%s", message);
+	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
 # if GTK_CHECK_VERSION(2, 14, 0)
 	vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 # else
 	vbox = GTK_DIALOG(dialog)->vbox;
 # endif
 	widget = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(widget), TRUE);
 	gtk_box_pack_start(GTK_BOX(vbox), widget, TRUE, TRUE, 0);
 	gtk_widget_show_all(vbox);
 	if((ret = gtk_dialog_run(GTK_DIALOG(dialog))) == GTK_RESPONSE_OK)
