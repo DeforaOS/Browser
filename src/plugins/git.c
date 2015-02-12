@@ -110,7 +110,7 @@ static Git * _git_init(BrowserPluginHelper * helper)
 {
 	Git * git;
 	PangoFontDescription * font;
-	GtkSizeGroup * bgroup;
+	GtkSizeGroup * group;
 	GtkWidget * widget;
 
 	if((git = object_new(sizeof(*git))) == NULL)
@@ -126,7 +126,7 @@ static Git * _git_init(BrowserPluginHelper * helper)
 #endif
 	font = pango_font_description_new();
 	pango_font_description_set_weight(font, PANGO_WEIGHT_BOLD);
-	bgroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	/* label */
 	git->name = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(git->name), PANGO_ELLIPSIZE_MIDDLE);
@@ -143,10 +143,10 @@ static Git * _git_init(BrowserPluginHelper * helper)
 #else
 	git->init = gtk_vbox_new(FALSE, 4);
 #endif
-	widget = _init_button(bgroup, GTK_STOCK_OK, _("Initialize"), G_CALLBACK(
+	widget = _init_button(group, GTK_STOCK_OK, _("Initialize"), G_CALLBACK(
 				_git_on_init), git);
 	gtk_box_pack_start(GTK_BOX(git->init), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_OK, _("Clone..."), G_CALLBACK(
+	widget = _init_button(group, GTK_STOCK_OK, _("Clone..."), G_CALLBACK(
 				_git_on_clone), git);
 	gtk_box_pack_start(GTK_BOX(git->init), widget, FALSE, TRUE, 0);
 	gtk_widget_show_all(git->init);
@@ -158,19 +158,19 @@ static Git * _git_init(BrowserPluginHelper * helper)
 #else
 	git->directory = gtk_vbox_new(FALSE, 4);
 #endif
-	widget = _init_button(bgroup, GTK_STOCK_FIND_AND_REPLACE,
+	widget = _init_button(group, GTK_STOCK_FIND_AND_REPLACE,
 			_("Request diff"), G_CALLBACK(_git_on_diff), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_FIND, _("View log"),
+	widget = _init_button(group, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_git_on_log), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_PROPERTIES, _("Status"),
+	widget = _init_button(group, GTK_STOCK_PROPERTIES, _("Status"),
 			G_CALLBACK(_git_on_status), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_REFRESH, _("Pull"),
+	widget = _init_button(group, GTK_STOCK_REFRESH, _("Pull"),
 			G_CALLBACK(_git_on_pull), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_JUMP_TO, _("Commit"),
+	widget = _init_button(group, GTK_STOCK_JUMP_TO, _("Commit"),
 			G_CALLBACK(_git_on_commit), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
 	gtk_widget_show_all(git->directory);
@@ -183,29 +183,29 @@ static Git * _git_init(BrowserPluginHelper * helper)
 #else
 	git->file = gtk_vbox_new(FALSE, 4);
 #endif
-	widget = _init_button(bgroup, GTK_STOCK_FIND_AND_REPLACE,
+	widget = _init_button(group, GTK_STOCK_FIND_AND_REPLACE,
 			_("Request diff"), G_CALLBACK(_git_on_diff), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("Annotate"),
+	widget = _init_button(group, GTK_STOCK_INDEX, _("Annotate"),
 			G_CALLBACK(_git_on_blame), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_FIND, _("View log"),
+	widget = _init_button(group, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_git_on_log), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_PROPERTIES, _("Status"),
+	widget = _init_button(group, GTK_STOCK_PROPERTIES, _("Status"),
 			G_CALLBACK(_git_on_status), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_REFRESH, _("Pull"),
+	widget = _init_button(group, GTK_STOCK_REFRESH, _("Pull"),
 			G_CALLBACK(_git_on_pull), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_JUMP_TO, _("Commit"),
+	widget = _init_button(group, GTK_STOCK_JUMP_TO, _("Commit"),
 			G_CALLBACK(_git_on_commit), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
 	gtk_widget_show_all(git->file);
 	gtk_widget_set_no_show_all(git->file, TRUE);
 	gtk_box_pack_start(GTK_BOX(git->widget), git->file, FALSE, TRUE, 0);
 	/* additional actions */
-	git->add = _init_button(bgroup, GTK_STOCK_ADD, _("Add to repository"),
+	git->add = _init_button(group, GTK_STOCK_ADD, _("Add to repository"),
 			G_CALLBACK(_git_on_add), git);
 	gtk_box_pack_start(GTK_BOX(git->widget), git->add, FALSE, TRUE, 0);
 	gtk_widget_show_all(git->widget);
