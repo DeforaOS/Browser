@@ -110,7 +110,6 @@ static Git * _git_init(BrowserPluginHelper * helper)
 {
 	Git * git;
 	PangoFontDescription * font;
-	GtkSizeGroup * group;
 	GtkSizeGroup * bgroup;
 	GtkWidget * widget;
 
@@ -127,7 +126,6 @@ static Git * _git_init(BrowserPluginHelper * helper)
 #endif
 	font = pango_font_description_new();
 	pango_font_description_set_weight(font, PANGO_WEIGHT_BOLD);
-	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	bgroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	/* label */
 	git->name = gtk_label_new("");
@@ -397,14 +395,12 @@ static void _git_on_add(gpointer data)
 	gchar * dirname;
 	gchar * basename;
 	char * argv[] = { "git", "add", "--", NULL, NULL };
-	char const * type;
 
 	if(git->filename == NULL)
 		return;
 	dirname = g_path_get_dirname(git->filename);
 	basename = g_path_get_basename(git->filename);
 	argv[3] = basename;
-	type = git->helper->get_type(git->helper->browser, git->filename, 0);
 	_git_add_task(git, "git add", dirname, argv);
 	g_free(basename);
 	g_free(dirname);
