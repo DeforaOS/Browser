@@ -1618,6 +1618,7 @@ static void _desktop_show_preferences(Desktop * desktop)
 			GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
 	gtk_window_set_position(GTK_WINDOW(desktop->pr_window),
 			GTK_WIN_POS_CENTER);
+	gtk_window_set_resizable(GTK_WINDOW(desktop->pr_window), FALSE);
 	g_signal_connect_swapped(G_OBJECT(desktop->pr_window), "delete-event",
 			G_CALLBACK(_on_preferences_closex), desktop);
 	g_signal_connect(G_OBJECT(desktop->pr_window), "response", G_CALLBACK(
