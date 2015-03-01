@@ -1,4 +1,4 @@
-TARGETS	= $(OBJDIR)backup.so $(OBJDIR)cvs.so $(OBJDIR)dirtree.so $(OBJDIR)favorites.so $(OBJDIR)git.so $(OBJDIR)make.so $(OBJDIR)preview.so $(OBJDIR)properties.so $(OBJDIR)selection.so $(OBJDIR)subversion.so $(OBJDIR)template.so $(OBJDIR)trash.so $(OBJDIR)volumes.so
+TARGETS	= $(OBJDIR)backup.so $(OBJDIR)cvs.so $(OBJDIR)dirtree.so $(OBJDIR)favorites.so $(OBJDIR)git.so $(OBJDIR)make.so $(OBJDIR)preview.so $(OBJDIR)properties.so $(OBJDIR)selection.so $(OBJDIR)subversion.so $(OBJDIR)template.so $(OBJDIR)trash.so $(OBJDIR)undelete.so $(OBJDIR)volumes.so
 OBJDIR	=
 PREFIX	= /usr/local
 DESTDIR	=
@@ -104,6 +104,13 @@ trash_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 $(OBJDIR)trash.so: $(trash_OBJS)
 	$(CCSHARED) -o $(OBJDIR)trash.so $(trash_OBJS) $(trash_LDFLAGS)
 
+undelete_OBJS = $(OBJDIR)undelete.o
+undelete_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
+undelete_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+
+$(OBJDIR)undelete.so: $(undelete_OBJS)
+	$(CCSHARED) -o $(OBJDIR)undelete.so $(undelete_OBJS) $(undelete_LDFLAGS)
+
 volumes_OBJS = $(OBJDIR)volumes.o
 volumes_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 volumes_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
@@ -147,11 +154,14 @@ $(OBJDIR)template.o: template.c ../../include/Browser.h
 $(OBJDIR)trash.o: trash.c ../../include/Browser.h
 	$(CC) $(trash_CFLAGS) -o $(OBJDIR)trash.o -c trash.c
 
+$(OBJDIR)undelete.o: undelete.c ../../include/Browser.h
+	$(CC) $(undelete_CFLAGS) -o $(OBJDIR)undelete.o -c undelete.c
+
 $(OBJDIR)volumes.o: volumes.c ../../include/Browser.h
 	$(CC) $(volumes_CFLAGS) -o $(OBJDIR)volumes.o -c volumes.c
 
 clean:
-	$(RM) -- $(backup_OBJS) $(cvs_OBJS) $(dirtree_OBJS) $(favorites_OBJS) $(git_OBJS) $(make_OBJS) $(preview_OBJS) $(properties_OBJS) $(selection_OBJS) $(subversion_OBJS) $(template_OBJS) $(trash_OBJS) $(volumes_OBJS)
+	$(RM) -- $(backup_OBJS) $(cvs_OBJS) $(dirtree_OBJS) $(favorites_OBJS) $(git_OBJS) $(make_OBJS) $(preview_OBJS) $(properties_OBJS) $(selection_OBJS) $(subversion_OBJS) $(template_OBJS) $(trash_OBJS) $(undelete_OBJS) $(volumes_OBJS)
 
 distclean: clean
 	$(RM) -- $(TARGETS)

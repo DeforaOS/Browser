@@ -108,6 +108,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/plugins/subversion.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/template.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/trash.c \
+		$(PACKAGE)-$(VERSION)/src/plugins/undelete.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/volumes.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/Makefile \
 		$(PACKAGE)-$(VERSION)/src/plugins/common.c \
