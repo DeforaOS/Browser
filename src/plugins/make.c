@@ -122,7 +122,6 @@ static Make * _make_init(BrowserPluginHelper * helper)
 	Make * make;
 	PangoFontDescription * font;
 	GtkSizeGroup * group;
-	GtkSizeGroup * bgroup;
 	GtkWidget * widget;
 
 	if((make = object_new(sizeof(*make))) == NULL)
@@ -139,7 +138,7 @@ static Make * _make_init(BrowserPluginHelper * helper)
 	font = pango_font_description_new();
 	pango_font_description_set_weight(font, PANGO_WEIGHT_BOLD);
 	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	bgroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	/* label */
 	make->name = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(make->name), PANGO_ELLIPSIZE_MIDDLE);
@@ -156,22 +155,22 @@ static Make * _make_init(BrowserPluginHelper * helper)
 #else
 	make->directory = gtk_vbox_new(FALSE, 4);
 #endif
-	widget = _init_button(bgroup, GTK_STOCK_EXECUTE, _("Build"),
+	widget = _init_button(group, GTK_STOCK_EXECUTE, _("Build"),
 			G_CALLBACK(_make_on_all), make);
 	gtk_box_pack_start(GTK_BOX(make->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_CLEAR, _("Clean"),
+	widget = _init_button(group, GTK_STOCK_CLEAR, _("Clean"),
 			G_CALLBACK(_make_on_clean), make);
 	gtk_box_pack_start(GTK_BOX(make->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_SAVE, _("Dist"),
+	widget = _init_button(group, GTK_STOCK_SAVE, _("Dist"),
 			G_CALLBACK(_make_on_dist), make);
 	gtk_box_pack_start(GTK_BOX(make->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_DELETE, _("Distclean"),
+	widget = _init_button(group, GTK_STOCK_DELETE, _("Distclean"),
 			G_CALLBACK(_make_on_distclean), make);
 	gtk_box_pack_start(GTK_BOX(make->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_HARDDISK, _("Install"),
+	widget = _init_button(group, GTK_STOCK_HARDDISK, _("Install"),
 			G_CALLBACK(_make_on_install), make);
 	gtk_box_pack_start(GTK_BOX(make->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_REVERT_TO_SAVED, _("Uninstall"),
+	widget = _init_button(group, GTK_STOCK_REVERT_TO_SAVED, _("Uninstall"),
 			G_CALLBACK(_make_on_uninstall), make);
 	gtk_box_pack_start(GTK_BOX(make->directory), widget, FALSE, TRUE, 0);
 	gtk_widget_show_all(make->directory);
@@ -184,39 +183,39 @@ static Make * _make_init(BrowserPluginHelper * helper)
 #else
 	make->file = gtk_vbox_new(FALSE, 4);
 #endif
-	widget = _init_button(bgroup, GTK_STOCK_CONVERT, _("Build"),
+	widget = _init_button(group, GTK_STOCK_CONVERT, _("Build"),
 			G_CALLBACK(_make_on_target), make);
 	gtk_box_pack_start(GTK_BOX(make->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_CLEAR, _("Clean"),
+	widget = _init_button(group, GTK_STOCK_CLEAR, _("Clean"),
 			G_CALLBACK(_make_on_clean), make);
 	gtk_box_pack_start(GTK_BOX(make->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_SAVE, _("Dist"),
+	widget = _init_button(group, GTK_STOCK_SAVE, _("Dist"),
 			G_CALLBACK(_make_on_dist), make);
 	gtk_box_pack_start(GTK_BOX(make->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_DELETE, _("Distclean"),
+	widget = _init_button(group, GTK_STOCK_DELETE, _("Distclean"),
 			G_CALLBACK(_make_on_distclean), make);
 	gtk_box_pack_start(GTK_BOX(make->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_HARDDISK, _("Install"),
+	widget = _init_button(group, GTK_STOCK_HARDDISK, _("Install"),
 			G_CALLBACK(_make_on_install), make);
 	gtk_box_pack_start(GTK_BOX(make->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_REVERT_TO_SAVED, _("Uninstall"),
+	widget = _init_button(group, GTK_STOCK_REVERT_TO_SAVED, _("Uninstall"),
 			G_CALLBACK(_make_on_uninstall), make);
 	gtk_box_pack_start(GTK_BOX(make->file), widget, FALSE, TRUE, 0);
 	gtk_widget_show_all(make->file);
 	gtk_widget_set_no_show_all(make->file, TRUE);
 	gtk_box_pack_start(GTK_BOX(make->widget), make->file, FALSE, TRUE, 0);
 	/* additional actions */
-	make->configure = _init_button(bgroup, "applications-development",
+	make->configure = _init_button(group, "applications-development",
 			_("Run configure"), G_CALLBACK(_make_on_configure),
 			make);
 	gtk_box_pack_start(GTK_BOX(make->widget), make->configure, FALSE, TRUE,
 			0);
-	make->autogensh = _init_button(bgroup, "applications-development",
+	make->autogensh = _init_button(group, "applications-development",
 			_("Run ./autogen.sh"), G_CALLBACK(_make_on_autogensh),
 			make);
 	gtk_box_pack_start(GTK_BOX(make->widget), make->autogensh, FALSE, TRUE,
 			0);
-	make->gnuconfigure = _init_button(bgroup, "applications-development",
+	make->gnuconfigure = _init_button(group, "applications-development",
 			_("Run ./configure"), G_CALLBACK(
 				_make_on_gnu_configure), make);
 	gtk_box_pack_start(GTK_BOX(make->widget), make->gnuconfigure, FALSE,
