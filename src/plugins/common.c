@@ -581,7 +581,7 @@ static GtkResponseType _common_prompt(char const * message, char ** entry)
 	dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
 			GTK_MESSAGE_QUESTION, GTK_BUTTONS_OK_CANCEL,
 # if GTK_CHECK_VERSION(2, 6, 0)
-			"%s", "Question");
+			"%s", _("Question"));
 	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
 # endif
 			"%s", message);
