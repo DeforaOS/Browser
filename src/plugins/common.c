@@ -586,6 +586,7 @@ static GtkResponseType _common_prompt(char const * message, char ** entry)
 # endif
 			"%s", message);
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
+	gtk_window_set_title(GTK_WINDOW(dialog), _("Question"));
 # if GTK_CHECK_VERSION(2, 14, 0)
 	vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 # else
