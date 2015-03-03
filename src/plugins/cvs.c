@@ -42,6 +42,8 @@ typedef struct _BrowserPlugin
 	GtkWidget * widget;
 	GtkWidget * name;
 	GtkWidget * status;
+	/* checkout */
+	GtkWidget * checkout;
 	/* directory */
 	GtkWidget * directory;
 	GtkWidget * d_root;
@@ -76,10 +78,13 @@ static gboolean _cvs_is_managed(char const * filename, char ** revision);
 static int _cvs_add_task(CVS * cvs, char const * title, char const * directory,
 		char * argv[], CommonTaskCallback callback);
 static int _cvs_confirm_delete(char const * filename);
+static GtkResponseType _cvs_prompt_checkout(char const * message, char ** path,
+		char ** module);
 
 /* callbacks */
 static void _cvs_on_add(gpointer data);
 static void _cvs_on_annotate(gpointer data);
+static void _cvs_on_checkout(gpointer data);
 static void _cvs_on_commit(gpointer data);
 static void _cvs_on_delete(gpointer data);
 static void _cvs_on_diff(gpointer data);
@@ -144,6 +149,18 @@ static CVS * _cvs_init(BrowserPluginHelper * helper)
 	gtk_label_set_ellipsize(GTK_LABEL(cvs->status), PANGO_ELLIPSIZE_END);
 	gtk_misc_set_alignment(GTK_MISC(cvs->status), 0.0, 0.0);
 	gtk_box_pack_start(GTK_BOX(cvs->widget), cvs->status, FALSE, TRUE, 0);
+	/* checkout */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	cvs->checkout = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
+	cvs->checkout = gtk_vbox_new(FALSE, 4);
+#endif
+	widget = _init_button(bgroup, GTK_STOCK_OK, _("Checkout..."),
+			G_CALLBACK(_cvs_on_checkout), cvs);
+	gtk_box_pack_start(GTK_BOX(cvs->checkout), widget, FALSE, TRUE, 0);
+	gtk_widget_show_all(cvs->checkout);
+	gtk_widget_set_no_show_all(cvs->checkout, TRUE);
+	gtk_box_pack_start(GTK_BOX(cvs->widget), cvs->checkout, FALSE, TRUE, 0);
 	/* directory */
 #if GTK_CHECK_VERSION(3, 0, 0)
 	cvs->directory = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
@@ -321,6 +338,7 @@ static void _cvs_refresh(CVS * cvs, GList * selection)
 	gtk_label_set_text(GTK_LABEL(cvs->name), p);
 	g_free(p);
 	_refresh_status(cvs, NULL);
+	gtk_widget_hide(cvs->checkout);
 	gtk_widget_hide(cvs->directory);
 	gtk_widget_hide(cvs->file);
 	gtk_widget_hide(cvs->add);
@@ -368,7 +386,10 @@ static void _refresh_dir(CVS * cvs)
 		{
 			/* check if the parent folder is managed */
 			if(_cvs_is_managed(filename, NULL) == FALSE)
+			{
 				_refresh_status(cvs, _("Not a CVS repository"));
+				gtk_widget_show(cvs->checkout);
+			}
 			else
 			{
 				_refresh_status(cvs, _("Not managed by CVS"));
@@ -599,6 +620,73 @@ static int _cvs_confirm_delete(char const * filename)
 }
 
 
+/* cvs_prompt_checkout */
+static GtkResponseType _cvs_prompt_checkout(char const * message, char ** path,
+		char ** module)
+{
+	GtkResponseType ret;
+	GtkWidget * dialog;
+	GtkWidget * vbox;
+	GtkWidget * hbox;
+	GtkWidget * label;
+	GtkWidget * epath;
+	GtkWidget * emodule;
+
+	/* FIXME make it transient */
+	dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
+			GTK_MESSAGE_QUESTION, GTK_BUTTONS_OK_CANCEL,
+# if GTK_CHECK_VERSION(2, 6, 0)
+			"%s", _("Question"));
+	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
+# endif
+			"%s", message);
+	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
+	gtk_window_set_title(GTK_WINDOW(dialog), _("Question"));
+# if GTK_CHECK_VERSION(2, 14, 0)
+	vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+# else
+	vbox = GTK_DIALOG(dialog)->vbox;
+# endif
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
+	hbox = gtk_hbox_new(FALSE, 4);
+#endif
+	label = gtk_label_new(_("Path: "));
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
+	epath = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(epath), TRUE);
+	gtk_box_pack_start(GTK_BOX(hbox), epath, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
+	hbox = gtk_hbox_new(FALSE, 4);
+#endif
+	label = gtk_label_new(_("Module: "));
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
+	emodule = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(emodule), TRUE);
+	gtk_box_pack_start(GTK_BOX(hbox), emodule, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
+	gtk_widget_show_all(vbox);
+	if((ret = gtk_dialog_run(GTK_DIALOG(dialog))) == GTK_RESPONSE_OK)
+	{
+		if((*path = g_strdup(gtk_entry_get_text(GTK_ENTRY(epath))))
+				== NULL
+				|| (*module = g_strdup(gtk_entry_get_text(
+							GTK_ENTRY(emodule))))
+				== NULL)
+		{
+			ret = GTK_RESPONSE_NONE;
+			g_free(*path);
+		}
+	}
+	gtk_widget_destroy(dialog);
+	return ret;
+}
+
+
 /* callbacks */
 /* cvs_on_add */
 static gboolean _add_is_binary(char const * type);
@@ -675,6 +763,31 @@ static void _cvs_on_annotate(gpointer data)
 	_cvs_add_task(cvs, "cvs annotate", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
+}
+
+
+/* cvs_on_checkout */
+static void _cvs_on_checkout(gpointer data)
+{
+	CVS * cvs = data;
+	struct stat st;
+	char * argv[] = { "cvs", "checkout", "--", NULL, NULL };
+	char * dirname;
+	char * path;
+	char * module;
+
+	if(_cvs_prompt_checkout("Checkout repository from:", &path, &module)
+			!= GTK_RESPONSE_OK)
+		return;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(cvs->filename)
+		: g_path_get_dirname(cvs->filename);
+	/* FIXME escape arguments as required */
+	argv[3] = g_strdup_printf("%s%s checkout %s", "-d:", path, module);
+	_cvs_add_task(cvs, "cvs checkout", dirname, argv, NULL);
+	g_free(argv[3]);
+	g_free(dirname);
+	free(path);
+	free(module);
 }
 
 
