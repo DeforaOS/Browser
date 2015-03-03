@@ -75,7 +75,7 @@ static gboolean _cvs_is_managed(char const * filename, char ** revision);
 /* useful */
 static int _cvs_add_task(CVS * cvs, char const * title, char const * directory,
 		char * argv[], CommonTaskCallback callback);
-static int _cvs_confirm_delete(CVS * cvs, char const * filename);
+static int _cvs_confirm_delete(char const * filename);
 
 /* callbacks */
 static void _cvs_on_add(gpointer data);
@@ -576,7 +576,7 @@ static int _cvs_add_task(CVS * cvs, char const * title, char const * directory,
 
 
 /* cvs_confirm_delete */
-static int _cvs_confirm_delete(CVS * cvs, char const * filename)
+static int _cvs_confirm_delete(char const * filename)
 {
 	GtkWidget * dialog;
 	int res;
@@ -727,7 +727,7 @@ static void _cvs_on_delete(gpointer data)
 		: g_path_get_basename(cvs->filename);
 	if((argv[3] = basename) == NULL)
 		_cvs_add_task(cvs, "cvs delete", dirname, argv, NULL);
-	else if(_cvs_confirm_delete(cvs, basename) == 1)
+	else if(_cvs_confirm_delete(basename) == 1)
 	{
 		/* delete the file locally before asking CVS to */
 		if(unlink(cvs->filename) != 0)
