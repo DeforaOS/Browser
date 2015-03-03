@@ -625,6 +625,7 @@ static GtkResponseType _cvs_prompt_checkout(char const * message, char ** path,
 		char ** module)
 {
 	GtkResponseType ret;
+	GtkSizeGroup * group;
 	GtkWidget * dialog;
 	GtkWidget * vbox;
 	GtkWidget * hbox;
@@ -632,6 +633,7 @@ static GtkResponseType _cvs_prompt_checkout(char const * message, char ** path,
 	GtkWidget * epath;
 	GtkWidget * emodule;
 
+	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	/* FIXME make it transient */
 	dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
 			GTK_MESSAGE_QUESTION, GTK_BUTTONS_OK_CANCEL,
@@ -653,6 +655,8 @@ static GtkResponseType _cvs_prompt_checkout(char const * message, char ** path,
 	hbox = gtk_hbox_new(FALSE, 4);
 #endif
 	label = gtk_label_new(_("Path: "));
+	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 	epath = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(epath), TRUE);
@@ -664,6 +668,8 @@ static GtkResponseType _cvs_prompt_checkout(char const * message, char ** path,
 	hbox = gtk_hbox_new(FALSE, 4);
 #endif
 	label = gtk_label_new(_("Module: "));
+	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 	emodule = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(emodule), TRUE);
