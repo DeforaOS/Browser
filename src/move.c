@@ -163,7 +163,7 @@ static void _move_refresh(Move * move)
 		filename = p;
 	gtk_label_set_text(GTK_LABEL(move->label), filename);
 	free(p);
-	snprintf(buf, sizeof(buf), _("File %u of %u"), move->cur,
+	snprintf(buf, sizeof(buf), _("File %u of %u"), move->cur + 1,
 			move->filec - 1);
 	fraction = move->cur;
 	fraction /= move->filec - 1;
