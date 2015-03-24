@@ -71,7 +71,8 @@ static gboolean _git_is_managed(char const * filename);
 
 /* useful */
 static int _git_add_task(Git * git, char const * title,
-		char const * directory, char * argv[]);
+		char const * directory, char * argv[],
+		CommonTaskCallback callback);
 
 /* callbacks */
 static void _git_on_add(gpointer data);
@@ -370,7 +371,8 @@ static gboolean _git_is_managed(char const * filename)
 /* useful */
 /* git_add_task */
 static int _git_add_task(Git * git, char const * title,
-		char const * directory, char * argv[])
+		char const * directory, char * argv[],
+		CommonTaskCallback callback)
 {
 	BrowserPluginHelper * helper = git->helper;
 	GitTask ** p;
@@ -380,7 +382,7 @@ static int _git_add_task(Git * git, char const * title,
 		return -helper->error(helper->browser, strerror(errno), 1);
 	git->tasks = p;
 	if((task = _common_task_new(helper, &plugin, title, directory, argv,
-					NULL, NULL)) == NULL)
+					callback, git)) == NULL)
 		return -helper->error(helper->browser, error_get(), 1);
 	git->tasks[git->tasks_cnt++] = task;
 	return 0;
@@ -401,7 +403,7 @@ static void _git_on_add(gpointer data)
 	dirname = g_path_get_dirname(git->filename);
 	basename = g_path_get_basename(git->filename);
 	argv[3] = basename;
-	_git_add_task(git, "git add", dirname, argv);
+	_git_add_task(git, "git add", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
 }
@@ -423,7 +425,7 @@ static void _git_on_blame(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(git->filename);
 	argv[3] = basename;
-	_git_add_task(git, "git blame", dirname, argv);
+	_git_add_task(git, "git blame", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
 }
@@ -444,7 +446,7 @@ static void _git_on_clone(gpointer data)
 		: g_path_get_dirname(git->filename);
 	argv[3] = p;
 	argv[4] = git->filename;
-	_git_add_task(git, "git clone", dirname, argv);
+	_git_add_task(git, "git clone", dirname, argv, NULL);
 	g_free(dirname);
 	free(p);
 }
@@ -466,7 +468,7 @@ static void _git_on_commit(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? g_strdup(".")
 		: g_path_get_basename(git->filename);
 	argv[3] = basename;
-	_git_add_task(git, "git commit", dirname, argv);
+	_git_add_task(git, "git commit", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
 }
@@ -488,13 +490,15 @@ static void _git_on_diff(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(git->filename);
 	argv[3] = basename;
-	_git_add_task(git, "git diff", dirname, argv);
+	_git_add_task(git, "git diff", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
 }
 
 
 /* git_on_init */
+static void _init_on_callback(Git * git, int ret);
+
 static void _git_on_init(gpointer data)
 {
 	Git * git = data;
@@ -506,8 +510,15 @@ static void _git_on_init(gpointer data)
 		return;
 	dirname = S_ISDIR(st.st_mode) ? g_strdup(git->filename)
 		: g_path_get_dirname(git->filename);
-	_git_add_task(git, "git pull", dirname, argv);
+	_git_add_task(git, "git pull", dirname, argv, _init_on_callback);
 	g_free(dirname);
+}
+
+static void _init_on_callback(Git * git, int ret)
+{
+	if(ret == 0)
+		/* refresh upon success */
+		git->helper->refresh(git->helper->browser);
 }
 
 
@@ -527,7 +538,7 @@ static void _git_on_log(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(git->filename);
 	argv[3] = basename;
-	_git_add_task(git, "git log", dirname, argv);
+	_git_add_task(git, "git log", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
 }
@@ -549,7 +560,7 @@ static void _git_on_pull(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(git->filename);
 	argv[3] = basename;
-	_git_add_task(git, "git pull", dirname, argv);
+	_git_add_task(git, "git pull", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
 }
@@ -571,7 +582,7 @@ static void _git_on_status(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(git->filename);
 	argv[3] = basename;
-	_git_add_task(git, "git status", dirname, argv);
+	_git_add_task(git, "git status", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
 }
