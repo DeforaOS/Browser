@@ -123,5 +123,6 @@ int main(int argc, char * argv[])
 					&& view != -1)
 				browser_set_view(browser, view);
 	gtk_main();
+	/* browser is automatically deleted */
 	return 0;
 }
