@@ -114,6 +114,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/plugins/common.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/project.conf \
 		$(PACKAGE)-$(VERSION)/tests/plugins.c \
+		$(PACKAGE)-$(VERSION)/tests/vfs.c \
 		$(PACKAGE)-$(VERSION)/tests/Makefile \
 		$(PACKAGE)-$(VERSION)/tests/tests.sh \
 		$(PACKAGE)-$(VERSION)/tests/project.conf \
