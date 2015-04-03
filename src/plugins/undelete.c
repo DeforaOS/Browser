@@ -21,6 +21,11 @@
 #include <string.h>
 #include <System.h>
 #include <libintl.h>
+#ifdef __linux__
+# include <sys/syscall.h>
+# include <unistd.h>
+# include <errno.h>
+#endif
 #include "Browser.h"
 #define _(string) gettext(string)
 #define N_(string) (string)
@@ -29,6 +34,18 @@
 /* Undelete */
 /* private */
 /* types */
+#ifdef __linux__
+typedef struct _UndeleteDirent
+{
+	unsigned long d_ino;
+	unsigned long d_off;
+	unsigned short d_reclen;
+	char d_name[0];
+} UndeleteDirent;
+#else
+typedef struct dirent UndeleteDirent;
+#endif
+
 enum _UndeleteColumn
 {
 	UC_ICON,
@@ -60,6 +77,11 @@ static Undelete * _undelete_init(BrowserPluginHelper * helper);
 static void _undelete_destroy(Undelete * undelete);
 static GtkWidget * _undelete_get_widget(Undelete * undelete);
 static void _undelete_refresh(Undelete * undelete, GList * selection);
+
+/* useful */
+#ifdef __linux__
+static int getdents(int fd, char * buf, unsigned int count);
+#endif
 
 /* callbacks */
 static gboolean _undelete_on_idle(gpointer data);
@@ -158,6 +180,15 @@ static void _undelete_refresh(Undelete * undelete, GList * selection)
 }
 
 
+/* useful */
+#ifdef __linux__
+static int getdents(int fd, char * buf, unsigned int count)
+{
+	return syscall(__NR_getdents64, fd, buf, count);
+}
+#endif
+
+
 /* callbacks */
 /* undelete_on_idle */
 static gboolean _undelete_on_idle(gpointer data)
@@ -166,7 +197,8 @@ static gboolean _undelete_on_idle(gpointer data)
 	char buf[65536];
 	int i;
 	int j;
-	struct dirent de;
+	UndeleteDirent de;
+	size_t namlen;
 
 	if(undelete->fd < 0)
 	{
@@ -187,9 +219,15 @@ static gboolean _undelete_on_idle(gpointer data)
 		for(j = 0; j + (int)sizeof(de) < i; j += de.d_reclen)
 		{
 			memcpy(&de, &buf[j], sizeof(de));
-			if(strncmp(de.d_name, ".", 1) == 0 && de.d_namlen == 1)
+#ifdef __linux__
+			namlen = de.d_reclen - 2
+				- offsetof(UndeleteDirent, d_name);
+#else
+			namlen = de.d_namlen;
+#endif
+			if(strncmp(de.d_name, ".", 1) == 0 && namlen == 1)
 				continue;
-			if(strncmp(de.d_name, "..", 2) == 0 && de.d_namlen == 2)
+			if(strncmp(de.d_name, "..", 2) == 0 && namlen == 2)
 				continue;
 			/* FIXME implement */
 		}
