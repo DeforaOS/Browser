@@ -14,7 +14,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /* TODO:
  * - let the user define the desktop folder (possibly default to FDO's)
- * - set the font for the icons instantly
  * - track multiple selection on delete/properties
  * - avoid code duplication with DeforaOS Panel ("main" applet) */
 
