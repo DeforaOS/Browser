@@ -499,11 +499,11 @@ static void _on_realize(gpointer data)
 	Desktop * desktop = data;
 	GdkEventMask mask = desktop->prefs.popup ? GDK_BUTTON_PRESS_MASK : 0;
 
-# if GTK_CHECK_VERSION(2, 14, 0)
+#if GTK_CHECK_VERSION(2, 14, 0)
 	desktop->back = gtk_widget_get_window(desktop->desktop);
-# else
+#else
 	desktop->back = desktop->desktop->window;
-# endif
+#endif
 	/* support pop-up menus on the desktop window if enabled */
 	if(mask != 0)
 		_new_events(desktop, desktop->back, mask);
