@@ -1031,6 +1031,9 @@ static void _refresh_homescreen(Desktop * desktop)
 /* desktop_reset */
 static void _reset_background(Desktop * desktop, Config * config);
 static void _reset_icons(Desktop * desktop, Config * config);
+static void _reset_icons_colors(Desktop * desktop, Config * config);
+static void _reset_icons_font(Desktop * desktop, Config * config);
+static void _reset_icons_monitor(Desktop * desktop, Config * config);
 /* callbacks */
 static gboolean _reset_on_idle(gpointer data);
 
@@ -1064,33 +1067,11 @@ static void _reset_background(Desktop * desktop, Config * config)
 
 static void _reset_icons(Desktop * desktop, Config * config)
 {
-	GdkColor color;
-	char const * p;
-	char * q;
+	String const * p;
 	size_t i;
 
-	/* icons colors */
-	if((p = config_get(config, "icons", "background")) != NULL)
-	{
-		gdk_color_parse(p, &color);
-		desktop->background = color;
-	}
-	if((p = config_get(config, "icons", "foreground")) != NULL)
-	{
-		gdk_color_parse(p, &color);
-		desktop->foreground = color;
-	}
-	/* icons font */
-	if(desktop->font != NULL)
-		pango_font_description_free(desktop->font);
-	if((p = config_get(config, "icons", "font")) != NULL)
-		desktop->font = pango_font_description_from_string(p);
-	else
-	{
-		desktop->font = pango_font_description_new();
-		pango_font_description_set_weight(desktop->font,
-				PANGO_WEIGHT_BOLD);
-	}
+	_reset_icons_colors(desktop, config);
+	_reset_icons_font(desktop, config);
 	for(i = 0; i < desktop->icon_cnt; i++)
 	{
 		desktopicon_set_background(desktop->icon[i],
@@ -1099,14 +1080,7 @@ static void _reset_icons(Desktop * desktop, Config * config)
 		desktopicon_set_foreground(desktop->icon[i],
 				&desktop->foreground);
 	}
-	/* icons monitor */
-	if(desktop->prefs.monitor < 0
-			&& (p = config_get(config, "icons", "monitor")) != NULL)
-	{
-		desktop->prefs.monitor = strtol(p, &q, 10);
-		if(p[0] == '\0' || *q != '\0')
-			desktop->prefs.monitor = -1;
-	}
+	_reset_icons_monitor(desktop, config);
 	/* icons layout */
 	if(desktop->prefs.icons < 0
 			&& (p = config_get(config, "icons", "layout")) != NULL)
@@ -1127,6 +1101,54 @@ static void _reset_icons(Desktop * desktop, Config * config)
 				== DESKTOP_ICONS_FILES)
 			? DESKTOP_ALIGNMENT_VERTICAL
 			: DESKTOP_ALIGNMENT_HORIZONTAL;
+}
+
+static void _reset_icons_colors(Desktop * desktop, Config * config)
+{
+	String const * p;
+	GdkColor color;
+
+	if((p = config_get(config, "icons", "background")) != NULL)
+	{
+		gdk_color_parse(p, &color);
+		desktop->background = color;
+	}
+	if((p = config_get(config, "icons", "foreground")) != NULL)
+	{
+		gdk_color_parse(p, &color);
+		desktop->foreground = color;
+	}
+}
+
+static void _reset_icons_font(Desktop * desktop, Config * config)
+{
+	String const * p;
+
+	if(desktop->font != NULL)
+		pango_font_description_free(desktop->font);
+	if((p = config_get(config, "icons", "font")) != NULL)
+		desktop->font = pango_font_description_from_string(p);
+	else
+	{
+		desktop->font = pango_font_description_new();
+		pango_font_description_set_weight(desktop->font,
+				PANGO_WEIGHT_BOLD);
+	}
+}
+
+static void _reset_icons_monitor(Desktop * desktop, Config * config)
+{
+	String const * p;
+	char * q;
+
+	/* icons monitor */
+	if(desktop->prefs.monitor < 0
+			&& (p = config_get(config, "icons", "monitor")) != NULL)
+	{
+		desktop->prefs.monitor = strtol(p, &q, 10);
+		if(p[0] == '\0' || *q != '\0')
+			desktop->prefs.monitor = -1;
+	}
 }
 
 /* callbacks */
