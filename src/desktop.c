@@ -1081,6 +1081,8 @@ static void _reset_icons(Desktop * desktop, Config * config)
 		desktop->foreground = color;
 	}
 	/* icons font */
+	if(desktop->font != NULL)
+		pango_font_description_free(desktop->font);
 	if((p = config_get(config, "icons", "font")) != NULL)
 		desktop->font = pango_font_description_from_string(p);
 	else
