@@ -219,9 +219,6 @@ static gboolean _desktop_on_refresh(gpointer data);
 static void _new_events(Desktop * desktop, GdkWindow * window,
 		GdkEventMask mask);
 static void _new_icons(Desktop * desktop);
-static gboolean _new_idle(gpointer data);
-static void _idle_background(Desktop * desktop, Config * config);
-static void _idle_icons(Desktop * desktop, Config * config);
 static int _on_message(void * data, uint32_t value1, uint32_t value2,
 		uint32_t value3);
 static void _on_popup(gpointer data);
@@ -293,7 +290,7 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 		desktop->desktop = NULL;
 		desktop->back = desktop->root;
 		/* draw the icons and background when idle */
-		desktop->refresh_source = g_idle_add(_new_idle, desktop);
+		desktop_reset(desktop);
 		/* support pop-up menus on the root window if enabled */
 		if(desktop->prefs.popup)
 			mask |= GDK_BUTTON_PRESS_MASK;
@@ -333,110 +330,6 @@ static void _new_icons(Desktop * desktop)
 	for(p = folder; *p != NULL && desktop->folder == NULL; p++)
 		desktop->folder = gtk_icon_theme_load_icon(desktop->theme, *p,
 				DESKTOPICON_ICON_SIZE, 0, NULL);
-}
-
-static gboolean _new_idle(gpointer data)
-{
-	Desktop * desktop = data;
-	Config * config;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s()\n", __func__);
-#endif
-	if((config = _desktop_get_config(desktop)) == NULL)
-		return FALSE;
-	_idle_background(desktop, config);
-	_idle_icons(desktop, config);
-	config_delete(config);
-	_desktop_get_workarea(desktop);
-	desktop_set_icons(desktop, desktop->prefs.icons);
-	return FALSE;
-}
-
-static void _idle_background(Desktop * desktop, Config * config)
-{
-	GdkColor color = { 0, 0, 0, 0 };
-	char const * filename;
-	DesktopHows how = DESKTOP_HOW_SCALED;
-	gboolean extend = FALSE;
-	size_t i;
-	char const * p;
-
-	if((p = config_get(config, "background", "color")) != NULL)
-		gdk_color_parse(p, &color);
-	filename = config_get(config, "background", "wallpaper");
-	if((p = config_get(config, "background", "how")) != NULL)
-		for(i = 0; i < DESKTOP_HOW_COUNT; i++)
-			if(strcmp(_desktop_hows[i], p) == 0)
-				how = i;
-	if((p = config_get(config, "background", "extend")) != NULL)
-		extend = strtol(p, NULL, 10) ? TRUE : FALSE;
-	_desktop_draw_background(desktop, &color, filename, how, extend);
-}
-
-static void _idle_icons(Desktop * desktop, Config * config)
-{
-	GdkColor color;
-	char const * p;
-	char * q;
-	size_t i;
-
-	/* icons colors */
-	if((p = config_get(config, "icons", "background")) != NULL)
-	{
-		gdk_color_parse(p, &color);
-		desktop->background = color;
-	}
-	if((p = config_get(config, "icons", "foreground")) != NULL)
-	{
-		gdk_color_parse(p, &color);
-		desktop->foreground = color;
-	}
-	/* icons font */
-	if((p = config_get(config, "icons", "font")) != NULL)
-		desktop->font = pango_font_description_from_string(p);
-	else
-	{
-		desktop->font = pango_font_description_new();
-		pango_font_description_set_weight(desktop->font,
-				PANGO_WEIGHT_BOLD);
-	}
-	for(i = 0; i < desktop->icon_cnt; i++)
-	{
-		desktopicon_set_background(desktop->icon[i],
-				&desktop->background);
-		desktopicon_set_font(desktop->icon[i], desktop->font);
-		desktopicon_set_foreground(desktop->icon[i],
-				&desktop->foreground);
-	}
-	/* icons monitor */
-	if(desktop->prefs.monitor < 0
-			&& (p = config_get(config, "icons", "monitor")) != NULL)
-	{
-		desktop->prefs.monitor = strtol(p, &q, 10);
-		if(p[0] == '\0' || *q != '\0')
-			desktop->prefs.monitor = -1;
-	}
-	/* icons layout */
-	if(desktop->prefs.icons < 0
-			&& (p = config_get(config, "icons", "layout")) != NULL)
-	{
-		for(i = 0; i < DESKTOP_ICONS_COUNT; i++)
-			if(strcmp(_desktop_icons_config[i], p) == 0)
-			{
-				desktop->prefs.icons = i;
-				break;
-			}
-	}
-	if(desktop->prefs.icons < 0
-			|| desktop->prefs.icons >= DESKTOP_ICONS_COUNT)
-		desktop->prefs.icons = DESKTOP_ICONS_FILES;
-	/* icons alignment */
-	if(desktop->prefs.alignment < 0)
-		desktop->prefs.alignment = (desktop->prefs.icons
-				== DESKTOP_ICONS_FILES)
-			? DESKTOP_ALIGNMENT_VERTICAL
-			: DESKTOP_ALIGNMENT_HORIZONTAL;
 }
 
 static int _on_message(void * data, uint32_t value1, uint32_t value2,
@@ -614,9 +507,7 @@ static void _on_realize(gpointer data)
 	/* support pop-up menus on the desktop window if enabled */
 	if(mask != 0)
 		_new_events(desktop, desktop->back, mask);
-	if(desktop->refresh_source != 0)
-		g_source_remove(desktop->refresh_source);
-	desktop->refresh_source = g_idle_add(_new_idle, desktop);
+	desktop_reset(desktop);
 }
 
 static GdkFilterReturn _event_button_press(XButtonEvent * xbev,
@@ -675,10 +566,8 @@ static GdkFilterReturn _event_configure(XConfigureEvent * xevent,
 			desktop->window.width, desktop->window.height,
 			desktop->window.x, desktop->window.y);
 #endif
-	if(desktop->refresh_source != 0)
-		g_source_remove(desktop->refresh_source);
 	/* FIXME run it directly? */
-	desktop->refresh_source = g_idle_add(_new_idle, desktop);
+	desktop_reset(desktop);
 	return GDK_FILTER_CONTINUE;
 }
 
@@ -1137,6 +1026,126 @@ static void _refresh_homescreen(Desktop * desktop)
 {
 	/* for cleanup */
 	desktop->refresh_source = g_idle_add(_desktop_on_refresh, desktop);
+}
+
+
+/* desktop_reset */
+static void _reset_background(Desktop * desktop, Config * config);
+static void _reset_icons(Desktop * desktop, Config * config);
+/* callbacks */
+static gboolean _reset_on_idle(gpointer data);
+
+void desktop_reset(Desktop * desktop)
+{
+	if(desktop->refresh_source != 0)
+		g_source_remove(desktop->refresh_source);
+	desktop->refresh_source = g_idle_add(_reset_on_idle, desktop);
+}
+
+static void _reset_background(Desktop * desktop, Config * config)
+{
+	GdkColor color = { 0, 0, 0, 0 };
+	char const * filename;
+	DesktopHows how = DESKTOP_HOW_SCALED;
+	gboolean extend = FALSE;
+	size_t i;
+	char const * p;
+
+	if((p = config_get(config, "background", "color")) != NULL)
+		gdk_color_parse(p, &color);
+	filename = config_get(config, "background", "wallpaper");
+	if((p = config_get(config, "background", "how")) != NULL)
+		for(i = 0; i < DESKTOP_HOW_COUNT; i++)
+			if(strcmp(_desktop_hows[i], p) == 0)
+				how = i;
+	if((p = config_get(config, "background", "extend")) != NULL)
+		extend = strtol(p, NULL, 10) ? TRUE : FALSE;
+	_desktop_draw_background(desktop, &color, filename, how, extend);
+}
+
+static void _reset_icons(Desktop * desktop, Config * config)
+{
+	GdkColor color;
+	char const * p;
+	char * q;
+	size_t i;
+
+	/* icons colors */
+	if((p = config_get(config, "icons", "background")) != NULL)
+	{
+		gdk_color_parse(p, &color);
+		desktop->background = color;
+	}
+	if((p = config_get(config, "icons", "foreground")) != NULL)
+	{
+		gdk_color_parse(p, &color);
+		desktop->foreground = color;
+	}
+	/* icons font */
+	if((p = config_get(config, "icons", "font")) != NULL)
+		desktop->font = pango_font_description_from_string(p);
+	else
+	{
+		desktop->font = pango_font_description_new();
+		pango_font_description_set_weight(desktop->font,
+				PANGO_WEIGHT_BOLD);
+	}
+	for(i = 0; i < desktop->icon_cnt; i++)
+	{
+		desktopicon_set_background(desktop->icon[i],
+				&desktop->background);
+		desktopicon_set_font(desktop->icon[i], desktop->font);
+		desktopicon_set_foreground(desktop->icon[i],
+				&desktop->foreground);
+	}
+	/* icons monitor */
+	if(desktop->prefs.monitor < 0
+			&& (p = config_get(config, "icons", "monitor")) != NULL)
+	{
+		desktop->prefs.monitor = strtol(p, &q, 10);
+		if(p[0] == '\0' || *q != '\0')
+			desktop->prefs.monitor = -1;
+	}
+	/* icons layout */
+	if(desktop->prefs.icons < 0
+			&& (p = config_get(config, "icons", "layout")) != NULL)
+	{
+		for(i = 0; i < DESKTOP_ICONS_COUNT; i++)
+			if(strcmp(_desktop_icons_config[i], p) == 0)
+			{
+				desktop->prefs.icons = i;
+				break;
+			}
+	}
+	if(desktop->prefs.icons < 0
+			|| desktop->prefs.icons >= DESKTOP_ICONS_COUNT)
+		desktop->prefs.icons = DESKTOP_ICONS_FILES;
+	/* icons alignment */
+	if(desktop->prefs.alignment < 0)
+		desktop->prefs.alignment = (desktop->prefs.icons
+				== DESKTOP_ICONS_FILES)
+			? DESKTOP_ALIGNMENT_VERTICAL
+			: DESKTOP_ALIGNMENT_HORIZONTAL;
+}
+
+/* callbacks */
+static gboolean _reset_on_idle(gpointer data)
+{
+	Desktop * desktop = data;
+	Config * config;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	desktop->refresh_source = 0;
+	if((config = _desktop_get_config(desktop)) == NULL)
+		return FALSE;
+	_reset_background(desktop, config);
+	_reset_icons(desktop, config);
+	config_delete(config);
+	_desktop_get_workarea(desktop);
+	desktop_set_icons(desktop, desktop->prefs.icons);
+	return FALSE;
 }
 
 
@@ -2071,12 +2080,10 @@ static void _on_preferences_apply(gpointer data)
 	int i;
 	char buf[12];
 
-	/* XXX not very efficient */
-	if(desktop->refresh_source)
-		g_source_remove(desktop->refresh_source);
-	desktop->refresh_source = g_idle_add(_new_idle, desktop);
 	if((config = _desktop_get_config(desktop)) == NULL)
 		return;
+	/* XXX not very efficient */
+	desktop_reset(desktop);
 	/* background */
 	p = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
 				desktop->pr_background));

@@ -66,6 +66,7 @@ int desktop_set_layout(Desktop * desktop, DesktopLayout layout);
 int desktop_error(Desktop * desktop, char const * message, int ret);
 
 void desktop_refresh(Desktop * desktop);
+void desktop_reset(Desktop * desktop);
 
 void desktop_icon_add(Desktop * desktop, DesktopIcon * icon);
 void desktop_icon_remove(Desktop * desktop, DesktopIcon * icon);
