@@ -2617,6 +2617,10 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 			desktop_error(NULL, NULL, 1); /* XXX */
 			continue;
 		}
+		/* skip this entry if it is deleted */
+		if((q = config_get(config, section, "Hidden")) != NULL
+				&& strcmp(q, "true") == 0)
+			continue;
 		q = config_get(config, section, "Name");
 		r = config_get(config, section, "Exec");
 		if(q == NULL || r == NULL)
