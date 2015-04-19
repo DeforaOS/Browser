@@ -211,6 +211,8 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
 	if((config = config_new()) == NULL)
 		return NULL;
 	if(config_load(config, path) != 0
+			|| ((p = config_get(config, section, "Hidden")) != NULL
+				&& strcmp(p, "true") == 0)
 			|| (p = config_get(config, section, "Type")) == NULL
 			|| (strcmp(p, "Application") != 0
 				&& strcmp(p, "Directory") != 0
