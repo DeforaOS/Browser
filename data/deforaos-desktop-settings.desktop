@@ -5,4 +5,4 @@ TryExec=desktopctl
 Exec=desktopctl -S
 Icon=user-desktop
 Type=Application
-Categories=Settings;GTK;
+Categories=Settings;DesktopSettings;GTK;
