@@ -228,7 +228,7 @@ msgstr "Tous les fichiers"
 
 #: ../src/browser.c:1272
 msgid "_Set as the default handler"
-msgstr ""
+msgstr "Utiliser par _défaut"
 
 #: ../src/browser.c:1384 ../src/browser.c:1743
 msgid "Refreshing folder: "
@@ -898,7 +898,7 @@ msgstr "CVS"
 
 #: ../src/plugins/cvs.c:158
 msgid "Checkout..."
-msgstr ""
+msgstr "Rapatrier..."
 
 #: ../src/plugins/cvs.c:170
 msgid "Root:"
@@ -969,11 +969,11 @@ msgstr "Voulez-vous vraiment effacer %s ?"
 
 #: ../src/plugins/cvs.c:657
 msgid "Path: "
-msgstr ""
+msgstr "Chemin : "
 
 #: ../src/plugins/cvs.c:670
 msgid "Module: "
-msgstr ""
+msgstr "Module : "
 
 #: ../src/plugins/dirtree.c:75
 msgid "Directory tree"
@@ -1005,7 +1005,7 @@ msgstr "Archiver"
 
 #: ../src/plugins/make.c:167 ../src/plugins/make.c:195
 msgid "Distclean"
-msgstr ""
+msgstr "Tout nettoyer"
 
 #: ../src/plugins/make.c:170 ../src/plugins/make.c:198
 msgid "Install"
@@ -1017,15 +1017,15 @@ msgstr "Désinstaller"
 
 #: ../src/plugins/make.c:209
 msgid "Run configure"
-msgstr ""
+msgstr "Relancer configure"
 
 #: ../src/plugins/make.c:214
 msgid "Run ./autogen.sh"
-msgstr ""
+msgstr "Relancer ./autogen.sh"
 
 #: ../src/plugins/make.c:219
 msgid "Run ./configure"
-msgstr ""
+msgstr "Relancer ./configure"
 
 #: ../src/plugins/make.c:327 ../src/plugins/make.c:336
 msgid "No Makefile found"
@@ -1099,11 +1099,11 @@ msgstr "Volumes"
 
 #: ../src/plugins/volumes.c:183
 msgid "Mountpoint"
-msgstr ""
+msgstr "Point de montage"
 
 #: ../src/plugins/volumes.c:190
 msgid "Used"
-msgstr ""
+msgstr "Utilisé"
 
 #: ../src/plugins/volumes.c:311 ../src/plugins/volumes.c:325
 #: ../src/plugins/volumes.c:332 ../src/plugins/volumes.c:378
