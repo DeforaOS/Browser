@@ -103,19 +103,19 @@ msgstr "Acerca _de"
 
 #: ../src/browser.c:294 ../src/view.c:150 ../src/view.c:157
 msgid "_File"
-msgstr ""
+msgstr "_Archivo"
 
 #: ../src/browser.c:295 ../src/desktopicon.c:834 ../src/view.c:124
 msgid "_Edit"
-msgstr ""
+msgstr "_Editar"
 
 #: ../src/browser.c:296
 msgid "_View"
-msgstr ""
+msgstr "_Ver"
 
 #: ../src/browser.c:297 ../src/view.c:151 ../src/view.c:158
 msgid "_Help"
-msgstr ""
+msgstr "_Ayuda"
 
 #: ../src/browser.c:305 ../src/desktop.c:882 ../src/desktop.c:905
 msgid "Back"
@@ -201,7 +201,7 @@ msgstr ""
 #: ../src/view.c:452 ../src/view.c:457 ../src/plugins/common.c:342
 #: ../src/plugins/common.c:346
 msgid "Error"
-msgstr ""
+msgstr "Error"
 
 #: ../src/browser.c:1213
 msgid "Open file..."
@@ -310,11 +310,11 @@ msgstr ""
 
 #: ../src/browser.c:2139
 msgid "Name"
-msgstr ""
+msgstr "Nombre"
 
 #: ../src/browser.c:2152
 msgid "_Plug-ins"
-msgstr ""
+msgstr "_Plug-ins"
 
 #: ../src/browser.c:2267
 msgid "Edit file association"
@@ -448,7 +448,7 @@ msgstr ""
 #: ../src/copy.c:222 ../src/delete.c:171 ../src/move.c:166
 #, c-format
 msgid "File %u of %u"
-msgstr ""
+msgstr "Archivo %u de %u"
 
 #: ../src/copy.c:355
 msgid "Omitting directory"
@@ -469,7 +469,7 @@ msgstr ""
 #: ../src/plugins/cvs.c:588 ../src/plugins/cvs.c:595
 #: ../src/plugins/trash.c:321 ../src/plugins/trash.c:328
 msgid "Question"
-msgstr ""
+msgstr "Pregunta"
 
 #: ../src/copy.c:795 ../src/move.c:502
 #, c-format
@@ -772,7 +772,7 @@ msgstr "Propriedades con "
 #: ../src/properties.c:482
 #, c-format
 msgid "Usage: %s [-p plug-in] file...\n"
-msgstr ""
+msgstr "Usage: %s [-p plug-in] archivo...\n"
 
 #: ../src/view.c:138
 msgid "Contents"
@@ -780,7 +780,7 @@ msgstr ""
 
 #: ../src/view.c:173
 msgid "Edit"
-msgstr ""
+msgstr "Editar"
 
 #: ../src/view.c:229
 msgid "Unknown file type"
@@ -788,7 +788,7 @@ msgstr ""
 
 #: ../src/view.c:236
 msgid "View - "
-msgstr ""
+msgstr "Ver - "
 
 #: ../src/view.c:279
 msgid "Unable to view file type"
@@ -800,7 +800,7 @@ msgstr "Seleccionar todo"
 
 #: ../src/view.c:405
 msgid "View file..."
-msgstr ""
+msgstr "Ver archivo..."
 
 #: ../src/view.c:575 ../src/view.c:670
 msgid "Could not edit file"
@@ -809,7 +809,7 @@ msgstr ""
 #: ../src/view.c:710
 #, c-format
 msgid "Usage: %s file...\n"
-msgstr ""
+msgstr "Usage: %s archivo...\n"
 
 #: ../src/plugins/common.c:117 ../src/plugins/common.c:421
 msgid "Save as..."
@@ -1010,7 +1010,7 @@ msgstr ""
 
 #: ../src/plugins/subversion.c:88
 msgid "Subversion"
-msgstr ""
+msgstr "Subversion"
 
 #: ../src/plugins/subversion.c:312
 msgid "Not a Subversion repository"
