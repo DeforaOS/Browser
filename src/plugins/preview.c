@@ -278,13 +278,13 @@ static void _refresh_mime(Preview * preview, Mime * mime, char const * type)
 {
 	if(mime_get_handler(mime, type, "open") != NULL)
 	{
-		gtk_widget_show(preview->toolbar);
 		gtk_widget_show(GTK_WIDGET(preview->open));
+		gtk_widget_show(preview->toolbar);
 	}
 	if(mime_get_handler(mime, type, "edit") != NULL)
 	{
-		gtk_widget_show(preview->toolbar);
 		gtk_widget_show(GTK_WIDGET(preview->edit));
+		gtk_widget_show(preview->toolbar);
 	}
 }
 
@@ -426,6 +426,7 @@ static gboolean _preview_on_idle_text(gpointer data)
 	preview->source = 0;
 	gtk_widget_show(GTK_WIDGET(preview->copy));
 	gtk_widget_show(GTK_WIDGET(preview->select_all));
+	gtk_widget_show(preview->toolbar);
 	gtk_text_buffer_set_text(preview->view_text_tbuf, "", 0);
 	if((fd = open(preview->path, O_RDONLY)) < 0)
 	{
