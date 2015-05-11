@@ -37,7 +37,7 @@ typedef struct _BrowserPlugin
 
 	char * path;
 	guint source;
-	unsigned int size;
+	ssize_t size;
 
 	/* widgets */
 	GtkWidget * widget;
@@ -307,7 +307,6 @@ static void _refresh_reset(Preview * preview)
 	if(preview->source != 0)
 		g_source_remove(preview->source);
 	preview->source = 0;
-	preview->size = PREVIEW_DEFAULT_SIZE;
 	gtk_widget_hide(preview->toolbar);
 	gtk_widget_hide(GTK_WIDGET(preview->open));
 	gtk_widget_hide(GTK_WIDGET(preview->edit));
@@ -347,18 +346,57 @@ static void _preview_on_edit(gpointer data)
 
 
 /* preview_on_idle_image */
+static void _idle_image_100(Preview * preview);
+static void _idle_image_scale(Preview * preview);
+
 static gboolean _preview_on_idle_image(gpointer data)
 {
 	Preview * preview = data;
-	BrowserPluginHelper * helper = preview->helper;
-	GdkPixbuf * pixbuf;
-	GError * error = NULL;
 
 	preview->source = 0;
+	/* show the toolbar */
 	gtk_widget_show(GTK_WIDGET(preview->zoom_100));
 	gtk_widget_show(GTK_WIDGET(preview->zoom_fit));
 	gtk_widget_show(GTK_WIDGET(preview->zoom_out));
 	gtk_widget_show(GTK_WIDGET(preview->zoom_in));
+	gtk_widget_show(preview->toolbar);
+	if(preview->size < 0)
+		_idle_image_100(preview);
+	else
+		_idle_image_scale(preview);
+	gtk_widget_show(preview->view_image);
+	return FALSE;
+}
+
+static void _idle_image_100(Preview * preview)
+{
+	BrowserPluginHelper * helper = preview->helper;
+	GdkPixbufAnimation * pixbuf;
+	GError * error = NULL;
+
+	if((pixbuf = gdk_pixbuf_animation_new_from_file(preview->path, &error))
+			== NULL)
+	{
+		helper->error(helper->browser, error->message, 1);
+		g_error_free(error);
+		return;
+	}
+	if(error != NULL)
+	{
+		helper->error(NULL, error->message, 1);
+		g_error_free(error);
+	}
+	gtk_image_set_from_animation(GTK_IMAGE(preview->view_image_image),
+			pixbuf);
+	g_object_unref(pixbuf);
+}
+
+static void _idle_image_scale(Preview * preview)
+{
+	BrowserPluginHelper * helper = preview->helper;
+	GdkPixbuf * pixbuf;
+	GError * error = NULL;
+
 #if GTK_CHECK_VERSION(2, 6, 0)
 	if((pixbuf = gdk_pixbuf_new_from_file_at_scale(preview->path,
 					preview->size, preview->size, TRUE,
@@ -371,46 +409,15 @@ static gboolean _preview_on_idle_image(gpointer data)
 	{
 		helper->error(helper->browser, error->message, 1);
 		g_error_free(error);
-		return FALSE;
+		return;
 	}
-	else if(error != NULL)
+	if(error != NULL)
 	{
 		helper->error(NULL, error->message, 1);
 		g_error_free(error);
 	}
 	gtk_image_set_from_pixbuf(GTK_IMAGE(preview->view_image_image), pixbuf);
 	g_object_unref(pixbuf);
-	gtk_widget_show(preview->view_image);
-	return FALSE;
-}
-
-
-/* preview_on_idle_image_100 */
-static gboolean _preview_on_idle_image_100(gpointer data)
-{
-	Preview * preview = data;
-	BrowserPluginHelper * helper = preview->helper;
-	GdkPixbufAnimation * pixbuf;
-	GError * error = NULL;
-
-	/* the toolbar and the image are already displayed */
-	preview->source = 0;
-	if((pixbuf = gdk_pixbuf_animation_new_from_file(preview->path, &error))
-			== NULL)
-	{
-		helper->error(helper->browser, error->message, 1);
-		g_error_free(error);
-		return FALSE;
-	}
-	else if(error != NULL)
-	{
-		helper->error(NULL, error->message, 1);
-		g_error_free(error);
-	}
-	gtk_image_set_from_animation(GTK_IMAGE(preview->view_image_image),
-			pixbuf);
-	g_object_unref(pixbuf);
-	return FALSE;
 }
 
 
@@ -479,10 +486,11 @@ static void _preview_on_zoom_100(gpointer data)
 {
 	Preview * preview = data;
 
+	preview->size = -1;
 	if(preview->source != 0)
 		g_source_remove(preview->source);
 	/* XXX may not always be an image */
-	preview->source = g_idle_add(_preview_on_idle_image_100, preview);
+	preview->source = g_idle_add(_preview_on_idle_image, preview);
 }
 
 
@@ -504,7 +512,8 @@ static void _preview_on_zoom_in(gpointer data)
 {
 	Preview * preview = data;
 
-	preview->size = preview->size * 2;
+	preview->size = ((preview->size > 0) ? preview->size
+			: PREVIEW_DEFAULT_SIZE) * 2;
 	if(preview->source != 0)
 		g_source_remove(preview->source);
 	/* XXX may not always be an image */
@@ -517,7 +526,8 @@ static void _preview_on_zoom_out(gpointer data)
 {
 	Preview * preview = data;
 
-	preview->size = preview->size / 2;
+	preview->size = ((preview->size > 0) ? preview->size
+			: PREVIEW_DEFAULT_SIZE) / 2;
 	/* stick with a minimum amount of pixels */
 	if(preview->size < 3)
 		preview->size = 3;
