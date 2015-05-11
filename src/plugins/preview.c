@@ -58,6 +58,10 @@ typedef struct _BrowserPlugin
 } Preview;
 
 
+/* constants */
+#define PREVIEW_DEFAULT_SIZE	96
+
+
 /* prototypes */
 /* plug-in */
 static Preview * _preview_init(BrowserPluginHelper * helper);
@@ -107,7 +111,7 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	preview->helper = helper;
 	preview->path = NULL;
 	preview->source = 0;
-	preview->size = 96;
+	preview->size = PREVIEW_DEFAULT_SIZE;
 	/* widgets */
 	vbox = gtk_vbox_new(FALSE, 4);
 	preview->widget = vbox;
@@ -303,7 +307,7 @@ static void _refresh_reset(Preview * preview)
 	if(preview->source != 0)
 		g_source_remove(preview->source);
 	preview->source = 0;
-	preview->size = 96;
+	preview->size = PREVIEW_DEFAULT_SIZE;
 	gtk_widget_hide(preview->toolbar);
 	gtk_widget_hide(GTK_WIDGET(preview->open));
 	gtk_widget_hide(GTK_WIDGET(preview->edit));
@@ -486,7 +490,7 @@ static void _preview_on_zoom_fit(gpointer data)
 {
 	Preview * preview = data;
 
-	preview->size = 96;
+	preview->size = PREVIEW_DEFAULT_SIZE;
 	if(preview->source != 0)
 		g_source_remove(preview->source);
 	/* XXX may not always be an image */
@@ -513,7 +517,7 @@ static void _preview_on_zoom_out(gpointer data)
 	Preview * preview = data;
 
 	preview->size = preview->size / 2;
-	/* stick with a divider of 96 */
+	/* stick with a minimum amount of pixels */
 	if(preview->size < 3)
 		preview->size = 3;
 	if(preview->source != 0)
