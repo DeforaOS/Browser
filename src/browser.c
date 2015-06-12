@@ -3232,8 +3232,8 @@ static void _view_thumbnails(Browser * browser)
 }
 #endif
 
-static gboolean _view_on_button_press(GtkWidget * widget, GdkEventButton * event,
-		gpointer data)
+static gboolean _view_on_button_press(GtkWidget * widget,
+		GdkEventButton * event, gpointer data)
 {
 	static IconCallback ic;
 	Browser * browser = data;
@@ -3332,7 +3332,8 @@ static void _view_on_button_press_directory(GtkWidget * menu, IconCallback * ic)
 			gtk_image_new_from_icon_name("window-new",
 				GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
-				_view_on_button_press_icon_open_new_window), ic);
+				_view_on_button_press_icon_open_new_window),
+			ic);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	menuitem = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
