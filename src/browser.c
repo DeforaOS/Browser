@@ -2932,10 +2932,12 @@ static void _view_details(Browser * browser)
 	_view_details_column_text(view, NULL, _("MIME type"), BC_MIME_TYPE,
 			BC_MIME_TYPE);
 	gtk_tree_view_set_headers_visible(view, TRUE);
-	g_signal_connect(view, "row-activated", G_CALLBACK(
-				_view_on_detail_default), browser);
+	g_signal_connect(view, "popup-menu", G_CALLBACK(_view_on_popup_menu),
+			browser);
 	g_signal_connect(view, "button-press-event", G_CALLBACK(
 				_view_on_button_press), browser);
+	g_signal_connect(view, "row-activated", G_CALLBACK(
+				_view_on_detail_default), browser);
 	gtk_container_add(GTK_CONTAINER(browser->scrolled),
 			browser->detailview);
 	gtk_widget_show(browser->detailview);
