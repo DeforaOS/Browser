@@ -2928,14 +2928,15 @@ static void _view_details(Browser * browser)
 			BC_SIZE);
 	_view_details_column_text(view, NULL, _("Owner"), BC_OWNER, BC_OWNER);
 	_view_details_column_text(view, NULL, _("Group"), BC_GROUP, BC_GROUP);
-	_view_details_column_text(view, NULL, _("Date"), BC_DISPLAY_DATE, BC_DATE);
+	_view_details_column_text(view, NULL, _("Date"), BC_DISPLAY_DATE,
+			BC_DATE);
 	_view_details_column_text(view, NULL, _("MIME type"), BC_MIME_TYPE,
 			BC_MIME_TYPE);
 	gtk_tree_view_set_headers_visible(view, TRUE);
-	g_signal_connect(view, "popup-menu", G_CALLBACK(_view_on_popup_menu),
-			browser);
 	g_signal_connect(view, "button-press-event", G_CALLBACK(
 				_view_on_button_press), browser);
+	g_signal_connect(view, "popup-menu", G_CALLBACK(_view_on_popup_menu),
+			browser);
 	g_signal_connect(view, "row-activated", G_CALLBACK(
 				_view_on_detail_default), browser);
 	gtk_container_add(GTK_CONTAINER(browser->scrolled),
