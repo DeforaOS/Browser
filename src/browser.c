@@ -2799,6 +2799,8 @@ static void _view_thumbnails(Browser * browser);
 /* callbacks */
 static gboolean _view_on_button_press(GtkWidget * widget,
 		GdkEventButton * event, gpointer data);
+static GtkTreePath * _view_on_button_press_path(Browser * browser,
+		GdkEventButton * event);
 static void _view_on_button_press_directory(GtkWidget * menu,
 		IconCallback * ic);
 static void _view_on_button_press_file(Browser * browser, GtkWidget * menu,
@@ -3253,23 +3255,12 @@ static gboolean _view_on_button_press(GtkWidget * widget,
 	/* FIXME prevents actions to be called but probably leaks memory
 	g_signal_connect(widget, "deactivate", G_CALLBACK(gtk_widget_destroy),
 			NULL); */
-#if GTK_CHECK_VERSION(2, 6, 0)
-	if(browser_get_view(browser) != BV_DETAILS)
-		path = gtk_icon_view_get_path_at_pos(GTK_ICON_VIEW(
-					browser->iconview), (int)event->x,
-				(int)event->y);
-	else
-#endif
-		gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(
-					browser->detailview), (int)event->x,
-				(int)event->y, &path, NULL, NULL, NULL);
 	ic.browser = browser;
 	ic.isdir = 0;
 	ic.isexec = 0;
 	ic.path = NULL;
-	if(path == NULL)
-		return _view_on_button_press_popup(browser, event, widget,
-				&ic);
+	if((path = _view_on_button_press_path(browser, event)) == NULL)
+		return _view_on_button_press_popup(browser, event, widget, &ic);
 	/* FIXME error checking + sub-functions */
 	gtk_tree_model_get_iter(GTK_TREE_MODEL(browser->store), &iter, path);
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -3316,6 +3307,40 @@ static gboolean _view_on_button_press(GtkWidget * widget,
 	gtk_tree_path_free(path);
 #endif
 	return _view_on_button_press_show(browser, event, widget);
+}
+
+static GtkTreePath * _view_on_button_press_path(Browser * browser,
+		GdkEventButton * event)
+{
+	BrowserView view;
+	GtkTreePath * path;
+	GList * sel;
+
+	view = browser_get_view(browser);
+	if(event->button == 3)
+	{
+#if GTK_CHECK_VERSION(2, 6, 0)
+		if(view != BV_DETAILS)
+			path = gtk_icon_view_get_path_at_pos(GTK_ICON_VIEW(
+						browser->iconview),
+					(int)event->x, (int)event->y);
+		else
+#endif
+			gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(
+						browser->detailview),
+					(int)event->x, (int)event->y,
+					&path, NULL, NULL, NULL);
+	}
+	else if((sel = _browser_get_selection(browser)) != NULL)
+	{
+		/* FIXME only considers one selected item */
+		path = sel->data;
+		g_list_foreach(sel->next, (GFunc)gtk_tree_path_free, NULL);
+		g_list_free(sel);
+	}
+	else
+		path = NULL;
+	return path;
 }
 
 static void _view_on_button_press_directory(GtkWidget * menu, IconCallback * ic)
