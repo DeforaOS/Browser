@@ -106,7 +106,6 @@ static SVN * _subversion_init(BrowserPluginHelper * helper)
 	SVN * svn;
 	PangoFontDescription * font;
 	GtkSizeGroup * group;
-	GtkSizeGroup * bgroup;
 	GtkWidget * widget;
 
 	if((svn = object_new(sizeof(*svn))) == NULL)
@@ -123,7 +122,6 @@ static SVN * _subversion_init(BrowserPluginHelper * helper)
 	font = pango_font_description_new();
 	pango_font_description_set_weight(font, PANGO_WEIGHT_BOLD);
 	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	bgroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	/* label */
 	svn->name = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(svn->name), PANGO_ELLIPSIZE_MIDDLE);
@@ -140,20 +138,20 @@ static SVN * _subversion_init(BrowserPluginHelper * helper)
 #else
 	svn->directory = gtk_vbox_new(FALSE, 4);
 #endif
-	widget = _init_button(bgroup, GTK_STOCK_FIND_AND_REPLACE,
+	widget = _init_button(group, GTK_STOCK_FIND_AND_REPLACE,
 			_("Request diff"), G_CALLBACK(_subversion_on_diff),
 			svn);
 	gtk_box_pack_start(GTK_BOX(svn->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_FIND, _("View log"),
+	widget = _init_button(group, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_subversion_on_log), svn);
 	gtk_box_pack_start(GTK_BOX(svn->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_PROPERTIES, _("Status"),
+	widget = _init_button(group, GTK_STOCK_PROPERTIES, _("Status"),
 			G_CALLBACK(_subversion_on_status), svn);
 	gtk_box_pack_start(GTK_BOX(svn->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_REFRESH, _("Update"),
+	widget = _init_button(group, GTK_STOCK_REFRESH, _("Update"),
 			G_CALLBACK(_subversion_on_update), svn);
 	gtk_box_pack_start(GTK_BOX(svn->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_JUMP_TO, _("Commit"),
+	widget = _init_button(group, GTK_STOCK_JUMP_TO, _("Commit"),
 			G_CALLBACK(_subversion_on_commit), svn);
 	gtk_box_pack_start(GTK_BOX(svn->directory), widget, FALSE, TRUE, 0);
 	gtk_widget_show_all(svn->directory);
@@ -166,30 +164,30 @@ static SVN * _subversion_init(BrowserPluginHelper * helper)
 #else
 	svn->file = gtk_vbox_new(FALSE, 4);
 #endif
-	widget = _init_button(bgroup, GTK_STOCK_FIND_AND_REPLACE,
+	widget = _init_button(group, GTK_STOCK_FIND_AND_REPLACE,
 			_("Request diff"), G_CALLBACK(_subversion_on_diff),
 			svn);
 	gtk_box_pack_start(GTK_BOX(svn->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_INDEX, _("Annotate"),
+	widget = _init_button(group, GTK_STOCK_INDEX, _("Annotate"),
 			G_CALLBACK(_subversion_on_blame), svn);
 	gtk_box_pack_start(GTK_BOX(svn->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_FIND, _("View log"),
+	widget = _init_button(group, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_subversion_on_log), svn);
 	gtk_box_pack_start(GTK_BOX(svn->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_PROPERTIES, _("Status"),
+	widget = _init_button(group, GTK_STOCK_PROPERTIES, _("Status"),
 			G_CALLBACK(_subversion_on_status), svn);
 	gtk_box_pack_start(GTK_BOX(svn->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_REFRESH, _("Update"),
+	widget = _init_button(group, GTK_STOCK_REFRESH, _("Update"),
 			G_CALLBACK(_subversion_on_update), svn);
 	gtk_box_pack_start(GTK_BOX(svn->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(bgroup, GTK_STOCK_JUMP_TO, _("Commit"),
+	widget = _init_button(group, GTK_STOCK_JUMP_TO, _("Commit"),
 			G_CALLBACK(_subversion_on_commit), svn);
 	gtk_box_pack_start(GTK_BOX(svn->file), widget, FALSE, TRUE, 0);
 	gtk_widget_show_all(svn->file);
 	gtk_widget_set_no_show_all(svn->file, TRUE);
 	gtk_box_pack_start(GTK_BOX(svn->widget), svn->file, FALSE, TRUE, 0);
 	/* additional actions */
-	svn->add = _init_button(bgroup, GTK_STOCK_ADD, _("Add to repository"),
+	svn->add = _init_button(group, GTK_STOCK_ADD, _("Add to repository"),
 			G_CALLBACK(_subversion_on_add), svn);
 	gtk_box_pack_start(GTK_BOX(svn->widget), svn->add, FALSE, TRUE, 0);
 	gtk_widget_show_all(svn->widget);
