@@ -3314,7 +3314,6 @@ static GtkTreePath * _view_on_button_press_path(Browser * browser,
 {
 	BrowserView view;
 	GtkTreePath * path;
-	GList * sel;
 
 	view = browser_get_view(browser);
 	if(event->button == 3)
@@ -3331,15 +3330,21 @@ static GtkTreePath * _view_on_button_press_path(Browser * browser,
 					(int)event->x, (int)event->y,
 					&path, NULL, NULL, NULL);
 	}
-	else if((sel = _browser_get_selection(browser)) != NULL)
-	{
-		/* FIXME only considers one selected item */
-		path = sel->data;
-		g_list_foreach(sel->next, (GFunc)gtk_tree_path_free, NULL);
-		g_list_free(sel);
-	}
 	else
+	{
 		path = NULL;
+		/* FIXME only considers one selected item */
+#if GTK_CHECK_VERSION(2, 6, 0)
+		if(view != BV_DETAILS)
+			gtk_icon_view_get_cursor(GTK_ICON_VIEW(
+						browser->iconview), &path,
+					NULL);
+		else
+#endif
+			gtk_tree_view_get_cursor(GTK_TREE_VIEW(
+						browser->detailview), &path,
+					NULL);
+	}
 	return path;
 }
 
