@@ -1890,8 +1890,8 @@ GList * browser_selection_copy(Browser * browser)
 		sel = gtk_tree_selection_get_selected_rows(treesel, NULL);
 	for(p = NULL; sel != NULL; sel = sel->next)
 	{
-		if(!gtk_tree_model_get_iter(GTK_TREE_MODEL(browser->store),
-					&iter, sel->data))
+		if(gtk_tree_model_get_iter(GTK_TREE_MODEL(browser->store),
+					&iter, sel->data) == FALSE)
 			continue;
 		gtk_tree_model_get(GTK_TREE_MODEL(browser->store), &iter,
 				BC_PATH, &q, -1);
@@ -3133,10 +3133,11 @@ static void _view_icons_on_icon_drag_data_received(GtkWidget * widget,
 			x, y);
 	if(path == NULL)
 		location = browser_get_location(browser);
+	else if(gtk_tree_model_get_iter(GTK_TREE_MODEL(browser->store), &iter,
+				path) == FALSE)
+		return;
 	else
 	{
-		gtk_tree_model_get_iter(GTK_TREE_MODEL(browser->store), &iter,
-				path);
 		gtk_tree_model_get(GTK_TREE_MODEL(browser->store), &iter,
 				BC_PATH, &p, -1);
 		location = p;
@@ -3702,7 +3703,9 @@ static void _view_on_detail_default_do(Browser * browser, GtkTreePath * path)
 	GtkTreeIter iter;
 	gboolean is_dir;
 
-	gtk_tree_model_get_iter(GTK_TREE_MODEL(browser->store), &iter, path);
+	if(gtk_tree_model_get_iter(GTK_TREE_MODEL(browser->store), &iter, path)
+			== FALSE)
+		return;
 	gtk_tree_model_get(GTK_TREE_MODEL(browser->store), &iter, BC_PATH,
 			&location, BC_IS_DIRECTORY, &is_dir, -1);
 	if(is_dir)
