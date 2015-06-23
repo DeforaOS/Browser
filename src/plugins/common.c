@@ -16,9 +16,6 @@
 
 
 #include <sys/stat.h>
-#ifdef COMMON_RTRIM
-# include <ctype.h>
-#endif
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -604,24 +601,5 @@ static GtkResponseType _common_prompt(char const * message, char ** entry)
 	}
 	gtk_widget_destroy(dialog);
 	return ret;
-}
-#endif
-
-
-#ifdef COMMON_RTRIM
-/* common_rtrim */
-static void _common_rtrim(char * string)
-{
-	unsigned char * s = (unsigned char *)string;
-	size_t i;
-
-	if(s == NULL || (i = strlen(string)) == 0)
-		return;
-	for(i--; s[i] != '\0' && isspace(s[i]); i--)
-	{
-		string[i] = '\0';
-		if(i == 0)
-			break;
-	}
 }
 #endif
