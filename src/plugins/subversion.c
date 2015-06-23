@@ -385,14 +385,13 @@ static void _subversion_on_add(gpointer data)
 	gchar * dirname;
 	gchar * basename;
 	char * argv[] = { "svn", "add", "--", NULL, NULL };
-	char const * type;
 
 	if(svn->filename == NULL)
 		return;
 	dirname = g_path_get_dirname(svn->filename);
 	basename = g_path_get_basename(svn->filename);
 	argv[3] = basename;
-	type = svn->helper->get_type(svn->helper->browser, svn->filename, 0);
+	svn->helper->get_type(svn->helper->browser, svn->filename, 0);
 	_subversion_add_task(svn, "svn add", dirname, argv);
 	g_free(basename);
 	g_free(dirname);
