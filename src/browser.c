@@ -2722,7 +2722,7 @@ static char * _location_real_path(char const * path)
 	if(i >= 2 && strcmp(&p[i - 2], "/.") == 0)
 		p[i - 1] = '\0';
 	/* trim slashes in the end */
-	for(i = strlen(p); i > 1 && p[--i] == '/'; p[i] = '\0');
+	string_rtrim(p, "/");
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\") => \"%s\"\n", __func__, path, p);
 #endif

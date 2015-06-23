@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#define COMMON_RTRIM
 #include "common.c"
 
 
@@ -496,7 +495,7 @@ static char * _cvs_get_repository(char const * pathname)
 		return NULL;
 	snprintf(p, len, "%s/%s", pathname, repository);
 	if(g_file_get_contents(p, &ret, NULL, NULL) == TRUE)
-		_common_rtrim(ret);
+		string_rtrim(ret, NULL);
 	free(p);
 	return ret;
 }
@@ -515,7 +514,7 @@ static char * _cvs_get_root(char const * pathname)
 		return NULL;
 	snprintf(p, len, "%s/%s", pathname, root);
 	if(g_file_get_contents(p, &ret, NULL, NULL) == TRUE)
-		_common_rtrim(ret);
+		string_rtrim(ret, NULL);
 	free(p);
 	return ret;
 }
@@ -534,7 +533,7 @@ static char * _cvs_get_tag(char const * pathname)
 		return NULL;
 	snprintf(p, len, "%s/%s", pathname, tag);
 	if(g_file_get_contents(p, &ret, NULL, NULL) == TRUE)
-		_common_rtrim(ret);
+		string_rtrim(ret, NULL);
 	free(p);
 	return ret;
 }
