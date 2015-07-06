@@ -63,6 +63,8 @@ enum _VolumesColumn
 	DC_FILESYSTEM,
 	DC_FLAGS,
 	DC_MOUNTPOINT,
+	DC_SIZE,
+	DC_SIZE_DISPLAY,
 	DC_FREE,
 	DC_FREE_DISPLAY,
 	DC_UPDATED
@@ -164,8 +166,8 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	volumes->store = gtk_list_store_new(DC_COUNT, GDK_TYPE_PIXBUF,
 			G_TYPE_STRING, G_TYPE_STRING, G_TYPE_UINT,
 			G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_UINT,
-			G_TYPE_STRING, G_TYPE_UINT, G_TYPE_STRING,
-			G_TYPE_BOOLEAN);
+			G_TYPE_STRING, G_TYPE_UINT64, G_TYPE_STRING,
+			G_TYPE_UINT, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	volumes->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				volumes->store));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(volumes->view), TRUE);
@@ -173,24 +175,31 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 				_volumes_on_view_button_press), volumes);
 	g_signal_connect(volumes->view, "popup-menu", G_CALLBACK(
 				_volumes_on_view_popup_menu), volumes);
-	/* icon */
+	/* column: icon */
 	renderer = gtk_cell_renderer_pixbuf_new();
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
 			"pixbuf", DC_PIXBUF, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(volumes->view), column);
-	/* volume name */
+	/* column: volume name */
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes(_("Mountpoint"),
 			renderer, "text", DC_NAME, "ellipsize", DC_ELLIPSIZE,
 			"ellipsize-set", DC_ELLIPSIZE_SET, NULL);
 	gtk_tree_view_column_set_resizable(column, TRUE);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(volumes->view), column);
-	/* free space */
+	/* column: size */
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes(_("Size"), renderer,
+			"text", DC_SIZE_DISPLAY, NULL);
+	gtk_tree_view_column_set_resizable(column, TRUE);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(volumes->view), column);
+	/* column: free space */
 	renderer = gtk_cell_renderer_progress_new();
 	column = gtk_tree_view_column_new_with_attributes(_("Used"), renderer,
 			"text", DC_FREE_DISPLAY, "value", DC_FREE, NULL);
 	gtk_tree_view_column_set_resizable(column, TRUE);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(volumes->view), column);
+	/* selection */
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(volumes->view));
 	gtk_tree_selection_set_mode(treesel, GTK_SELECTION_SINGLE);
 	g_signal_connect(volumes->view, "row-activated", G_CALLBACK(
@@ -268,7 +277,10 @@ static int _volumes_can_eject(unsigned int flags)
 /* volumes_list */
 static void _list_add(Volumes * volumes, char const * name, char const * device,
 		char const * filesystem, unsigned int flags,
-		char const * mountpoint, fsblkcnt_t free, fsblkcnt_t total);
+		char const * mountpoint, unsigned long bsize,
+		fsblkcnt_t free, fsblkcnt_t total);
+static void _list_add_size(char * buf, size_t len, unsigned long bsize,
+		fsblkcnt_t total);
 static GdkPixbuf * _list_get_icon(Volumes * volumes, VolumesPixbuf dp,
 		unsigned int flags, char const * mountpoint);
 static GdkPixbuf * _list_get_icon_emblem(GdkPixbuf * pixbuf, int size,
@@ -310,8 +322,8 @@ static void _volumes_list(Volumes * volumes)
 		_list_add(volumes, (mnt[i].f_flag & ST_ROOTFS)
 				? _("Root filesystem") : NULL,
 				mnt[i].f_mntfromname, mnt[i].f_fstypename,
-				flags, mnt[i].f_mntonname, mnt[i].f_bavail,
-				mnt[i].f_blocks);
+				flags, mnt[i].f_mntonname, mnt[i].f_frsize,
+				mnt[i].f_bavail, mnt[i].f_blocks);
 	}
 #elif defined(MNT_NOWAIT)
 	if((res = getmntinfo(&mnt, MNT_NOWAIT)) <= 0)
@@ -324,19 +336,20 @@ static void _volumes_list(Volumes * volumes)
 		_list_add(volumes, (mnt[i].f_flags & MNT_ROOTFS)
 				? _("Root filesystem") : NULL,
 				mnt[i].f_mntfromname, mnt[i].f_fstypename,
-				flags, mnt[i].f_mntonname, mnt[i].f_bavail,
-				mnt[i].f_blocks);
+				flags, mnt[i].f_mntonname, mnt[i].f_bsize,
+				mnt[i].f_bavail, mnt[i].f_blocks);
 	}
 #else
 	_list_reset(volumes);
-	_list_add(volumes, _("Root filesystem"), NULL, NULL, 0, "/", 0, 0);
+	_list_add(volumes, _("Root filesystem"), NULL, NULL, 0, "/", 0, 0, 0);
 #endif
 	_list_purge(volumes);
 }
 
 static void _list_add(Volumes * volumes, char const * name, char const * device,
 		char const * filesystem, unsigned int flags,
-		char const * mountpoint, fsblkcnt_t free, fsblkcnt_t total)
+		char const * mountpoint, unsigned long bsize,
+		fsblkcnt_t free, fsblkcnt_t total)
 {
 	GtkTreeIter iter;
 	VolumesPixbuf dp;
@@ -348,6 +361,7 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 	double fraction = 0.0;
 	unsigned int f = 0;
 	char buf[16] = "";
+	char buf2[16];
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\", \"%s\", \"%s\", %lu, %lu)\n",
@@ -386,6 +400,7 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 		f = fraction * 100;
 		snprintf(buf, sizeof(buf), "%.1lf%%", fraction * 100.0);
 	}
+	_list_add_size(buf2, sizeof(buf2), bsize, total);
 	_list_get_iter(volumes, &iter, mountpoint);
 	pixbuf = _list_get_icon(volumes, dp, flags, mountpoint);
 	gtk_list_store_set(volumes->store, &iter, DC_DEVICE, device,
@@ -393,7 +408,31 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 			DC_ELLIPSIZE, PANGO_ELLIPSIZE_END,
 			DC_ELLIPSIZE_SET, TRUE, DC_FILESYSTEM, filesystem,
 			DC_FLAGS, flags, DC_MOUNTPOINT, mountpoint, DC_FREE, f,
-			DC_FREE_DISPLAY, buf, DC_UPDATED, TRUE, -1);
+			DC_FREE_DISPLAY, buf, DC_SIZE, bsize * total,
+			DC_SIZE_DISPLAY, buf2, DC_UPDATED, TRUE, -1);
+}
+
+static void _list_add_size(char * buf, size_t len, unsigned long bsize,
+		fsblkcnt_t total)
+{
+	double sz = bsize * total;
+	char * unit = _("bytes");
+	char const * format = "%.1f %s";
+
+	if(sz < 1024)
+		format = "%.0f %s";
+	else if((sz /= 1024) < 1024)
+		unit = _("kB");
+	else if((sz /= 1024) < 1024)
+		unit = _("MB");
+	else if((sz /= 1024) < 1024)
+		unit = _("GB");
+	else
+	{
+		sz /= 1024;
+		unit = _("TB");
+	}
+	snprintf(buf, len, format, sz, unit);
 }
 
 static GdkPixbuf * _list_get_icon(Volumes * volumes, VolumesPixbuf dp,
