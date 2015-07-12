@@ -1798,9 +1798,9 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 			, &icon48, &icon96
 #endif
 		   );
-	gtk_list_store_set(browser->store, iter, BC_UPDATED, 1, BC_PATH, path,
-			BC_DISPLAY_NAME, display, BC_INODE, inode,
-			BC_IS_DIRECTORY, S_ISDIR(st->st_mode),
+	gtk_list_store_set(browser->store, iter, BC_UPDATED, TRUE,
+			BC_PATH, path, BC_DISPLAY_NAME, display,
+			BC_INODE, inode, BC_IS_DIRECTORY, S_ISDIR(st->st_mode),
 			BC_IS_EXECUTABLE, st->st_mode & S_IXUSR,
 			BC_IS_MOUNT_POINT,
 			(st->st_dev != browser->refresh_dev) ? TRUE : FALSE,
