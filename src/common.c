@@ -198,7 +198,7 @@ static int _common_symlink(GtkWidget * window, char const * cur)
 #else
 	hbox = gtk_hbox_new(FALSE, 0);
 #endif
-	widget = gtk_label_new(_("Destination: "));
+	widget = gtk_label_new(_("Destination:"));
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 4);
 	widget = gtk_entry_new();
 	gtk_box_pack_start(GTK_BOX(hbox), widget, TRUE, TRUE, 4);
