@@ -34,6 +34,7 @@
 #define _(string) gettext(string)
 #define N_(string) (string)
 
+#define COMMON_GET_ABSOLUTE_PATH
 #define COMMON_CONFIG_FILENAME
 #include "common.c"
 
@@ -123,9 +124,9 @@ static int _properties(Mime * mime, char const * plugin,
 
 	for(i = 0; i < filec; i++)
 	{
-		p = (filev[i][0] != '/') ? g_build_filename(g_get_current_dir(),
-				"/", filev[i], NULL) : g_strdup(filev[i]);
-		if((properties = _properties_new(mime, plugin, p)) == NULL)
+		if((p = _common_get_absolute_path(filev[i])) == NULL)
+			ret |= 1;
+		else if((properties = _properties_new(mime, plugin, p)) == NULL)
 			ret |= 1;
 		else
 			_properties_cnt++;
