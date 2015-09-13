@@ -13,7 +13,6 @@
 - enable drag and drop as a source
 
 [properties.c]
-- resolve relative paths
 - add an option to count files altogether
 
 [view.c]
