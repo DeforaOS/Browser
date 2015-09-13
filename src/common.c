@@ -40,6 +40,10 @@ static int _common_drag_data_received(GdkDragContext * context,
 static int _common_exec(char const * program, char const * flags, GList * args);
 #endif
 
+#ifdef COMMON_GET_ABSOLUTE_PATH
+static char * _common_get_absolute_path(char const * path);
+#endif
+
 #ifdef COMMON_SYMLINK
 static int _common_symlink(GtkWidget * window, char const * cur);
 #endif
@@ -173,6 +177,47 @@ static int _common_exec(char const * program, char const * flags, GList * args)
 	return ret;
 }
 #endif /* COMMON_EXEC */
+
+
+#ifdef COMMON_GET_ABSOLUTE_PATH
+/* common_get_absolute_path */
+static char * _common_get_absolute_path(char const * path)
+{
+	char * p;
+	char * cur;
+	size_t i;
+
+	if(path == NULL)
+		return NULL;
+	if(g_path_is_absolute(path))
+	{
+		if((p = strdup(path)) == NULL)
+			return NULL;
+	}
+	else
+	{
+		cur = g_get_current_dir();
+		p = g_build_filename(cur, path, NULL);
+		g_free(cur);
+	}
+	/* replace "/./" by "/" */
+	for(i = strlen(p); (cur = strstr(p, "/./")) != NULL; i = strlen(p))
+		memmove(cur, &cur[2], (p + i) - (cur + 1));
+	/* replace "//" by "/" */
+	for(i = strlen(p); (cur = strstr(p, "//")) != NULL; i = strlen(p))
+		memmove(cur, &cur[1], (p + i) - (cur));
+	/* remove single dots at the end of the address */
+	i = strlen(p);
+	if(i >= 2 && strcmp(&p[i - 2], "/.") == 0)
+		p[i - 1] = '\0';
+	/* trim slashes in the end */
+	string_rtrim(p, "/");
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\") => \"%s\"\n", __func__, path, p);
+#endif
+	return p;
+}
+#endif /* COMMON_GET_ABSOLUTE_PATH */
 
 
 #ifdef COMMON_SYMLINK

@@ -43,6 +43,7 @@ static char const _license[] =
 #define COMMON_CONFIG_FILENAME
 #define COMMON_DND
 #define COMMON_EXEC
+#define COMMON_GET_ABSOLUTE_PATH
 #include "common.c"
 
 /* constants */
@@ -2654,7 +2655,6 @@ static void _browser_set_status(Browser * browser, char const * status)
 
 
 /* browser_set_location */
-static char * _location_real_path(char const * path);
 static int _location_directory(Browser * browser, char const * path, DIR * dir,
 		struct stat * st);
 
@@ -2668,7 +2668,7 @@ int browser_set_location(Browser * browser, char const * path)
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, path);
 #endif
-	if((realpath = _location_real_path(path)) == NULL)
+	if((realpath = _common_get_absolute_path(path)) == NULL)
 		return -1;
 	/* XXX check browser_cnt to disallow filenames at startup */
 	if(browser_cnt && g_file_test(realpath, G_FILE_TEST_IS_REGULAR))
@@ -2690,43 +2690,6 @@ int browser_set_location(Browser * browser, char const * path)
 		ret = -browser_error(browser, strerror(errno), 1);
 	free(realpath);
 	return ret;
-}
-
-static char * _location_real_path(char const * path)
-{
-	char * p;
-	char * cur;
-	size_t i;
-
-	if(path == NULL)
-		return NULL;
-	if(path[0] == '/')
-	{
-		if((p = strdup(path)) == NULL)
-			return NULL;
-	}
-	else
-	{
-		cur = g_get_current_dir();
-		p = g_build_filename(cur, path, NULL);
-		g_free(cur);
-	}
-	/* replace "/./" by "/" */
-	for(i = strlen(p); (cur = strstr(p, "/./")) != NULL; i = strlen(p))
-		memmove(cur, &cur[2], (p + i) - (cur + 1));
-	/* replace "//" by "/" */
-	for(i = strlen(p); (cur = strstr(p, "//")) != NULL; i = strlen(p))
-		memmove(cur, &cur[1], (p + i) - (cur));
-	/* remove single dots at the end of the address */
-	i = strlen(p);
-	if(i >= 2 && strcmp(&p[i - 2], "/.") == 0)
-		p[i - 1] = '\0';
-	/* trim slashes in the end */
-	string_rtrim(p, "/");
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\") => \"%s\"\n", __func__, path, p);
-#endif
-	return p;
 }
 
 static int _location_directory(Browser * browser, char const * path, DIR * dir,
