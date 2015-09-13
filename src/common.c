@@ -27,6 +27,10 @@
 
 
 /* prototypes */
+#ifdef COMMON_CONFIG_FILENAME
+static String * _common_config_filename(String const * name);
+#endif
+
 #ifdef COMMON_DND
 static int _common_drag_data_received(GdkDragContext * context,
 		GtkSelectionData * seldata, char const * dest);
@@ -36,10 +40,14 @@ static int _common_drag_data_received(GdkDragContext * context,
 static int _common_exec(char const * program, char const * flags, GList * args);
 #endif
 
+#ifdef COMMON_SYMLINK
+static int _common_symlink(GtkWidget * window, char const * cur);
+#endif
+
 
 /* functions */
 #ifdef COMMON_CONFIG_FILENAME
-static String * _common_config_filename(char const * name)
+static String * _common_config_filename(String const * name)
 {
 	char const * homedir;
 
