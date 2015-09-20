@@ -2787,7 +2787,7 @@ static int _error(char const * message, int ret)
 /* usage */
 static int _usage(void)
 {
-	fputs(_("Usage: desktop [-H|-V][-a|-c|-f|-h|-n][-m monitor][-N][-w]\n"
+	fprintf(stderr, _("Usage: %s [-H|-V][-a|-c|-f|-h|-n][-m monitor][-N][-w]\n"
 "  -H	Place icons horizontally\n"
 "  -V	Place icons vertically\n"
 "  -a	Display the applications registered\n"
@@ -2797,7 +2797,7 @@ static int _usage(void)
 "  -m	Monitor where to display the desktop\n"
 "  -n	Do not display icons on the desktop\n"
 "  -N	Do not intercept mouse clicks on the desktop\n"
-"  -w	Draw the desktop as a window\n"), stderr);
+"  -w	Draw the desktop as a window\n"), PROGNAME);
 	return 1;
 }
 
