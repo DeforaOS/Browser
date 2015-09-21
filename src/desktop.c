@@ -1352,6 +1352,7 @@ static int _desktop_get_workarea(Desktop * desktop)
 	unsigned long bytes;
 	unsigned char * p = NULL;
 	unsigned long * u;
+	int res;
 
 	if(desktop->prefs.monitor >= 0 && desktop->prefs.monitor
 			< gdk_screen_get_n_monitors(desktop->screen))
@@ -1368,10 +1369,15 @@ static int _desktop_get_workarea(Desktop * desktop)
 		return 0;
 	}
 	atom = gdk_x11_get_xatom_by_name("_NET_WORKAREA");
-	if(XGetWindowProperty(GDK_DISPLAY_XDISPLAY(desktop->display),
+	gdk_error_trap_push();
+	res = XGetWindowProperty(GDK_DISPLAY_XDISPLAY(desktop->display),
 				GDK_WINDOW_XID(desktop->root), atom, 0,
 				G_MAXLONG, False, XA_CARDINAL, &type, &format,
-				&cnt, &bytes, &p) == Success && cnt >= 4)
+				&cnt, &bytes, &p);
+	if(gdk_error_trap_pop() || res != Success || cnt < 4)
+		gdk_screen_get_monitor_geometry(desktop->screen, 0,
+				&desktop->workarea);
+	else
 	{
 		u = (unsigned long *)p;
 		desktop->workarea.x = u[0];
@@ -1381,10 +1387,8 @@ static int _desktop_get_workarea(Desktop * desktop)
 			gdk_screen_get_monitor_geometry(desktop->screen, 0,
 					&desktop->workarea);
 	}
-	else
-		gdk_screen_get_monitor_geometry(desktop->screen, 0,
-				&desktop->workarea);
-	XFree(p);
+	if(p != NULL)
+		XFree(p);
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() (%d, %d) %dx%d\n", __func__,
 			desktop->workarea.x, desktop->workarea.y,
