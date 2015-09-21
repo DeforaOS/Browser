@@ -2245,9 +2245,7 @@ static void _preferences_set(Desktop * desktop)
 
 	/* FIXME:
 	 * - cache the current configuration within the Desktop class
-	 * - apply the configuration values to the widgets
-	 * - no longer prepend an empty line in configuration files when there
-	 *   are no values in the default section */
+	 * - apply the configuration values to the widgets */
 	if((config = _desktop_get_config(desktop)) != NULL)
 	{
 		/* background */
