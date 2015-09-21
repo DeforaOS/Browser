@@ -1661,9 +1661,9 @@ static void _on_preferences_monitors_changed(gpointer data);
 static void _on_preferences_monitors_refresh(gpointer data);
 static void _on_preferences_response(GtkWidget * widget, gint response,
 		gpointer data);
-static void _on_preferences_ok(gpointer data);
-static void _on_preferences_apply(gpointer data);
-static void _on_preferences_cancel(gpointer data);
+static void _on_preferences_response_apply(gpointer data);
+static void _on_preferences_response_cancel(gpointer data);
+static void _on_preferences_response_ok(gpointer data);
 static void _on_preferences_update_preview(gpointer data);
 
 static void _desktop_show_preferences(Desktop * desktop)
@@ -2004,7 +2004,7 @@ static void _preferences_monitors(Desktop * desktop, GtkWidget * notebook)
 
 static gboolean _on_preferences_closex(gpointer data)
 {
-	_on_preferences_cancel(data);
+	_on_preferences_response_cancel(data);
 	return TRUE;
 }
 
@@ -2112,22 +2112,14 @@ static void _on_preferences_response(GtkWidget * widget, gint response,
 	Desktop * desktop = data;
 
 	if(response == GTK_RESPONSE_OK)
-		_on_preferences_ok(desktop);
+		_on_preferences_response_ok(desktop);
 	else if(response == GTK_RESPONSE_APPLY)
-		_on_preferences_apply(desktop);
+		_on_preferences_response_apply(desktop);
 	else if(response == GTK_RESPONSE_CANCEL)
-		_on_preferences_cancel(desktop);
+		_on_preferences_response_cancel(desktop);
 }
 
-static void _on_preferences_ok(gpointer data)
-{
-	Desktop * desktop = data;
-
-	gtk_widget_hide(desktop->pr_window);
-	_on_preferences_apply(desktop);
-}
-
-static void _on_preferences_apply(gpointer data)
+static void _on_preferences_response_apply(gpointer data)
 {
 	Desktop * desktop = data;
 	Config * config;
@@ -2223,12 +2215,20 @@ static void _on_preferences_apply(gpointer data)
 	config_delete(config);
 }
 
-static void _on_preferences_cancel(gpointer data)
+static void _on_preferences_response_cancel(gpointer data)
 {
 	Desktop * desktop = data;
 
 	gtk_widget_hide(desktop->pr_window);
 	_preferences_set(desktop);
+}
+
+static void _on_preferences_response_ok(gpointer data)
+{
+	Desktop * desktop = data;
+
+	gtk_widget_hide(desktop->pr_window);
+	_on_preferences_response_apply(desktop);
 }
 
 static void _on_preferences_update_preview(gpointer data)
