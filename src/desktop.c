@@ -282,6 +282,8 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 		/* draw the icons and background when realized */
 		g_signal_connect_swapped(desktop->desktop, "realize",
 				G_CALLBACK(_on_realize), desktop);
+		gtk_window_move(GTK_WINDOW(desktop->desktop), desktop->window.x,
+				desktop->window.y);
 		gtk_widget_show(desktop->desktop);
 	}
 	else
