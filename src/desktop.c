@@ -1461,6 +1461,7 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 		{
 			desktop_error(desktop, error->message, 1);
 			g_error_free(error);
+			error = NULL;
 		}
 	}
 	if(desktop->desktop != NULL)
