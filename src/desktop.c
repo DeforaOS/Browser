@@ -1525,11 +1525,11 @@ static void _background_scaled(GdkRectangle * window, GdkPixmap * pixmap,
 static void _background_scaled_ratio(GdkRectangle * window, GdkPixmap * pixmap,
 		char const * filename, GError ** error)
 {
+#if GTK_CHECK_VERSION(2, 4, 0)
 	GdkPixbuf * background;
 	gint w;
 	gint h;
 
-#if GTK_CHECK_VERSION(2, 4, 0)
 	background = gdk_pixbuf_new_from_file_at_size(filename, window->width,
 			window->height, error);
 	if(background == NULL)
@@ -1542,7 +1542,7 @@ static void _background_scaled_ratio(GdkRectangle * window, GdkPixmap * pixmap,
 			GDK_RGB_DITHER_NONE, 0, 0);
 	g_object_unref(background);
 #else
-	_background_scaled(desktop, pixmap, filename);
+	_background_scaled(window, pixmap, filename, error);
 #endif
 }
 
