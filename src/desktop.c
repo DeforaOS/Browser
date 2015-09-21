@@ -93,6 +93,7 @@ struct _Desktop
 	char const * home;
 	GdkPixbuf * file;
 	GdkPixbuf * folder;
+	gboolean show_hidden;
 	/* applications */
 	DesktopCategory * category;
 	/* categories */
@@ -1070,7 +1071,9 @@ static void _reset_background(Desktop * desktop, Config * config)
 static void _reset_icons(Desktop * desktop, Config * config)
 {
 	String const * p;
+	String * q;
 	size_t i;
+	int j;
 
 	_reset_icons_colors(desktop, config);
 	_reset_icons_font(desktop, config);
@@ -1103,6 +1106,14 @@ static void _reset_icons(Desktop * desktop, Config * config)
 				== DESKTOP_ICONS_FILES)
 			? DESKTOP_ALIGNMENT_VERTICAL
 			: DESKTOP_ALIGNMENT_HORIZONTAL;
+	/* show hidden */
+	if((p = config_get(config, "icons", "show_hidden")) != NULL)
+	{
+		j = strtol(p, &q, 10);
+		if(p[0] == '\0' || *q != '\0' || j < 0)
+			j = 0;
+		desktop->show_hidden = j ? 1 : 0;
+	}
 }
 
 static void _reset_icons_colors(Desktop * desktop, Config * config)
@@ -2199,6 +2210,8 @@ static void _on_preferences_apply(gpointer data)
 	desktop->prefs.monitor = (i >= 0) ? i - 1 : i;
 	snprintf(buf, sizeof(buf), "%d", desktop->prefs.monitor);
 	config_set(config, "icons", "monitor", buf);
+	config_set(config, "icons", "show_hidden", desktop->show_hidden
+			? "1" : "0");
 	/* XXX code duplication */
 	if((p = string_new_append(desktop->home, "/" DESKTOPRC, NULL)) != NULL)
 	{
@@ -2761,9 +2774,14 @@ static int _refresh_loop_files(Desktop * desktop)
 	while((de = browser_vfs_readdir(desktop->refresh_dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
-			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
-						&& de->d_name[2] == '\0'))
+		{
+			if(de->d_name[1] == '\0')
 				continue;
+			if(de->d_name[1] == '.' && de->d_name[2] == '\0')
+				continue;
+			if(desktop->show_hidden == 0)
+				continue;
+		}
 		if(_refresh_loop_lookup(desktop, de->d_name) == 1)
 			continue;
 		break;
