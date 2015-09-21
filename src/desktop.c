@@ -2196,9 +2196,9 @@ static void _on_preferences_apply(gpointer data)
 	q = gtk_font_button_get_font_name(GTK_FONT_BUTTON(desktop->pr_ifont));
 	config_set(config, "icons", "font", q);
 	i = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_imonitor));
-	snprintf(buf, sizeof(buf), "%d", i - 1);
+	desktop->prefs.monitor = (i >= 0) ? i - 1 : i;
+	snprintf(buf, sizeof(buf), "%d", desktop->prefs.monitor);
 	config_set(config, "icons", "monitor", buf);
-	desktop->prefs.monitor = i - 1;
 	/* XXX code duplication */
 	if((p = string_new_append(desktop->home, "/" DESKTOPRC, NULL)) != NULL)
 	{
