@@ -1509,7 +1509,7 @@ static void _background_scaled(GdkRectangle * window, GdkPixmap * pixmap,
 	background = gdk_pixbuf_new_from_file_at_size(filename, window->width,
 			window->height, error);
 #else
-	background = gdk_pixbuf_new_from_file(filename, &error);
+	background = gdk_pixbuf_new_from_file(filename, error);
 #endif
 	if(background == NULL)
 		return;
