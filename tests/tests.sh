@@ -32,7 +32,7 @@ _fail()
 	echo -n "$test:" 1>&2
 	(echo
 	echo "Testing: ./$test" "$@"
-	"./$test" "$@") >> "$target" 2>&1
+	LD_LIBRARY_PATH="${OBJDIR}../src" "./$test" "$@") >> "$target" 2>&1
 	res=$?
 	if [ $res -ne 0 ]; then
 		echo " FAIL (error $res)" 1>&2
@@ -51,7 +51,7 @@ _test()
 	echo -n "$test:" 1>&2
 	(echo
 	echo "Testing: ./$test" "$@"
-	"./$test" "$@") >> "$target" 2>&1
+	LD_LIBRARY_PATH="${OBJDIR}../src" "./$test" "$@") >> "$target" 2>&1
 	res=$?
 	if [ $res -ne 0 ]; then
 		echo " FAIL" 1>&2
