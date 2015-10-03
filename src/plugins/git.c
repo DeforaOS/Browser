@@ -278,6 +278,8 @@ static GtkWidget * _git_get_widget(Git * git)
 
 /* git_refresh */
 static void _refresh_dir(Git * git);
+static void _refresh_error(Git * git, char const * message);
+static void _refresh_hide(Git * git, gboolean name);
 static void _refresh_status(Git * git, char const * status);
 
 static void _git_refresh(Git * git, GList * selection)
@@ -290,20 +292,24 @@ static void _git_refresh(Git * git, GList * selection)
 		g_source_remove(git->source);
 	free(git->filename);
 	git->filename = NULL;
-	if(path == NULL || lstat(path, &st) != 0)
+	if(path == NULL || selection->next != NULL)
+	{
+		_refresh_hide(git, TRUE);
 		return;
-	if((git->filename = strdup(path)) == NULL)
+	}
+	if(lstat(path, &st) != 0
+			|| (git->filename = strdup(path)) == NULL)
+	{
+		_refresh_error(git, path);
 		return;
+	}
 	p = g_filename_display_basename(path);
 	gtk_label_set_text(GTK_LABEL(git->name), p);
 	g_free(p);
-	_refresh_status(git, NULL);
-	gtk_widget_hide(git->init);
-	gtk_widget_hide(git->directory);
-	gtk_widget_hide(git->file);
-	gtk_widget_hide(git->add);
 	if(S_ISDIR(st.st_mode))
 		_refresh_dir(git);
+	else
+		_refresh_hide(git, FALSE);
 }
 
 static void _refresh_dir(Git * git)
@@ -311,6 +317,7 @@ static void _refresh_dir(Git * git)
 	char const dir[] = "/.git";
 	size_t len = strlen(git->filename);
 
+	_refresh_hide(git, FALSE);
 	/* consider ".git" folders like their parent */
 	if((len = strlen(git->filename)) >= (sizeof(dir) - 1)
 			&& strcmp(&git->filename[len - 4], dir) == 0)
@@ -322,6 +329,24 @@ static void _refresh_dir(Git * git)
 		return;
 	}
 	gtk_widget_show(git->directory);
+}
+
+static void _refresh_error(Git * git, char const * message)
+{
+	BrowserPluginHelper * helper = git->helper;
+
+	error_set("%s: %s", message, strerror(errno));
+	helper->error(helper->browser, error_get(), 1);
+}
+
+static void _refresh_hide(Git * git, gboolean name)
+{
+	name ? gtk_widget_hide(git->name) : gtk_widget_show(git->name);
+	_refresh_status(git, NULL);
+	gtk_widget_hide(git->init);
+	gtk_widget_hide(git->directory);
+	gtk_widget_hide(git->file);
+	gtk_widget_hide(git->add);
 }
 
 static void _refresh_status(Git * git, char const * status)
