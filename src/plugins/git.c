@@ -148,8 +148,8 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	widget = _init_button(group, GTK_STOCK_OK, _("Initialize"), G_CALLBACK(
 				_git_on_init), git);
 	gtk_box_pack_start(GTK_BOX(git->init), widget, FALSE, TRUE, 0);
-	widget = _init_button(group, GTK_STOCK_OK, _("Clone..."), G_CALLBACK(
-				_git_on_clone), git);
+	widget = _init_button(group, GTK_STOCK_SAVE_AS, _("Clone..."),
+			G_CALLBACK(_git_on_clone), git);
 	gtk_box_pack_start(GTK_BOX(git->init), widget, FALSE, TRUE, 0);
 	gtk_widget_show_all(git->init);
 	gtk_widget_set_no_show_all(git->init, TRUE);
