@@ -189,22 +189,13 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	git->file = gtk_vbox_new(FALSE, 4);
 #endif
 	widget = _init_button(group, GTK_STOCK_FIND_AND_REPLACE,
-			_("Request diff"), G_CALLBACK(_git_on_diff), git);
+			_("Diff"), G_CALLBACK(_git_on_diff), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(group, GTK_STOCK_INDEX, _("Annotate"),
 			G_CALLBACK(_git_on_blame), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(group, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_git_on_log), git);
-	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(group, GTK_STOCK_PROPERTIES, _("Status"),
-			G_CALLBACK(_git_on_status), git);
-	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(group, GTK_STOCK_REFRESH, _("Pull"),
-			G_CALLBACK(_git_on_pull), git);
-	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(group, GTK_STOCK_CONNECT, _("Push"),
-			G_CALLBACK(_git_on_push), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(group, GTK_STOCK_JUMP_TO, _("Commit"),
 			G_CALLBACK(_git_on_commit), git);
@@ -279,6 +270,7 @@ static GtkWidget * _git_get_widget(Git * git)
 /* git_refresh */
 static void _refresh_dir(Git * git);
 static void _refresh_error(Git * git, char const * message);
+static void _refresh_file(Git * git);
 static void _refresh_hide(Git * git, gboolean name);
 static void _refresh_status(Git * git, char const * status);
 
@@ -309,7 +301,7 @@ static void _git_refresh(Git * git, GList * selection)
 	if(S_ISDIR(st.st_mode))
 		_refresh_dir(git);
 	else
-		_refresh_hide(git, FALSE);
+		_refresh_file(git);
 }
 
 static void _refresh_dir(Git * git)
@@ -337,6 +329,13 @@ static void _refresh_error(Git * git, char const * message)
 
 	error_set("%s: %s", message, strerror(errno));
 	helper->error(helper->browser, error_get(), 1);
+}
+
+static void _refresh_file(Git * git)
+{
+	_refresh_hide(git, FALSE);
+	/* FIXME detect if the file is actually managed */
+	gtk_widget_show(git->file);
 }
 
 static void _refresh_hide(Git * git, gboolean name)
