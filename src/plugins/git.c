@@ -161,7 +161,7 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	git->directory = gtk_vbox_new(FALSE, 4);
 #endif
 	widget = _init_button(group, GTK_STOCK_FIND_AND_REPLACE,
-			_("Request diff"), G_CALLBACK(_git_on_diff), git);
+			_("Diff"), G_CALLBACK(_git_on_diff), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
 	widget = _init_button(group, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_git_on_log), git);
