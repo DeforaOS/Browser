@@ -343,6 +343,7 @@ static void _cvs_refresh(CVS * cvs, GList * selection)
 	if(lstat(path, &st) != 0
 			|| (cvs->filename = strdup(path)) == NULL)
 	{
+		_refresh_hide(cvs, TRUE);
 		if(errno != ENOENT)
 			_refresh_error(cvs, path);
 		return;

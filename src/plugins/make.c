@@ -305,6 +305,7 @@ static void _make_refresh(Make * make, GList * selection)
 	if(lstat(path, &st) != 0
 			|| (make->filename = strdup(path)) == NULL)
 	{
+		_refresh_hide(make, TRUE);
 		if(errno != ENOENT)
 			_refresh_error(make, path);
 		return;

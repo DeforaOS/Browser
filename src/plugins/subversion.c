@@ -275,6 +275,7 @@ static void _subversion_refresh(SVN * svn, GList * selection)
 	}
 	if(lstat(path, &st) != 0 || (svn->filename = strdup(path)) == NULL)
 	{
+		_refresh_hide(svn, TRUE);
 		if(errno != ENOENT)
 			_refresh_error(svn, path);
 		return;

@@ -300,6 +300,7 @@ static void _git_refresh(Git * git, GList * selection)
 	if(lstat(path, &st) != 0
 			|| (git->filename = strdup(path)) == NULL)
 	{
+		_refresh_hide(git, TRUE);
 		if(errno != ENOENT)
 			_refresh_error(git, path);
 		return;
