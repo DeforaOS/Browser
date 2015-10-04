@@ -398,7 +398,7 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 		fraction = total - free;
 		fraction = fraction / total;
 		f = fraction * 100;
-		snprintf(buf, sizeof(buf), "%.1lf%%", fraction * 100.0);
+		snprintf(buf, sizeof(buf), "%.1f%%", fraction * 100.0);
 	}
 	_list_add_size(buf2, sizeof(buf2), bsize, total);
 	_list_get_iter(volumes, &iter, mountpoint);
