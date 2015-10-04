@@ -58,6 +58,10 @@ typedef struct _BrowserPlugin
 } Git;
 
 
+/* constants */
+#define GIT_GIT		"git"
+
+
 /* prototypes */
 static Git * _git_init(BrowserPluginHelper * helper);
 static void _git_destroy(Git * git);
@@ -430,7 +434,7 @@ static void _git_on_add(gpointer data)
 	Git * git = data;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "git", "add", "--", NULL, NULL };
+	char * argv[] = { GIT_GIT, "add", "--", NULL, NULL };
 
 	if(git->filename == NULL)
 		return;
@@ -452,7 +456,7 @@ static void _git_on_blame(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "git", "blame", "--", NULL, NULL };
+	char * argv[] = { GIT_GIT, "blame", "--", NULL, NULL };
 
 	if(git->filename == NULL || lstat(git->filename, &st) != 0)
 		return;
@@ -481,7 +485,7 @@ static void _git_on_clone(gpointer data)
 {
 	Git * git = data;
 	struct stat st;
-	char * argv[] = { "git", "clone", "--", NULL, NULL };
+	char * argv[] = { GIT_GIT, "clone", "--", NULL, NULL };
 	char * dirname;
 	char * p;
 
@@ -517,7 +521,7 @@ static void _git_on_commit(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "git", "commit", "--", NULL, NULL };
+	char * argv[] = { GIT_GIT, "commit", "--", NULL, NULL };
 
 	if(git->filename == NULL || lstat(git->filename, &st) != 0)
 		return;
@@ -548,7 +552,7 @@ static void _git_on_diff(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "git", "diff", "--", NULL, NULL };
+	char * argv[] = { GIT_GIT, "diff", "--", NULL, NULL };
 
 	if(git->filename == NULL || lstat(git->filename, &st) != 0)
 		return;
@@ -588,7 +592,7 @@ static void _git_on_init(gpointer data)
 	Git * git = data;
 	struct stat st;
 	gchar * dirname;
-	char * argv[] = { "git", "init", NULL };
+	char * argv[] = { GIT_GIT, "init", NULL };
 
 	if(git->filename == NULL || lstat(git->filename, &st) != 0)
 		return;
@@ -618,7 +622,7 @@ static void _git_on_log(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "git", "log", "--", NULL, NULL };
+	char * argv[] = { GIT_GIT, "log", "--", NULL, NULL };
 
 	if(git->filename == NULL || lstat(git->filename, &st) != 0)
 		return;
@@ -653,7 +657,7 @@ static void _git_on_pull(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "git", "pull", "--", NULL, NULL };
+	char * argv[] = { GIT_GIT, "pull", "--", NULL, NULL };
 
 	if(git->filename == NULL || lstat(git->filename, &st) != 0)
 		return;
@@ -675,7 +679,7 @@ static void _git_on_push(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "git", "push", "--", NULL, NULL };
+	char * argv[] = { GIT_GIT, "push", "--", NULL, NULL };
 
 	if(git->filename == NULL || lstat(git->filename, &st) != 0)
 		return;
@@ -697,7 +701,7 @@ static void _git_on_reset(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "git", "reset", "--", NULL, NULL };
+	char * argv[] = { GIT_GIT, "reset", "--", NULL, NULL };
 
 	if(git->filename == NULL || lstat(git->filename, &st) != 0)
 		return;
@@ -719,7 +723,7 @@ static void _git_on_status(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "git", "status", "--", NULL, NULL };
+	char * argv[] = { GIT_GIT, "status", "--", NULL, NULL };
 
 	if(git->filename == NULL || lstat(git->filename, &st) != 0)
 		return;
