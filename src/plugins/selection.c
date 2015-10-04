@@ -113,6 +113,9 @@ static Selection * _selection_init(BrowserPluginHelper * helper)
 	column = gtk_tree_view_column_new_with_attributes(_("Filename"),
 			renderer, "text", SC_FILENAME_DISPLAY,
 			"ellipsize", SC_ELLIPSIZE, NULL);
+#if GTK_CHECK_VERSION(2, 4, 0)
+	gtk_tree_view_column_set_expand(column, TRUE);
+#endif
 	gtk_tree_view_column_set_resizable(column, TRUE);
 	gtk_tree_view_column_set_sort_column_id(column, SC_FILENAME_DISPLAY);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(selection->view), column);
