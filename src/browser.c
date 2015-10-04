@@ -44,6 +44,7 @@ static char const _license[] =
 #define COMMON_DND
 #define COMMON_EXEC
 #define COMMON_GET_ABSOLUTE_PATH
+#define COMMON_SIZE
 #include "common.c"
 
 /* constants */
@@ -1480,7 +1481,6 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 }
 
 /* insert_all */
-static char const * _insert_size(off_t size);
 static char const * _insert_date(time_t date);
 
 static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
@@ -1502,7 +1502,7 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		*display = p; /* XXX memory leak */
 	*inode = lst->st_ino;
 	*size = lst->st_size;
-	*dsize = _insert_size(lst->st_size);
+	*dsize = _common_size(lst->st_size);
 	*pw = getpwuid(lst->st_uid);
 	*gr = getgrgid(lst->st_gid);
 	*ddate = _insert_date(lst->st_mtime);
@@ -1530,32 +1530,6 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		*icon96 = browser_vfs_mime_icon(browser->mime, path, *type, lst, st,
 				96);
 	}
-}
-
-static char const * _insert_size(off_t size)
-{
-	static char buf[11];
-	double sz = size;
-	char * unit;
-
-	if(sz < 1024)
-	{
-		snprintf(buf, sizeof(buf), "%.0f %s", sz, _("bytes"));
-		return buf;
-	}
-	else if((sz /= 1024) < 1024)
-		unit = N_("kB");
-	else if((sz /= 1024) < 1024)
-		unit = N_("MB");
-	else if((sz /= 1024) < 1024)
-		unit = N_("GB");
-	else
-	{
-		sz /= 1024;
-		unit = N_("TB");
-	}
-	snprintf(buf, sizeof(buf), "%.1f %s", sz, _(unit));
-	return buf;
 }
 
 static char const * _insert_date(time_t date)

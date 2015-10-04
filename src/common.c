@@ -44,6 +44,10 @@ static int _common_exec(char const * program, char const * flags, GList * args);
 static char * _common_get_absolute_path(char const * path);
 #endif
 
+#ifdef COMMON_SIZE
+static char const * _common_size(off_t size);
+#endif
+
 #ifdef COMMON_SYMLINK
 static int _common_symlink(GtkWidget * window, char const * cur);
 #endif
@@ -219,6 +223,36 @@ static char * _common_get_absolute_path(char const * path)
 	return p;
 }
 #endif /* COMMON_GET_ABSOLUTE_PATH */
+
+
+#ifdef COMMON_SIZE
+/* common_size */
+static char const * _common_size(off_t size)
+{
+	static char buf[16];
+	double sz = size;
+	char * unit;
+
+	if(sz < 1024)
+	{
+		snprintf(buf, sizeof(buf), "%.0f %s", sz, _("bytes"));
+		return buf;
+	}
+	else if((sz /= 1024) < 1024)
+		unit = N_("kB");
+	else if((sz /= 1024) < 1024)
+		unit = N_("MB");
+	else if((sz /= 1024) < 1024)
+		unit = N_("GB");
+	else
+	{
+		sz /= 1024;
+		unit = N_("TB");
+	}
+	snprintf(buf, sizeof(buf), "%.1f %s", sz, _(unit));
+	return buf;
+}
+#endif
 
 
 #ifdef COMMON_SYMLINK
