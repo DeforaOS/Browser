@@ -441,6 +441,8 @@ static void _git_on_add(gpointer data)
 
 
 /* git_on_blame */
+static void _on_blame_callback(Git * git, CommonTask * task, int res);
+
 static void _git_on_blame(gpointer data)
 {
 	Git * git = data;
@@ -456,9 +458,16 @@ static void _git_on_blame(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(git->filename);
 	argv[3] = basename;
-	_git_add_task(git, "git blame", dirname, argv, NULL);
+	_git_add_task(git, "git blame", dirname, argv, _on_blame_callback);
 	g_free(basename);
 	g_free(dirname);
+}
+
+static void _on_blame_callback(Git * git, CommonTask * task, int res)
+{
+	if(res == 128)
+		_common_task_message(task, GTK_MESSAGE_ERROR,
+				_("This file is not managed by Git"), 0);
 }
 
 
