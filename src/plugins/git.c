@@ -574,14 +574,15 @@ static void _diff_on_callback(Git * git, CommonTask * task, int ret)
 	if(ret != 0)
 		_common_task_message(task, GTK_MESSAGE_ERROR,
 				_("Could not diff the file or directory"), 1);
+#ifdef notyet /* XXX race condition */
 	else
 	{
 		tbuf = _common_task_get_buffer(task);
-		/* XXX race condition */
 		if(gtk_text_buffer_get_char_count(tbuf) == 0)
 			_common_task_message(task, GTK_MESSAGE_INFO,
 					_("No difference was found"), 0);
 	}
+#endif
 }
 
 
@@ -639,15 +640,16 @@ static void _git_on_log(gpointer data)
 
 static void _log_on_callback(Git * git, CommonTask * task, int ret)
 {
+#ifdef notyet /* XXX race condition */
 	GtkTextBuffer * tbuf;
 
 	if(ret != 0)
 		return;
 	tbuf = _common_task_get_buffer(task);
-	/* XXX race condition */
 	if(gtk_text_buffer_get_char_count(tbuf) == 0)
 		_common_task_message(task, GTK_MESSAGE_ERROR,
 				_("This file is not managed by Git"), 1);
+#endif
 }
 
 
