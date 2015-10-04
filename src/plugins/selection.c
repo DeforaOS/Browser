@@ -43,9 +43,10 @@ typedef struct _BrowserPlugin
 
 typedef enum _SelectionCount
 {
-	SC_ICON = 0, SC_FILENAME, SC_FILENAME_DISPLAY, SC_SIZE, SC_SIZE_DISPLAY
+	SC_ICON = 0, SC_FILENAME, SC_FILENAME_DISPLAY, SC_SIZE, SC_SIZE_DISPLAY,
+	SC_ELLIPSIZE
 } SelectionCount;
-#define SC_LAST SC_SIZE_DISPLAY
+#define SC_LAST SC_ELLIPSIZE
 #define SC_COUNT (SC_LAST + 1)
 
 
@@ -96,11 +97,12 @@ static Selection * _selection_init(BrowserPluginHelper * helper)
 			G_TYPE_STRING,		/* SC_FILENAME */
 			G_TYPE_STRING,		/* SC_FILENAME_DISPLAY */
 			G_TYPE_UINT64,		/* SC_SIZE */
-			G_TYPE_STRING);		/* SC_SIZE_DISPLAY */
+			G_TYPE_STRING,		/* SC_SIZE_DISPLAY */
+			G_TYPE_UINT);		/* SC_ELLIPSIZE */
 	selection->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				selection->store));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(selection->view),
-			FALSE);
+			TRUE);
 	/* column: icon */
 	renderer = gtk_cell_renderer_pixbuf_new();
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
@@ -109,7 +111,9 @@ static Selection * _selection_init(BrowserPluginHelper * helper)
 	/* column: filename */
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes(_("Filename"),
-			renderer, "text", SC_FILENAME_DISPLAY, NULL);
+			renderer, "text", SC_FILENAME_DISPLAY,
+			"ellipsize", SC_ELLIPSIZE, NULL);
+	gtk_tree_view_column_set_resizable(column, TRUE);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(selection->view), column);
 	/* column: size */
 	renderer = gtk_cell_renderer_text_new();
@@ -171,7 +175,8 @@ static void _selection_refresh(Selection * selection, GList * selected)
 				SC_FILENAME, l->data,
 				SC_FILENAME_DISPLAY, basename,
 				SC_SIZE, lst.st_size,
-				SC_SIZE_DISPLAY, _common_size(lst.st_size), -1);
+				SC_SIZE_DISPLAY, _common_size(lst.st_size),
+				SC_ELLIPSIZE, PANGO_ELLIPSIZE_END, -1);
 		g_free(basename);
 		if(plst != NULL)
 			size += lst.st_size;
