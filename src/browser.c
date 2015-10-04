@@ -3366,12 +3366,13 @@ static void _view_on_button_press_directory(GtkWidget * menu, IconCallback * ic)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 }
 
-static void _view_on_button_press_file(Browser * browser, GtkWidget * menu, char * mimetype,
-		IconCallback * ic)
+static void _view_on_button_press_file(Browser * browser, GtkWidget * menu,
+		char * mimetype, IconCallback * ic)
 {
 	GtkWidget * menuitem;
 
-	_view_on_button_press_mime(browser->mime, mimetype, "open", GTK_STOCK_OPEN, G_CALLBACK(
+	_view_on_button_press_mime(browser->mime, mimetype, "open",
+			GTK_STOCK_OPEN, G_CALLBACK(
 				_view_on_button_press_icon_open), ic, menu);
 	_view_on_button_press_mime(browser->mime, mimetype, "edit",
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -3413,9 +3414,9 @@ static void _view_on_button_press_file(Browser * browser, GtkWidget * menu, char
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 }
 
-static void _view_on_button_press_mime(Mime * mime, char const * mimetype, char const * action,
-		char const * label, GCallback callback, IconCallback * ic,
-		GtkWidget * menu)
+static void _view_on_button_press_mime(Mime * mime, char const * mimetype,
+		char const * action, char const * label, GCallback callback,
+		IconCallback * ic, GtkWidget * menu)
 {
 	GtkWidget * menuitem;
 
