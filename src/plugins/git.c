@@ -300,7 +300,8 @@ static void _git_refresh(Git * git, GList * selection)
 	if(lstat(path, &st) != 0
 			|| (git->filename = strdup(path)) == NULL)
 	{
-		_refresh_error(git, path);
+		if(errno != ENOENT)
+			_refresh_error(git, path);
 		return;
 	}
 	p = g_filename_display_basename(path);
