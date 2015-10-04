@@ -472,23 +472,36 @@ static void _blame_on_callback(Git * git, CommonTask * task, int ret)
 
 
 /* git_on_clone */
+static void _clone_on_callback(Git * git, CommonTask * task, int ret);
+
 static void _git_on_clone(gpointer data)
 {
 	Git * git = data;
 	struct stat st;
-	char * argv[] = { "git", "clone", "--", NULL, NULL, NULL };
+	char * argv[] = { "git", "clone", "--", NULL, NULL };
 	char * dirname;
 	char * p;
 
+	if(git->filename == NULL || lstat(git->filename, &st) != 0)
+		return;
 	if(_common_prompt("Clone repository from:", &p) != GTK_RESPONSE_OK)
 		return;
 	dirname = S_ISDIR(st.st_mode) ? g_strdup(git->filename)
 		: g_path_get_dirname(git->filename);
 	argv[3] = p;
-	argv[4] = git->filename;
-	_git_add_task(git, "git clone", dirname, argv, NULL);
+	_git_add_task(git, "git clone", dirname, argv, _clone_on_callback);
 	g_free(dirname);
 	free(p);
+}
+
+static void _clone_on_callback(Git * git, CommonTask * task, int ret)
+{
+	if(ret == 0)
+		_common_task_message(task, GTK_MESSAGE_INFO,
+				_("Repository cloned successfully"), 0);
+	else
+		_common_task_message(task, GTK_MESSAGE_ERROR,
+				_("Could not clone repository"), 1);
 }
 
 
