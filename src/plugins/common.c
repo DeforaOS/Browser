@@ -72,8 +72,12 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 		CommonTaskCallback callback, void * data);
 static void _common_task_delete(CommonTask * task);
 
+/* accessors */
+static GtkTextBuffer * _common_task_get_buffer(CommonTask * task);
+
 static void _common_task_set_status(CommonTask * task, char const * status);
 
+/* useful */
 static void _common_task_close(CommonTask * task);
 static void _common_task_close_channel(CommonTask * task, GIOChannel * channel);
 
@@ -272,6 +276,14 @@ static void _common_task_delete(CommonTask * task)
 }
 
 
+/* accessors */
+/* common_task_get_buffer */
+static GtkTextBuffer * _common_task_get_buffer(CommonTask * task)
+{
+	return gtk_text_view_get_buffer(GTK_TEXT_VIEW(task->view));
+}
+
+
 /* common_task_set_status */
 static void _common_task_set_status(CommonTask * task, char const * status)
 {
@@ -285,6 +297,7 @@ static void _common_task_set_status(CommonTask * task, char const * status)
 }
 
 
+/* useful */
 /* common_task_close */
 static void _common_task_close(CommonTask * task)
 {
