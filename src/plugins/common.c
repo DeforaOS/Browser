@@ -493,6 +493,7 @@ static void _common_task_on_child_watch(GPid pid, gint status, gpointer data)
 				_("Command exited with error code %d"), res);
 		_common_task_set_status(task, buf);
 		if(task->callback != NULL)
+			/* FIXME the buffer may not be flushed yet */
 			task->callback(task->callback_data, task, res);
 	}
 	else if(WIFSIGNALED(status))
@@ -502,6 +503,7 @@ static void _common_task_on_child_watch(GPid pid, gint status, gpointer data)
 				res);
 		_common_task_set_status(task, buf);
 		if(task->callback != NULL)
+			/* FIXME the buffer may not be flushed yet */
 			task->callback(task->callback_data, task, res);
 	}
 	g_spawn_close_pid(pid);
