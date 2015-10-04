@@ -320,7 +320,9 @@ static GtkWidget * _cvs_get_widget(CVS * cvs)
 
 /* cvs_refresh */
 static void _refresh_dir(CVS * cvs);
+static void _refresh_error(CVS * cvs, char const * message);
 static void _refresh_file(CVS * cvs);
+static void _refresh_hide(CVS * cvs, gboolean name);
 static void _refresh_status(CVS * cvs, char const * status);
 
 static void _cvs_refresh(CVS * cvs, GList * selection)
@@ -333,18 +335,22 @@ static void _cvs_refresh(CVS * cvs, GList * selection)
 		g_source_remove(cvs->source);
 	free(cvs->filename);
 	cvs->filename = NULL;
-	if(path == NULL || lstat(path, &st) != 0)
+	if(path == NULL || selection->next != NULL)
+	{
+		_refresh_hide(cvs, TRUE);
 		return;
-	if((cvs->filename = strdup(path)) == NULL)
+	}
+	if(lstat(path, &st) != 0
+			|| (cvs->filename = strdup(path)) == NULL)
+	{
+		if(errno != ENOENT)
+			_refresh_error(cvs, path);
 		return;
+	}
 	p = g_filename_display_basename(path);
 	gtk_label_set_text(GTK_LABEL(cvs->name), p);
 	g_free(p);
-	_refresh_status(cvs, NULL);
-	gtk_widget_hide(cvs->checkout);
-	gtk_widget_hide(cvs->directory);
-	gtk_widget_hide(cvs->file);
-	gtk_widget_hide(cvs->add);
+	_refresh_hide(cvs, FALSE);
 	if(S_ISDIR(st.st_mode))
 		_refresh_dir(cvs);
 	else
@@ -426,6 +432,14 @@ static void _refresh_dir(CVS * cvs)
 	free(p);
 }
 
+static void _refresh_error(CVS * cvs, char const * message)
+{
+	BrowserPluginHelper * helper = cvs->helper;
+
+	error_set("%s: %s", message, strerror(errno));
+	helper->error(helper->browser, error_get(), 1);
+}
+
 static void _refresh_file(CVS * cvs)
 {
 	char * revision = NULL;
@@ -450,6 +464,16 @@ static void _refresh_file(CVS * cvs)
 			free(revision);
 		}
 	}
+}
+
+static void _refresh_hide(CVS * cvs, gboolean name)
+{
+	name ? gtk_widget_hide(cvs->name) : gtk_widget_show(cvs->name);
+	_refresh_status(cvs, NULL);
+	gtk_widget_hide(cvs->checkout);
+	gtk_widget_hide(cvs->directory);
+	gtk_widget_hide(cvs->file);
+	gtk_widget_hide(cvs->add);
 }
 
 static void _refresh_status(CVS * cvs, char const * status)
