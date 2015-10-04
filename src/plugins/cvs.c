@@ -695,7 +695,7 @@ static GtkResponseType _cvs_prompt_checkout(char const * message, char ** path,
 /* callbacks */
 /* cvs_on_add */
 static gboolean _add_is_binary(char const * type);
-static void _add_on_callback(CVS * cvs, int ret);
+static void _add_on_callback(CVS * cvs, CommonTask * task, int ret);
 
 static void _cvs_on_add(gpointer data)
 {
@@ -741,7 +741,7 @@ static gboolean _add_is_binary(char const * type)
 	return TRUE;
 }
 
-static void _add_on_callback(CVS * cvs, int ret)
+static void _add_on_callback(CVS * cvs, CommonTask * task, int ret)
 {
 	if(ret == 0)
 		/* refresh upon success */
@@ -797,7 +797,7 @@ static void _cvs_on_checkout(gpointer data)
 
 
 /* cvs_on_commit */
-static void _on_commit_callback(CVS * cvs, int ret);
+static void _on_commit_callback(CVS * cvs, CommonTask * task, int ret);
 
 static void _cvs_on_commit(gpointer data)
 {
@@ -819,7 +819,7 @@ static void _cvs_on_commit(gpointer data)
 	g_free(dirname);
 }
 
-static void _on_commit_callback(CVS * cvs, int ret)
+static void _on_commit_callback(CVS * cvs, CommonTask * task, int ret)
 {
 	if(ret == 0)
 		/* refresh upon success */

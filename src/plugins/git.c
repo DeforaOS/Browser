@@ -528,7 +528,7 @@ static void _git_on_diff(gpointer data)
 
 
 /* git_on_init */
-static void _init_on_callback(Git * git, int ret);
+static void _init_on_callback(Git * git, CommonTask * task, int ret);
 
 static void _git_on_init(gpointer data)
 {
@@ -545,7 +545,7 @@ static void _git_on_init(gpointer data)
 	g_free(dirname);
 }
 
-static void _init_on_callback(Git * git, int ret)
+static void _init_on_callback(Git * git, CommonTask * task, int ret)
 {
 	if(ret == 0)
 		/* refresh upon success */

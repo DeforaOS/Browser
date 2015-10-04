@@ -29,9 +29,11 @@
 
 /* private */
 /* types */
-typedef void (*CommonTaskCallback)(BrowserPlugin * plugin, int ret);
+typedef struct _CommonTask CommonTask;
 
-typedef struct _CommonTask
+typedef void (*CommonTaskCallback)(BrowserPlugin * plugin, CommonTask * task,
+		int ret);
+struct _CommonTask
 {
 	GPid pid;
 	guint source;
@@ -59,7 +61,7 @@ typedef struct _CommonTask
 	GtkWidget * view;
 	GtkWidget * statusbar;
 	guint statusbar_id;
-} CommonTask;
+};
 
 
 /* prototypes */
@@ -77,7 +79,8 @@ static void _common_task_close_channel(CommonTask * task, GIOChannel * channel);
 
 static void _common_task_copy(CommonTask * task);
 
-static int _common_task_error(CommonTask * task, char const * message, int ret);
+static int _common_task_message(CommonTask * task, GtkMessageType type,
+		char const * message, int ret);
 
 static int _common_task_save_buffer_as(CommonTask * task,
 		char const * filename);
@@ -198,8 +201,6 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 	/* infobar */
 	task->infobar = gtk_info_bar_new_with_buttons(GTK_STOCK_CLOSE,
 			GTK_RESPONSE_CLOSE, NULL);
-	gtk_info_bar_set_message_type(GTK_INFO_BAR(task->infobar),
-			GTK_MESSAGE_ERROR);
 	g_signal_connect(task->infobar, "close", G_CALLBACK(gtk_widget_hide),
 			NULL);
 	g_signal_connect(task->infobar, "response", G_CALLBACK(
@@ -237,8 +238,10 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 	if((g_io_channel_set_encoding(task->o_channel, NULL, &error))
 			!= G_IO_STATUS_NORMAL)
 	{
-		_common_task_error(task, error->message, 1);
+		_common_task_message(task, GTK_MESSAGE_WARNING, error->message,
+				1);
 		g_error_free(error);
+		error = NULL;
 	}
 	task->o_source = g_io_add_watch(task->o_channel, G_IO_IN,
 			_common_task_on_io_can_read, task);
@@ -246,7 +249,8 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 	if((g_io_channel_set_encoding(task->e_channel, NULL, &error))
 			!= G_IO_STATUS_NORMAL)
 	{
-		_common_task_error(task, error->message, 1);
+		_common_task_message(task, GTK_MESSAGE_WARNING, error->message,
+				1);
 		g_error_free(error);
 	}
 	task->e_source = g_io_add_watch(task->e_channel, G_IO_IN,
@@ -326,18 +330,19 @@ static void _common_task_copy(CommonTask * task)
 }
 
 
-/* common_task_error */
-static int _common_task_error(CommonTask * task, char const * message, int ret)
+/* common_task_message */
+static int _common_task_message(CommonTask * task, GtkMessageType type,
+		char const * message, int ret)
 {
 #if GTK_CHECK_VERSION(2, 18, 0)
+	gtk_info_bar_set_message_type(GTK_INFO_BAR(task->infobar), type);
 	gtk_label_set_text(GTK_LABEL(task->infobar_label), message);
 	gtk_widget_show(task->infobar);
 #else
 	GtkWidget * dialog;
 
 	dialog = gtk_message_dialog_new(GTK_WINDOW(task->window),
-			GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR,
-			GTK_BUTTONS_CLOSE,
+			GTK_DIALOG_DESTROY_WITH_PARENT, type, GTK_BUTTONS_CLOSE,
 # if GTK_CHECK_VERSION(2, 6, 0)
 			"%s", _("Error"));
 	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
@@ -386,7 +391,8 @@ static int _common_task_save_buffer_as(CommonTask * task, char const * filename)
 			return -1;
 	}
 	if((fp = fopen(filename, "w")) == NULL)
-		return -_common_task_error(task, strerror(errno), 1);
+		return -_common_task_message(task, GTK_MESSAGE_ERROR,
+				strerror(errno), 1);
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(task->view));
 	/* XXX allocating the complete file is not optimal */
 	gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(tbuf), &start);
@@ -399,13 +405,15 @@ static int _common_task_save_buffer_as(CommonTask * task, char const * filename)
 		g_free(buf);
 		fclose(fp);
 		unlink(filename);
-		return -_common_task_error(task, strerror(errno), 1);
+		return -_common_task_message(task, GTK_MESSAGE_ERROR,
+				strerror(errno), 1);
 	}
 	g_free(buf);
 	if(fclose(fp) != 0)
 	{
 		unlink(filename);
-		return -_common_task_error(task, strerror(errno), 1);
+		return -_common_task_message(task, GTK_MESSAGE_ERROR,
+				strerror(errno), 1);
 	}
 	return 0;
 }
@@ -472,7 +480,7 @@ static void _common_task_on_child_watch(GPid pid, gint status, gpointer data)
 				_("Command exited with error code %d"), res);
 		_common_task_set_status(task, buf);
 		if(task->callback != NULL)
-			task->callback(task->callback_data, res);
+			task->callback(task->callback_data, task, res);
 	}
 	else if(WIFSIGNALED(status))
 	{
@@ -481,7 +489,7 @@ static void _common_task_on_child_watch(GPid pid, gint status, gpointer data)
 				res);
 		_common_task_set_status(task, buf);
 		if(task->callback != NULL)
-			task->callback(task->callback_data, res);
+			task->callback(task->callback_data, task, res);
 	}
 	g_spawn_close_pid(pid);
 }
@@ -530,7 +538,8 @@ static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 		case G_IO_STATUS_NORMAL:
 			break;
 		case G_IO_STATUS_ERROR:
-			_common_task_error(task, error->message, 1);
+			_common_task_message(task, GTK_MESSAGE_ERROR,
+					error->message, 1);
 			g_error_free(error);
 			/* fallback */
 		case G_IO_STATUS_EOF:
