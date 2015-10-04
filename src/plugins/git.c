@@ -131,12 +131,12 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	/* label */
 	git->name = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(git->name), PANGO_ELLIPSIZE_MIDDLE);
-	gtk_misc_set_alignment(GTK_MISC(git->name), 0.0, 0.0);
+	gtk_misc_set_alignment(GTK_MISC(git->name), 0.0, 0.5);
 	gtk_widget_modify_font(git->name, font);
 	gtk_box_pack_start(GTK_BOX(git->widget), git->name, FALSE, TRUE, 0);
 	git->status = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(git->status), PANGO_ELLIPSIZE_END);
-	gtk_misc_set_alignment(GTK_MISC(git->status), 0.0, 0.0);
+	gtk_misc_set_alignment(GTK_MISC(git->status), 0.0, 0.5);
 	gtk_box_pack_start(GTK_BOX(git->widget), git->status, FALSE, TRUE, 0);
 	/* init */
 #if GTK_CHECK_VERSION(3, 0, 0)
