@@ -213,8 +213,8 @@ static gboolean _mime_icon_folder_in_home(struct stat * pst)
 
 	if(homedir == NULL)
 	{
-		if((homedir = g_get_home_dir()) == NULL
-				&& (homedir = getenv("HOME")) == NULL)
+		if((homedir = getenv("HOME")) == NULL
+				&& (homedir = g_get_home_dir()) == NULL)
 			return FALSE;
 		if(browser_vfs_stat(homedir, &hst) != 0)
 		{
@@ -234,8 +234,8 @@ static gboolean _mime_icon_folder_is_home(struct stat * st)
 
 	if(homedir == NULL)
 	{
-		if((homedir = g_get_home_dir()) == NULL
-				&& (homedir = getenv("HOME")) == NULL)
+		if((homedir = getenv("HOME")) == NULL
+				&& (homedir = g_get_home_dir()) == NULL)
 			return FALSE;
 		if(browser_vfs_stat(homedir, &hst) != 0)
 		{
