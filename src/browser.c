@@ -3224,6 +3224,7 @@ static gboolean _view_on_button_press(GtkWidget * widget,
 	ic.browser = browser;
 	ic.isdir = 0;
 	ic.isexec = 0;
+	ic.ismnt = 0;
 	ic.path = NULL;
 	if((path = _view_on_button_press_path(browser, event)) == NULL)
 		return _view_on_button_press_popup(browser, event, widget, &ic);
