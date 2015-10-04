@@ -307,6 +307,7 @@ static void _git_refresh(Git * git, GList * selection)
 	p = g_filename_display_basename(path);
 	gtk_label_set_text(GTK_LABEL(git->name), p);
 	g_free(p);
+	_refresh_hide(git, FALSE);
 	if(S_ISDIR(st.st_mode))
 		_refresh_dir(git);
 	else
@@ -318,7 +319,6 @@ static void _refresh_dir(Git * git)
 	char const dir[] = "/.git";
 	size_t len = strlen(git->filename);
 
-	_refresh_hide(git, FALSE);
 	/* consider ".git" folders like their parent */
 	if((len = strlen(git->filename)) >= (sizeof(dir) - 1)
 			&& strcmp(&git->filename[len - 4], dir) == 0)
@@ -342,7 +342,6 @@ static void _refresh_error(Git * git, char const * message)
 
 static void _refresh_file(Git * git)
 {
-	_refresh_hide(git, FALSE);
 	/* FIXME detect if the file is actually managed */
 	gtk_widget_show(git->file);
 }
