@@ -55,6 +55,7 @@ static GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size,
 static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 		struct stat * lst, struct stat * st, int size);
 static gboolean _mime_icon_folder_in_home(struct stat * pst);
+static gboolean _mime_icon_folder_is_home(struct stat * st);
 
 GdkPixbuf * browser_vfs_mime_icon(Mime * mime, char const * filename,
 		char const * type, struct stat * lst, struct stat * st,
@@ -179,7 +180,10 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 	{
 		if(st->st_dev != ps.st_dev || st->st_ino == ps.st_ino)
 			icon = "mount-point";
+		else if(_mime_icon_folder_is_home(st))
+			icon = "folder_home";
 		else if(_mime_icon_folder_in_home(&ps))
+			/* check if the folder is special */
 			for(i = 0; i < sizeof(name_icon) / sizeof(*name_icon);
 					i++)
 				if(strcasecmp(basename(p), name_icon[i].name)
@@ -219,6 +223,27 @@ static gboolean _mime_icon_folder_in_home(struct stat * pst)
 		}
 	}
 	return (hst.st_dev == pst->st_dev && hst.st_ino == pst->st_ino)
+		? TRUE : FALSE;
+}
+
+static gboolean _mime_icon_folder_is_home(struct stat * st)
+{
+	/* FIXME code duplicated from _mime_icon_folder_in_home() */
+	static char const * homedir = NULL;
+	static struct stat hst;
+
+	if(homedir == NULL)
+	{
+		if((homedir = g_get_home_dir()) == NULL
+				&& (homedir = getenv("HOME")) == NULL)
+			return FALSE;
+		if(browser_vfs_stat(homedir, &hst) != 0)
+		{
+			homedir = NULL;
+			return FALSE;
+		}
+	}
+	return (hst.st_dev == st->st_dev && hst.st_ino == st->st_ino)
 		? TRUE : FALSE;
 }
 
