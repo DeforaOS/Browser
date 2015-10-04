@@ -155,7 +155,7 @@ static Make * _make_init(BrowserPluginHelper * helper)
 #else
 	make->directory = gtk_vbox_new(FALSE, 4);
 #endif
-	widget = _init_button(group, GTK_STOCK_EXECUTE, _("Build"),
+	widget = _init_button(group, "applications-development", _("Build"),
 			G_CALLBACK(_make_on_all), make);
 	gtk_box_pack_start(GTK_BOX(make->directory), widget, FALSE, TRUE, 0);
 	widget = _init_button(group, GTK_STOCK_CLEAR, _("Clean"),
@@ -205,17 +205,17 @@ static Make * _make_init(BrowserPluginHelper * helper)
 	gtk_widget_set_no_show_all(make->file, TRUE);
 	gtk_box_pack_start(GTK_BOX(make->widget), make->file, FALSE, TRUE, 0);
 	/* additional actions */
-	make->configure = _init_button(group, "applications-development",
+	make->configure = _init_button(group, GTK_STOCK_EXECUTE,
 			_("Run configure"), G_CALLBACK(_make_on_configure),
 			make);
 	gtk_box_pack_start(GTK_BOX(make->widget), make->configure, FALSE, TRUE,
 			0);
-	make->autogensh = _init_button(group, "applications-development",
+	make->autogensh = _init_button(group, GTK_STOCK_EXECUTE,
 			_("Run ./autogen.sh"), G_CALLBACK(_make_on_autogensh),
 			make);
 	gtk_box_pack_start(GTK_BOX(make->widget), make->autogensh, FALSE, TRUE,
 			0);
-	make->gnuconfigure = _init_button(group, "applications-development",
+	make->gnuconfigure = _init_button(group, GTK_STOCK_EXECUTE,
 			_("Run ./configure"), G_CALLBACK(
 				_make_on_gnu_configure), make);
 	gtk_box_pack_start(GTK_BOX(make->widget), make->gnuconfigure, FALSE,
