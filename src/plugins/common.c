@@ -165,7 +165,7 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 			&task->pid, NULL, &task->o_fd, &task->e_fd, &error);
 	if(res != TRUE)
 	{
-		helper->error(helper->browser, error->message, 1);
+		error_set_code(1, "%s", error->message);
 		g_error_free(error);
 		object_delete(task);
 		return NULL;
