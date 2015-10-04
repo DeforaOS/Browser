@@ -57,6 +57,10 @@ typedef struct _BrowserPlugin
 } SVN;
 
 
+/* constants */
+#define SVN_SVN		"svn"
+
+
 /* prototypes */
 static SVN * _subversion_init(BrowserPluginHelper * helper);
 static void _subversion_destroy(SVN * svn);
@@ -382,7 +386,7 @@ static void _subversion_on_add(gpointer data)
 	SVN * svn = data;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "svn", "add", "--", NULL, NULL };
+	char * argv[] = { SVN_SVN, "add", "--", NULL, NULL };
 
 	if(svn->filename == NULL)
 		return;
@@ -402,7 +406,7 @@ static void _subversion_on_blame(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "svn", "blame", "--", NULL, NULL };
+	char * argv[] = { SVN_SVN, "blame", "--", NULL, NULL };
 
 	if(svn->filename == NULL || lstat(svn->filename, &st) != 0)
 		return;
@@ -424,7 +428,7 @@ static void _subversion_on_commit(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "svn", "commit", "--", NULL, NULL };
+	char * argv[] = { SVN_SVN, "commit", "--", NULL, NULL };
 
 	if(svn->filename == NULL || lstat(svn->filename, &st) != 0)
 		return;
@@ -446,7 +450,7 @@ static void _subversion_on_diff(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "svn", "diff", "--", NULL, NULL };
+	char * argv[] = { SVN_SVN, "diff", "--", NULL, NULL };
 
 	if(svn->filename == NULL || lstat(svn->filename, &st) != 0)
 		return;
@@ -468,7 +472,7 @@ static void _subversion_on_log(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "svn", "log", "--", NULL, NULL };
+	char * argv[] = { SVN_SVN, "log", "--", NULL, NULL };
 
 	if(svn->filename == NULL || lstat(svn->filename, &st) != 0)
 		return;
@@ -490,7 +494,7 @@ static void _subversion_on_status(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "svn", "status", "--", NULL, NULL };
+	char * argv[] = { SVN_SVN, "status", "--", NULL, NULL };
 
 	if(svn->filename == NULL || lstat(svn->filename, &st) != 0)
 		return;
@@ -512,7 +516,7 @@ static void _subversion_on_update(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { "svn", "update", "--", NULL, NULL };
+	char * argv[] = { SVN_SVN, "update", "--", NULL, NULL };
 
 	if(svn->filename == NULL || lstat(svn->filename, &st) != 0)
 		return;
