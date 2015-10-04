@@ -50,6 +50,7 @@ struct _CommonTask
 	/* stderr */
 	gint e_fd;
 	GIOChannel * e_channel;
+	GtkTextTag * e_tag;
 	guint e_source;
 
 	/* widgets */
@@ -257,6 +258,9 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 				1);
 		g_error_free(error);
 	}
+	task->e_tag = gtk_text_buffer_create_tag(
+			_common_task_get_buffer(task), "stderr",
+			"foreground", "red", NULL);
 	task->e_source = g_io_add_watch(task->e_channel, G_IO_IN,
 			_common_task_on_io_can_read, task);
 	_common_task_set_status(task, _("Running command..."));
@@ -542,9 +546,7 @@ static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 	{
 		tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(task->view));
 		gtk_text_buffer_get_end_iter(tbuf, &iter);
-		tag = (channel == task->e_channel)
-			? gtk_text_buffer_create_tag(tbuf, NULL, "foreground",
-					"red", NULL) : NULL;
+		tag = (channel == task->e_channel) ? task->e_tag : NULL;
 		gtk_text_buffer_insert_with_tags(tbuf, &iter, buf, cnt, tag,
 				NULL);
 	}
