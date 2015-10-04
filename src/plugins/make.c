@@ -282,7 +282,9 @@ static GtkWidget * _make_get_widget(Make * make)
 
 /* make_refresh */
 static void _refresh_dir(Make * make);
+static void _refresh_error(Make * make, char const * message);
 static void _refresh_file(Make * make);
+static void _refresh_hide(Make * make, gboolean name);
 static void _refresh_status(Make * make, char const * status);
 
 static void _make_refresh(Make * make, GList * selection)
@@ -295,19 +297,22 @@ static void _make_refresh(Make * make, GList * selection)
 		g_source_remove(make->source);
 	free(make->filename);
 	make->filename = NULL;
-	if(path == NULL || lstat(path, &st) != 0)
+	if(path == NULL || selection->next != NULL)
+	{
+		_refresh_hide(make, TRUE);
 		return;
-	if((make->filename = strdup(path)) == NULL)
+	}
+	if(lstat(path, &st) != 0
+			|| (make->filename = strdup(path)) == NULL)
+	{
+		if(errno != ENOENT)
+			_refresh_error(make, path);
 		return;
+	}
 	p = g_filename_display_basename(path);
 	gtk_label_set_text(GTK_LABEL(make->name), p);
 	g_free(p);
-	_refresh_status(make, NULL);
-	gtk_widget_hide(make->directory);
-	gtk_widget_hide(make->file);
-	gtk_widget_hide(make->configure);
-	gtk_widget_hide(make->autogensh);
-	gtk_widget_hide(make->gnuconfigure);
+	_refresh_hide(make, FALSE);
 	if(S_ISDIR(st.st_mode))
 		_refresh_dir(make);
 	else
@@ -329,6 +334,14 @@ static void _refresh_dir(Make * make)
 		gtk_widget_show(make->directory);
 }
 
+static void _refresh_error(Make * make, char const * message)
+{
+	BrowserPluginHelper * helper = make->helper;
+
+	error_set("%s: %s", message, strerror(errno));
+	helper->error(helper->browser, error_get(), 1);
+}
+
 static void _refresh_file(Make * make)
 {
 	/* check if it is managed */
@@ -336,6 +349,17 @@ static void _refresh_file(Make * make)
 		_refresh_status(make, _("No Makefile found"));
 	else
 		gtk_widget_show(make->file);
+}
+
+static void _refresh_hide(Make * make, gboolean name)
+{
+	name ? gtk_widget_hide(make->name) : gtk_widget_show(make->name);
+	_refresh_status(make, NULL);
+	gtk_widget_hide(make->directory);
+	gtk_widget_hide(make->file);
+	gtk_widget_hide(make->configure);
+	gtk_widget_hide(make->autogensh);
+	gtk_widget_hide(make->gnuconfigure);
 }
 
 static void _refresh_status(Make * make, char const * status)
