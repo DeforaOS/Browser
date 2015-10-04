@@ -1,6 +1,6 @@
 #!/bin/sh
 #$Id$
-#Copyright (c) 2012-2014 Pierre Pronchery <khorben@defora.org>
+#Copyright (c) 2012-2015 Pierre Pronchery <khorben@defora.org>
 #
 #Redistribution and use in source and binary forms, with or without
 #modification, are permitted provided that the following conditions are met:
@@ -42,7 +42,7 @@ XSLTPROC="xsltproc --nonet --xinclude"
 #debug
 _debug()
 {
-	echo "$@" 1>&2
+	echo "$@" 1>&3
 	"$@"
 }
 
@@ -151,6 +151,7 @@ fi
 [ -z "$DATADIR" ] && DATADIR="$PREFIX/share"
 [ -z "$MANDIR" ] && MANDIR="$DATADIR/man"
 
+exec 3>&1
 while [ $# -gt 0 ]; do
 	target="$1"
 	shift
