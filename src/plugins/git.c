@@ -82,6 +82,7 @@ static void _git_on_init(gpointer data);
 static void _git_on_log(gpointer data);
 static void _git_on_pull(gpointer data);
 static void _git_on_push(gpointer data);
+static void _git_on_reset(gpointer data);
 static void _git_on_status(gpointer data);
 
 
@@ -173,6 +174,9 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	widget = _init_button(group, GTK_STOCK_CONNECT, _("Push"),
 			G_CALLBACK(_git_on_push), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
+	widget = _init_button(group, GTK_STOCK_UNDO, _("Reset"),
+			G_CALLBACK(_git_on_reset), git);
+	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
 	widget = _init_button(group, GTK_STOCK_JUMP_TO, _("Commit"),
 			G_CALLBACK(_git_on_commit), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
@@ -197,6 +201,9 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(group, GTK_STOCK_ADD, _("Stage"),
 			G_CALLBACK(_git_on_add), git);
+	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
+	widget = _init_button(group, GTK_STOCK_UNDO, _("Reset"),
+			G_CALLBACK(_git_on_reset), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(group, GTK_STOCK_JUMP_TO, _("Commit"),
 			G_CALLBACK(_git_on_commit), git);
@@ -678,6 +685,28 @@ static void _git_on_push(gpointer data)
 		: g_path_get_basename(git->filename);
 	argv[3] = basename;
 	_git_add_task(git, "git push", dirname, argv, NULL);
+	g_free(basename);
+	g_free(dirname);
+}
+
+
+/* git_on_reset */
+static void _git_on_reset(gpointer data)
+{
+	Git * git = data;
+	struct stat st;
+	gchar * dirname;
+	gchar * basename;
+	char * argv[] = { "git", "reset", "--", NULL, NULL };
+
+	if(git->filename == NULL || lstat(git->filename, &st) != 0)
+		return;
+	dirname = S_ISDIR(st.st_mode) ? g_strdup(git->filename)
+		: g_path_get_dirname(git->filename);
+	basename = S_ISDIR(st.st_mode) ? NULL
+		: g_path_get_basename(git->filename);
+	argv[3] = basename;
+	_git_add_task(git, "git reset", dirname, argv, NULL);
 	g_free(basename);
 	g_free(dirname);
 }
