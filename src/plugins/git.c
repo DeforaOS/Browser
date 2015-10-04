@@ -51,8 +51,6 @@ typedef struct _BrowserPlugin
 	GtkWidget * directory;
 	/* file */
 	GtkWidget * file;
-	/* additional actions */
-	GtkWidget * add;
 
 	/* tasks */
 	GitTask ** tasks;
@@ -197,16 +195,15 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	widget = _init_button(group, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_git_on_log), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
+	widget = _init_button(group, GTK_STOCK_ADD, _("Stage"),
+			G_CALLBACK(_git_on_add), git);
+	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(group, GTK_STOCK_JUMP_TO, _("Commit"),
 			G_CALLBACK(_git_on_commit), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
 	gtk_widget_show_all(git->file);
 	gtk_widget_set_no_show_all(git->file, TRUE);
 	gtk_box_pack_start(GTK_BOX(git->widget), git->file, FALSE, TRUE, 0);
-	/* additional actions */
-	git->add = _init_button(group, GTK_STOCK_ADD, _("Add to repository"),
-			G_CALLBACK(_git_on_add), git);
-	gtk_box_pack_start(GTK_BOX(git->widget), git->add, FALSE, TRUE, 0);
 	gtk_widget_show_all(git->widget);
 	pango_font_description_free(font);
 	/* tasks */
@@ -345,7 +342,6 @@ static void _refresh_hide(Git * git, gboolean name)
 	gtk_widget_hide(git->init);
 	gtk_widget_hide(git->directory);
 	gtk_widget_hide(git->file);
-	gtk_widget_hide(git->add);
 }
 
 static void _refresh_status(Git * git, char const * status)
