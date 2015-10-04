@@ -465,7 +465,11 @@ static int _single_regular(Copy * copy, char const * src, char const * dst)
 static gboolean _regular_channel(GIOChannel * source, GIOCondition condition,
 		gpointer data);
 static gboolean _channel_in(Copy * copy, GIOChannel * source);
+static gboolean _channel_in_error(Copy * copy, GIOChannel * source,
+		GError * error);
 static gboolean _channel_out(Copy * copy, GIOChannel * source);
+static gboolean _channel_out_error(Copy * copy, GIOChannel * source,
+		GError * error);
 static void _out_rate(Copy * copy);
 
 static gboolean _regular_idle_in(gpointer data)
@@ -502,22 +506,29 @@ static gboolean _channel_in(Copy * copy, GIOChannel * source)
 	status = g_io_channel_read_chars(source, &copy->buf[copy->buf_cnt],
 			sizeof(copy->buf) - copy->buf_cnt, &read, &error);
 	if(status == G_IO_STATUS_ERROR)
-	{
-		_copy_filename_error(copy, copy->filev[copy->cur], 0);
-		g_io_channel_unref(source);
-		gtk_main_quit(); /* XXX ugly */
-		return FALSE;
-	}
+		return _channel_in_error(copy, source, error);
 	else if(status == G_IO_STATUS_EOF)
 	{
 		copy->eof = 1; /* reached end of input file */
-		g_io_channel_close(source);
+		if(g_io_channel_shutdown(source, TRUE, &error)
+				== G_IO_STATUS_ERROR)
+			return _channel_in_error(copy, source, error);
 	}
 	else if(copy->buf_cnt + read != sizeof(copy->buf))
 		g_idle_add(_regular_idle_in, copy); /* continue to read */
 	if(copy->buf_cnt == 0)
 		g_idle_add(_regular_idle_out, copy); /* begin to write */
 	copy->buf_cnt += read;
+	return FALSE;
+}
+
+static gboolean _channel_in_error(Copy * copy, GIOChannel * source,
+		GError * error)
+{
+	_copy_filename_error(copy, copy->filev[copy->cur], 0);
+	g_error_free(error);
+	g_io_channel_unref(source);
+	gtk_main_quit(); /* XXX ugly */
 	return FALSE;
 }
 
@@ -530,11 +541,7 @@ static gboolean _channel_out(Copy * copy, GIOChannel * source)
 	/* write data */
 	if(g_io_channel_write_chars(source, copy->buf, copy->buf_cnt, &written,
 				&error) == G_IO_STATUS_ERROR)
-	{
-		_copy_filename_error(copy, copy->filev[copy->cur], 0);
-		gtk_main_quit(); /* XXX ugly */
-		return FALSE;
-	}
+		return _channel_out_error(copy, source, error);
 	if(copy->buf_cnt == sizeof(copy->buf))
 		g_idle_add(_regular_idle_in, copy); /* read again */
 	copy->buf_cnt -= written;
@@ -545,9 +552,20 @@ static gboolean _channel_out(Copy * copy, GIOChannel * source)
 		g_idle_add(_regular_idle_out, copy); /* continue to write */
 	else if(copy->eof == 1) /* reached end of input */
 	{
-		g_io_channel_close(copy->out_channel);
+		if(g_io_channel_shutdown(copy->out_channel, TRUE, &error)
+				== G_IO_STATUS_ERROR)
+			return _channel_out_error(copy, source, error);
 		gtk_main_quit(); /* XXX ugly */
 	}
+	return FALSE;
+}
+
+static gboolean _channel_out_error(Copy * copy, GIOChannel * source,
+		GError * error)
+{
+	_copy_filename_error(copy, copy->filev[copy->cur], 0);
+	g_error_free(error);
+	gtk_main_quit(); /* XXX ugly */
 	return FALSE;
 }
 
