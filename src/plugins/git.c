@@ -566,6 +566,8 @@ static void _init_on_callback(Git * git, CommonTask * task, int ret)
 
 
 /* git_on_log */
+static void _log_on_callback(Git * git, CommonTask * task, int ret);
+
 static void _git_on_log(gpointer data)
 {
 	Git * git = data;
@@ -581,9 +583,21 @@ static void _git_on_log(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(git->filename);
 	argv[3] = basename;
-	_git_add_task(git, "git log", dirname, argv, NULL);
+	_git_add_task(git, "git log", dirname, argv, _log_on_callback);
 	g_free(basename);
 	g_free(dirname);
+}
+
+static void _log_on_callback(Git * git, CommonTask * task, int ret)
+{
+	GtkTextBuffer * tbuf;
+
+	if(ret != 0)
+		return;
+	tbuf = _common_task_get_buffer(task);
+	if(gtk_text_buffer_get_char_count(tbuf) == 0)
+		_common_task_message(task, GTK_MESSAGE_ERROR,
+				_("This file is not managed by Git"), 1);
 }
 
 
