@@ -515,6 +515,8 @@ static void _git_on_commit(gpointer data)
 
 
 /* git_on_diff */
+static void _diff_on_callback(Git * git, CommonTask * task, int ret);
+
 static void _git_on_diff(gpointer data)
 {
 	Git * git = data;
@@ -530,9 +532,25 @@ static void _git_on_diff(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(git->filename);
 	argv[3] = basename;
-	_git_add_task(git, "git diff", dirname, argv, NULL);
+	_git_add_task(git, "git diff", dirname, argv, _diff_on_callback);
 	g_free(basename);
 	g_free(dirname);
+}
+
+static void _diff_on_callback(Git * git, CommonTask * task, int ret)
+{
+	GtkTextBuffer * tbuf;
+
+	if(ret != 0)
+		_common_task_message(task, GTK_MESSAGE_ERROR,
+				_("Could not diff the file or directory"), 1);
+	else
+	{
+		tbuf = _common_task_get_buffer(task);
+		if(gtk_text_buffer_get_char_count(tbuf) == 0)
+			_common_task_message(task, GTK_MESSAGE_INFO,
+					_("No difference was found"), 0);
+	}
 }
 
 
