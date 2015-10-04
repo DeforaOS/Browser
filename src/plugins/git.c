@@ -174,7 +174,7 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	widget = _init_button(group, GTK_STOCK_CONNECT, _("Push"),
 			G_CALLBACK(_git_on_push), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
-	widget = _init_button(group, GTK_STOCK_UNDO, _("Reset"),
+	widget = _init_button(group, GTK_STOCK_REVERT_TO_SAVED, _("Reset"),
 			G_CALLBACK(_git_on_reset), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
 	widget = _init_button(group, GTK_STOCK_JUMP_TO, _("Commit"),
@@ -202,7 +202,7 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	widget = _init_button(group, GTK_STOCK_ADD, _("Stage"),
 			G_CALLBACK(_git_on_add), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
-	widget = _init_button(group, GTK_STOCK_UNDO, _("Reset"),
+	widget = _init_button(group, GTK_STOCK_REVERT_TO_SAVED, _("Reset"),
 			G_CALLBACK(_git_on_reset), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
 	widget = _init_button(group, GTK_STOCK_JUMP_TO, _("Commit"),
