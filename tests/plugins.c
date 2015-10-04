@@ -41,7 +41,7 @@ static int _perror(char const * message, int ret);
 static int _plugins(void)
 {
 	int ret = 0;
-	const char path[] = "../src/plugins";
+	const char path[] = "../src/plugins"; /* FIXME broken with OBJDIR */
 #ifdef __APPLE__
 	const char ext[] = ".dylib";
 #else
