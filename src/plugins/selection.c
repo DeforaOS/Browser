@@ -24,6 +24,9 @@
 #define _(string) gettext(string)
 #define N_(string) (string)
 
+#define COMMON_SIZE
+#include "../common.c"
+
 
 /* Selection */
 /* private */
@@ -164,6 +167,7 @@ static void _selection_refresh(Selection * selection, GList * selected)
 		if(plst != NULL)
 			size += lst.st_size;
 	}
-	snprintf(buf, sizeof(buf), "%lu selected (%zu bytes)", cnt, size);
+	snprintf(buf, sizeof(buf), "%lu selected (%s)", cnt,
+			_common_size(size));
 	gtk_label_set_text(GTK_LABEL(selection->status), buf);
 }
