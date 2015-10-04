@@ -441,7 +441,7 @@ static void _git_on_add(gpointer data)
 
 
 /* git_on_blame */
-static void _blame_on_callback(Git * git, CommonTask * task, int res);
+static void _blame_on_callback(Git * git, CommonTask * task, int ret);
 
 static void _git_on_blame(gpointer data)
 {
@@ -463,9 +463,9 @@ static void _git_on_blame(gpointer data)
 	g_free(dirname);
 }
 
-static void _blame_on_callback(Git * git, CommonTask * task, int res)
+static void _blame_on_callback(Git * git, CommonTask * task, int ret)
 {
-	if(res == 128)
+	if(ret == 128)
 		_common_task_message(task, GTK_MESSAGE_ERROR,
 				_("This file is not managed by Git"), 1);
 }
