@@ -550,6 +550,9 @@ static void _init_on_callback(Git * git, CommonTask * task, int ret)
 	if(ret == 0)
 		/* refresh upon success */
 		git->helper->refresh(git->helper->browser);
+	else
+		_common_task_message(task, GTK_MESSAGE_ERROR,
+				_("Could not initialize repository"), 1);
 }
 
 
