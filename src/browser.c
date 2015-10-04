@@ -874,8 +874,7 @@ int browser_error(Browser * browser, char const * message, int ret)
 #endif
 
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\", %d) errno=%d\n", __func__, message,
-			ret, errno);
+	fprintf(stderr, "DEBUG: %s(\"%s\", %d)\n", __func__, message, ret);
 #endif
 	if(browser == NULL)
 		return _browser_error(message, ret);
