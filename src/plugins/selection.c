@@ -43,9 +43,9 @@ typedef struct _BrowserPlugin
 
 typedef enum _SelectionCount
 {
-	SC_ICON = 0, SC_FILENAME, SC_FILENAME_DISPLAY
+	SC_ICON = 0, SC_FILENAME, SC_FILENAME_DISPLAY, SC_SIZE, SC_SIZE_DISPLAY
 } SelectionCount;
-#define SC_LAST SC_FILENAME_DISPLAY
+#define SC_LAST SC_SIZE_DISPLAY
 #define SC_COUNT (SC_LAST + 1)
 
 
@@ -92,9 +92,11 @@ static Selection * _selection_init(BrowserPluginHelper * helper)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	selection->store = gtk_list_store_new(SC_COUNT,
-			GDK_TYPE_PIXBUF,
-			G_TYPE_STRING,
-			G_TYPE_STRING);
+			GDK_TYPE_PIXBUF,	/* SC_ICON */
+			G_TYPE_STRING,		/* SC_FILENAME */
+			G_TYPE_STRING,		/* SC_FILENAME_DISPLAY */
+			G_TYPE_UINT64,		/* SC_SIZE */
+			G_TYPE_STRING);		/* SC_SIZE_DISPLAY */
 	selection->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				selection->store));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(selection->view),
@@ -108,6 +110,11 @@ static Selection * _selection_init(BrowserPluginHelper * helper)
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes(_("Filename"),
 			renderer, "text", SC_FILENAME_DISPLAY, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(selection->view), column);
+	/* column: size */
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes(_("Size"),
+			renderer, "text", SC_SIZE_DISPLAY, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(selection->view), column);
 	gtk_container_add(GTK_CONTAINER(widget), selection->view);
 	gtk_box_pack_start(GTK_BOX(selection->widget), widget, TRUE, TRUE, 0);
@@ -162,7 +169,9 @@ static void _selection_refresh(Selection * selection, GList * selected)
 		gtk_list_store_append(selection->store, &iter);
 		gtk_list_store_set(selection->store, &iter, SC_ICON, pixbuf,
 				SC_FILENAME, l->data,
-				SC_FILENAME_DISPLAY, basename, -1);
+				SC_FILENAME_DISPLAY, basename,
+				SC_SIZE, lst.st_size,
+				SC_SIZE_DISPLAY, _common_size(lst.st_size), -1);
 		g_free(basename);
 		if(plst != NULL)
 			size += lst.st_size;
