@@ -26,6 +26,15 @@
 
 /* public */
 /* functions */
+/* accessors */
+/* browser_vfs_is_mountpoint */
+int browser_vfs_is_mountpoint(struct stat * lst, dev_t parent)
+{
+	return (lst->st_dev != parent) ? 1 : 0;
+}
+
+
+/* useful */
 /* browser_vfs_lstat */
 int browser_vfs_lstat(char const * filename, struct stat * st)
 {

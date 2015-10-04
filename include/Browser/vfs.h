@@ -26,15 +26,24 @@
 
 /* public */
 /* functions */
+/* accessors */
+int browser_vfs_is_mountpoint(struct stat * lst, dev_t parent);
+
+/* useful */
+/* DIR */
+DIR * browser_vfs_opendir(char const * filename, struct stat * st);
 int browser_vfs_closedir(DIR * dir);
-int browser_vfs_lstat(char const * filename, struct stat * st);
+struct dirent * browser_vfs_readdir(DIR * dir);
+
+/* Mime */
 GdkPixbuf * browser_vfs_mime_icon(Mime * mime, char const * filename,
 		char const * type, struct stat * lst, struct stat * st,
 		int size);
 char const * browser_vfs_mime_type(Mime * mime, char const * filename,
 		mode_t mode);
-DIR * browser_vfs_opendir(char const * filename, struct stat * st);
-struct dirent * browser_vfs_readdir(DIR * dir);
+
+/* stat */
+int browser_vfs_lstat(char const * filename, struct stat * st);
 int browser_vfs_stat(char const * filename, struct stat * st);
 
 #endif /* !DESKTOP_BROWSER_VFS_H */
