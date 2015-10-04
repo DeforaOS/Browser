@@ -506,6 +506,8 @@ static void _clone_on_callback(Git * git, CommonTask * task, int ret)
 
 
 /* git_on_commit */
+static void _commit_on_callback(Git * git, CommonTask * task, int ret);
+
 static void _git_on_commit(gpointer data)
 {
 	Git * git = data;
@@ -521,9 +523,16 @@ static void _git_on_commit(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? g_strdup(".")
 		: g_path_get_basename(git->filename);
 	argv[3] = basename;
-	_git_add_task(git, "git commit", dirname, argv, NULL);
+	_git_add_task(git, "git commit", dirname, argv, _commit_on_callback);
 	g_free(basename);
 	g_free(dirname);
+}
+
+static void _commit_on_callback(Git * git, CommonTask * task, int ret)
+{
+	if(ret != 0)
+		_common_task_message(task, GTK_MESSAGE_ERROR,
+				_("Could not commit the file or directory"), 1);
 }
 
 
