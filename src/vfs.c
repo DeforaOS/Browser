@@ -54,6 +54,7 @@ static GdkPixbuf * _mime_icon_emblem(GdkPixbuf * pixbuf, int size,
 		char const * emblem);
 static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 		struct stat * lst, struct stat * st, int size);
+static gboolean _mime_icon_folder_in_home(struct stat * pst);
 
 GdkPixbuf * browser_vfs_mime_icon(Mime * mime, char const * filename,
 		char const * type, struct stat * lst, struct stat * st,
@@ -170,20 +171,24 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 
 	if(lst == NULL && browser_vfs_lstat(filename, &ls) == 0)
 		lst = &ls;
-	/* check if the folder is a mountpoint */
+	/* check if the folder is special */
 	if((p = strdup(filename)) != NULL
 			&& (lst == NULL || !S_ISLNK(lst->st_mode))
 			&& st != NULL
-			&& browser_vfs_lstat(dirname(p), &ps) == 0
-			&& (st->st_dev != ps.st_dev || st->st_ino == ps.st_ino))
-		icon = "mount-point";
-	if(p != NULL && icon == NULL)
-		for(i = 0; i < sizeof(name_icon) / sizeof(*name_icon); i++)
-			if(strcasecmp(basename(p), name_icon[i].name) == 0)
-			{
-				icon = name_icon[i].icon;
-				break;
-			}
+			&& browser_vfs_lstat(dirname(p), &ps) == 0)
+	{
+		if(st->st_dev != ps.st_dev || st->st_ino == ps.st_ino)
+			icon = "mount-point";
+		else if(_mime_icon_folder_in_home(&ps))
+			for(i = 0; i < sizeof(name_icon) / sizeof(*name_icon);
+					i++)
+				if(strcasecmp(basename(p), name_icon[i].name)
+						== 0)
+				{
+					icon = name_icon[i].icon;
+					break;
+				}
+	}
 	free(p);
 	if(icon != NULL)
 	{
@@ -195,6 +200,26 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 	if(ret == NULL)
 		mime_icons(mime, "inode/directory", size, &ret, -1);
 	return ret;
+}
+
+static gboolean _mime_icon_folder_in_home(struct stat * pst)
+{
+	static char const * homedir = NULL;
+	static struct stat hst;
+
+	if(homedir == NULL)
+	{
+		if((homedir = g_get_home_dir()) == NULL
+				&& (homedir = getenv("HOME")) == NULL)
+			return FALSE;
+		if(browser_vfs_stat(homedir, &hst) != 0)
+		{
+			homedir = NULL;
+			return FALSE;
+		}
+	}
+	return (hst.st_dev == pst->st_dev && hst.st_ino == pst->st_ino)
+		? TRUE : FALSE;
 }
 
 
