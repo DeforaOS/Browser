@@ -797,7 +797,7 @@ static void _cvs_on_checkout(gpointer data)
 
 
 /* cvs_on_commit */
-static void _on_commit_callback(CVS * cvs, CommonTask * task, int ret);
+static void _commit_on_callback(CVS * cvs, CommonTask * task, int ret);
 
 static void _cvs_on_commit(gpointer data)
 {
@@ -814,16 +814,19 @@ static void _cvs_on_commit(gpointer data)
 	basename = S_ISDIR(st.st_mode) ? NULL
 		: g_path_get_basename(cvs->filename);
 	argv[3] = basename;
-	_cvs_add_task(cvs, "cvs commit", dirname, argv, _on_commit_callback);
+	_cvs_add_task(cvs, "cvs commit", dirname, argv, _commit_on_callback);
 	g_free(basename);
 	g_free(dirname);
 }
 
-static void _on_commit_callback(CVS * cvs, CommonTask * task, int ret)
+static void _commit_on_callback(CVS * cvs, CommonTask * task, int ret)
 {
 	if(ret == 0)
 		/* refresh upon success */
 		cvs->helper->refresh(cvs->helper->browser);
+	else
+		_common_task_message(task, GTK_MESSAGE_ERROR,
+				_("Could not commit the file or directory"), 1);
 }
 
 
