@@ -23,6 +23,10 @@
 #include <Desktop/mime.h>
 #include "Browser/vfs.h"
 
+#ifndef PROGNAME
+# define PROGNAME	"vfs"
+#endif
+
 
 /* vfs */
 static int _vfs(void)
@@ -51,7 +55,7 @@ static int _vfs(void)
 /* usage */
 static int _usage(void)
 {
-	fputs("Usage: vfs\n", stderr);
+	fputs("Usage: " PROGNAME "\n", stderr);
 	return 1;
 }
 

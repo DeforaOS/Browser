@@ -22,6 +22,10 @@
 #include <dlfcn.h>
 #include "Browser/plugin.h"
 
+#ifndef PROGNAME
+# define PROGNAME	"plugins"
+#endif
+
 
 /* private */
 /* prototypes */
@@ -90,7 +94,7 @@ static int _plugins(void)
 /* dlerror */
 static int _dlerror(char const * message, int ret)
 {
-	fputs("plugins: ", stderr);
+	fputs(PROGNAME ": ", stderr);
 	fprintf(stderr, "%s: %s\n", message, dlerror());
 	return ret;
 }
@@ -99,7 +103,7 @@ static int _dlerror(char const * message, int ret)
 /* error */
 static int _error(char const * message, char const * error, int ret)
 {
-	fputs("plugins: ", stderr);
+	fputs(PROGNAME ": ", stderr);
 	fprintf(stderr, "%s: %s\n", message, error);
 	return ret;
 }
@@ -108,7 +112,7 @@ static int _error(char const * message, char const * error, int ret)
 /* perror */
 static int _perror(char const * message, int ret)
 {
-	fputs("plugins: ", stderr);
+	fputs(PROGNAME ": ", stderr);
 	perror(message);
 	return ret;
 }
