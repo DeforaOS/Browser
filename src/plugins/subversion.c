@@ -254,6 +254,8 @@ static GtkWidget * _subversion_get_widget(SVN * svn)
 
 /* subversion_refresh */
 static void _refresh_dir(SVN * svn);
+static void _refresh_error(SVN * svn, char const * message);
+static void _refresh_hide(SVN * svn, gboolean name);
 static void _refresh_status(SVN * svn, char const * status);
 
 static void _subversion_refresh(SVN * svn, GList * selection)
@@ -266,17 +268,21 @@ static void _subversion_refresh(SVN * svn, GList * selection)
 		g_source_remove(svn->source);
 	free(svn->filename);
 	svn->filename = NULL;
-	if(path == NULL || lstat(path, &st) != 0)
+	if(path == NULL || selection->next != NULL)
+	{
+		_refresh_hide(svn, TRUE);
 		return;
-	if((svn->filename = strdup(path)) == NULL)
+	}
+	if(lstat(path, &st) != 0 || (svn->filename = strdup(path)) == NULL)
+	{
+		if(errno != ENOENT)
+			_refresh_error(svn, path);
 		return;
+	}
 	p = g_filename_display_basename(path);
 	gtk_label_set_text(GTK_LABEL(svn->name), p);
 	g_free(p);
-	_refresh_status(svn, NULL);
-	gtk_widget_hide(svn->directory);
-	gtk_widget_hide(svn->file);
-	gtk_widget_hide(svn->add);
+	_refresh_hide(svn, FALSE);
 	if(S_ISDIR(st.st_mode))
 		_refresh_dir(svn);
 }
@@ -310,6 +316,23 @@ static void _refresh_dir(SVN * svn)
 		gtk_widget_show(svn->directory);
 	else
 		_refresh_status(svn, _("Not a Subversion repository"));
+}
+
+static void _refresh_error(SVN * svn, char const * message)
+{
+	BrowserPluginHelper * helper = svn->helper;
+
+	error_set("%s: %s", message, strerror(errno));
+	helper->error(helper->browser, error_get(), 1);
+}
+
+static void _refresh_hide(SVN * svn, gboolean name)
+{
+	name ? gtk_widget_hide(svn->name) : gtk_widget_show(svn->name);
+	_refresh_status(svn, NULL);
+	gtk_widget_hide(svn->directory);
+	gtk_widget_hide(svn->file);
+	gtk_widget_hide(svn->add);
 }
 
 static void _refresh_status(SVN * svn, char const * status)
