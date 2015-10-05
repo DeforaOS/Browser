@@ -15,6 +15,9 @@
 
 
 
+#ifdef __sun
+# include <sys/stat.h>
+#endif
 #include <unistd.h>
 #include <dirent.h>
 #include <stdlib.h>
@@ -111,6 +114,9 @@ static int _dirtree_add(GtkTreeStore * store, GtkTreeIter * iter)
 	char * str;
 	DIR * dir;
 	struct dirent * de;
+#ifdef __sun
+	struct stat st;
+#endif
 	char * q;
 	GtkTreeIter iter2;
 
@@ -128,14 +134,24 @@ static int _dirtree_add(GtkTreeStore * store, GtkTreeIter * iter)
 	snprintf(str, len + 1, "%s/", p);
 	while((de = readdir(dir)) != NULL)
 	{
+#ifdef __sun
+		if(strcmp(".", de->d_name) == 0
+				|| strcmp("..", de->d_name) == 0)
+			continue;
+#else
 		if(!(de->d_type & DT_DIR)
 				|| strcmp(".", de->d_name) == 0
 				|| strcmp("..", de->d_name) == 0)
 			continue;
+#endif
 		if((q = realloc(str, len + strlen(de->d_name) + 1)) == NULL)
 			continue;
 		str = q;
 		snprintf(&str[len], strlen(de->d_name) + 1, "%s", de->d_name);
+#ifdef __sun
+		if(lstat(str, &st) != 0 || (st.st_mode & S_IFDIR) == 0)
+			continue;
+#endif
 		gtk_tree_store_append(store, &iter2, iter);
 		if((q = g_filename_to_utf8(de->d_name, strlen(de->d_name), NULL,
 						NULL, NULL)) == NULL)
