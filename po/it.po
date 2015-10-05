@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Browser 0.4.13\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-04 21:54+0200\n"
+"POT-Creation-Date: 2015-10-06 00:13+0200\n"
 "PO-Revision-Date: 2010-04-07 23:18+0200\n"
 "Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
 "Language-Team: Italian\n"
@@ -158,7 +158,7 @@ msgstr "Proprietà"
 msgid "Error while loading configuration"
 msgstr ""
 
-#: ../src/browser.c:456 ../src/browser.c:3857
+#: ../src/browser.c:456 ../src/browser.c:3858
 msgid "File manager"
 msgstr ""
 
@@ -238,8 +238,8 @@ msgstr ""
 msgid "%s%u file%c (%u hidden)"
 msgstr ""
 
-#: ../src/browser.c:1903 ../src/browser.c:1909 ../src/browser.c:3472
-#: ../src/browser.c:3476 ../src/desktopicon.c:1024 ../src/desktopicon.c:1029
+#: ../src/browser.c:1903 ../src/browser.c:1909 ../src/browser.c:3473
+#: ../src/browser.c:3477 ../src/desktopicon.c:1024 ../src/desktopicon.c:1029
 #: ../src/desktopicon.c:1211 ../src/desktopicon.c:1216
 msgid "Warning"
 msgstr ""
@@ -305,80 +305,80 @@ msgstr ""
 msgid "Type:"
 msgstr ""
 
-#: ../src/browser.c:2272
+#: ../src/browser.c:2273
 msgid "Open with:"
 msgstr ""
 
-#: ../src/browser.c:2287
+#: ../src/browser.c:2288
 msgid "View with:"
 msgstr ""
 
-#: ../src/browser.c:2302
+#: ../src/browser.c:2303
 msgid "Edit with:"
 msgstr ""
 
-#: ../src/browser.c:2859 ../src/plugins/trash.c:234
+#: ../src/browser.c:2860 ../src/plugins/trash.c:234
 msgid "Filename"
 msgstr ""
 
-#: ../src/browser.c:2863 ../src/plugins/volumes.c:192
+#: ../src/browser.c:2864 ../src/plugins/volumes.c:192
 msgid "Size"
 msgstr ""
 
-#: ../src/browser.c:2865
+#: ../src/browser.c:2866
 msgid "Owner"
 msgstr ""
 
-#: ../src/browser.c:2866
+#: ../src/browser.c:2867
 msgid "Group"
 msgstr ""
 
-#: ../src/browser.c:2867
+#: ../src/browser.c:2868
 msgid "Date"
 msgstr ""
 
-#: ../src/browser.c:2869
+#: ../src/browser.c:2870
 msgid "MIME type"
 msgstr ""
 
-#: ../src/browser.c:3301
+#: ../src/browser.c:3302
 msgid "Open in new _window"
 msgstr ""
 
-#: ../src/browser.c:3330
+#: ../src/browser.c:3331
 msgid "_Unmount"
 msgstr ""
 
-#: ../src/browser.c:3366 ../src/desktopicon.c:849 ../src/view.c:115
+#: ../src/browser.c:3367 ../src/desktopicon.c:849 ../src/view.c:115
 #: ../src/view.c:126
 msgid "Open _with..."
 msgstr ""
 
-#: ../src/browser.c:3475 ../src/desktopicon.c:1028
+#: ../src/browser.c:3476 ../src/desktopicon.c:1028
 msgid "Are you sure you want to execute this file?"
 msgstr ""
 
-#: ../src/browser.c:3533
+#: ../src/browser.c:3534
 msgid "New"
 msgstr ""
 
-#: ../src/browser.c:3538 ../src/browser.c:3542 ../src/desktop.c:394
+#: ../src/browser.c:3539 ../src/browser.c:3543 ../src/desktop.c:394
 msgid "Folder"
 msgstr ""
 
-#: ../src/browser.c:3549 ../src/desktop.c:402
+#: ../src/browser.c:3550 ../src/desktop.c:402
 msgid "Symbolic link..."
 msgstr ""
 
-#: ../src/browser.c:3553 ../src/desktop.c:406
+#: ../src/browser.c:3554 ../src/desktop.c:406
 msgid "Text file"
 msgstr ""
 
-#: ../src/browser.c:3588 ../src/desktop.c:455
+#: ../src/browser.c:3589 ../src/desktop.c:455
 msgid "New text file.txt"
 msgstr ""
 
-#: ../src/browser.c:3829
+#: ../src/browser.c:3830
 msgid "Refreshing folder..."
 msgstr ""
 
