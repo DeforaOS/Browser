@@ -1,5 +1,5 @@
 # $Id$
-# Copyright (c) 2010-2013 Pierre Pronchery <khorben@defora.org>
+# Copyright (c) 2010-2015 Pierre Pronchery <khorben@defora.org>
 # This file is distributed under the same license as the Browser package.
 # Pierre Pronchery <khorben@defora.org>, 2010.
 #
@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: Browser 0.4.13\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-10-04 21:54+0200\n"
-"PO-Revision-Date: 2010-03-30 01:04+0200\n"
-"Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
+"PO-Revision-Date: 2015-10-05 01:19+0100\n"
+"Last-Translator: Ana Carolina Rocha <carolina@defora.org>\n"
 "Language-Team: Spanish\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -27,11 +27,11 @@ msgstr "Nueva carpeta"
 
 #: ../src/browser.c:226
 msgid "New _symbolic link..."
-msgstr ""
+msgstr "Nuevo enlace _simbólico..."
 
 #: ../src/browser.c:228
 msgid "_Open file..."
-msgstr ""
+msgstr "_Abrir archivo..."
 
 #: ../src/browser.c:231 ../src/view.c:128
 msgid "_Properties"
@@ -63,7 +63,7 @@ msgstr "Seleccionar _todo"
 
 #: ../src/browser.c:257
 msgid "_Unselect all"
-msgstr ""
+msgstr "_Deseleccionar todo"
 
 #: ../src/browser.c:259
 msgid "_Preferences"
@@ -79,19 +79,19 @@ msgstr "_Inicio"
 
 #: ../src/browser.c:273
 msgid "_Details"
-msgstr ""
+msgstr "_Detalles"
 
 #: ../src/browser.c:275
 msgid "_Icons"
-msgstr ""
+msgstr "_Íconos"
 
 #: ../src/browser.c:276
 msgid "_List"
-msgstr ""
+msgstr "_Lista"
 
 #: ../src/browser.c:277
 msgid "_Thumbnails"
-msgstr ""
+msgstr "Minia_tura"
 
 #: ../src/browser.c:284
 msgid "_Contents"
@@ -124,7 +124,7 @@ msgstr "Atrás"
 
 #: ../src/browser.c:309
 msgid "Up"
-msgstr ""
+msgstr "Arriba"
 
 #: ../src/browser.c:310
 msgid "Forward"
@@ -156,32 +156,32 @@ msgstr "Propriedades"
 
 #: ../src/browser.c:417
 msgid "Error while loading configuration"
-msgstr ""
+msgstr "Error al cargar configuración"
 
 #: ../src/browser.c:456 ../src/browser.c:3857
 msgid "File manager"
-msgstr ""
+msgstr "Administrador de archivos"
 
 #: ../src/browser.c:479
 msgid "View as..."
-msgstr ""
+msgstr "Ver como..."
 
 #: ../src/browser.c:483 ../src/browser.c:2020 ../src/browser.c:2028
 msgid "Details"
-msgstr ""
+msgstr "Detalles"
 
 #: ../src/browser.c:490 ../src/browser.c:2021 ../src/browser.c:2029
 #: ../src/desktop.c:1919
 msgid "Icons"
-msgstr ""
+msgstr "Íconos"
 
 #: ../src/browser.c:497 ../src/browser.c:2022 ../src/browser.c:2030
 msgid "List"
-msgstr ""
+msgstr "Lista"
 
 #: ../src/browser.c:504 ../src/browser.c:2024 ../src/browser.c:2031
 msgid "Thumbnails"
-msgstr ""
+msgstr "Miniatura"
 
 #: ../src/browser.c:525
 msgid " Location: "
@@ -189,7 +189,7 @@ msgstr " Dirección: "
 
 #: ../src/browser.c:839
 msgid "File manager for the DeforaOS desktop"
-msgstr ""
+msgstr "Administrador de archivo para Escritorio DeforaOS "
 
 #: ../src/browser.c:846
 msgid "translator-credits"
@@ -211,15 +211,15 @@ msgstr "Abrir archivo..."
 #: ../src/browser.c:1244 ../src/desktopicon.c:1093 ../src/view.c:171
 #: ../src/view.c:515
 msgid "Open with..."
-msgstr ""
+msgstr "Abrir con..."
 
 #: ../src/browser.c:1253 ../src/view.c:521
 msgid "Executable files"
-msgstr ""
+msgstr "Archivos ejecutables"
 
 #: ../src/browser.c:1258 ../src/view.c:526
 msgid "Shell scripts"
-msgstr ""
+msgstr "Shell cripts"
 
 #: ../src/browser.c:1262 ../src/desktop.c:1762 ../src/view.c:530
 msgid "All files"
@@ -227,16 +227,16 @@ msgstr "Todos los archivos"
 
 #: ../src/browser.c:1274
 msgid "_Set as the default handler"
-msgstr ""
+msgstr "_Establecer como gestor de errores predeterminado"
 
 #: ../src/browser.c:1386 ../src/browser.c:1718
 msgid "Refreshing folder: "
-msgstr ""
+msgstr "Actualizando carpeta:"
 
 #: ../src/browser.c:1408
 #, c-format
 msgid "%s%u file%c (%u hidden)"
-msgstr ""
+msgstr "%s%u archivo%c (%u oculto)"
 
 #: ../src/browser.c:1903 ../src/browser.c:1909 ../src/browser.c:3472
 #: ../src/browser.c:3476 ../src/desktopicon.c:1024 ../src/desktopicon.c:1029
@@ -247,7 +247,7 @@ msgstr "Aviso"
 #: ../src/browser.c:1907
 #, c-format
 msgid "Are you sure you want to delete %lu file(s)?"
-msgstr ""
+msgstr "Está seguro que desea eliminar el archivos(s) %lu?"
 
 #: ../src/browser.c:1989
 msgid "Preferences"
@@ -255,39 +255,39 @@ msgstr "Preferencias"
 
 #: ../src/browser.c:2014
 msgid "Default view:"
-msgstr ""
+msgstr "Vistra predeterminada"
 
 #: ../src/browser.c:2038
 msgid "_Alternate row colors in detailed view"
-msgstr ""
+msgstr "_Alternar línea de colores en vista detallada"
 
 #: ../src/browser.c:2042
 msgid "_Confirm before deletion"
-msgstr ""
+msgstr "_Confirmar antes de eliminar"
 
 #: ../src/browser.c:2045
 msgid "Sort _folders first"
-msgstr ""
+msgstr "Ordernar _Carpetas primero"
 
 #: ../src/browser.c:2048
 msgid "Show _hidden files"
-msgstr ""
+msgstr "Mostrar arc_hivos ocultos"
 
 #: ../src/browser.c:2051
 msgid "_Appearance"
-msgstr ""
+msgstr "_Apariencia"
 
 #: ../src/browser.c:2069
 msgid "Type"
-msgstr ""
+msgstr "Tipo"
 
 #: ../src/browser.c:2093
 msgid "_File associations"
-msgstr ""
+msgstr "Asociación de a_rchivos"
 
 #: ../src/browser.c:2106
 msgid "Enabled"
-msgstr ""
+msgstr "Abilitado"
 
 #: ../src/browser.c:2114
 msgid "Name"
@@ -299,64 +299,64 @@ msgstr "_Plug-ins"
 
 #: ../src/browser.c:2242
 msgid "Edit file association"
-msgstr ""
+msgstr "Editar la asociación de archivo"
 
 #: ../src/browser.c:2259
 msgid "Type:"
-msgstr ""
+msgstr "Tipo:"
 
 #: ../src/browser.c:2272
 msgid "Open with:"
-msgstr ""
+msgstr "Abrir con:"
 
 #: ../src/browser.c:2287
 msgid "View with:"
-msgstr ""
+msgstr "Ver con:"
 
 #: ../src/browser.c:2302
 msgid "Edit with:"
-msgstr ""
+msgstr "Editar con:"
 
 #: ../src/browser.c:2859 ../src/plugins/trash.c:234
 msgid "Filename"
-msgstr ""
+msgstr "Nombre de archivo"
 
 #: ../src/browser.c:2863 ../src/plugins/volumes.c:192
 msgid "Size"
-msgstr ""
+msgstr "Tamaño"
 
 #: ../src/browser.c:2865
 msgid "Owner"
-msgstr ""
+msgstr "Dueño"
 
 #: ../src/browser.c:2866
 msgid "Group"
-msgstr ""
+msgstr "Grupo"
 
 #: ../src/browser.c:2867
 msgid "Date"
-msgstr ""
+msgstr "Fecha"
 
 #: ../src/browser.c:2869
 msgid "MIME type"
-msgstr ""
+msgstr "MIME type"
 
 #: ../src/browser.c:3301
 msgid "Open in new _window"
-msgstr ""
+msgstr "Abrir en nueva_ventana"
 
 #: ../src/browser.c:3330
 msgid "_Unmount"
-msgstr ""
+msgstr "_Desmontar"
 
 #: ../src/browser.c:3366 ../src/desktopicon.c:849 ../src/view.c:115
 #: ../src/view.c:126
 msgid "Open _with..."
-msgstr ""
+msgstr "Abrir _con..."
 
 #: ../src/browser.c:3475 ../src/desktopicon.c:1028
 msgid "Are you sure you want to execute this file?"
-msgstr ""
+msgstr "¿Está seguro que desea ejecutar este archivo?"
 
 #: ../src/browser.c:3533
 msgid "New"
@@ -364,11 +364,11 @@ msgstr "Nuevo"
 
 #: ../src/browser.c:3538 ../src/browser.c:3542 ../src/desktop.c:394
 msgid "Folder"
-msgstr ""
+msgstr "Carpeta"
 
 #: ../src/browser.c:3549 ../src/desktop.c:402
 msgid "Symbolic link..."
-msgstr ""
+msgstr "Enlace simbólico..."
 
 #: ../src/browser.c:3553 ../src/desktop.c:406
 msgid "Text file"
@@ -376,27 +376,27 @@ msgstr "Archivo de texto"
 
 #: ../src/browser.c:3588 ../src/desktop.c:455
 msgid "New text file.txt"
-msgstr ""
+msgstr "Nuevo archivo de texto.txt"
 
 #: ../src/browser.c:3829
 msgid "Refreshing folder..."
-msgstr ""
+msgstr "Actualizar carpeta..."
 
 #: ../src/callbacks.c:113 ../src/desktop.c:436
 msgid "New folder"
-msgstr ""
+msgstr "Nueva carpeta"
 
 #: ../src/common.c:111
 msgid "copying"
-msgstr ""
+msgstr "copiando"
 
 #: ../src/common.c:111
 msgid "moving"
-msgstr ""
+msgstr "moviendo"
 
 #: ../src/common.c:111
 msgid " to \""
-msgstr ""
+msgstr "a \""
 
 #: ../src/common.c:238 ../src/copy.c:699 ../src/plugins/properties.c:469
 #: ../src/plugins/volumes.c:419
@@ -416,40 +416,40 @@ msgstr "MB"
 #: ../src/common.c:246 ../src/copy.c:720 ../src/plugins/properties.c:479
 #: ../src/plugins/volumes.c:429
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: ../src/common.c:250 ../src/plugins/properties.c:483
 #: ../src/plugins/volumes.c:433
 msgid "TB"
-msgstr ""
+msgstr "TB"
 
 #: ../src/common.c:272
 msgid "New symbolic link"
-msgstr ""
+msgstr "Nuevo enlace simbólico"
 
 #: ../src/common.c:289
 msgid "Destination:"
-msgstr ""
+msgstr "Destino:"
 
 #: ../src/copy.c:130
 msgid "Copy file(s)"
-msgstr ""
+msgstr "Copiar archivo(s)"
 
 #: ../src/copy.c:138
 msgid "Copying: "
-msgstr ""
+msgstr "Copiando:"
 
 #: ../src/copy.c:156
 msgid "Filename: "
-msgstr ""
+msgstr "Nombre de archivo:"
 
 #: ../src/copy.c:170
 msgid "Copied: "
-msgstr ""
+msgstr "Copiado:"
 
 #: ../src/copy.c:182
 msgid "Remaining: "
-msgstr ""
+msgstr "Restantes:"
 
 #: ../src/copy.c:222 ../src/delete.c:171 ../src/move.c:166
 #, c-format
@@ -458,16 +458,16 @@ msgstr "Archivo %u de %u"
 
 #: ../src/copy.c:355
 msgid "Omitting directory"
-msgstr ""
+msgstr "Omitiendo directorio"
 
 #: ../src/copy.c:669
 msgid "0 bytes"
-msgstr ""
+msgstr "0 bytes"
 
 #: ../src/copy.c:686
 #, c-format
 msgid "%.1f of %.1f %s (%.1f %s/s)"
-msgstr ""
+msgstr "%.1f of %.1f %s (%.1f %s/s)"
 
 #: ../src/copy.c:810 ../src/copy.c:814 ../src/delete.c:339 ../src/delete.c:343
 #: ../src/delete.c:371 ../src/delete.c:376 ../src/move.c:499 ../src/move.c:503
@@ -485,10 +485,12 @@ msgid ""
 "%s will be overwritten\n"
 "Proceed?"
 msgstr ""
+"%s será sobreescrito\n"
+" ¿Proceder?"
 
 #: ../src/copy.c:845 ../src/copy.c:849
 msgid "Information"
-msgstr ""
+msgstr "Información"
 
 #: ../src/copy.c:871
 msgid ""
@@ -502,14 +504,23 @@ msgid ""
 "  -R\tCopy file hierarchies\n"
 "  -r\tCopy file hierarchies\n"
 msgstr ""
+"Usage: copiar [-fip] fuente_archivo objetivo_archivo\n"
+"       copiar [-fip] fuente_archivo ... objetivo\n"
+"       copiar -R [-H | -L | -P][-fip] fuente_archivo ... objetivo\n"
+"       copiar -r [-H | -L | -P][-fip] fuente_archivo ... objetivo\n"
+"  -f\tNo solicitar confirmación si la ruta de destino existe\n"
+"  -i\tSolicitar confirmación si la ruta de destino existe\n"
+"  -p\tDuplicar características de la fuente de archivos\n"
+"  -R\tCopiar jerarquías de archivos\n"
+"  -r\tCopiar jerarquías de archivos\n"
 
 #: ../src/delete.c:111
 msgid "Delete file(s)"
-msgstr ""
+msgstr "Eliminar archivo(s)"
 
 #: ../src/delete.c:125
 msgid "Deleting: "
-msgstr ""
+msgstr "Eliminando:"
 
 #: ../src/delete.c:342
 #, c-format
@@ -517,10 +528,12 @@ msgid ""
 "%s is a directory.\n"
 "Recursively delete?"
 msgstr ""
+"%s es un directorio.\n"
+"¿Eliminar recursivamente?"
 
 #: ../src/delete.c:344 ../src/delete.c:377
 msgid "Yes to all"
-msgstr ""
+msgstr "Sí a todo"
 
 #: ../src/delete.c:374
 #, c-format
@@ -528,6 +541,8 @@ msgid ""
 "%s will be permanently deleted.\n"
 "Continue?"
 msgstr ""
+"%s será eliminado de manera permanente.\n"
+"¿Continuar?"
 
 #: ../src/delete.c:475
 msgid ""
@@ -537,30 +552,35 @@ msgid ""
 "  -R\tRemove file hierarchies\n"
 "  -r\tEquivalent to -R\n"
 msgstr ""
+"Usage: eliminar [-fiRr] archivo...\n"
+"  -f\tNo solicitar confirmación e ignorar errore\n"
+"  -i\tSolicitar confirmación\n"
+"  -R\tRemover jerarquía de archivos\n"
+"  -r\tEquivalente a -R\n"
 
 #: ../src/desktop.c:185
 msgid "Do not draw icons"
-msgstr ""
+msgstr "No mostrar íconos"
 
 #: ../src/desktop.c:186 ../src/desktop.c:877
 msgid "Applications"
-msgstr ""
+msgstr "Aplicaciones"
 
 #: ../src/desktop.c:187
 msgid "Categories"
-msgstr ""
+msgstr "Categorías"
 
 #: ../src/desktop.c:188
 msgid "Desktop contents"
-msgstr ""
+msgstr "Contenidos del Escritorio"
 
 #: ../src/desktop.c:189
 msgid "Home screen"
-msgstr ""
+msgstr "Pantalla de Inicio"
 
 #: ../src/desktop.c:1350
 msgid "Could not load preferences"
-msgstr ""
+msgstr "No se pudieron cargar preferencias"
 
 #: ../src/desktop.c:1684
 msgid "Desktop preferences"
@@ -568,105 +588,105 @@ msgstr "Desktop preferencias"
 
 #: ../src/desktop.c:1733
 msgid "Default color: "
-msgstr ""
+msgstr "Color predeterminado:"
 
 #: ../src/desktop.c:1745
 msgid "Wallpaper: "
-msgstr ""
+msgstr "Papel tapíz:"
 
 #: ../src/desktop.c:1749 ../src/desktop.c:1816
 msgid "Background"
-msgstr ""
+msgstr "Fondo de pantalla"
 
 #: ../src/desktop.c:1752
 msgid "Picture files"
-msgstr ""
+msgstr "Archivos de imagen"
 
 #: ../src/desktop.c:1778
 msgid "Position: "
-msgstr ""
+msgstr "Posición:"
 
 #: ../src/desktop.c:1785 ../src/desktop.c:1798
 msgid "Do not draw"
-msgstr ""
+msgstr "No mostrar"
 
 #: ../src/desktop.c:1787 ../src/desktop.c:1800
 msgid "Centered"
-msgstr ""
+msgstr "Centrado"
 
 #: ../src/desktop.c:1789 ../src/desktop.c:1802
 msgid "Scaled"
-msgstr ""
+msgstr "A escala"
 
 #: ../src/desktop.c:1792 ../src/desktop.c:1804
 msgid "Scaled (keep ratio)"
-msgstr ""
+msgstr "A escala (manteniendo las proporciones)"
 
 #: ../src/desktop.c:1794 ../src/desktop.c:1806
 msgid "Tiled"
-msgstr ""
+msgstr "Mosaico"
 
 #: ../src/desktop.c:1812
 msgid "E_xtend background to all monitors"
-msgstr ""
+msgstr "E_xtender fondo a todos los monitores"
 
 #: ../src/desktop.c:1840
 msgid "Layout: "
-msgstr ""
+msgstr "Disposición:"
 
 #: ../src/desktop.c:1867 ../src/desktop.c:1943
 msgid "Monitor: "
-msgstr ""
+msgstr "Monitor:"
 
 #: ../src/desktop.c:1884
 msgid "Background color: "
-msgstr ""
+msgstr "Color de fondo:"
 
 #: ../src/desktop.c:1897
 msgid "Foreground color: "
-msgstr ""
+msgstr "Color del primer plano:"
 
 #: ../src/desktop.c:1910
 msgid "Font: "
-msgstr ""
+msgstr "Fuente:"
 
 #: ../src/desktop.c:1960
 msgid "Resolution: "
-msgstr ""
+msgstr "Resolución:"
 
 #: ../src/desktop.c:1975
 msgid "Size: "
-msgstr ""
+msgstr "Tamaño:"
 
 #: ../src/desktop.c:2002
 msgid "Monitors"
-msgstr ""
+msgstr "Monitores"
 
 #: ../src/desktop.c:2039
 msgid "Unknown size"
-msgstr ""
+msgstr "Tamaño desconocido"
 
 #: ../src/desktop.c:2041
 #, c-format
 msgid "%dx%d (at %d,%d)"
-msgstr ""
+msgstr "%dx%d (at %d,%d)"
 
 #: ../src/desktop.c:2046
 msgid "Unknown resolution"
-msgstr ""
+msgstr "Resolución desconocida"
 
 #: ../src/desktop.c:2048
 #, c-format
 msgid "%dx%d mm (%.0fx%.0f DPI)"
-msgstr ""
+msgstr "%dx%d mm (%.0fx%.0f DPI)"
 
 #: ../src/desktop.c:2074 ../src/desktop.c:2079
 msgid "Default monitor"
-msgstr ""
+msgstr "Monitor predeterminado"
 
 #: ../src/desktop.c:2076 ../src/desktop.c:2081
 msgid "Whole screen"
-msgstr ""
+msgstr "Toda la pantalla"
 
 #: ../src/desktop.c:2087
 #, c-format
@@ -688,6 +708,17 @@ msgid ""
 "  -N\tDo not intercept mouse clicks on the desktop\n"
 "  -w\tDraw the desktop as a window\n"
 msgstr ""
+"Usage: %s [-H|-V][-a|-c|-f|-h|-n][-m monitor][-N][-w]\n"
+"  -H\tOrganizar íconos horizontalmente\n"
+"  -V\tOrganizar íconos verticalmente\n"
+"  -a\tMostrar las aplicaciones registradas\n"
+"  -c\tOrganizar las aplicaciones registradas por categorías\n"
+"  -f\tMostrar contenidos de la carpeta del escritorio (predeterminado)\n"
+"  -h\tMostrar la pantalla de inicio\n"
+"  -m\tMonitor donde proyectar el escritorio\n"
+"  -n\tNo mostrar íconos en el escritorio\n"
+"  -N\tNo interceptar click del ratón en el escritorio\n"
+"  -w\tMostrar el escritorio como una ventana\n"
 
 #: ../src/desktopctl.c:71
 msgid ""
@@ -708,27 +739,27 @@ msgstr ""
 
 #: ../src/desktopicon.c:807 ../src/desktopicon.c:858
 msgid "_Rename..."
-msgstr ""
+msgstr "_Cambiar nombre"
 
 #: ../src/desktopicon.c:1131 ../src/desktopicon.c:1132
 msgid "Rename"
-msgstr ""
+msgstr "Cambiar nombre"
 
 #: ../src/desktopicon.c:1145
 msgid "Rename: "
-msgstr ""
+msgstr "Cambiar nombre:"
 
 #: ../src/desktopicon.c:1160
 msgid "To: "
-msgstr ""
+msgstr "A:"
 
 #: ../src/desktopicon.c:1214
 msgid "Are you sure you want to delete "
-msgstr ""
+msgstr "Está seguro que desea eliminar"
 
 #: ../src/desktopicon.c:1215
 msgid " file(s)?"
-msgstr ""
+msgstr "archivo(s)?"
 
 #: ../src/main.c:63
 #, c-format
@@ -746,14 +777,16 @@ msgid ""
 "Usage: %s [-D] [directory...]\n"
 "  -D\tStart in detailed view\n"
 msgstr ""
+"Usage: %s [-D] [directorio...]\n"
+"  -D\tComenzar en vista detallada\n"
 
 #: ../src/move.c:100
 msgid "Move file(s)"
-msgstr ""
+msgstr "Mover archivos"
 
 #: ../src/move.c:116
 msgid "Moving: "
-msgstr ""
+msgstr "Moviendo:"
 
 #: ../src/move.c:529
 msgid ""
@@ -765,7 +798,7 @@ msgstr ""
 
 #: ../src/open.c:69
 msgid ": Could not perform action \""
-msgstr ""
+msgstr ": No se pudo realizar la acción\""
 
 #: ../src/open.c:90
 msgid ""
@@ -793,7 +826,7 @@ msgstr "Editar"
 
 #: ../src/view.c:229
 msgid "Unknown file type"
-msgstr ""
+msgstr "Tipo de archivo desconocido"
 
 #: ../src/view.c:236
 msgid "View - "
@@ -801,7 +834,7 @@ msgstr "Ver - "
 
 #: ../src/view.c:279
 msgid "Unable to view file type"
-msgstr ""
+msgstr "No se puede visualizar el tipo de archivo"
 
 #: ../src/view.c:362 ../src/plugins/common.c:131
 msgid "Select All"
@@ -813,7 +846,7 @@ msgstr "Ver archivo..."
 
 #: ../src/view.c:575 ../src/view.c:670
 msgid "Could not edit file"
-msgstr ""
+msgstr "No se puede editar el archivo"
 
 #: ../src/view.c:710
 #, c-format
@@ -822,25 +855,25 @@ msgstr "Usage: %s archivo...\n"
 
 #: ../src/plugins/common.c:125 ../src/plugins/common.c:446
 msgid "Save as..."
-msgstr ""
+msgstr "Guardar como..."
 
 #: ../src/plugins/common.c:266
 msgid "Running command..."
-msgstr ""
+msgstr "Ejecutando comando..."
 
 #: ../src/plugins/common.c:403
 msgid "This file already exists. Overwrite?"
-msgstr ""
+msgstr "Este archivo ya existe. ¿Reemplazar?"
 
 #: ../src/plugins/common.c:497
 #, c-format
 msgid "Command exited with error code %d"
-msgstr ""
+msgstr "El comando se ha cerrado con el código de error %d"
 
 #: ../src/plugins/common.c:506
 #, c-format
 msgid "Command exited with signal %d"
-msgstr ""
+msgstr "El comando se ha cerrado con la señal %d"
 
 #: ../src/plugins/cvs.c:104
 msgid "CVS"
@@ -848,44 +881,44 @@ msgstr "CVS"
 
 #: ../src/plugins/cvs.c:161
 msgid "Checkout..."
-msgstr ""
+msgstr "Checkout..."
 
 #: ../src/plugins/cvs.c:173
 msgid "Root:"
-msgstr ""
+msgstr "Raíz:"
 
 #: ../src/plugins/cvs.c:175
 msgid "Repository:"
-msgstr ""
+msgstr "Repositorio:"
 
 #: ../src/plugins/cvs.c:177
 msgid "Tag:"
-msgstr ""
+msgstr "Etiquetar:"
 
 #: ../src/plugins/cvs.c:180 ../src/plugins/cvs.c:213
 msgid "Request diff"
-msgstr ""
+msgstr "Pedido diff"
 
 #: ../src/plugins/cvs.c:182 ../src/plugins/cvs.c:215 ../src/plugins/git.c:200
 #: ../src/plugins/subversion.c:173
 msgid "Annotate"
-msgstr ""
+msgstr "Comentar"
 
 #: ../src/plugins/cvs.c:185 ../src/plugins/cvs.c:218 ../src/plugins/git.c:169
 #: ../src/plugins/git.c:203 ../src/plugins/subversion.c:148
 #: ../src/plugins/subversion.c:176
 msgid "View log"
-msgstr ""
+msgstr "Ver log"
 
 #: ../src/plugins/cvs.c:188 ../src/plugins/cvs.c:221 ../src/plugins/git.c:172
 #: ../src/plugins/subversion.c:151 ../src/plugins/subversion.c:179
 msgid "Status"
-msgstr ""
+msgstr "Estado"
 
 #: ../src/plugins/cvs.c:191 ../src/plugins/cvs.c:224
 #: ../src/plugins/subversion.c:154 ../src/plugins/subversion.c:182
 msgid "Update"
-msgstr ""
+msgstr "Actualizar"
 
 #: ../src/plugins/cvs.c:194 ../src/plugins/cvs.c:227
 msgid "Delete"
@@ -899,32 +932,32 @@ msgstr ""
 
 #: ../src/plugins/cvs.c:210
 msgid "Revision:"
-msgstr ""
+msgstr "Revisión:"
 
 #: ../src/plugins/cvs.c:237 ../src/plugins/subversion.c:192
 msgid "Add to repository"
-msgstr ""
+msgstr "Agregar a repositiorio"
 
 #: ../src/plugins/cvs.c:400 ../src/plugins/cvs.c:452
 msgid "Not a CVS repository"
-msgstr ""
+msgstr "No es un CVS repositorio"
 
 #: ../src/plugins/cvs.c:405 ../src/plugins/cvs.c:456
 msgid "Not managed by CVS"
-msgstr ""
+msgstr "No administrado por CVS"
 
 #: ../src/plugins/cvs.c:640
 #, c-format
 msgid "Do you really want to delete %s?"
-msgstr ""
+msgstr "Realmente desea eliminar %s?"
 
 #: ../src/plugins/cvs.c:685
 msgid "Path: "
-msgstr ""
+msgstr "Ruta:"
 
 #: ../src/plugins/cvs.c:698
 msgid "Module: "
-msgstr ""
+msgstr "Módulo:"
 
 #: ../src/plugins/cvs.c:858 ../src/plugins/git.c:543
 msgid "Could not commit the file or directory"
@@ -932,88 +965,88 @@ msgstr ""
 
 #: ../src/plugins/dirtree.c:75
 msgid "Directory tree"
-msgstr ""
+msgstr "Árbol de directorios"
 
 #: ../src/plugins/favorites.c:160
 msgid "Add to bookmarks"
-msgstr ""
+msgstr "Agregar a favoritos"
 
 #: ../src/plugins/favorites.c:168
 msgid "Remove from bookmarks"
-msgstr ""
+msgstr "Eliminar de favoritos"
 
 #: ../src/plugins/git.c:98
 msgid "Git"
-msgstr ""
+msgstr "Git"
 
 #: ../src/plugins/git.c:151
 msgid "Initialize"
-msgstr ""
+msgstr "Inicializar"
 
 #: ../src/plugins/git.c:154
 msgid "Clone..."
-msgstr ""
+msgstr "Clonar..."
 
 #: ../src/plugins/git.c:167 ../src/plugins/git.c:198
 #: ../src/plugins/subversion.c:146 ../src/plugins/subversion.c:171
 msgid "Diff"
-msgstr ""
+msgstr "Diff"
 
 #: ../src/plugins/git.c:175
 msgid "Pull"
-msgstr ""
+msgstr "Tirar"
 
 #: ../src/plugins/git.c:178
 msgid "Push"
-msgstr ""
+msgstr "Empujar"
 
 #: ../src/plugins/git.c:181 ../src/plugins/git.c:209
 msgid "Reset"
-msgstr ""
+msgstr "Reset"
 
 #: ../src/plugins/git.c:206
 msgid "Stage"
-msgstr ""
+msgstr "Fase"
 
 #: ../src/plugins/git.c:329
 msgid "Not a Git repository"
-msgstr ""
+msgstr "No es un repositorio Git"
 
 #: ../src/plugins/git.c:478 ../src/plugins/git.c:651
 msgid "This file is not managed by Git"
-msgstr ""
+msgstr "Este archivo no es administrado por Git"
 
 #: ../src/plugins/git.c:509
 msgid "Repository cloned successfully"
-msgstr ""
+msgstr "Repositorio clonado exitosamente"
 
 #: ../src/plugins/git.c:512
 msgid "Could not clone repository"
-msgstr ""
+msgstr "No se pudo clonar repositorio"
 
 #: ../src/plugins/git.c:576
 msgid "Could not diff the file or directory"
-msgstr ""
+msgstr "No se pudo diff el archivo o el directorio"
 
 #: ../src/plugins/git.c:583
 msgid "No difference was found"
-msgstr ""
+msgstr "No se ha encontrado diferencia"
 
 #: ../src/plugins/git.c:614
 msgid "Could not initialize repository"
-msgstr ""
+msgstr "No se ha podido inicializar repositorio"
 
 #: ../src/plugins/make.c:104
 msgid "Make"
-msgstr ""
+msgstr "Hacer"
 
 #: ../src/plugins/make.c:158 ../src/plugins/make.c:186
 msgid "Build"
-msgstr ""
+msgstr "Crear"
 
 #: ../src/plugins/make.c:161 ../src/plugins/make.c:189
 msgid "Clean"
-msgstr ""
+msgstr "Limpiar"
 
 #: ../src/plugins/make.c:164 ../src/plugins/make.c:192
 msgid "Dist"
@@ -1025,75 +1058,75 @@ msgstr ""
 
 #: ../src/plugins/make.c:170 ../src/plugins/make.c:198
 msgid "Install"
-msgstr ""
+msgstr "Instalar"
 
 #: ../src/plugins/make.c:173 ../src/plugins/make.c:201
 msgid "Uninstall"
-msgstr ""
+msgstr "Desinstalar"
 
 #: ../src/plugins/make.c:209
 msgid "Run configure"
-msgstr ""
+msgstr "Ejecutar configuración"
 
 #: ../src/plugins/make.c:214
 msgid "Run ./autogen.sh"
-msgstr ""
+msgstr "Run ./autogen.sh"
 
 #: ../src/plugins/make.c:219
 msgid "Run ./configure"
-msgstr ""
+msgstr "Run ./autogen.sh"
 
 #: ../src/plugins/make.c:333 ../src/plugins/make.c:350
 msgid "No Makefile found"
-msgstr ""
+msgstr "No se ha encontrado Makefile "
 
 #: ../src/plugins/preview.c:89
 msgid "Preview"
-msgstr ""
+msgstr "Vista previa"
 
 #: ../src/plugins/properties.c:178
 msgid "Size:"
-msgstr ""
+msgstr "Tamaño:"
 
 #: ../src/plugins/properties.c:183 ../src/plugins/properties.c:233
 msgid "Owner:"
-msgstr ""
+msgstr "Dueño:"
 
 #: ../src/plugins/properties.c:188 ../src/plugins/properties.c:236
 msgid "Group:"
-msgstr ""
+msgstr "Grupo:"
 
 #: ../src/plugins/properties.c:197
 msgid "Accessed:"
-msgstr ""
+msgstr "Accedido:"
 
 #: ../src/plugins/properties.c:202
 msgid "Modified:"
-msgstr ""
+msgstr "Modificado:"
 
 #: ../src/plugins/properties.c:207
 msgid "Changed:"
-msgstr ""
+msgstr "Cambiado:"
 
 #: ../src/plugins/properties.c:216
 msgid "Read:"
-msgstr ""
+msgstr "Leído:"
 
 #: ../src/plugins/properties.c:219
 msgid "Write:"
-msgstr ""
+msgstr "Escrito:"
 
 #: ../src/plugins/properties.c:222
 msgid "Execute:"
-msgstr ""
+msgstr "Ejecutado:"
 
 #: ../src/plugins/properties.c:239
 msgid "Others:"
-msgstr ""
+msgstr "Otros:"
 
 #: ../src/plugins/properties.c:388
 msgid "Unknown type"
-msgstr ""
+msgstr "Tipo desconocido:"
 
 #: ../src/plugins/subversion.c:92
 msgid "Subversion"
@@ -1101,35 +1134,37 @@ msgstr "Subversion"
 
 #: ../src/plugins/subversion.c:319
 msgid "Not a Subversion repository"
-msgstr ""
+msgstr "No es una Subversión repositoria"
 
 #: ../src/plugins/trash.c:579
 msgid ""
 "This will delete the file(s) selected.\n"
 "Do you really want to proceed?"
 msgstr ""
+"Esto eliminará el/los archivo(s) seleccionado(s).\n"
+"¿Realmente desea proceder?"
 
 #: ../src/plugins/volumes.c:134
 msgid "Volumes"
-msgstr ""
+msgstr "Volúmenes"
 
 #: ../src/plugins/volumes.c:185
 msgid "Mountpoint"
-msgstr ""
+msgstr "Mountpoint"
 
 #: ../src/plugins/volumes.c:198
 msgid "Used"
-msgstr ""
+msgstr "Usado"
 
 #: ../src/plugins/volumes.c:323 ../src/plugins/volumes.c:337
 #: ../src/plugins/volumes.c:344 ../src/plugins/volumes.c:392
 msgid "Root filesystem"
-msgstr ""
+msgstr "Root sistema de archivos"
 
 #: ../src/plugins/volumes.c:630
 msgid "Unmount"
-msgstr ""
+msgstr "Desmontar"
 
 #: ../src/plugins/volumes.c:641
 msgid "Eject"
-msgstr ""
+msgstr "Expulsar"
