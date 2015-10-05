@@ -17,6 +17,7 @@
 
 
 #variables
+[ -n "$OBJDIR" ] || OBJDIR="./"
 PROGNAME="tests.sh"
 #executables
 DATE="date"
@@ -26,19 +27,27 @@ DATE="date"
 #fail
 _fail()
 {
+	_run "$@"
+}
+
+
+#run
+_run()
+{
 	test="$1"
 
 	shift
 	echo -n "$test:" 1>&2
 	(echo
-	echo "Testing: ./$test" "$@"
-	LD_LIBRARY_PATH="${OBJDIR}../src" "./$test" "$@") >> "$target" 2>&1
+	echo "Testing: $OBJDIR$test" "$@"
+	LD_LIBRARY_PATH="$OBJDIR../src" "$OBJDIR$test" "$@") >> "$target" 2>&1
 	res=$?
 	if [ $res -ne 0 ]; then
-		echo " FAIL (error $res)" 1>&2
+		echo " FAIL (error $res)"
 	else
-		echo " PASS" 1>&2
+		echo " PASS"
 	fi
+	return $res
 }
 
 
@@ -47,20 +56,9 @@ _test()
 {
 	test="$1"
 
-	shift
-	echo -n "$test:" 1>&2
-	(echo
-	echo "Testing: ./$test" "$@"
-	LD_LIBRARY_PATH="${OBJDIR}../src" "./$test" "$@") >> "$target" 2>&1
+	_run "$@"
 	res=$?
-	if [ $res -ne 0 ]; then
-		echo " FAIL" 1>&2
-		FAILED="$FAILED $test(error $res)"
-		return 2
-	else
-		echo " PASS" 1>&2
-		return 0
-	fi
+	[ $res -eq 0 ] || FAILED="$FAILED $test(error $res)"
 }
 
 
