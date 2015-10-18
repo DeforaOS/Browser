@@ -61,7 +61,11 @@ char const * desktopicon_get_path(DesktopIcon * desktopicon);
 gboolean desktopicon_get_selected(DesktopIcon * desktopicon);
 gboolean desktopicon_get_updated(DesktopIcon * desktopicon);
 
+# if GTK_CHECK_VERSION(3, 0, 0)
+void desktopicon_set_background(DesktopIcon * desktopicon, GdkRGBA * color);
+# else
 void desktopicon_set_background(DesktopIcon * desktopicon, GdkColor * color);
+# endif
 void desktopicon_set_callback(DesktopIcon * desktopicon,
 		DesktopIconCallback callback, gpointer data);
 void desktopicon_set_confirm(DesktopIcon * desktopicon, gboolean confirm);

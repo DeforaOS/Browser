@@ -418,9 +418,18 @@ gboolean desktopicon_get_updated(DesktopIcon * desktopicon)
 
 
 /* desktopicon_set_background */
+#if GTK_CHECK_VERSION(3, 0, 0)
+void desktopicon_set_background(DesktopIcon * desktopicon, GdkRGBA * color)
+#else
 void desktopicon_set_background(DesktopIcon * desktopicon, GdkColor * color)
+#endif
 {
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_background_color(desktopicon->event,
+			GTK_STATE_NORMAL, color);
+#else
 	gtk_widget_modify_bg(desktopicon->event, GTK_STATE_NORMAL, color);
+#endif
 }
 
 
