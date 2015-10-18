@@ -476,9 +476,18 @@ void desktopicon_set_font(DesktopIcon * desktopicon,
 
 
 /* desktopicon_set_foreground */
+#if GTK_CHECK_VERSION(3, 0, 0)
+void desktopicon_set_foreground(DesktopIcon * desktopicon, GdkRGBA * color)
+#else
 void desktopicon_set_foreground(DesktopIcon * desktopicon, GdkColor * color)
+#endif
 {
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_foreground_color(desktopicon->event,
+			GTK_STATE_NORMAL, color);
+#else
 	gtk_widget_modify_fg(desktopicon->label, GTK_STATE_NORMAL, color);
+#endif
 }
 
 

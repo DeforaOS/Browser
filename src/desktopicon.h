@@ -73,7 +73,11 @@ void desktopicon_set_executable(DesktopIcon * desktopicon, gboolean executable);
 void desktopicon_set_first(DesktopIcon * desktopicon, gboolean first);
 void desktopicon_set_font(DesktopIcon * desktopicon,
 		PangoFontDescription * font);
+# if GTK_CHECK_VERSION(3, 0, 0)
+void desktopicon_set_foreground(DesktopIcon * desktopicon, GdkRGBA * color);
+# else
 void desktopicon_set_foreground(DesktopIcon * desktopicon, GdkColor * color);
+# endif
 void desktopicon_set_icon(DesktopIcon * desktopicon, GdkPixbuf * icon);
 void desktopicon_set_immutable(DesktopIcon * desktopicon, gboolean immutable);
 void desktopicon_set_selected(DesktopIcon * desktopicon, gboolean selected);
