@@ -666,11 +666,16 @@ static void _desktopicon_update_transparency(DesktopIcon * desktopicon)
 	int height;
 	int iwidth;
 	int iheight;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	GdkRGBA black = { 0.0, 0.0, 0.0, 1.0 };
+	GdkRGBA white = { 1.0, 1.0, 1.0, 1.0 };
+#else
 	GdkBitmap * mask;
 	GdkBitmap * iconmask;
 	GdkGC * gc;
 	GdkColor black = { 0, 0, 0, 0 };
 	GdkColor white = { 0xffffffff, 0xffff, 0xffff, 0xffff };
+#endif
 	GtkRequisition req;
 	int offset;
 
@@ -683,6 +688,10 @@ static void _desktopicon_update_transparency(DesktopIcon * desktopicon)
 	fprintf(stderr, "DEBUG: %s(\"%s\") window is %dx%d\n", __func__,
 			desktopicon->name, width, height);
 #endif
+#if GTK_CHECK_VERSION(3, 0, 0)
+	/* FIXME re-implement */
+	gtk_widget_get_preferred_size(desktopicon->label, NULL, &req);
+#else
 	mask = gdk_pixmap_new(NULL, width, height, 1);
 	gdk_pixbuf_render_pixmap_and_mask(icon, NULL, &iconmask, 255);
 	gc = gdk_gc_new(mask);
@@ -691,15 +700,11 @@ static void _desktopicon_update_transparency(DesktopIcon * desktopicon)
 	gdk_draw_drawable(mask, gc, iconmask, 0, 0, (width - iwidth) / 2,
 			(DESKTOPICON_ICON_SIZE - iheight) / 2, -1, -1);
 	gdk_gc_set_foreground(gc, &white);
-#if GTK_CHECK_VERSION(3, 0, 0)
-	gtk_widget_get_preferred_size(desktopicon->label, NULL, &req);
-#else
 	gtk_widget_size_request(desktopicon->label, &req);
-#endif
-#ifdef DEBUG
+# ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\") label is %dx%d\n", __func__,
 			desktopicon->name, req.width, req.height);
-#endif
+# endif
 	offset = DESKTOPICON_ICON_SIZE + 4;
 	gdk_draw_rectangle(mask, gc, TRUE, (width - req.width - 8) / 2,
 			offset /* + ((height - offset - req.height - 8)
@@ -708,6 +713,7 @@ static void _desktopicon_update_transparency(DesktopIcon * desktopicon)
 	g_object_unref(gc);
 	g_object_unref(iconmask);
 	g_object_unref(mask);
+#endif
 }
 
 
