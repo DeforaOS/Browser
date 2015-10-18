@@ -458,7 +458,11 @@ void desktopicon_set_first(DesktopIcon * desktopicon, gboolean first)
 void desktopicon_set_font(DesktopIcon * desktopicon,
 		PangoFontDescription * font)
 {
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(desktopicon->label, font);
+#else
 	gtk_widget_modify_font(desktopicon->label, font);
+#endif
 }
 
 

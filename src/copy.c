@@ -130,15 +130,27 @@ static int _copy(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_window_set_title(GTK_WINDOW(copy.window), _("Copy file(s)"));
 	g_signal_connect(G_OBJECT(copy.window), "delete-event", G_CALLBACK(
 			_copy_on_closex), NULL);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
 	vbox = gtk_vbox_new(FALSE, 4);
+#endif
 	left = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	right = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	/* current argument */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_label_new(_("Copying: "));
 	bold = pango_font_description_new();
 	pango_font_description_set_weight(bold, PANGO_WEIGHT_BOLD);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	gtk_misc_set_alignment(GTK_MISC(widget), 0, 0);
 	gtk_size_group_add_widget(left, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
@@ -152,9 +164,17 @@ static int _copy(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(copy.progress), " ");
 	gtk_box_pack_start(GTK_BOX(vbox), copy.progress, TRUE, TRUE, 0);
 	/* file copy */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_label_new(_("Filename: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	gtk_misc_set_alignment(GTK_MISC(widget), 0, 0);
 	gtk_size_group_add_widget(left, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
@@ -166,9 +186,17 @@ static int _copy(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_box_pack_start(GTK_BOX(hbox), copy.flabel, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 	/* file copy speed */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_label_new(_("Copied: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	gtk_misc_set_alignment(GTK_MISC(widget), 0, 0);
 	gtk_size_group_add_widget(left, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
@@ -178,9 +206,17 @@ static int _copy(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_box_pack_start(GTK_BOX(hbox), copy.fspeed, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 	/* file copy remaining */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_label_new(_("Remaining: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	gtk_misc_set_alignment(GTK_MISC(widget), 0, 0);
 	gtk_size_group_add_widget(left, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
@@ -193,7 +229,11 @@ static int _copy(Prefs * prefs, unsigned int filec, char * filev[])
 	copy.fprogress = gtk_progress_bar_new();
 	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(copy.fprogress), " ");
 	gtk_box_pack_start(GTK_BOX(vbox), copy.fprogress, TRUE, TRUE, 0);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
 	g_signal_connect_swapped(G_OBJECT(widget), "clicked", G_CALLBACK(
 				_copy_on_cancel), NULL);

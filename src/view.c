@@ -310,8 +310,12 @@ static GtkWidget * _new_image(View * view, char const * path)
 	if(pixbuf == NULL)
 		return NULL;
 	view->view = gtk_image_new_from_animation(pixbuf);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_container_add(GTK_CONTAINER(window), view->view);
+#else
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(window),
 			view->view);
+#endif
 	/* get the current window size */
 	gtk_window_get_size(GTK_WINDOW(view->window), &width, &height);
 	/* add the size of the image */
@@ -375,7 +379,11 @@ static GtkWidget * _new_text(View * view, char const * path)
 			GTK_WRAP_WORD_CHAR);
 	desc = pango_font_description_new();
 	pango_font_description_set_family(desc, "monospace");
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(view->view, desc);
+#else
 	gtk_widget_modify_font(view->view, desc);
+#endif
 	pango_font_description_free(desc);
 	gtk_container_add(GTK_CONTAINER(window), view->view);
 	/* FIXME read asynchronously */
