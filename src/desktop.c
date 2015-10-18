@@ -71,8 +71,13 @@ struct _Desktop
 {
 	DesktopPrefs prefs;
 	PangoFontDescription * font;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	GdkRGBA background;
+	GdkRGBA foreground;
+#else
 	GdkColor background;
 	GdkColor foreground;
+#endif
 
 	/* workarea */
 	GdkRectangle window;
@@ -200,8 +205,13 @@ static Config * _desktop_get_config(Desktop * desktop);
 static int _desktop_get_workarea(Desktop * desktop);
 
 /* useful */
+#if GTK_CHECK_VERSION(3, 0, 0)
+static void _desktop_draw_background(Desktop * desktop, GdkRGBA * color,
+		char const * filename, DesktopHows how, gboolean extend);
+#else
 static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 		char const * filename, DesktopHows how, gboolean extend);
+#endif
 
 static int _desktop_icon_add(Desktop * desktop, DesktopIcon * icon);
 static int _desktop_icon_remove(Desktop * desktop, DesktopIcon * icon);
@@ -613,6 +623,7 @@ void desktop_delete(Desktop * desktop)
 /* desktop_get_drag_data */
 int desktop_get_drag_data(Desktop * desktop, GtkSelectionData * seldata)
 {
+#if !GTK_CHECK_VERSION(3, 0, 0)
 	int ret = 0;
 	size_t i;
 	size_t len;
@@ -631,7 +642,7 @@ int desktop_get_drag_data(Desktop * desktop, GtkSelectionData * seldata)
 		len = strlen(path + 1);
 		if((p = realloc(seldata->data, seldata->length + len)) == NULL)
 		{
-			ret |= error_set_code(1, "%s", strerror(errno));
+			ret = -error_set_code(1, "%s", strerror(errno));
 			continue;
 		}
 		seldata->data = p;
@@ -639,6 +650,9 @@ int desktop_get_drag_data(Desktop * desktop, GtkSelectionData * seldata)
 		seldata->length += len;
 	}
 	return ret;
+#else
+	return -1;
+#endif
 }
 
 
@@ -1049,7 +1063,11 @@ void desktop_reset(Desktop * desktop)
 
 static void _reset_background(Desktop * desktop, Config * config)
 {
+#if GTK_CHECK_VERSION(3, 0, 0)
+	GdkRGBA color = { 0.0, 0.0, 0.0, 0.0 };
+#else
 	GdkColor color = { 0, 0, 0, 0 };
+#endif
 	char const * filename;
 	DesktopHows how = DESKTOP_HOW_SCALED;
 	gboolean extend = FALSE;
@@ -1057,7 +1075,11 @@ static void _reset_background(Desktop * desktop, Config * config)
 	char const * p;
 
 	if((p = config_get(config, "background", "color")) != NULL)
+#if GTK_CHECK_VERSION(3, 0, 0)
+		gdk_rgba_parse(&color, p);
+#else
 		gdk_color_parse(p, &color);
+#endif
 	filename = config_get(config, "background", "wallpaper");
 	if((p = config_get(config, "background", "how")) != NULL)
 		for(i = 0; i < DESKTOP_HOW_COUNT; i++)
@@ -1119,16 +1141,28 @@ static void _reset_icons(Desktop * desktop, Config * config)
 static void _reset_icons_colors(Desktop * desktop, Config * config)
 {
 	String const * p;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	GdkRGBA color;
+#else
 	GdkColor color;
+#endif
 
 	if((p = config_get(config, "icons", "background")) != NULL)
 	{
+#if GTK_CHECK_VERSION(3, 0, 0)
+		gdk_rgba_parse(&color, p);
+#else
 		gdk_color_parse(p, &color);
+#endif
 		desktop->background = color;
 	}
 	if((p = config_get(config, "icons", "foreground")) != NULL)
 	{
+#if GTK_CHECK_VERSION(3, 0, 0)
+		gdk_rgba_parse(&color, p);
+#else
 		gdk_color_parse(p, &color);
+#endif
 		desktop->foreground = color;
 	}
 }
@@ -1429,12 +1463,21 @@ static void _background_monitors(Desktop * desktop, char const * filename,
 		DesktopHows how, gboolean extend, GdkPixmap * pixmap,
 		GdkRectangle * window);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+static void _desktop_draw_background(Desktop * desktop, GdkRGBA * color,
+		char const * filename, DesktopHows how, gboolean extend)
+#else
 static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 		char const * filename, DesktopHows how, gboolean extend)
+#endif
 {
 	GdkRectangle window = desktop->window;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	cairo_t * cairo;
+#else
 	GdkPixmap * pixmap;
 	GdkGC * gc;
+#endif
 	GtkStyle * style;
 
 #ifdef DEBUG
@@ -1444,10 +1487,17 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 	if(how == DESKTOP_HOW_NONE)
 		return;
 	/* draw default color */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	cairo = gdk_cairo_create(NULL);
+	cairo_set_source_rgba(cairo, color->red, color->green, color->blue,
+			1.0);
+	gdk_cairo_rectangle(cairo, &window);
+#else
 	pixmap = gdk_pixmap_new(desktop->back, window.width, window.height, -1);
 	gc = gdk_gc_new(pixmap);
 	gdk_gc_set_rgb_fg_color(gc, color);
 	gdk_draw_rectangle(pixmap, gc, TRUE, 0, 0, window.width, window.height);
+#endif
 	if(filename != NULL)
 		/* draw the background */
 		_background_monitors(desktop, filename, how, extend, pixmap,
@@ -1462,7 +1512,11 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 	{
 		gdk_window_set_back_pixmap(desktop->back, pixmap, FALSE);
 		gdk_window_clear(desktop->back);
+#if GTK_CHECK_VERSION(3, 0, 0)
+		cairo_destroy(cairo);
+#else
 		gdk_pixmap_unref(pixmap);
+#endif
 	}
 }
 
@@ -2363,7 +2417,7 @@ static void _preferences_set_color(Config * config, char const * section,
 		GtkWidget * widget)
 {
 	char const * p;
-#if GTK_CHECK_VERSION(3, 4, 0)
+#if GTK_CHECK_VERSION(3, 0, 0)
 	GdkRGBA color = { 0.0, 0.0, 0.0, 0.0 };
 #else
 	GdkColor color = { 0, 0, 0, 0 };
