@@ -1448,6 +1448,7 @@ static int _desktop_get_workarea(Desktop * desktop)
 
 /* useful */
 /* desktop_background */
+#if !GTK_CHECK_VERSION(3, 0, 0)
 static void _background_how_centered(GdkRectangle * window, GdkPixmap * pixmap,
 		char const * filename, GError ** error);
 static void _background_how_scaled(GdkRectangle * window, GdkPixmap * pixmap,
@@ -1462,6 +1463,7 @@ static void _background_monitor(Desktop * desktop, char const * filename,
 static void _background_monitors(Desktop * desktop, char const * filename,
 		DesktopHows how, gboolean extend, GdkPixmap * pixmap,
 		GdkRectangle * window);
+#endif
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 static void _desktop_draw_background(Desktop * desktop, GdkRGBA * color,
@@ -1477,8 +1479,8 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 #else
 	GdkPixmap * pixmap;
 	GdkGC * gc;
-#endif
 	GtkStyle * style;
+#endif
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\", %u, %s)\n", __func__, filename, how,
@@ -1486,18 +1488,19 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 #endif
 	if(how == DESKTOP_HOW_NONE)
 		return;
-	/* draw default color */
 #if GTK_CHECK_VERSION(3, 0, 0)
+	/* FIXME really implement */
 	cairo = gdk_cairo_create(NULL);
 	cairo_set_source_rgba(cairo, color->red, color->green, color->blue,
 			1.0);
 	gdk_cairo_rectangle(cairo, &window);
+	cairo_destroy(cairo);
 #else
+	/* draw default color */
 	pixmap = gdk_pixmap_new(desktop->back, window.width, window.height, -1);
 	gc = gdk_gc_new(pixmap);
 	gdk_gc_set_rgb_fg_color(gc, color);
 	gdk_draw_rectangle(pixmap, gc, TRUE, 0, 0, window.width, window.height);
-#endif
 	if(filename != NULL)
 		/* draw the background */
 		_background_monitors(desktop, filename, how, extend, pixmap,
@@ -1512,14 +1515,12 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 	{
 		gdk_window_set_back_pixmap(desktop->back, pixmap, FALSE);
 		gdk_window_clear(desktop->back);
-#if GTK_CHECK_VERSION(3, 0, 0)
-		cairo_destroy(cairo);
-#else
 		gdk_pixmap_unref(pixmap);
-#endif
 	}
+#endif
 }
 
+#if !GTK_CHECK_VERSION(3, 0, 0)
 static void _background_how_centered(GdkRectangle * window, GdkPixmap * pixmap,
 		char const * filename, GError ** error)
 {
@@ -1658,6 +1659,7 @@ static void _background_monitors(Desktop * desktop, char const * filename,
 		_background_monitor(desktop, filename, how, extend, pixmap,
 				window, i);
 }
+#endif
 
 
 /* desktop_icon_add */
