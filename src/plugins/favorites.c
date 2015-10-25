@@ -12,8 +12,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-/* FIXME:
- * - no longer skip unknown elements (they are lost on add/remove) */
 
 
 
@@ -69,6 +67,8 @@ static int _favorites_save(Favorites * favorites);
 
 /* callbacks */
 static void _favorites_on_add(gpointer data);
+static gboolean _favorites_on_filter_visible(GtkTreeModel * model,
+		GtkTreeIter * iter);
 static void _favorites_on_remove(gpointer data);
 static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 		GtkTreeViewColumn * column, gpointer data);
@@ -98,6 +98,7 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 	gint size;
 	GtkWidget * widget;
 	GtkToolItem * toolitem;
+	GtkTreeModel * model;
 	GtkCellRenderer * renderer;
 	GtkTreeViewColumn * column;
 	GtkTreeSelection * treesel;
@@ -127,8 +128,11 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	favorites->store = gtk_list_store_new(FC_COUNT, GDK_TYPE_PIXBUF,
 			G_TYPE_STRING, G_TYPE_STRING);
-	favorites->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
-				favorites->store));
+	model = gtk_tree_model_filter_new(GTK_TREE_MODEL(favorites->store),
+			NULL);
+	gtk_tree_model_filter_set_visible_func(GTK_TREE_MODEL_FILTER(model),
+			_favorites_on_filter_visible, NULL, NULL);
+	favorites->view = gtk_tree_view_new_with_model(model);
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(favorites->view),
 			FALSE);
 	/* columns */
@@ -193,6 +197,9 @@ static GtkWidget * _favorites_get_widget(Favorites * favorites)
 
 
 /* favorites_refresh */
+static void _refresh_add(Favorites * favorites, char const * buf);
+static void _refresh_add_file(Favorites * favorites, gint size,
+	char const * buf);
 static void _refresh_copy(gchar const * pathname, gpointer data);
 
 static void _favorites_refresh(Favorites * favorites, GList * selection)
@@ -204,8 +211,6 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 	char buf[512];
 	size_t len;
 	int c;
-	GtkTreeIter iter;
-	GdkPixbuf * pixbuf;
 
 	/* obtain the current selection */
 	g_list_foreach(favorites->selection, (GFunc)g_free, NULL);
@@ -232,27 +237,51 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 			while((c = fgetc(fp)) != EOF && c != '\n');
 			continue;
 		}
-		if(strncmp(buf, scheme, sizeof(scheme) - 1) != 0)
-			/* ignore anything but local file: URLs */
-			continue;
 		buf[len - 1] = '\0';
-		filename = g_path_get_basename(
-				&buf[sizeof(scheme) - 2]);
-		if((pixbuf = browser_vfs_mime_icon(favorites->mime,
-						&buf[sizeof(scheme) - 2], NULL,
-						NULL, NULL, size)) == NULL)
-			pixbuf = favorites->folder;
-#if GTK_CHECK_VERSION(2, 6, 0)
-		gtk_list_store_insert_with_values(favorites->store, &iter, -1,
-#else
-		gtk_list_store_append(favorites->store, &iter);
-		gtk_list_store_set(favorites->store, &iter,
-#endif
-				FC_ICON, pixbuf, FC_NAME, filename,
-				FC_PATH, buf, -1);
-		g_free(filename);
+		if(strncmp(buf, scheme, sizeof(scheme) - 1) == 0)
+			_refresh_add_file(favorites, size, buf);
+		else
+			_refresh_add(favorites, buf);
 	}
 	fclose(fp);
+}
+
+static void _refresh_add(Favorites * favorites, char const * buf)
+{
+	GtkTreeIter iter;
+
+#if GTK_CHECK_VERSION(2, 6, 0)
+	gtk_list_store_insert_with_values(favorites->store, &iter, -1,
+#else
+	gtk_list_store_append(favorites->store, &iter);
+	gtk_list_store_set(favorites->store, &iter,
+#endif
+			FC_PATH, buf, -1);
+}
+
+static void _refresh_add_file(Favorites * favorites, gint size,
+	char const * buf)
+{
+	const char scheme[] = "file:///";
+	gchar * filename;
+	GtkTreeIter iter;
+	GdkPixbuf * pixbuf;
+
+	filename = g_path_get_basename(
+			&buf[sizeof(scheme) - 2]);
+	if((pixbuf = browser_vfs_mime_icon(favorites->mime,
+					&buf[sizeof(scheme) - 2], NULL,
+					NULL, NULL, size)) == NULL)
+		pixbuf = favorites->folder;
+#if GTK_CHECK_VERSION(2, 6, 0)
+	gtk_list_store_insert_with_values(favorites->store, &iter, -1,
+#else
+	gtk_list_store_append(favorites->store, &iter);
+	gtk_list_store_set(favorites->store, &iter,
+#endif
+			FC_ICON, pixbuf, FC_NAME, filename,
+			FC_PATH, buf, -1);
+	g_free(filename);
 }
 
 static void _refresh_copy(gchar const * pathname, gpointer data)
@@ -357,17 +386,36 @@ static void _on_add_filename(gchar const * pathname, gpointer data)
 }
 
 
+/* favorites_on_filter_visible */
+static gboolean _favorites_on_filter_visible(GtkTreeModel * model,
+		GtkTreeIter * iter)
+{
+	const char scheme[] = "file:///";
+	gboolean ret;
+	gchar * path;
+
+	gtk_tree_model_get(model, iter, FC_PATH, &path, -1);
+	ret = (path != NULL && strncmp(path, scheme, sizeof(scheme) - 1) == 0)
+		? TRUE : FALSE;
+	g_free(path);
+	return ret;
+}
+
+
 /* favorites_on_remove */
 static void _favorites_on_remove(gpointer data)
 {
 	Favorites * favorites = data;
-	GtkTreeModel * model = GTK_TREE_MODEL(favorites->store);
 	GtkTreeSelection * treesel;
+	GtkTreeModel * model;
+	GtkTreeIter fiter;
 	GtkTreeIter iter;
 
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(favorites->view));
-	if(gtk_tree_selection_get_selected(treesel, &model, &iter) != TRUE)
+	if(gtk_tree_selection_get_selected(treesel, &model, &fiter) != TRUE)
 		return;
+	gtk_tree_model_filter_convert_iter_to_child_iter(GTK_TREE_MODEL_FILTER(
+				model), &iter, &fiter);
 	gtk_list_store_remove(favorites->store, &iter);
 	_favorites_save(favorites);
 }
@@ -379,12 +427,17 @@ static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 {
 	const char scheme[] = "file:///";
 	Favorites * favorites = data;
-	GtkTreeModel * model = GTK_TREE_MODEL(favorites->store);
+	GtkTreeModel * model;
+	GtkTreeIter fiter;
 	GtkTreeIter iter;
 	gchar * location;
 
-	if(gtk_tree_model_get_iter(model, &iter, path) == FALSE)
+	model = gtk_tree_view_get_model(view);
+	if(gtk_tree_model_get_iter(model, &fiter, path) == FALSE)
 		return;
+	gtk_tree_model_filter_convert_iter_to_child_iter(GTK_TREE_MODEL_FILTER(
+				model), &iter, &fiter);
+	model = gtk_tree_model_filter_get_model(GTK_TREE_MODEL_FILTER(model));
 	gtk_tree_model_get(model, &iter, FC_PATH, &location, -1);
 	if(strncmp(location, scheme, sizeof(scheme) - 1) == 0)
 		favorites->helper->set_location(favorites->helper->browser,
