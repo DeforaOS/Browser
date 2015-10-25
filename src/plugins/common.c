@@ -194,11 +194,7 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 	gtk_window_set_title(GTK_WINDOW(task->window), buf);
 	g_signal_connect_swapped(task->window, "delete-event", G_CALLBACK(
 				_common_task_on_closex), task);
-#if GTK_CHECK_VERSION(3, 0, 0)
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-#else
-	vbox = gtk_vbox_new(FALSE, 0);
-#endif
 	/* toolbar */
 	widget = desktop_toolbar_create(_common_task_toolbar, task, group);
 	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);

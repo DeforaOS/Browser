@@ -84,11 +84,7 @@ static Selection * _selection_init(BrowserPluginHelper * helper)
 	if((selection = object_new(sizeof(*selection))) == NULL)
 		return NULL;
 	selection->helper = helper;
-#if GTK_CHECK_VERSION(3, 0, 0)
 	selection->widget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-#else
-	selection->widget = gtk_vbox_new(FALSE, 0);
-#endif
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);

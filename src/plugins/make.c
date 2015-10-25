@@ -130,11 +130,7 @@ static Make * _make_init(BrowserPluginHelper * helper)
 	make->filename = NULL;
 	make->source = 0;
 	/* widgets */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	make->widget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
-#else
-	make->widget = gtk_vbox_new(FALSE, 4);
-#endif
 	font = pango_font_description_new();
 	pango_font_description_set_weight(font, PANGO_WEIGHT_BOLD);
 	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
@@ -150,11 +146,7 @@ static Make * _make_init(BrowserPluginHelper * helper)
 	gtk_misc_set_alignment(GTK_MISC(make->status), 0.0, 0.5);
 	gtk_box_pack_start(GTK_BOX(make->widget), make->status, FALSE, TRUE, 0);
 	/* directory */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	make->directory = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
-#else
-	make->directory = gtk_vbox_new(FALSE, 4);
-#endif
 	widget = _init_button(group, "applications-development", _("Build"),
 			G_CALLBACK(_make_on_all), make);
 	gtk_box_pack_start(GTK_BOX(make->directory), widget, FALSE, TRUE, 0);
@@ -178,11 +170,7 @@ static Make * _make_init(BrowserPluginHelper * helper)
 	gtk_box_pack_start(GTK_BOX(make->widget), make->directory, FALSE, TRUE,
 			0);
 	/* file */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	make->file = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
-#else
-	make->file = gtk_vbox_new(FALSE, 4);
-#endif
 	widget = _init_button(group, GTK_STOCK_CONVERT, _("Build"),
 			G_CALLBACK(_make_on_target), make);
 	gtk_box_pack_start(GTK_BOX(make->file), widget, FALSE, TRUE, 0);
@@ -236,11 +224,7 @@ static GtkWidget * _init_button(GtkSizeGroup * group, char const * icon,
 	GtkWidget * widget;
 	char const stock[] = "gtk-";
 
-#if GTK_CHECK_VERSION(3, 0, 0)
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-#else
-	hbox = gtk_hbox_new(FALSE, 4);
-#endif
 	widget = gtk_button_new_with_label(label);
 	gtk_size_group_add_widget(group, widget);
 	if(icon != NULL)

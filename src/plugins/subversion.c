@@ -118,11 +118,7 @@ static SVN * _subversion_init(BrowserPluginHelper * helper)
 	svn->filename = NULL;
 	svn->source = 0;
 	/* widgets */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	svn->widget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
-#else
-	svn->widget = gtk_vbox_new(FALSE, 4);
-#endif
 	font = pango_font_description_new();
 	pango_font_description_set_weight(font, PANGO_WEIGHT_BOLD);
 	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
@@ -137,11 +133,7 @@ static SVN * _subversion_init(BrowserPluginHelper * helper)
 	gtk_misc_set_alignment(GTK_MISC(svn->status), 0.0, 0.5);
 	gtk_box_pack_start(GTK_BOX(svn->widget), svn->status, FALSE, TRUE, 0);
 	/* directory */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	svn->directory = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
-#else
-	svn->directory = gtk_vbox_new(FALSE, 4);
-#endif
 	widget = _init_button(group, GTK_STOCK_FIND_AND_REPLACE,
 			_("Diff"), G_CALLBACK(_subversion_on_diff), svn);
 	gtk_box_pack_start(GTK_BOX(svn->directory), widget, FALSE, TRUE, 0);
@@ -162,11 +154,7 @@ static SVN * _subversion_init(BrowserPluginHelper * helper)
 	gtk_box_pack_start(GTK_BOX(svn->widget), svn->directory, FALSE, TRUE,
 			0);
 	/* file */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	svn->file = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
-#else
-	svn->file = gtk_vbox_new(FALSE, 4);
-#endif
 	widget = _init_button(group, GTK_STOCK_FIND_AND_REPLACE,
 			_("Diff"), G_CALLBACK(_subversion_on_diff), svn);
 	gtk_box_pack_start(GTK_BOX(svn->file), widget, FALSE, TRUE, 0);
@@ -208,11 +196,7 @@ static GtkWidget * _init_button(GtkSizeGroup * group, char const * icon,
 	GtkWidget * widget;
 	char const stock[] = "gtk-";
 
-#if GTK_CHECK_VERSION(3, 0, 0)
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-#else
-	hbox = gtk_hbox_new(FALSE, 4);
-#endif
 	widget = gtk_button_new_with_label(label);
 	gtk_size_group_add_widget(group, widget);
 	if(icon != NULL)

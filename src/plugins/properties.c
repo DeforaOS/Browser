@@ -161,11 +161,11 @@ static Properties * _properties_new(BrowserPluginHelper * helper,
 	bold = pango_font_description_new();
 	pango_font_description_set_weight(bold, PANGO_WEIGHT_BOLD);
 	/* view */
-	properties->view = gtk_vbox_new(FALSE, 4);
+	properties->view = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
 	gtk_container_set_border_width(GTK_CONTAINER(properties->view), 4);
 	properties->image = gtk_image_new();
 	gtk_size_group_add_widget(group, properties->image);
-	vbox = gtk_vbox_new(FALSE, 4);
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
 	properties->name = gtk_entry_new();
 	gtk_editable_set_editable(GTK_EDITABLE(properties->name), FALSE);
 	gtk_widget_modify_font(properties->name, bold);
@@ -274,7 +274,7 @@ static void _new_pack(GtkWidget * vbox, GtkWidget * label, GtkWidget * widget)
 {
 	GtkWidget * hbox;
 
-	hbox = gtk_hbox_new(FALSE, 4);
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);

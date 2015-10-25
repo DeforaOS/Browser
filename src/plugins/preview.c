@@ -113,7 +113,7 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	preview->source = 0;
 	preview->size = PREVIEW_DEFAULT_SIZE;
 	/* widgets */
-	vbox = gtk_vbox_new(FALSE, 4);
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
 	preview->widget = vbox;
 	/* toolbar */
 	preview->toolbar = gtk_toolbar_new();

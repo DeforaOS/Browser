@@ -124,11 +124,7 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	git->filename = NULL;
 	git->source = 0;
 	/* widgets */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	git->widget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
-#else
-	git->widget = gtk_vbox_new(FALSE, 4);
-#endif
 	font = pango_font_description_new();
 	pango_font_description_set_weight(font, PANGO_WEIGHT_BOLD);
 	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
@@ -143,11 +139,7 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	gtk_misc_set_alignment(GTK_MISC(git->status), 0.0, 0.5);
 	gtk_box_pack_start(GTK_BOX(git->widget), git->status, FALSE, TRUE, 0);
 	/* init */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	git->init = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
-#else
-	git->init = gtk_vbox_new(FALSE, 4);
-#endif
 	widget = _init_button(group, GTK_STOCK_OK, _("Initialize"), G_CALLBACK(
 				_git_on_init), git);
 	gtk_box_pack_start(GTK_BOX(git->init), widget, FALSE, TRUE, 0);
@@ -158,11 +150,7 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	gtk_widget_set_no_show_all(git->init, TRUE);
 	gtk_box_pack_start(GTK_BOX(git->widget), git->init, FALSE, TRUE, 0);
 	/* directory */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	git->directory = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
-#else
-	git->directory = gtk_vbox_new(FALSE, 4);
-#endif
 	widget = _init_button(group, GTK_STOCK_FIND_AND_REPLACE,
 			_("Diff"), G_CALLBACK(_git_on_diff), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
@@ -189,11 +177,7 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	gtk_box_pack_start(GTK_BOX(git->widget), git->directory, FALSE, TRUE,
 			0);
 	/* file */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	git->file = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
-#else
-	git->file = gtk_vbox_new(FALSE, 4);
-#endif
 	widget = _init_button(group, GTK_STOCK_FIND_AND_REPLACE,
 			_("Diff"), G_CALLBACK(_git_on_diff), git);
 	gtk_box_pack_start(GTK_BOX(git->file), widget, FALSE, TRUE, 0);
@@ -231,11 +215,7 @@ static GtkWidget * _init_button(GtkSizeGroup * group, char const * icon,
 	GtkWidget * widget;
 	char const stock[] = "gtk-";
 
-#if GTK_CHECK_VERSION(3, 0, 0)
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-#else
-	hbox = gtk_hbox_new(FALSE, 4);
-#endif
 	widget = gtk_button_new_with_label(label);
 	gtk_size_group_add_widget(group, widget);
 	if(icon != NULL)
