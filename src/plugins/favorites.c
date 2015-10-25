@@ -382,7 +382,8 @@ static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 	GtkTreeIter iter;
 	gchar * location;
 
-	gtk_tree_model_get_iter(model, &iter, path);
+	if(gtk_tree_model_get_iter(model, &iter, path) == FALSE)
+		return;
 	gtk_tree_model_get(model, &iter, FC_PATH, &location, -1);
 	if(strncmp(location, scheme, sizeof(scheme) - 1) == 0)
 		favorites->helper->set_location(favorites->helper->browser,
