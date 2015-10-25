@@ -24,6 +24,7 @@
 #include <System.h>
 #include "Browser.h"
 #define _(string) gettext(string)
+#define N_(string) (string)
 
 
 /* Favorites */
@@ -77,7 +78,7 @@ static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 /* variables */
 BrowserPluginDefinition plugin =
 {
-	"Favorites",
+	N_("Favorites"),
 	"user-bookmarks",
 	NULL,
 	_favorites_init,
