@@ -13,8 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /* FIXME:
- * - no longer skip unknown elements (they are lost on add/remove)
- * - store the complete line within the list store */
+ * - no longer skip unknown elements (they are lost on add/remove) */
 
 
 
@@ -197,6 +196,7 @@ static void _refresh_copy(gchar const * pathname, gpointer data);
 
 static void _favorites_refresh(Favorites * favorites, GList * selection)
 {
+	const char scheme[] = "file:///";
 	FILE * fp;
 	gchar * filename;
 	gint size;
@@ -204,7 +204,6 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 	size_t len;
 	int c;
 	GtkTreeIter iter;
-	char const scheme[] = "file:///";
 	GdkPixbuf * pixbuf;
 
 	/* obtain the current selection */
@@ -236,9 +235,10 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 			/* ignore anything but local file: URLs */
 			continue;
 		buf[len - 1] = '\0';
-		memmove(buf, &buf[7], len - 7);
-		filename = g_path_get_basename(buf);
-		if((pixbuf = browser_vfs_mime_icon(favorites->mime, buf, NULL,
+		filename = g_path_get_basename(
+				&buf[sizeof(scheme) - 2]);
+		if((pixbuf = browser_vfs_mime_icon(favorites->mime,
+						&buf[sizeof(scheme) - 2], NULL,
 						NULL, NULL, size)) == NULL)
 			pixbuf = favorites->folder;
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -302,7 +302,7 @@ static int _favorites_save(Favorites * favorites)
 		gtk_tree_model_get(model, &iter, FC_PATH, &p, -1);
 		if(p == NULL)
 			continue;
-		fprintf(fp, "%s%s\n", "file://", p);
+		fprintf(fp, "%s\n", p);
 		g_free(p);
 	}
 	return fclose(fp);
@@ -323,10 +323,12 @@ static void _favorites_on_add(gpointer data)
 
 static void _on_add_filename(gchar const * pathname, gpointer data)
 {
+	const char scheme[] = "file://";
 	Favorites * favorites = data;
 	GtkTreeIter iter;
 	struct stat st;
 	gchar * filename;
+	String * path;
 	gint size = 24;
 	GdkPixbuf * pixbuf;
 
@@ -334,6 +336,8 @@ static void _on_add_filename(gchar const * pathname, gpointer data)
 	if(browser_vfs_stat(pathname, &st) != 0 || !S_ISDIR(st.st_mode))
 		return;
 	if((filename = g_path_get_basename(pathname)) == NULL)
+		return;
+	if((path = string_new_append(scheme, pathname, NULL)) == NULL)
 		return;
 	gtk_icon_size_lookup(GTK_ICON_SIZE_BUTTON, &size, &size);
 	if((pixbuf = browser_vfs_mime_icon(favorites->mime, pathname, NULL,
@@ -345,8 +349,8 @@ static void _on_add_filename(gchar const * pathname, gpointer data)
 	gtk_list_store_append(favorites->store, &iter);
 	gtk_list_store_set(favorites->store, &iter,
 #endif
-			FC_ICON, pixbuf, FC_NAME, filename, FC_PATH, pathname,
-			-1);
+			FC_ICON, pixbuf, FC_NAME, filename, FC_PATH, path, -1);
+	string_delete(path);
 	g_free(filename);
 	_favorites_save(favorites);
 }
@@ -372,6 +376,7 @@ static void _favorites_on_remove(gpointer data)
 static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 	GtkTreeViewColumn * column, gpointer data)
 {
+	const char scheme[] = "file:///";
 	Favorites * favorites = data;
 	GtkTreeModel * model = GTK_TREE_MODEL(favorites->store);
 	GtkTreeIter iter;
@@ -379,6 +384,8 @@ static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 
 	gtk_tree_model_get_iter(model, &iter, path);
 	gtk_tree_model_get(model, &iter, FC_PATH, &location, -1);
-	favorites->helper->set_location(favorites->helper->browser, location);
+	if(strncmp(location, scheme, sizeof(scheme) - 1) == 0)
+		favorites->helper->set_location(favorites->helper->browser,
+				&location[sizeof(scheme) - 2]);
 	g_free(location);
 }
