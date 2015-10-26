@@ -26,6 +26,10 @@
 #include <libgen.h>
 #include <gtk/gtk.h>
 
+#ifndef PROGNAME
+# define PROGNAME	"dirtree"
+#endif
+
 
 /* dirtree */
 /* types */
@@ -207,7 +211,7 @@ static void _on_dirtree_default(GtkTreeView * view, GtkTreePath * path,
 /* dirtree_error */
 static int _dirtree_error(char const * message, int ret)
 {
-	fputs("dirtree: ", stderr);
+	fputs(PROGNAME ": ", stderr);
 	perror(message);
 	return ret;
 }
@@ -216,7 +220,7 @@ static int _dirtree_error(char const * message, int ret)
 /* usage */
 static int _usage(void)
 {
-	fputs("Usage: dirtree [-pu][pathname]\n"
+	fputs("Usage: " PROGNAME " [-pu][pathname]\n"
 "  -p\tKeep the directory tree opened when opening a folder\n"
 "  -u\tExpand all entries\n", stderr);
 	return 1;
