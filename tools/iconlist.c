@@ -20,6 +20,10 @@
 #include <string.h>
 #include <gtk/gtk.h>
 
+#ifndef PROGNAME
+# define PROGNAME	"iconlist"
+#endif
+
 
 /* types */
 typedef struct _Prefs
@@ -195,8 +199,8 @@ static void _do_iconview(GtkWidget * iconview, GtkIconTheme * icontheme)
 /* usage */
 static int _usage(void)
 {
-	fputs("Usage: iconlist [-t theme]\n"
-"       iconlist -l [-t theme]\n", stderr);
+	fputs("Usage: " PROGNAME " [-t theme]\n"
+"       " PROGNAME " -l [-t theme]\n", stderr);
 	return 1;
 }
 
