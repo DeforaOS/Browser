@@ -94,6 +94,7 @@ static int _dirtree_new(Prefs * prefs, char const * pathname)
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes("Name", renderer,
 			"text", 2, NULL);
+	gtk_tree_view_column_set_expand(column, TRUE);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column);
 	g_signal_connect(G_OBJECT(treeview), "row-activated", G_CALLBACK(
 				_on_dirtree_default), prefs);
