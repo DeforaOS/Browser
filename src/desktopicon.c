@@ -523,8 +523,14 @@ void desktopicon_set_selected(DesktopIcon * desktopicon, gboolean selected)
 			selected ? "selected" : "deselected");
 #endif
 	desktopicon->selected = selected;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_set_state_flags(desktopicon->event, selected
+			? GTK_STATE_FLAG_SELECTED : GTK_STATE_FLAG_NORMAL,
+			FALSE);
+#else
 	gtk_widget_set_state(desktopicon->event, selected
 			? GTK_STATE_SELECTED : GTK_STATE_NORMAL);
+#endif
 }
 
 
