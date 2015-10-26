@@ -184,9 +184,14 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	gtk_widget_set_no_show_all(preview->view_image, TRUE);
 	preview->view_image_image = gtk_image_new();
 	gtk_widget_show(preview->view_image_image);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_container_add(GTK_CONTAINER(preview->view_image),
+			preview->view_image_image);
+#else
 	gtk_scrolled_window_add_with_viewport(
 			GTK_SCROLLED_WINDOW(preview->view_image),
 			preview->view_image_image);
+#endif
 	gtk_box_pack_start(GTK_BOX(vbox), preview->view_image, TRUE, TRUE, 0);
 	/* text */
 	preview->view_text = gtk_scrolled_window_new(NULL, NULL);
@@ -204,8 +209,12 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	gtk_widget_modify_font(widget, font);
 	gtk_widget_show(widget);
 	pango_font_description_free(font);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_container_add(GTK_CONTAINER(preview->view_text), widget);
+#else
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(
 				preview->view_text), widget);
+#endif
 	gtk_box_pack_start(GTK_BOX(vbox), preview->view_text, TRUE, TRUE, 0);
 	gtk_widget_show_all(vbox);
 	return preview;

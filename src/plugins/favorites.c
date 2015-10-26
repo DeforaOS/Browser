@@ -147,8 +147,12 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 	/* signals */
 	g_signal_connect(favorites->view, "row-activated", G_CALLBACK(
 				_favorites_on_row_activated), favorites);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_container_add(GTK_CONTAINER(widget), favorites->view);
+#else
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(widget),
 			favorites->view);
+#endif
 	gtk_box_pack_start(GTK_BOX(favorites->widget), widget, TRUE, TRUE, 0);
 	/* lower toolbar */
 	widget = gtk_toolbar_new();

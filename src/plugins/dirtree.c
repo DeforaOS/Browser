@@ -153,8 +153,12 @@ static Dirtree * _dirtree_init(BrowserPluginHelper * helper)
 				_dirtree_on_row_activated), dirtree);
 	g_signal_connect(dirtree->view, "row-expanded", G_CALLBACK(
 				_dirtree_on_row_expanded), dirtree);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_container_add(GTK_CONTAINER(dirtree->widget), dirtree->view);
+#else
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(
 				dirtree->widget), dirtree->view);
+#endif
 	gtk_widget_show_all(dirtree->widget);
 	/* populate the root folder */
 	dirtree->source = g_idle_add(_dirtree_on_idle, dirtree);
