@@ -168,7 +168,11 @@ static Properties * _properties_new(BrowserPluginHelper * helper,
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
 	properties->name = gtk_entry_new();
 	gtk_editable_set_editable(GTK_EDITABLE(properties->name), FALSE);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(properties->name, bold);
+#else
 	gtk_widget_modify_font(properties->name, bold);
+#endif
 	properties->type = _new_label_left(NULL, NULL);
 	gtk_box_pack_start(GTK_BOX(vbox), properties->name, FALSE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), properties->type, FALSE, TRUE, 0);
@@ -176,17 +180,29 @@ static Properties * _properties_new(BrowserPluginHelper * helper,
 	vbox = properties->view;
 	/* size */
 	widget = _new_label_left(group, _("Size:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	properties->size = _new_label_left(group, "");
 	_new_pack(vbox, widget, properties->size);
 	/* owner */
 	widget = _new_label_left(group, _("Owner:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	properties->owner = _new_label_left(NULL, "");
 	_new_pack(vbox, widget, properties->owner);
 	/* group */
 	widget = _new_label_left(group, _("Group:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 #if GTK_CHECK_VERSION(2, 24, 0)
 	properties->group = gtk_combo_box_text_new();
 #else
@@ -195,17 +211,29 @@ static Properties * _properties_new(BrowserPluginHelper * helper,
 	_new_pack(vbox, widget, properties->group);
 	/* last access */
 	widget = _new_label_left(group, _("Accessed:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	properties->atime = _new_label_left(NULL, NULL);
 	_new_pack(vbox, widget, properties->atime);
 	/* last modification */
 	widget = _new_label_left(group, _("Modified:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	properties->mtime = _new_label_left(NULL, NULL);
 	_new_pack(vbox, widget, properties->mtime);
 	/* last change */
 	widget = _new_label_left(group, _("Changed:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	properties->ctime = _new_label_left(NULL, NULL);
 	_new_pack(vbox, widget, properties->ctime);
 	/* permissions */
@@ -214,13 +242,25 @@ static Properties * _properties_new(BrowserPluginHelper * helper,
 	gtk_table_set_row_spacings(GTK_TABLE(table), 0);
 	gtk_table_set_col_spacings(GTK_TABLE(table), 0);
 	widget = _new_label_left(group2, _("Read:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	gtk_table_attach_defaults(GTK_TABLE(table), widget, 1, 2, 0, 1);
 	widget = _new_label_left(group2, _("Write:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	gtk_table_attach_defaults(GTK_TABLE(table), widget, 2, 3, 0, 1);
 	widget = _new_label_left(group2, _("Execute:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	gtk_table_attach_defaults(GTK_TABLE(table), widget, 3, 4, 0, 1);
 	for(i = 0; i < sizeof(properties->mode) / sizeof(*properties->mode);
 			i++)
@@ -231,13 +271,25 @@ static Properties * _properties_new(BrowserPluginHelper * helper,
 				3 - (i / 3), 4 - (i / 3));
 	}
 	widget = _new_label_left(NULL, _("Owner:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	gtk_table_attach_defaults(GTK_TABLE(table), widget, 0, 1, 1, 2);
 	widget = _new_label_left(NULL, _("Group:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	gtk_table_attach_defaults(GTK_TABLE(table), widget, 0, 1, 2, 3);
 	widget = _new_label_left(group, _("Others:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, bold);
+#else
 	gtk_widget_modify_font(widget, bold);
+#endif
 	gtk_table_attach_defaults(GTK_TABLE(table), widget, 0, 1, 3, 4);
 	pango_font_description_free(bold);
 	if(filename != NULL)

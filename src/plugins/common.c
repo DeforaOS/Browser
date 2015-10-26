@@ -222,10 +222,11 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(task->view), FALSE);
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(task->view),
 			GTK_WRAP_WORD_CHAR);
-	gtk_widget_modify_font(task->view, font);
 #if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(task->view, font);
 	gtk_container_add(GTK_CONTAINER(widget), task->view);
 #else
+	gtk_widget_modify_font(task->view, font);
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(widget),
 			task->view);
 #endif

@@ -174,7 +174,11 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	gtk_misc_set_alignment(GTK_MISC(preview->name), 0.0, 0.5);
 	font = pango_font_description_new();
 	pango_font_description_set_weight(font, PANGO_WEIGHT_BOLD);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(preview->name, font);
+#else
 	gtk_widget_modify_font(preview->name, font);
+#endif
 	pango_font_description_free(font);
 	gtk_box_pack_start(GTK_BOX(vbox), preview->name, FALSE, TRUE, 0);
 	/* image */
@@ -206,7 +210,11 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(widget), FALSE);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(widget), FALSE);
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(widget), GTK_WRAP_WORD_CHAR);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(widget, font);
+#else
 	gtk_widget_modify_font(widget, font);
+#endif
 	gtk_widget_show(widget);
 	pango_font_description_free(font);
 #if GTK_CHECK_VERSION(3, 0, 0)

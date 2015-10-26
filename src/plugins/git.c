@@ -132,7 +132,11 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	git->name = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(git->name), PANGO_ELLIPSIZE_MIDDLE);
 	gtk_misc_set_alignment(GTK_MISC(git->name), 0.0, 0.5);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_widget_override_font(git->name, font);
+#else
 	gtk_widget_modify_font(git->name, font);
+#endif
 	gtk_box_pack_start(GTK_BOX(git->widget), git->name, FALSE, TRUE, 0);
 	git->status = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(git->status), PANGO_ELLIPSIZE_END);
