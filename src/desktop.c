@@ -127,6 +127,11 @@ struct _Desktop
 	GdkWindow * back;
 	GtkIconTheme * theme;
 	GtkWidget * menu;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	cairo_t * cairo;
+#else
+	GdkPixmap * pixmap;
+#endif
 };
 
 struct _DesktopCategory
@@ -1448,22 +1453,19 @@ static int _desktop_get_workarea(Desktop * desktop)
 
 /* useful */
 /* desktop_background */
-#if !GTK_CHECK_VERSION(3, 0, 0)
-static void _background_how_centered(GdkRectangle * window, GdkPixmap * pixmap,
+static void _background_how_centered(Desktop * desktop, GdkRectangle * window,
 		char const * filename, GError ** error);
-static void _background_how_scaled(GdkRectangle * window, GdkPixmap * pixmap,
+static void _background_how_scaled(Desktop * desktop, GdkRectangle * window,
 		char const * filename, GError ** error);
-static void _background_how_scaled_ratio(GdkRectangle * window,
-		GdkPixmap * pixmap, char const * filename, GError ** error);
-static void _background_how_tiled(GdkRectangle * window, GdkPixmap * pixmap,
+static void _background_how_scaled_ratio(Desktop * desktop,
+		GdkRectangle * window, char const * filename, GError ** error);
+static void _background_how_tiled(Desktop * desktop, GdkRectangle * window,
 		char const * filename, GError ** error);
 static void _background_monitor(Desktop * desktop, char const * filename,
-		DesktopHows how, gboolean extend, GdkPixmap * pixmap,
-		GdkRectangle * window, int monitor);
+		DesktopHows how, gboolean extend, GdkRectangle * window,
+		int monitor);
 static void _background_monitors(Desktop * desktop, char const * filename,
-		DesktopHows how, gboolean extend, GdkPixmap * pixmap,
-		GdkRectangle * window);
-#endif
+		DesktopHows how, gboolean extend, GdkRectangle * window);
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 static void _desktop_draw_background(Desktop * desktop, GdkRGBA * color,
@@ -1473,11 +1475,7 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 		char const * filename, DesktopHows how, gboolean extend)
 #endif
 {
-	GdkRectangle window = desktop->window;
-#if GTK_CHECK_VERSION(3, 0, 0)
-	cairo_t * cairo;
-#else
-	GdkPixmap * pixmap;
+#if !GTK_CHECK_VERSION(3, 0, 0)
 	GdkGC * gc;
 	GtkStyle * style;
 #endif
@@ -1489,62 +1487,78 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 	if(how == DESKTOP_HOW_NONE)
 		return;
 #if GTK_CHECK_VERSION(3, 0, 0)
-	/* FIXME really implement */
-	cairo = gdk_cairo_create(NULL);
-	cairo_set_source_rgba(cairo, color->red, color->green, color->blue,
-			1.0);
-	gdk_cairo_rectangle(cairo, &window);
-	cairo_destroy(cairo);
-#else
-	/* draw default color */
-	pixmap = gdk_pixmap_new(desktop->back, window.width, window.height, -1);
-	gc = gdk_gc_new(pixmap);
-	gdk_gc_set_rgb_fg_color(gc, color);
-	gdk_draw_rectangle(pixmap, gc, TRUE, 0, 0, window.width, window.height);
+	desktop->cairo = gdk_cairo_create(desktop->root);
+	cairo_set_source_rgba(desktop->cairo, color->red, color->green,
+			color->blue, 1.0);
+	gdk_cairo_rectangle(desktop->cairo, &desktop->window);
 	if(filename != NULL)
 		/* draw the background */
-		_background_monitors(desktop, filename, how, extend, pixmap,
-				&window);
+		_background_monitors(desktop, filename, how, extend,
+				&desktop->window);
+	cairo_paint(desktop->cairo);
+	cairo_destroy(desktop->cairo);
+	desktop->cairo = NULL;
+#else
+	/* draw default color */
+	desktop->pixmap = gdk_pixmap_new(desktop->back, desktop->window.width,
+			desktop->window.height, -1);
+	gc = gdk_gc_new(desktop->pixmap);
+	gdk_gc_set_rgb_fg_color(gc, color);
+	gdk_draw_rectangle(desktop->pixmap, gc, TRUE, 0, 0,
+			desktop->window.width, desktop->window.height);
+	if(filename != NULL)
+		/* draw the background */
+		_background_monitors(desktop, filename, how, extend,
+				&desktop->window);
 	if(desktop->desktop != NULL)
 	{
 		style = gtk_style_new();
-		style->bg_pixmap[GTK_STATE_NORMAL] = pixmap;
+		style->bg_pixmap[GTK_STATE_NORMAL] = desktop->pixmap;
 		gtk_widget_set_style(desktop->desktop, style);
 	}
 	else
 	{
-		gdk_window_set_back_pixmap(desktop->back, pixmap, FALSE);
+		gdk_window_set_back_pixmap(desktop->back, desktop->pixmap,
+				FALSE);
 		gdk_window_clear(desktop->back);
-		gdk_pixmap_unref(pixmap);
+		gdk_pixmap_unref(desktop->pixmap);
 	}
+	desktop->pixmap = NULL;
 #endif
 }
 
-#if !GTK_CHECK_VERSION(3, 0, 0)
-static void _background_how_centered(GdkRectangle * window, GdkPixmap * pixmap,
+static void _background_how_centered(Desktop * desktop, GdkRectangle * window,
 		char const * filename, GError ** error)
 {
 	GdkPixbuf * background;
 	gint w;
 	gint h;
+	gint x;
+	gint y;
 
 	if((background = gdk_pixbuf_new_from_file(filename, error)) == NULL)
 		return;
 	w = gdk_pixbuf_get_width(background);
 	h = gdk_pixbuf_get_height(background);
-	gdk_draw_pixbuf(pixmap, NULL, background, 0, 0,
-			(window->width - w) / 2 + window->x,
-			(window->height - h) / 2 + window->y, w, h,
+	x = (window->width - w) / 2 + window->x;
+	y = (window->height - h) / 2 + window->y;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gdk_cairo_set_source_pixbuf(desktop->cairo, background, x, y);
+#else
+	gdk_draw_pixbuf(desktop->pixmap, NULL, background, 0, 0, x, y, w, h,
 			GDK_RGB_DITHER_NONE, 0, 0);
+#endif
 	g_object_unref(background);
 }
 
-static void _background_how_scaled(GdkRectangle * window, GdkPixmap * pixmap,
+static void _background_how_scaled(Desktop * desktop, GdkRectangle * window,
 		char const * filename, GError ** error)
 {
 	GdkPixbuf * background;
 	gint w;
 	gint h;
+	gint x;
+	gint y;
 
 #if GTK_CHECK_VERSION(2, 6, 0)
 	background = gdk_pixbuf_new_from_file_at_scale(filename, window->width,
@@ -1559,20 +1573,26 @@ static void _background_how_scaled(GdkRectangle * window, GdkPixmap * pixmap,
 		return;
 	w = gdk_pixbuf_get_width(background);
 	h = gdk_pixbuf_get_height(background);
-	gdk_draw_pixbuf(pixmap, NULL, background, 0, 0,
-			(window->width - w) / 2 + window->x,
-			(window->height - h) / 2 + window->y, w, h,
+	x = (window->width - w) / 2 + window->x;
+	y = (window->height - h) / 2 + window->y;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gdk_cairo_set_source_pixbuf(desktop->cairo, background, x, y);
+#else
+	gdk_draw_pixbuf(desktop->pixmap, NULL, background, 0, 0, x, y, w, h,
 			GDK_RGB_DITHER_NONE, 0, 0);
+#endif
 	g_object_unref(background);
 }
 
-static void _background_how_scaled_ratio(GdkRectangle * window,
-		GdkPixmap * pixmap, char const * filename, GError ** error)
+static void _background_how_scaled_ratio(Desktop * desktop,
+		GdkRectangle * window, char const * filename, GError ** error)
 {
 #if GTK_CHECK_VERSION(2, 4, 0)
 	GdkPixbuf * background;
 	gint w;
 	gint h;
+	gint x;
+	gint y;
 
 	background = gdk_pixbuf_new_from_file_at_size(filename, window->width,
 			window->height, error);
@@ -1580,17 +1600,21 @@ static void _background_how_scaled_ratio(GdkRectangle * window,
 		return; /* XXX report error */
 	w = gdk_pixbuf_get_width(background);
 	h = gdk_pixbuf_get_height(background);
-	gdk_draw_pixbuf(pixmap, NULL, background, 0, 0,
-			(window->width - w) / 2 + window->x,
-			(window->height - h) / 2 + window->y, w, h,
+	x =(window->width - w) / 2 + window->x;
+	y = (window->height - h) / 2 + window->y;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gdk_cairo_set_source_pixbuf(desktop->cairo, background, x, y);
+#else
+	gdk_draw_pixbuf(desktop->pixmap, NULL, background, 0, 0, x, y, w, h,
 			GDK_RGB_DITHER_NONE, 0, 0);
+#endif
 	g_object_unref(background);
 #else
-	_background_how_scaled(window, pixmap, filename, error);
+	_background_how_scaled(desktop, window, filename, error);
 #endif
 }
 
-static void _background_how_tiled(GdkRectangle * window, GdkPixmap * pixmap,
+static void _background_how_tiled(Desktop * desktop, GdkRectangle * window,
 		char const * filename, GError ** error)
 {
 	GdkPixbuf * background;
@@ -1605,15 +1629,20 @@ static void _background_how_tiled(GdkRectangle * window, GdkPixmap * pixmap,
 	h = gdk_pixbuf_get_height(background);
 	for(j = 0; j < window->height; j += h)
 		for(i = 0; i < window->width; i += w)
-			gdk_draw_pixbuf(pixmap, NULL, background, 0, 0,
+#if GTK_CHECK_VERSION(3, 0, 0)
+			gdk_cairo_set_source_pixbuf(desktop->cairo, background,
+					i + window->x, j + window->y);
+#else
+			gdk_draw_pixbuf(desktop->pixmap, NULL, background, 0, 0,
 					i + window->x, j + window->y, w, h,
 					GDK_RGB_DITHER_NONE, 0, 0);
+#endif
 	g_object_unref(background);
 }
 
 static void _background_monitor(Desktop * desktop, char const * filename,
-		DesktopHows how, gboolean extend, GdkPixmap * pixmap,
-		GdkRectangle * window, int monitor)
+		DesktopHows how, gboolean extend, GdkRectangle * window,
+		int monitor)
 {
 	GError * error = NULL;
 
@@ -1625,18 +1654,19 @@ static void _background_monitor(Desktop * desktop, char const * filename,
 		case DESKTOP_HOW_NONE:
 			break;
 		case DESKTOP_HOW_CENTERED:
-			_background_how_centered(window, pixmap, filename,
+			_background_how_centered(desktop, window, filename,
 					&error);
 			break;
 		case DESKTOP_HOW_SCALED_RATIO:
-			_background_how_scaled_ratio(window, pixmap, filename,
+			_background_how_scaled_ratio(desktop, window, filename,
 					&error);
 			break;
 		case DESKTOP_HOW_TILED:
-			_background_how_tiled(window, pixmap, filename, &error);
+			_background_how_tiled(desktop, window, filename,
+					&error);
 			break;
 		case DESKTOP_HOW_SCALED:
-			_background_how_scaled(window, pixmap, filename,
+			_background_how_scaled(desktop, window, filename,
 					&error);
 			break;
 	}
@@ -1648,18 +1678,15 @@ static void _background_monitor(Desktop * desktop, char const * filename,
 }
 
 static void _background_monitors(Desktop * desktop, char const * filename,
-		DesktopHows how, gboolean extend, GdkPixmap * pixmap,
-		GdkRectangle * window)
+		DesktopHows how, gboolean extend, GdkRectangle * window)
 {
 	gint n;
 	gint i;
 
 	n = (extend != TRUE) ? gdk_screen_get_n_monitors(desktop->screen) : 1;
 	for(i = 0; i < n; i++)
-		_background_monitor(desktop, filename, how, extend, pixmap,
-				window, i);
+		_background_monitor(desktop, filename, how, extend, window, i);
 }
-#endif
 
 
 /* desktop_icon_add */
