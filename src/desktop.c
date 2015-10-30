@@ -1453,13 +1453,13 @@ static int _desktop_get_workarea(Desktop * desktop)
 
 /* useful */
 /* desktop_background */
-static void _background_how_centered(Desktop * desktop, GdkRectangle * window,
-		char const * filename, GError ** error);
-static void _background_how_scaled(Desktop * desktop, GdkRectangle * window,
-		char const * filename, GError ** error);
-static void _background_how_scaled_ratio(Desktop * desktop,
+static gboolean _background_how_centered(Desktop * desktop,
 		GdkRectangle * window, char const * filename, GError ** error);
-static void _background_how_tiled(Desktop * desktop, GdkRectangle * window,
+static gboolean _background_how_scaled(Desktop * desktop, GdkRectangle * window,
+		char const * filename, GError ** error);
+static gboolean _background_how_scaled_ratio(Desktop * desktop,
+		GdkRectangle * window, char const * filename, GError ** error);
+static gboolean _background_how_tiled(Desktop * desktop, GdkRectangle * window,
 		char const * filename, GError ** error);
 static void _background_monitor(Desktop * desktop, char const * filename,
 		DesktopHows how, gboolean extend, GdkRectangle * window,
@@ -1527,8 +1527,8 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 #endif
 }
 
-static void _background_how_centered(Desktop * desktop, GdkRectangle * window,
-		char const * filename, GError ** error)
+static gboolean _background_how_centered(Desktop * desktop,
+		GdkRectangle * window, char const * filename, GError ** error)
 {
 	GdkPixbuf * background;
 	gint w;
@@ -1537,7 +1537,7 @@ static void _background_how_centered(Desktop * desktop, GdkRectangle * window,
 	gint y;
 
 	if((background = gdk_pixbuf_new_from_file(filename, error)) == NULL)
-		return;
+		return FALSE;
 	w = gdk_pixbuf_get_width(background);
 	h = gdk_pixbuf_get_height(background);
 	x = (window->width - w) / 2 + window->x;
@@ -1549,9 +1549,10 @@ static void _background_how_centered(Desktop * desktop, GdkRectangle * window,
 			GDK_RGB_DITHER_NONE, 0, 0);
 #endif
 	g_object_unref(background);
+	return TRUE;
 }
 
-static void _background_how_scaled(Desktop * desktop, GdkRectangle * window,
+static gboolean _background_how_scaled(Desktop * desktop, GdkRectangle * window,
 		char const * filename, GError ** error)
 {
 	GdkPixbuf * background;
@@ -1570,7 +1571,7 @@ static void _background_how_scaled(Desktop * desktop, GdkRectangle * window,
 	background = gdk_pixbuf_new_from_file(filename, error);
 #endif
 	if(background == NULL)
-		return;
+		return FALSE;
 	w = gdk_pixbuf_get_width(background);
 	h = gdk_pixbuf_get_height(background);
 	x = (window->width - w) / 2 + window->x;
@@ -1582,9 +1583,10 @@ static void _background_how_scaled(Desktop * desktop, GdkRectangle * window,
 			GDK_RGB_DITHER_NONE, 0, 0);
 #endif
 	g_object_unref(background);
+	return TRUE;
 }
 
-static void _background_how_scaled_ratio(Desktop * desktop,
+static gboolean _background_how_scaled_ratio(Desktop * desktop,
 		GdkRectangle * window, char const * filename, GError ** error)
 {
 #if GTK_CHECK_VERSION(2, 4, 0)
@@ -1597,7 +1599,7 @@ static void _background_how_scaled_ratio(Desktop * desktop,
 	background = gdk_pixbuf_new_from_file_at_size(filename, window->width,
 			window->height, error);
 	if(background == NULL)
-		return; /* XXX report error */
+		return FALSE;
 	w = gdk_pixbuf_get_width(background);
 	h = gdk_pixbuf_get_height(background);
 	x =(window->width - w) / 2 + window->x;
@@ -1609,12 +1611,13 @@ static void _background_how_scaled_ratio(Desktop * desktop,
 			GDK_RGB_DITHER_NONE, 0, 0);
 #endif
 	g_object_unref(background);
+	return TRUE;
 #else
-	_background_how_scaled(desktop, window, filename, error);
+	return _background_how_scaled(desktop, window, filename, error);
 #endif
 }
 
-static void _background_how_tiled(Desktop * desktop, GdkRectangle * window,
+static gboolean _background_how_tiled(Desktop * desktop, GdkRectangle * window,
 		char const * filename, GError ** error)
 {
 	GdkPixbuf * background;
@@ -1624,7 +1627,7 @@ static void _background_how_tiled(Desktop * desktop, GdkRectangle * window,
 	gint j;
 
 	if((background = gdk_pixbuf_new_from_file(filename, error)) == NULL)
-		return; /* XXX report error */
+		return FALSE;
 	w = gdk_pixbuf_get_width(background);
 	h = gdk_pixbuf_get_height(background);
 	for(j = 0; j < window->height; j += h)
@@ -1638,6 +1641,7 @@ static void _background_how_tiled(Desktop * desktop, GdkRectangle * window,
 					GDK_RGB_DITHER_NONE, 0, 0);
 #endif
 	g_object_unref(background);
+	return TRUE;
 }
 
 static void _background_monitor(Desktop * desktop, char const * filename,
