@@ -176,7 +176,7 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	gtk_label_set_ellipsize(GTK_LABEL(preview->name),
 			PANGO_ELLIPSIZE_MIDDLE);
 #if GTK_CHECK_VERSION(3, 0, 0)
-	g_object_set(preview->name, "halign", 0.0, NULL);
+	g_object_set(preview->name, "halign", GTK_ALIGN_START, NULL);
 #else
 	gtk_misc_set_alignment(GTK_MISC(preview->name), 0.0, 0.5);
 #endif
