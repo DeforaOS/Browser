@@ -171,7 +171,11 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	preview->name = gtk_label_new(NULL);
 	gtk_label_set_ellipsize(GTK_LABEL(preview->name),
 			PANGO_ELLIPSIZE_MIDDLE);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(preview->name, "halign", 0.0, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(preview->name), 0.0, 0.5);
+#endif
 	font = pango_font_description_new();
 	pango_font_description_set_weight(font, PANGO_WEIGHT_BOLD);
 #if GTK_CHECK_VERSION(3, 0, 0)
