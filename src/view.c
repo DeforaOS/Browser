@@ -220,6 +220,7 @@ static View * _view_new(char const * pathname)
 			|| lstat(pathname, &st) != 0)
 	{
 		_view_error(view, strerror(errno), 1);
+		_view_delete(view);
 		return NULL;
 	}
 	if(_mime == NULL)
