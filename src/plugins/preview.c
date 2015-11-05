@@ -105,13 +105,17 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	PangoFontDescription * font;
 	GtkWidget * vbox;
 	GtkWidget * widget;
+	String const * p;
 
 	if((preview = object_new(sizeof(*preview))) == NULL)
 		return NULL;
 	preview->helper = helper;
 	preview->path = NULL;
 	preview->source = 0;
-	preview->size = PREVIEW_DEFAULT_SIZE;
+	if((p = helper->config_get(helper->browser, "preview", "size")) != NULL)
+		preview->size = strtol(p, NULL, 0);
+	else
+		preview->size = PREVIEW_DEFAULT_SIZE;
 	/* widgets */
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
 	preview->widget = vbox;
