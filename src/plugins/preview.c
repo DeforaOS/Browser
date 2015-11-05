@@ -454,30 +454,45 @@ static gboolean _preview_on_idle_text(gpointer data)
 {
 	Preview * preview = data;
 	BrowserPluginHelper * helper = preview->helper;
+	GtkTextBuffer * tbuf;
+	GtkTextIter iter;
 	int fd;
 	char buf[256];
 	ssize_t s;
+	String const * p = NULL;
 
 	preview->source = 0;
 	gtk_widget_show(GTK_WIDGET(preview->copy));
 	gtk_widget_show(GTK_WIDGET(preview->select_all));
 	gtk_widget_show(preview->toolbar);
-	gtk_text_buffer_set_text(preview->view_text_tbuf, "", 0);
+	tbuf = preview->view_text_tbuf;
+	gtk_text_buffer_set_text(tbuf, "", 0);
+	gtk_text_buffer_get_end_iter(tbuf, &iter);
 	if((fd = open(preview->path, O_RDONLY)) < 0)
 	{
 		helper->error(helper->browser, strerror(errno), 1);
 		return FALSE;
 	}
 	/* FIXME use a GIOChannel instead */
-	if((s = read(fd, buf, sizeof(buf))) > 0)
+	while((s = read(fd, buf, sizeof(buf))) > 0)
 	{
-		if(s == sizeof(buf))
+		if(p == NULL)
 		{
-			buf[sizeof(buf) - 3] = '.';
-			buf[sizeof(buf) - 2] = '.';
-			buf[sizeof(buf) - 1] = '.';
+			if((p = helper->config_get(helper->browser, "preview",
+							"ellipsize")) == NULL
+					|| strtol(p, NULL, 0) != 0)
+			{
+				if(s == sizeof(buf))
+				{
+					buf[sizeof(buf) - 3] = '.';
+					buf[sizeof(buf) - 2] = '.';
+					buf[sizeof(buf) - 1] = '.';
+				}
+				gtk_text_buffer_set_text(tbuf, buf, s);
+				break;
+			}
 		}
-		gtk_text_buffer_set_text(preview->view_text_tbuf, buf, s);
+		gtk_text_buffer_insert(preview->view_text_tbuf, &iter, buf, s);
 	}
 	close(fd);
 	gtk_widget_show(preview->view_text);
