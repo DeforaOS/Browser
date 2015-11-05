@@ -14,8 +14,6 @@ static char const _license[] =
 "\n"
 "You should have received a copy of the GNU General Public License along with\n"
 "view; if not, see <http://www.gnu.org/licenses/>.\n";
-/* TODO:
- * - zoom/dezoom images */
 
 
 
@@ -29,7 +27,12 @@ static char const _license[] =
 #include <libintl.h>
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
+#include <System.h>
 #include <Desktop.h>
+#include "../include/Browser/vfs.h"
+#define Browser View /* XXX */
+#include "browser.h"
+#undef _Browser
 #include "../config.h"
 #define _(string) gettext(string)
 #define N_(string) (string)
@@ -37,7 +40,12 @@ static char const _license[] =
 #include "common.c"
 
 /* constants */
-#define PROGNAME	"view"
+#ifndef PROGNAME
+# define PROGNAME	"view"
+#endif
+#ifndef PROGNAME_PROPERTIES
+# define PROGNAME_PROPERTIES	"properties"
+#endif
 
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
@@ -56,16 +64,19 @@ static char const _license[] =
 /* view */
 /* private */
 /* types */
-typedef struct _View
+struct _Browser
 {
-	char * pathname;
+	/* internal */
+	Mime * mime;
+	char * filename;
+
+	/* plugins */
+	BrowserPluginHelper helper;
 
 	/* widgets */
 	GtkWidget * window;
-	GtkWidget * toolbar;
-	GtkWidget * view;
 	GtkWidget * ab_window;
-} View;
+};
 
 
 /* constants */
@@ -79,68 +90,84 @@ static char const * _view_authors[] =
 
 
 /* prototypes */
-static View * _view_new(char const * path);
-static View * _view_new_open(void);
+static View * _view_new(Mime * mime, char const * filename);
+static View * _view_new_open(Mime * mime);
 static void _view_delete(View * view);
+
+/* accessors */
+static String const * _view_config_get(View * view, String const * section,
+		String const * variable);
+static int _view_config_set(View * view, String const * section,
+		String const * variable, String const * value);
+static GdkPixbuf * _view_get_icon(View * view, char const * filename,
+		char const * type, struct stat * lst, struct stat * st,
+		int size);
+static Mime * _view_get_mime(View * view);
+static char const * _view_get_type(View * view, char const * filename,
+		mode_t mode);
+static int _view_set_location(View * view, char const * filename);
 
 /* useful */
 static int _view_error(View * view, char const * message, int ret);
 static void _view_open_with(View * view, char const * program);
 static void _view_open_with_dialog(View * view);
 
+/* helpers */
+static int _view_helper_set_location(View * view, char const * filename);
+
 /* callbacks */
 #ifdef EMBEDDED
-static void _on_close(gpointer data);
+static void _view_on_close(gpointer data);
 #endif
-static gboolean _on_closex(gpointer data);
+static gboolean _view_on_closex(gpointer data);
 #ifndef EMBEDDED
-static void _on_file_edit(gpointer data);
-static void _on_file_open_with(gpointer data);
-static void _on_file_properties(gpointer data);
-static void _on_file_close(gpointer data);
-static void _on_help_contents(gpointer data);
-static void _on_help_about(gpointer data);
+static void _view_on_file_edit(gpointer data);
+static void _view_on_file_open_with(gpointer data);
+static void _view_on_file_properties(gpointer data);
+static void _view_on_file_close(gpointer data);
+static void _view_on_help_contents(gpointer data);
+static void _view_on_help_about(gpointer data);
 #endif
-static void _on_copy(gpointer data);
-static void _on_edit(gpointer data);
-static void _on_open_with(gpointer data);
-static void _on_properties(gpointer data);
-static void _on_select_all(gpointer data);
+static void _view_on_open_with(gpointer data);
+static void _view_on_properties(gpointer data);
 
 
 /* constants */
 #ifndef EMBEDDED
 static DesktopMenu _view_menu_file[] =
 {
-	{ N_("Open _with..."), G_CALLBACK(_on_file_open_with), NULL, 0, 0 },
+	{ N_("Open _with..."), G_CALLBACK(_view_on_file_open_with), NULL, 0,
+		0 },
 	{ "", NULL, NULL, 0, 0 },
-	{ N_("_Close"), G_CALLBACK(_on_file_close), GTK_STOCK_CLOSE,
+	{ N_("_Close"), G_CALLBACK(_view_on_file_close), GTK_STOCK_CLOSE,
 		GDK_CONTROL_MASK, GDK_KEY_W },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
 static DesktopMenu _view_menu_file_edit[] =
 {
-	{ N_("_Edit"), G_CALLBACK(_on_file_edit), GTK_STOCK_EDIT,
+	{ N_("_Edit"), G_CALLBACK(_view_on_file_edit), GTK_STOCK_EDIT,
 		GDK_CONTROL_MASK, GDK_KEY_E },
-	{ N_("Open _with..."), G_CALLBACK(_on_file_open_with), NULL, 0, 0 },
+	{ N_("Open _with..."), G_CALLBACK(_view_on_file_open_with), NULL, 0,
+		0 },
 	{ "", NULL, NULL, 0, 0 },
-	{ N_("_Properties"), G_CALLBACK(_on_file_properties),
+	{ N_("_Properties"), G_CALLBACK(_view_on_file_properties),
 		GTK_STOCK_PROPERTIES, GDK_MOD1_MASK, GDK_KEY_Return },
 	{ "", NULL, NULL, 0, 0 },
-	{ N_("_Close"), G_CALLBACK(_on_file_close), GTK_STOCK_CLOSE,
+	{ N_("_Close"), G_CALLBACK(_view_on_file_close), GTK_STOCK_CLOSE,
 		GDK_CONTROL_MASK, GDK_KEY_W },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
 static DesktopMenu _view_menu_help[] =
 {
-	{ N_("Contents"), G_CALLBACK(_on_help_contents), "help-contents", 0,
-		GDK_KEY_F1 },
+	{ N_("Contents"), G_CALLBACK(_view_on_help_contents), "help-contents",
+		0, GDK_KEY_F1 },
 # if GTK_CHECK_VERSION(2, 6, 0)
-	{ N_("_About"), G_CALLBACK(_on_help_about), GTK_STOCK_ABOUT, 0, 0 },
+	{ N_("_About"), G_CALLBACK(_view_on_help_about), GTK_STOCK_ABOUT, 0,
+		0 },
 # else
-	{ N_("_About"), G_CALLBACK(_on_help_about), NULL, 0, 0 },
+	{ N_("_About"), G_CALLBACK(_view_on_help_about), NULL, 0, 0 },
 # endif
 	{ NULL, NULL, NULL, 0, 0 }
 };
@@ -161,27 +188,10 @@ static DesktopMenubar _view_menubar_edit[] =
 #else
 static DesktopAccel _view_accel[] =
 {
-	{ G_CALLBACK(_on_close), GDK_CONTROL_MASK, GDK_KEY_W },
+	{ G_CALLBACK(_view_on_close), GDK_CONTROL_MASK, GDK_KEY_W },
 	{ NULL, 0, 0 }
 };
 #endif /* EMBEDDED */
-
-static DesktopToolbar _view_toolbar[] =
-{
-	{ N_("Open with..."), G_CALLBACK(_on_open_with), GTK_STOCK_OPEN,
-		GDK_CONTROL_MASK, GDK_KEY_O, NULL },
-	{ N_("Edit"), G_CALLBACK(_on_edit), GTK_STOCK_EDIT, GDK_CONTROL_MASK,
-		GDK_KEY_E, NULL },
-	{ "", NULL, NULL, 0, 0, NULL },
-	{ N_("Properties"), G_CALLBACK(_on_properties), GTK_STOCK_PROPERTIES,
-#ifndef EMBEDDED
-		0, 0,
-#else
-		GDK_MOD1_MASK, GDK_KEY_Return,
-#endif
-		NULL },
-	{ NULL, NULL, NULL, 0, 0, NULL }
-};
 
 
 /* variables */
@@ -191,21 +201,13 @@ static unsigned int _view_cnt = 0;
 
 /* functions */
 /* view_new */
-static GtkWidget * _new_image(View * view, char const * path);
-static GtkWidget * _new_text(View * view, char const * path);
+static GtkWidget * _new_load(View * view);
 
-static View * _view_new(char const * pathname)
+static View * _view_new(Mime * mime, char const * filename)
 {
 	View * view;
 	struct stat st;
-	char const image[] = "image/";
-	char const text[] = "text/";
-	char const * types[] = { "application/x-perl",
-		"application/x-shellscript",
-		"application/xml",
-		"application/xslt+xml" };
 	char const * type;
-	size_t i;
 	char buf[256];
 	GtkAccelGroup * group;
 	GtkWidget * vbox;
@@ -213,19 +215,27 @@ static View * _view_new(char const * pathname)
 
 	if((view = malloc(sizeof(*view))) == NULL)
 		return NULL; /* FIXME handle error */
+	view->mime = mime;
+	view->filename = NULL;
+	view->helper.browser = view;
+	view->helper.config_get = _view_config_get;
+	view->helper.config_set = _view_config_set;
+	view->helper.error = _view_error;
+	view->helper.get_icon = _view_get_icon;
+	view->helper.get_mime = _view_get_mime;
+	view->helper.get_type = _view_get_type;
+	view->helper.set_location = _view_helper_set_location;
 	view->window = NULL;
 	view->ab_window = NULL;
 	_view_cnt++;
-	if((view->pathname = strdup(pathname)) == NULL
-			|| lstat(pathname, &st) != 0)
+	if((view->filename = strdup(filename)) == NULL
+			|| lstat(filename, &st) != 0)
 	{
 		_view_error(view, strerror(errno), 1);
 		_view_delete(view);
 		return NULL;
 	}
-	if(_mime == NULL)
-		_mime = mime_new(NULL);
-	if((type = mime_type(_mime, pathname)) == NULL)
+	if((type = mime_type(mime, filename)) == NULL)
 	{
 		_view_error(view, _("Unknown file type"), 1);
 		return NULL;
@@ -234,10 +244,10 @@ static View * _view_new(char const * pathname)
 	view->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_add_accel_group(GTK_WINDOW(view->window), group);
 	g_object_unref(group);
-	snprintf(buf, sizeof(buf), "%s%s", _("View - "), pathname);
+	snprintf(buf, sizeof(buf), "%s%s", _("View - "), filename);
 	gtk_window_set_title(GTK_WINDOW(view->window), buf);
 	g_signal_connect_swapped(view->window, "delete-event", G_CALLBACK(
-				_on_closex), view);
+				_view_on_closex), view);
 #if GTK_CHECK_VERSION(3, 0, 0)
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 #else
@@ -245,184 +255,75 @@ static View * _view_new(char const * pathname)
 #endif
 #ifndef EMBEDDED
 	widget = desktop_menubar_create(
-			(mime_get_handler(_mime, type, "edit") != NULL)
+			(mime_get_handler(mime, type, "edit") != NULL)
 			? _view_menubar_edit : _view_menubar, view, group);
 	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, FALSE, 0);
 #else
 	desktop_accel_create(_view_accel, view, group);
 #endif
-	view->toolbar = desktop_toolbar_create(_view_toolbar, view, group);
-	if(mime_get_handler(_mime, type, "edit") == NULL)
-		gtk_widget_set_sensitive(GTK_WIDGET(_view_toolbar[1].widget),
-				FALSE);
-	gtk_box_pack_start(GTK_BOX(vbox), view->toolbar, FALSE, FALSE, 0);
-	if(strncmp(type, image, sizeof(image) - 1) == 0)
+	if((widget = _new_load(view)) == NULL)
 	{
-		if((widget = _new_image(view, pathname)) == NULL)
-			return NULL;
-	}
-	else if(strncmp(type, text, sizeof(text) - 1) == 0)
-	{
-		widget = _new_text(view, pathname);
-		gtk_window_set_default_size(GTK_WINDOW(view->window), 600, 400);
-	}
-	else
-	{
-		widget = NULL;
-		for(i = 0; i < sizeof(types) / sizeof(*types); i++)
-			if(strcmp(types[i], type) == 0)
-			{
-				widget = _new_text(view, pathname);
-				break;
-			}
-		if(widget == NULL)
-		{
-			_view_error(view, _("Unable to view file type"), 1);
-			return NULL;
-		}
-		gtk_window_set_default_size(GTK_WINDOW(view->window), 600, 400);
+		_view_delete(view);
+		return NULL;
 	}
 	gtk_box_pack_start(GTK_BOX(vbox), widget, TRUE, TRUE, 0);
 	gtk_container_add(GTK_CONTAINER(view->window), vbox);
+	/* XXX fit the window to its content */
+	gtk_window_set_default_size(GTK_WINDOW(view->window), 600, 400);
 	gtk_widget_show_all(view->window);
 	return view;
 }
 
-static GtkWidget * _new_image(View * view, char const * path)
+static GtkWidget * _new_load(View * view)
 {
-	GtkWidget * window;
-	GError * error = NULL;
-	GdkPixbufAnimation * pixbuf;
-	int width;
-	int height;
-	GdkScreen * screen;
-	gint monitor;
-	GdkRectangle rect;
+	Plugin * p;
+	BrowserPluginDefinition * bpd;
+	BrowserPlugin * bp;
+	GList * l;
+	GtkWidget * widget;
 
-	window = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(window),
-			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	pixbuf = gdk_pixbuf_animation_new_from_file(path, &error);
-	if(error != NULL)
-	{
-		_view_error((pixbuf != NULL) ? NULL : view, error->message, 1);
-		g_error_free(error);
-	}
-	if(pixbuf == NULL)
+	if((p = plugin_new(LIBDIR, PACKAGE, "plugins", "preview")) == NULL)
 		return NULL;
-	view->view = gtk_image_new_from_animation(pixbuf);
-#if GTK_CHECK_VERSION(3, 0, 0)
-	gtk_container_add(GTK_CONTAINER(window), view->view);
-#else
-	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(window),
-			view->view);
-#endif
-	/* get the current window size */
-	gtk_window_get_size(GTK_WINDOW(view->window), &width, &height);
-	/* add the size of the image */
-	width += gdk_pixbuf_animation_get_width(pixbuf);
-	height += gdk_pixbuf_animation_get_height(pixbuf);
-	/* get the current monitor size */
-	screen = gdk_screen_get_default();
-#if GTK_CHECK_VERSION(2, 14, 0)
-	gtk_widget_realize(view->window);
-	monitor = gdk_screen_get_monitor_at_window(screen,
-			gtk_widget_get_window(view->window));
-#else
-	monitor = 0; /* XXX hard-coded */
-#endif
-	gdk_screen_get_monitor_geometry(screen, monitor, &rect);
-	/* set an upper bound to the size of the window */
-	gtk_window_set_default_size(GTK_WINDOW(view->window),
-			min(width, rect.width),
-			min(height, rect.height));
-	return window;
-}
-
-static GtkWidget * _new_text(View * view, char const * path)
-{
-	GtkToolItem * toolitem;
-	GtkWidget * window;
-	PangoFontDescription * desc;
-	FILE * fp;
-	GtkTextBuffer * tbuf;
-	GtkTextIter iter;
-	char buf[BUFSIZ];
-	size_t len;
-
-	toolitem = gtk_separator_tool_item_new();
-	gtk_toolbar_insert(GTK_TOOLBAR(view->toolbar), toolitem, 3);
-	/* copy */
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_COPY);
-	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(_on_copy),
-			view);
-	gtk_toolbar_insert(GTK_TOOLBAR(view->toolbar), toolitem, 3);
-	/* select all */
-#if GTK_CHECK_VERSION(2, 10, 0)
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_SELECT_ALL);
-#else
-	toolitem = gtk_tool_button_new(gtk_image_new_from_icon_name(
-				"edit-select-all", gtk_toolbar_get_icon_size(
-					GTK_TOOLBAR(view->toolbar))),
-			_("Select All"));
-#endif
-	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
-			_on_select_all), view);
-	gtk_toolbar_insert(GTK_TOOLBAR(view->toolbar), toolitem, 4);
-	/* view */
-	window = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(window),
-			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	view->view = gtk_text_view_new();
-	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(view->view), FALSE);
-	gtk_text_view_set_editable(GTK_TEXT_VIEW(view->view), FALSE);
-	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(view->view),
-			GTK_WRAP_WORD_CHAR);
-	desc = pango_font_description_new();
-	pango_font_description_set_family(desc, "monospace");
-#if GTK_CHECK_VERSION(3, 0, 0)
-	gtk_widget_override_font(view->view, desc);
-#else
-	gtk_widget_modify_font(view->view, desc);
-#endif
-	pango_font_description_free(desc);
-	gtk_container_add(GTK_CONTAINER(window), view->view);
-	/* FIXME read asynchronously */
-	if((fp = fopen(path, "r")) == NULL)
+	if((bpd = plugin_lookup(p, "plugin")) == NULL)
 	{
-		_view_error(view, strerror(errno), 0);
-		return window;
+		plugin_delete(p);
+		return NULL;
 	}
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view->view));
-	while((len = fread(buf, sizeof(char), sizeof(buf), fp)) > 0)
+	if(bpd->init == NULL
+			|| bpd->destroy == NULL
+			|| bpd->get_widget == NULL
+			|| (bp = bpd->init(&view->helper)) == NULL)
 	{
-		gtk_text_buffer_get_end_iter(tbuf, &iter);
-		gtk_text_buffer_insert(tbuf, &iter, buf, len);
+		plugin_delete(p);
+		return NULL;
 	}
-	fclose(fp);
-	return window;
+	widget = bpd->get_widget(bp);
+	l = g_list_append(NULL, view->filename);
+	bpd->refresh(bp, l);
+	g_list_free(l);
+	return widget;
 }
 
 
 /* view_new_open */
-static View * _view_new_open(void)
+static View * _view_new_open(Mime * mime)
 {
 	View * ret;
 	GtkWidget * dialog;
-	char * pathname = NULL;
+	char * filename = NULL;
 
 	dialog = gtk_file_chooser_dialog_new(_("View file..."), NULL,
 			GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
 			GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN,
 			GTK_RESPONSE_ACCEPT, NULL);
 	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
-		pathname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
+		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
 					dialog));
 	gtk_widget_destroy(dialog);
-	if(pathname == NULL)
+	if(filename == NULL)
 		return NULL;
-	ret = _view_new(pathname);
-	free(pathname);
+	ret = _view_new(mime, filename);
+	free(filename);
 	return ret;
 }
 
@@ -430,7 +331,7 @@ static View * _view_new_open(void)
 /* view_delete */
 static void _view_delete(View * view)
 {
-	free(view->pathname);
+	free(view->filename);
 	if(view->ab_window != NULL)
 		gtk_widget_destroy(view->ab_window);
 	if(view->window != NULL)
@@ -438,6 +339,73 @@ static void _view_delete(View * view)
 	free(view);
 	if(--_view_cnt == 0)
 		gtk_main_quit();
+}
+
+
+/* accessors */
+/* view_config_get */
+static String const * _view_config_get(View * view, String const * section,
+		String const * variable)
+{
+	if(section != NULL)
+	{
+		if(strcmp(section, "preview") == 0
+				&& strcmp(variable, "ellipsize") == 0)
+			return "0";
+		if(strcmp(section, "preview") == 0
+				&& strcmp(variable, "label") == 0)
+			return "0";
+		if(strcmp(section, "preview") == 0
+				&& strcmp(variable, "size") == 0)
+			return "-1";
+	}
+	return NULL;
+}
+
+
+/* view_config_set */
+static int _view_config_set(View * view, String const * section,
+		String const * variable, String const * value)
+{
+	/* FIXME implement */
+	return -1;
+}
+
+
+/* view_get_icon */
+static GdkPixbuf * _view_get_icon(View * view, char const * filename,
+		char const * type, struct stat * lst, struct stat * st,
+		int size)
+{
+	return browser_vfs_mime_icon(view->mime, filename, type, lst, st, size);
+}
+
+
+/* view_get_mime */
+static Mime * _view_get_mime(View * view)
+{
+	return view->mime;
+}
+
+
+/* view_get_type */
+static char const * _view_get_type(View * view,
+		char const * filename, mode_t mode)
+{
+	return browser_vfs_mime_type(view->mime, filename, mode);
+}
+
+
+/* view_set_location */
+static int _view_set_location(View * view, char const * filename)
+{
+	char * p;
+
+	if((p = strdup(filename)) == NULL)
+		return -error_set_code(1, "%s: %s", filename, strerror(errno));
+	free(view->filename);
+	view->filename = p;
+	return 0;
 }
 
 
@@ -503,7 +471,7 @@ static void _view_open_with(View * view, char const * program)
 		_view_error(view, strerror(errno), 1);
 		return;
 	}
-	argv[1] = view->pathname;
+	argv[1] = view->filename;
 	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
 			!= TRUE)
 	{
@@ -550,20 +518,32 @@ static void _view_open_with_dialog(View * view)
 }
 
 
+/* helpers */
+/* view_helper_set_location */
+static int _view_helper_set_location(View * view, char const * filename)
+{
+	int res;
+
+	if((res = _view_set_location(view, filename)) != 0)
+		return -_view_error(view, error_get(), 1);
+	return 0;
+}
+
+
 /* callbacks */
 #ifdef EMBEDDED
-/* on_close */
-static void _on_close(gpointer data)
+/* view_on_close */
+static void _view_on_close(gpointer data)
 {
 	View * view = data;
 
-	_on_closex(view);
+	_view_on_closex(view);
 }
 #endif
 
 
-/* on_closex */
-static gboolean _on_closex(gpointer data)
+/* view_on_closex */
+static gboolean _view_on_closex(gpointer data)
 {
 	View * view = data;
 
@@ -575,54 +555,54 @@ static gboolean _on_closex(gpointer data)
 
 
 #ifndef EMBEDDED
-/* on_file_edit */
-static void _on_file_edit(gpointer data)
+/* view_on_file_edit */
+static void _view_on_file_edit(gpointer data)
 {
 	View * view = data;
 
-	if(mime_action(_mime, "edit", view->pathname) != 0)
+	if(mime_action(_mime, "edit", view->filename) != 0)
 		_view_error(view, _("Could not edit file"), 0);
 }
 
 
-/* on_file_open_with */
-static void _on_file_open_with(gpointer data)
+/* view_on_file_open_with */
+static void _view_on_file_open_with(gpointer data)
 {
 	View * view = data;
 
-	_on_open_with(view);
+	_view_on_open_with(view);
 }
 
 
-/* on_file_properties */
-static void _on_file_properties(gpointer data)
+/* view_on_file_properties */
+static void _view_on_file_properties(gpointer data)
 {
 	View * view = data;
 
-	_on_properties(view);
+	_view_on_properties(view);
 }
 
 
-/* on_file_close */
-static void _on_file_close(gpointer data)
+/* view_on_file_close */
+static void _view_on_file_close(gpointer data)
 {
 	View * view = data;
 
-	_on_closex(view);
+	_view_on_closex(view);
 }
 
 
-/* on_help_contents */
-static void _on_help_contents(gpointer data)
+/* view_on_help_contents */
+static void _view_on_help_contents(gpointer data)
 {
 	desktop_help_contents(PACKAGE, PROGNAME);
 }
 
 
-/* on_help_about */
+/* view_on_help_about */
 static gboolean _about_on_closex(gpointer data);
 
-static void _on_help_about(gpointer data)
+static void _view_on_help_about(gpointer data)
 {
 	View * view = data;
 
@@ -656,32 +636,8 @@ static gboolean _about_on_closex(gpointer data)
 #endif /* EMBEDDED */
 
 
-/* on_copy */
-static void _on_copy(gpointer data)
-{
-	View * view = data;
-	GtkClipboard * clipboard;
-	GtkTextBuffer * tbuf;
-
-	clipboard = gtk_widget_get_clipboard(view->view,
-			GDK_SELECTION_CLIPBOARD);
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view->view));
-	gtk_text_buffer_copy_clipboard(tbuf, clipboard);
-}
-
-
-/* on_edit */
-static void _on_edit(gpointer data)
-{
-	View * view = data;
-
-	if(mime_action(_mime, "edit", view->pathname) != 0)
-		_view_error(view, _("Could not edit file"), 0);
-}
-
-
-/* on_open_with */
-static void _on_open_with(gpointer data)
+/* view_on_open_with */
+static void _view_on_open_with(gpointer data)
 {
 	View * view = data;
 
@@ -689,27 +645,12 @@ static void _on_open_with(gpointer data)
 }
 
 
-/* on_properties */
-static void _on_properties(gpointer data)
+/* view_on_properties */
+static void _view_on_properties(gpointer data)
 {
 	View * view = data;
 
-	_view_open_with(view, BINDIR "/properties");
-}
-
-
-/* on_select_all */
-static void _on_select_all(gpointer data)
-{
-	View * view = data;
-	GtkTextBuffer * tbuf;
-	GtkTextIter start;
-	GtkTextIter end;
-
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view->view));
-	gtk_text_buffer_get_start_iter(tbuf, &start);
-	gtk_text_buffer_get_end_iter(tbuf, &end);
-	gtk_text_buffer_select_range(tbuf, &start, &end);
+	_view_open_with(view, BINDIR "/" PROGNAME_PROPERTIES);
 }
 
 
@@ -728,6 +669,7 @@ int main(int argc, char * argv[])
 {
 	int o;
 	int i;
+	Mime * mime;
 
 	if(setlocale(LC_ALL, "") == NULL)
 		_view_error(NULL, "setlocale", 1);
@@ -740,12 +682,15 @@ int main(int argc, char * argv[])
 			default:
 				return _usage();
 		}
+	if((mime = mime_new(NULL)) == NULL)
+		return _view_error(NULL, error_get(), 2);
 	if(optind == argc)
-		_view_new_open();
+		_view_new_open(mime);
 	else
 		for(i = optind; i < argc; i++)
-			_view_new(argv[i]);
+			_view_new(mime, argv[i]);
 	if(_view_cnt)
 		gtk_main();
+	mime_delete(mime);
 	return 0;
 }
