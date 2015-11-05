@@ -27,9 +27,8 @@
 #include <gtk/gtk.h>
 #include <System.h>
 #include "../include/Browser/vfs.h"
-#define _Browser _BrowserHidden /* XXX */
+#define Browser Properties /* XXX */
 #include "browser.h"
-#undef _Browser
 #include "../config.h"
 #define _(string) gettext(string)
 #define N_(string) (string)
@@ -56,7 +55,7 @@
 /* properties */
 /* private */
 /* types */
-typedef struct _Properties
+struct _Browser
 {
 	/* internal */
 	Mime * mime;
@@ -69,7 +68,7 @@ typedef struct _Properties
 	GtkIconTheme * theme;
 	GtkWidget * window;
 	GtkWidget * notebook;
-} Properties;
+};
 
 
 /* variables */
