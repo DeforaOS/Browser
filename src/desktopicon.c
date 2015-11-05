@@ -619,7 +619,11 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 	gtk_box_pack_start(GTK_BOX(vbox), desktopicon->image, FALSE, TRUE, 0);
 	/* label */
 	desktopicon->label = gtk_label_new(NULL);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(desktopicon->label, "valign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(desktopicon->label), 0.5, 0.0);
+#endif
 #if GTK_CHECK_VERSION(2, 10, 0)
 	gtk_label_set_line_wrap_mode(GTK_LABEL(desktopicon->label),
 			PANGO_WRAP_WORD_CHAR);
@@ -1176,7 +1180,11 @@ static void _on_icon_rename(gpointer data)
 	hbox = gtk_hbox_new(FALSE, 4);
 #endif
 	widget = gtk_label_new(_("Rename: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	widget = gtk_entry_new();
@@ -1191,7 +1199,11 @@ static void _on_icon_rename(gpointer data)
 	hbox = gtk_hbox_new(FALSE, 4);
 #endif
 	widget = gtk_label_new(_("To: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	widget = gtk_entry_new();
