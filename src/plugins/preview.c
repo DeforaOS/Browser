@@ -188,6 +188,9 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	gtk_widget_modify_font(preview->name, font);
 #endif
 	pango_font_description_free(font);
+	if((p = helper->config_get(helper->browser, "preview", "label")) != NULL
+			&& strtol(p, NULL, 0) == 0)
+		gtk_widget_set_no_show_all(preview->name, TRUE);
 	gtk_box_pack_start(GTK_BOX(vbox), preview->name, FALSE, TRUE, 0);
 	/* image */
 	preview->view_image = gtk_scrolled_window_new(NULL, NULL);
