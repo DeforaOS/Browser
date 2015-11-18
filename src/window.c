@@ -98,7 +98,7 @@ static void _browserwindow_on_view_thumbnails(gpointer data);
 /* constants */
 #define ICON_NAME		"system-file-manager"
 
-static const DesktopAccel _browser_accel[] =
+static const DesktopAccel _browserwindow_accel[] =
 {
 	{ G_CALLBACK(on_location), GDK_CONTROL_MASK, GDK_KEY_L },
 	{ G_CALLBACK(on_properties), GDK_MOD1_MASK, GDK_KEY_Return },
@@ -115,7 +115,7 @@ static const DesktopAccel _browser_accel[] =
 };
 
 #ifndef EMBEDDED
-static const DesktopMenu _browser_menu_file[] =
+static const DesktopMenu _browserwindow_menu_file[] =
 {
 	{ N_("_New window"), G_CALLBACK(_browserwindow_on_file_new_window),
 		"window-new", GDK_CONTROL_MASK, GDK_KEY_N },
@@ -134,7 +134,7 @@ static const DesktopMenu _browser_menu_file[] =
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
-static const DesktopMenu _browser_menu_edit[] =
+static const DesktopMenu _browserwindow_menu_edit[] =
 {
 	{ N_("_Cut"), G_CALLBACK(_browserwindow_on_edit_cut), GTK_STOCK_CUT,
 		GDK_CONTROL_MASK, GDK_KEY_X },
@@ -161,7 +161,7 @@ static const DesktopMenu _browser_menu_edit[] =
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
-static const DesktopMenu _browser_menu_view[] =
+static const DesktopMenu _browserwindow_menu_view[] =
 {
 	{ N_("_Refresh"), G_CALLBACK(_browserwindow_on_view_refresh),
 		GTK_STOCK_REFRESH, GDK_CONTROL_MASK, GDK_KEY_R },
@@ -182,7 +182,7 @@ static const DesktopMenu _browser_menu_view[] =
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
-static const DesktopMenu _browser_menu_help[] =
+static const DesktopMenu _browserwindow_menu_help[] =
 {
 	{ N_("_Contents"), G_CALLBACK(_browserwindow_on_help_contents),
 		"help-contents", 0, GDK_KEY_F1 },
@@ -195,12 +195,12 @@ static const DesktopMenu _browser_menu_help[] =
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
-static const DesktopMenubar _browser_menubar[] =
+static const DesktopMenubar _browserwindow_menubar[] =
 {
-	{ N_("_File"), _browser_menu_file },
-	{ N_("_Edit"), _browser_menu_edit },
-	{ N_("_View"), _browser_menu_view },
-	{ N_("_Help"), _browser_menu_help },
+	{ N_("_File"), _browserwindow_menu_file },
+	{ N_("_Edit"), _browserwindow_menu_edit },
+	{ N_("_View"), _browserwindow_menu_view },
+	{ N_("_Help"), _browserwindow_menu_help },
 	{ NULL, NULL }
 };
 #endif
@@ -259,10 +259,11 @@ BrowserWindow * browserwindow_new(String const * directory)
 #endif
 	/* menubar */
 #ifndef EMBEDDED
-	tb_menubar = desktop_menubar_create(_browser_menubar, browser, group);
+	tb_menubar = desktop_menubar_create(_browserwindow_menubar, browser,
+			group);
 	gtk_box_pack_start(GTK_BOX(vbox), tb_menubar, FALSE, FALSE, 0);
 #endif
-	desktop_accel_create(_browser_accel, browser->browser, group);
+	desktop_accel_create(_browserwindow_accel, browser->browser, group);
 	gtk_box_pack_start(GTK_BOX(vbox), browser_get_widget(browser->browser),
 			TRUE, TRUE, 0);
 
