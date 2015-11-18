@@ -54,8 +54,11 @@ static int _browser(char const * filename, int view)
 {
 	Browser * browser;
 
-	if((browser = browser_new(filename)) != NULL && view != -1)
+	if((browser = browser_new(filename)) == NULL)
+		return -1;
+	if(view != -1)
 		browser_set_view(browser, view);
+	return 0;
 }
 
 
