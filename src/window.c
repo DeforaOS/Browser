@@ -244,7 +244,7 @@ BrowserWindow * browserwindow_new(String const * directory)
 
 	/* browser */
 	browser_window_cnt++;
-	if((browser->browser = browser_new(group, browser->window, directory))
+	if((browser->browser = browser_new(browser->window, group, directory))
 			== NULL)
 	{
 		browserwindow_delete(browser);

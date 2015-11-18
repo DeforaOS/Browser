@@ -64,7 +64,7 @@ typedef struct _BrowserPrefs
 
 
 /* functions */
-Browser * browser_new(GtkAccelGroup * group, GtkWidget * window,
+Browser * browser_new(GtkWidget * window, GtkAccelGroup * group,
 		String const * directory);
 Browser * browser_new_copy(Browser * browser);
 void browser_delete(Browser * browser);

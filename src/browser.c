@@ -280,8 +280,8 @@ static gboolean _new_idle(gpointer data);
 static void _idle_load_plugins(Browser * browser);
 static GtkListStore * _create_store(Browser * browser);
 
-Browser * browser_new(GtkAccelGroup * group, GtkWidget * window,
-		char const * directory)
+Browser * browser_new(GtkWidget * window, GtkAccelGroup * group,
+		String const * directory)
 {
 	Browser * browser;
 	GtkWidget * vbox;
