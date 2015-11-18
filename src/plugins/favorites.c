@@ -68,7 +68,7 @@ static int _favorites_save(Favorites * favorites);
 /* callbacks */
 static void _favorites_on_add(gpointer data);
 static gboolean _favorites_on_filter_visible(GtkTreeModel * model,
-		GtkTreeIter * iter);
+		GtkTreeIter * iter, gpointer data);
 static void _favorites_on_remove(gpointer data);
 static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 		GtkTreeViewColumn * column, gpointer data);
@@ -388,11 +388,12 @@ static void _on_add_filename(gchar const * pathname, gpointer data)
 
 /* favorites_on_filter_visible */
 static gboolean _favorites_on_filter_visible(GtkTreeModel * model,
-		GtkTreeIter * iter)
+		GtkTreeIter * iter, gpointer data)
 {
 	const char scheme[] = "file:///";
 	gboolean ret;
 	gchar * path;
+	(void) data;
 
 	gtk_tree_model_get(model, iter, FC_PATH, &path, -1);
 	ret = (path != NULL && strncmp(path, scheme, sizeof(scheme) - 1) == 0)
