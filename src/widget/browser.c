@@ -46,6 +46,8 @@ static void _browser_destroy(BrowserWidget * browser);
 
 static GtkWidget * _browser_get_widget(BrowserWidget * browser);
 
+static int _browser_set_property(BrowserWidget * browser, va_list ap);
+
 
 /* public */
 /* variables */
@@ -56,7 +58,8 @@ DesktopWidgetDefinition widget =
 	NULL,
 	_browser_init,
 	_browser_destroy,
-	_browser_get_widget
+	_browser_get_widget,
+	_browser_set_property
 };
 
 
@@ -92,4 +95,27 @@ static void _browser_destroy(BrowserWidget * browser)
 static GtkWidget * _browser_get_widget(BrowserWidget * browser)
 {
 	return browser_get_widget(browser->browser);
+}
+
+
+/* browser_set_property */
+static int _browser_set_property(BrowserWidget * browser, va_list ap)
+{
+	int ret = 0;
+	String const * property;
+	String const * s;
+	unsigned int u;
+
+	while((property = va_arg(ap, String const *)) != NULL)
+		if(strcmp(property, "location") == 0)
+		{
+			s = va_arg(ap, String const *);
+			ret = browser_set_location(browser->browser, s);
+		}
+		else if(strcmp(property, "view") == 0)
+		{
+			u = va_arg(ap, unsigned int);
+			browser_set_view(browser->browser, u);
+		}
+	return ret;
 }
