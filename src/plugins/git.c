@@ -553,7 +553,9 @@ static void _git_on_diff(gpointer data)
 
 static void _diff_on_callback(Git * git, CommonTask * task, int ret)
 {
+#ifdef notyet
 	GtkTextBuffer * tbuf;
+#endif
 
 	if(ret != 0)
 		_common_task_message(task, GTK_MESSAGE_ERROR,
