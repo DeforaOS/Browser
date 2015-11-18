@@ -42,11 +42,23 @@
 
 /* private */
 /* prototypes */
+static int _browser(char const * filename, int view);
+
 static int _error(char const * message, int ret);
 static int _usage(void);
 
 
 /* functions */
+/* browser */
+static int _browser(char const * filename, int view)
+{
+	Browser * browser;
+
+	if((browser = browser_new(filename)) != NULL && view != -1)
+		browser_set_view(browser, view);
+}
+
+
 /* error */
 static int _error(char const * message, int ret)
 {
@@ -81,7 +93,6 @@ int main(int argc, char * argv[])
 	int o;
 	int i;
 	int view = -1;
-	Browser * browser;
 
 	if(setlocale(LC_ALL, "") == NULL)
 		_error("setlocale", 1);
@@ -113,15 +124,10 @@ int main(int argc, char * argv[])
 				return _usage();
 		}
 	if(optind == argc)
-	{
-		if((browser = browser_new(NULL)) != NULL && view != -1)
-			browser_set_view(browser, view);
-	}
+		_browser(NULL, view);
 	else
 		for(i = optind; i < argc; i++)
-			if((browser = browser_new(argv[i])) != NULL
-					&& view != -1)
-				browser_set_view(browser, view);
+			_browser(argv[i], view);
 	gtk_main();
 	/* browser is automatically deleted */
 	return 0;
