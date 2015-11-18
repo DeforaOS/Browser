@@ -103,6 +103,8 @@ int browser_unload(Browser * browser, char const * plugin);
 void browser_open(Browser * browser, char const * path);
 void browser_open_with(Browser * browser, char const * path);
 
+void browser_properties(Browser * browser);
+
 void browser_refresh(Browser * browser);
 
 /* selection */

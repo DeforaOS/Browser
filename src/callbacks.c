@@ -42,7 +42,6 @@
 #ifndef PROGNAME
 # define PROGNAME "browser"
 #endif
-#define COMMON_EXEC
 #define COMMON_SYMLINK
 #include "common.c"
 
@@ -186,25 +185,8 @@ void on_paste(gpointer data)
 void on_properties(gpointer data)
 {
 	Browser * browser = data;
-	char const * location;
-	char * p;
-	GList * selection;
 
-	if((location = browser_get_location(browser)) == NULL)
-		return;
-	if((selection = browser_selection_copy(browser)) == NULL)
-	{
-		if((p = strdup(location)) == NULL)
-		{
-			browser_error(browser, strerror(errno), 1);
-			return;
-		}
-		selection = g_list_append(NULL, p);
-	}
-	if(_common_exec("properties", NULL, selection) != 0)
-		browser_error(browser, strerror(errno), 1);
-	g_list_foreach(selection, (GFunc)free, NULL);
-	g_list_free(selection);
+	browser_properties(browser);
 }
 
 
