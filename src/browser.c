@@ -660,7 +660,6 @@ void browser_delete(Browser * browser)
 	_delete_plugins(browser);
 	if(browser->config != NULL)
 		config_delete(browser->config);
-	gtk_widget_hide(browser->window);
 	if(browser->refresh_id)
 		g_source_remove(browser->refresh_id);
 	g_list_foreach(browser->history, (GFunc)free, NULL);
@@ -676,7 +675,6 @@ void browser_delete(Browser * browser)
 		g_object_unref(browser->loading);
 #endif
 	g_object_unref(browser->store);
-	gtk_widget_destroy(browser->window);
 	free(browser);
 }
 
