@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2006-2014 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2006-2015 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,12 +63,9 @@ typedef struct _BrowserPrefs
 } BrowserPrefs;
 
 
-/* variables */
-extern unsigned int browser_cnt;
-
-
 /* functions */
-Browser * browser_new(char const * directory);
+Browser * browser_new(GtkAccelGroup * group, GtkWidget * window,
+		String const * directory);
 Browser * browser_new_copy(Browser * browser);
 void browser_delete(Browser * browser);
 
@@ -76,14 +73,13 @@ void browser_delete(Browser * browser);
 char const * browser_get_location(Browser * browser);
 char const * browser_get_path_entry(Browser * browser);
 BrowserView browser_get_view(Browser * browser);
+GtkWidget * browser_get_widget(Browser * browser);
 GtkWidget * browser_get_window(Browser * browser);
 
 int browser_set_location(Browser * browser, char const * path);
 void browser_set_view(Browser * browser, BrowserView view);
 
 /* useful */
-void browser_about(Browser * browser);
-
 int browser_error(Browser * browser, char const * message, int ret);
 
 int browser_config_load(Browser * browser);
@@ -117,6 +113,7 @@ void browser_selection_paste(Browser * browser);
 void browser_unselect_all(Browser * browser);
 
 /* interface */
-void browser_show_preferences(Browser * browser);
+void browser_show_about(Browser * browser, gboolean show);
+void browser_show_preferences(Browser * browser, gboolean show);
 
 #endif /* !BROWSER_BROWSER_H */

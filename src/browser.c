@@ -35,6 +35,7 @@ static char const _license[] =
 #include <gdk/gdkkeysyms.h>
 #include <Desktop.h>
 #include "callbacks.h"
+#include "window.h"
 #include "browser.h"
 #include "../config.h"
 #define _(string) gettext(string)
@@ -62,7 +63,6 @@ static char const _license[] =
 #endif
 
 #define IDLE_LOOP_ICON_CNT	16	/* number of icons added in a loop */
-#define ICON_NAME		"system-file-manager"
 
 
 /* Browser */
@@ -149,10 +149,11 @@ struct _Browser
 
 	/* widgets */
 	GtkIconTheme * theme;
+	GtkWidget * window;
+	GtkWidget * widget;
 #if GTK_CHECK_VERSION(2, 6, 0)
 	GdkPixbuf * loading;
 #endif
-	GtkWidget * window;
 #if GTK_CHECK_VERSION(2, 18, 0)
 	GtkWidget * infobar;
 	GtkWidget * infobar_label;
@@ -216,91 +217,6 @@ static const DesktopAccel _browser_accel[] =
 	{ NULL, 0, 0 }
 };
 
-#ifndef EMBEDDED
-static const DesktopMenu _browser_menu_file[] =
-{
-	{ N_("_New window"), G_CALLBACK(on_file_new_window), "window-new",
-		GDK_CONTROL_MASK, GDK_KEY_N },
-	{ N_("New _folder"), G_CALLBACK(on_file_new_folder), "folder-new", 0,
-		0 },
-	{ N_("New _symbolic link..."), G_CALLBACK(on_file_new_symlink), NULL,
-		0, 0 },
-	{ N_("_Open file..."), G_CALLBACK(on_file_open_file), NULL,
-		GDK_CONTROL_MASK, GDK_KEY_O },
-	{ "", NULL, NULL, 0, 0 },
-	{ N_("_Properties"), G_CALLBACK(on_properties), GTK_STOCK_PROPERTIES,
-		GDK_MOD1_MASK, GDK_KEY_Return },
-	{ "", NULL, NULL, 0, 0 },
-	{ N_("_Close"), G_CALLBACK(on_file_close), GTK_STOCK_CLOSE,
-		GDK_CONTROL_MASK, GDK_KEY_W },
-	{ NULL, NULL, NULL, 0, 0 }
-};
-
-static const DesktopMenu _browser_menu_edit[] =
-{
-	{ N_("_Cut"), G_CALLBACK(on_edit_cut), GTK_STOCK_CUT, GDK_CONTROL_MASK,
-		GDK_KEY_X },
-	{ N_("Cop_y"), G_CALLBACK(on_edit_copy), GTK_STOCK_COPY,
-		GDK_CONTROL_MASK, GDK_KEY_C },
-	{ N_("_Paste"), G_CALLBACK(on_edit_paste), GTK_STOCK_PASTE,
-		GDK_CONTROL_MASK, GDK_KEY_V },
-	{ "", NULL, NULL, 0, 0 },
-	{ N_("_Delete"), G_CALLBACK(on_edit_delete), GTK_STOCK_DELETE, 0, 0 },
-	{ "", NULL, NULL, 0, 0 },
-	{ N_("Select _All"), G_CALLBACK(on_edit_select_all),
-#if GTK_CHECK_VERSION(2, 10, 0)
-		GTK_STOCK_SELECT_ALL,
-#else
-		"edit-select-all",
-#endif
-		GDK_CONTROL_MASK, GDK_KEY_A },
-	{ N_("_Unselect all"), G_CALLBACK(on_edit_unselect_all), NULL, 0, 0 },
-	{ "", NULL, NULL, 0, 0 },
-	{ N_("_Preferences"), G_CALLBACK(on_edit_preferences),
-		GTK_STOCK_PREFERENCES, GDK_CONTROL_MASK, GDK_KEY_P },
-	{ NULL, NULL, NULL, 0, 0 }
-};
-
-static const DesktopMenu _browser_menu_view[] =
-{
-	{ N_("_Refresh"), G_CALLBACK(on_refresh), GTK_STOCK_REFRESH,
-		GDK_CONTROL_MASK, GDK_KEY_R },
-	{ "", NULL, NULL, 0, 0 },
-	{ N_("_Home"), G_CALLBACK(on_view_home), GTK_STOCK_HOME, GDK_MOD1_MASK,
-		GDK_KEY_Home },
-#if GTK_CHECK_VERSION(2, 6, 0)
-	{ "", NULL, NULL, 0, 0 },
-	{ N_("_Details"), G_CALLBACK(on_view_details), "browser-view-details",
-		0, 0 },
-	{ N_("_Icons"), G_CALLBACK(on_view_icons), "browser-view-icons", 0, 0 },
-	{ N_("_List"), G_CALLBACK(on_view_list), "browser-view-list", 0, 0 },
-	{ N_("_Thumbnails"), G_CALLBACK(on_view_thumbnails), NULL, 0, 0 },
-#endif
-	{ NULL, NULL, NULL, 0, 0 }
-};
-
-static const DesktopMenu _browser_menu_help[] =
-{
-	{ N_("_Contents"), G_CALLBACK(on_help_contents), "help-contents", 0,
-		GDK_KEY_F1 },
-#if GTK_CHECK_VERSION(2, 6, 0)
-	{ N_("_About"), G_CALLBACK(on_help_about), GTK_STOCK_ABOUT, 0, 0 },
-#else
-	{ N_("_About"), G_CALLBACK(on_help_about), NULL, 0, 0 },
-#endif
-	{ NULL, NULL, NULL, 0, 0 }
-};
-
-static const DesktopMenubar _browser_menubar[] =
-{
-	{ N_("_File"), _browser_menu_file },
-	{ N_("_Edit"), _browser_menu_edit },
-	{ N_("_View"), _browser_menu_view },
-	{ N_("_Help"), _browser_menu_help },
-	{ NULL, NULL }
-};
-#endif
-
 /* toolbar */
 static DesktopToolbar _browser_toolbar[] =
 {
@@ -322,10 +238,6 @@ static DesktopToolbar _browser_toolbar[] =
 		0, NULL },
 	{ NULL, NULL, NULL, 0, 0, NULL }
 };
-
-
-/* variables */
-unsigned int browser_cnt = 0;
 
 
 /* prototypes */
@@ -368,14 +280,11 @@ static gboolean _new_idle(gpointer data);
 static void _idle_load_plugins(Browser * browser);
 static GtkListStore * _create_store(Browser * browser);
 
-Browser * browser_new(char const * directory)
+Browser * browser_new(GtkAccelGroup * group, GtkWidget * window,
+		char const * directory)
 {
 	Browser * browser;
-	GtkAccelGroup * group;
 	GtkWidget * vbox;
-#ifndef EMBEDDED
-	GtkWidget * tb_menubar;
-#endif
 	GtkWidget * toolbar;
 	GtkWidget * widget;
 	GtkToolItem * toolitem;
@@ -445,28 +354,13 @@ Browser * browser_new(char const * directory)
 	browser->pl_helper.set_location = browser_set_location;
 
 	/* widgets */
-	group = gtk_accel_group_new();
-	browser->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_add_accel_group(GTK_WINDOW(browser->window), group);
-	g_object_unref(group);
-	gtk_window_set_default_size(GTK_WINDOW(browser->window), 720, 480);
-#if GTK_CHECK_VERSION(2, 6, 0)
-	gtk_window_set_icon_name(GTK_WINDOW(browser->window), ICON_NAME);
-#endif
-	gtk_window_set_title(GTK_WINDOW(browser->window), _("File manager"));
-	g_signal_connect_swapped(browser->window, "delete-event", G_CALLBACK(
-				on_closex), browser);
+	browser->window = window;
 #if GTK_CHECK_VERSION(3, 0, 0)
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 #else
 	vbox = gtk_vbox_new(FALSE, 0);
 #endif
-	/* menubar */
-#ifndef EMBEDDED
-	tb_menubar = desktop_menubar_create(_browser_menubar, browser, group);
-	gtk_box_pack_start(GTK_BOX(vbox), tb_menubar, FALSE, FALSE, 0);
-#endif
-	desktop_accel_create(_browser_accel, browser, group);
+	browser->widget = vbox;
 	/* toolbar */
 	toolbar = desktop_toolbar_create(_browser_toolbar, browser, group);
 	browser->tb_back = _browser_toolbar[0].widget;
@@ -512,7 +406,7 @@ Browser * browser_new(char const * directory)
 #ifdef EMBEDDED
 	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_PREFERENCES);
 	g_signal_connect_swapped(toolitem, "clicked",
-			G_CALLBACK(on_edit_preferences), browser);
+			G_CALLBACK(on_preferences), browser);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolitem, -1);
 #endif
 	gtk_box_pack_start(GTK_BOX(vbox), toolbar, FALSE, FALSE, 0);
@@ -645,9 +539,7 @@ Browser * browser_new(char const * directory)
 	}
 	browser->source = g_idle_add(_new_idle, browser);
 
-	gtk_container_add(GTK_CONTAINER(browser->window), vbox);
-	gtk_widget_show_all(browser->window);
-	browser_cnt++;
+	gtk_widget_show_all(browser->widget);
 	return browser;
 }
 
@@ -758,12 +650,19 @@ static GtkListStore * _create_store(Browser * browser)
 /* browser_new_copy */
 Browser * browser_new_copy(Browser * browser)
 {
+	BrowserWindow * window;
 	char const * location;
 
 	if(browser == NULL)
-		return browser_new(NULL);
+	{
+		if((window = browserwindow_new(NULL)) == NULL)
+			return NULL;
+		return browserwindow_get_browser(window);
+	}
 	location = browser_get_location(browser);
-	return browser_new(location);
+	if((window = browserwindow_new(location)) == NULL)
+		return NULL;
+	return browserwindow_get_browser(window);
 }
 
 
@@ -795,7 +694,6 @@ void browser_delete(Browser * browser)
 	g_object_unref(browser->store);
 	gtk_widget_destroy(browser->window);
 	free(browser);
-	browser_cnt--;
 }
 
 static void _delete_plugins(Browser * browser)
@@ -821,46 +719,6 @@ static void _delete_plugins(Browser * browser)
 
 
 /* useful */
-/* browser_about */
-static gboolean _about_on_closex(gpointer data);
-
-void browser_about(Browser * browser)
-{
-	if(browser->ab_window != NULL)
-	{
-		gtk_window_present(GTK_WINDOW(browser->ab_window));
-		return;
-	}
-	browser->ab_window = desktop_about_dialog_new();
-	gtk_window_set_transient_for(GTK_WINDOW(browser->ab_window), GTK_WINDOW(
-				browser->window));
-	desktop_about_dialog_set_authors(browser->ab_window, _authors);
-	desktop_about_dialog_set_comments(browser->ab_window,
-			_("File manager for the DeforaOS desktop"));
-	desktop_about_dialog_set_copyright(browser->ab_window, _copyright);
-	desktop_about_dialog_set_logo_icon_name(browser->ab_window,
-			"system-file-manager");
-	desktop_about_dialog_set_license(browser->ab_window, _license);
-	desktop_about_dialog_set_name(browser->ab_window, PACKAGE);
-	desktop_about_dialog_set_translator_credits(browser->ab_window,
-			_("translator-credits"));
-	desktop_about_dialog_set_version(browser->ab_window, VERSION);
-	desktop_about_dialog_set_website(browser->ab_window,
-			"http://www.defora.org/");
-	g_signal_connect_swapped(browser->ab_window, "delete-event",
-			G_CALLBACK(_about_on_closex), browser);
-	gtk_widget_show(browser->ab_window);
-}
-
-static gboolean _about_on_closex(gpointer data)
-{
-	Browser * browser = data;
-
-	gtk_widget_hide(browser->ab_window);
-	return TRUE;
-}
-
-
 /* browser_error */
 static int _browser_error(char const * message, int ret);
 /* callbacks */
@@ -1084,6 +942,13 @@ char const * browser_get_path_entry(Browser * browser)
 BrowserView browser_get_view(Browser * browser)
 {
 	return browser->view;
+}
+
+
+/* browser_get_widget */
+GtkWidget * browser_get_widget(Browser * browser)
+{
+	return browser->widget;
 }
 
 
@@ -1956,6 +1821,46 @@ void browser_selection_paste(Browser * browser)
 }
 
 
+/* browser_show_about */
+static gboolean _about_on_closex(gpointer data);
+
+void browser_show_about(Browser * browser, gboolean show)
+{
+	if(browser->ab_window != NULL)
+	{
+		gtk_window_present(GTK_WINDOW(browser->ab_window));
+		return;
+	}
+	browser->ab_window = desktop_about_dialog_new();
+	gtk_window_set_transient_for(GTK_WINDOW(browser->ab_window), GTK_WINDOW(
+				browser->window));
+	desktop_about_dialog_set_authors(browser->ab_window, _authors);
+	desktop_about_dialog_set_comments(browser->ab_window,
+			_("File manager for the DeforaOS desktop"));
+	desktop_about_dialog_set_copyright(browser->ab_window, _copyright);
+	desktop_about_dialog_set_logo_icon_name(browser->ab_window,
+			"system-file-manager");
+	desktop_about_dialog_set_license(browser->ab_window, _license);
+	desktop_about_dialog_set_name(browser->ab_window, PACKAGE);
+	desktop_about_dialog_set_translator_credits(browser->ab_window,
+			_("translator-credits"));
+	desktop_about_dialog_set_version(browser->ab_window, VERSION);
+	desktop_about_dialog_set_website(browser->ab_window,
+			"http://www.defora.org/");
+	g_signal_connect_swapped(browser->ab_window, "delete-event",
+			G_CALLBACK(_about_on_closex), browser);
+	gtk_widget_show(browser->ab_window);
+}
+
+static gboolean _about_on_closex(gpointer data)
+{
+	Browser * browser = data;
+
+	gtk_widget_hide(browser->ab_window);
+	return TRUE;
+}
+
+
 /* browser_show_preferences */
 static void _preferences_set(Browser * browser);
 static void _preferences_set_plugins(Browser * browser);
@@ -1972,7 +1877,7 @@ static void _preferences_on_apply(gpointer data);
 static void _preferences_on_cancel(gpointer data);
 static void _preferences_on_ok(gpointer data);
 
-void browser_show_preferences(Browser * browser)
+void browser_show_preferences(Browser * browser, gboolean show)
 {
 	GtkWidget * widget;
 	GtkWidget * vbox;
@@ -2645,7 +2550,7 @@ int browser_set_location(Browser * browser, char const * path)
 	if((realpath = _common_get_absolute_path(path)) == NULL)
 		return -1;
 	/* XXX check browser_cnt to disallow filenames at startup */
-	if(browser_cnt && g_file_test(realpath, G_FILE_TEST_IS_REGULAR))
+	if(/* browser_cnt && */ g_file_test(realpath, G_FILE_TEST_IS_REGULAR))
 	{
 		if(browser->mime != NULL)
 			mime_action(browser->mime, "open", realpath);
@@ -3310,11 +3215,11 @@ static void _view_on_button_press_directory(GtkWidget * menu, IconCallback * ic)
 	menuitem = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_CUT, NULL);
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(on_edit_cut),
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(on_cut),
 			ic->browser);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_COPY, NULL);
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(on_edit_copy),
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(on_copy),
 			ic->browser);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, NULL);
@@ -3371,11 +3276,11 @@ static void _view_on_button_press_file(Browser * browser, GtkWidget * menu,
 	menuitem = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_CUT, NULL);
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(on_edit_cut),
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(on_cut),
 			browser);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_COPY, NULL);
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(on_edit_copy),
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(on_copy),
 			browser);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, NULL);
@@ -3427,7 +3332,7 @@ static void _view_on_button_press_icon_delete(gpointer data)
 	IconCallback * cb = data;
 
 	/* FIXME not selected => cursor */
-	on_edit_delete(cb->browser);
+	on_delete(cb->browser);
 }
 
 static void _view_on_button_press_icon_open(gpointer data)
@@ -3446,7 +3351,7 @@ static void _view_on_button_press_icon_open_new_window(gpointer data)
 
 	if(!cb->isdir)
 		return;
-	browser_new(cb->path);
+	browserwindow_new(cb->path);
 }
 
 static void _view_on_button_press_icon_edit(gpointer data)
@@ -3615,7 +3520,7 @@ static void _view_on_button_press_popup_new_folder(gpointer data)
 	IconCallback * ic = data;
 	Browser * browser = ic->browser;
 
-	on_file_new_folder(browser);
+	on_new_folder(browser);
 }
 
 static void _view_on_button_press_popup_new_symlink(gpointer data)
@@ -3623,7 +3528,7 @@ static void _view_on_button_press_popup_new_symlink(gpointer data)
 	IconCallback * ic = data;
 	Browser * browser = ic->browser;
 
-	on_file_new_symlink(browser);
+	on_new_symlink(browser);
 }
 
 static void _view_on_detail_default(GtkTreeView * view, GtkTreePath * path,

@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <locale.h>
 #include <libintl.h>
-#include "browser.h"
+#include "window.h"
 #include "../config.h"
 #define _(string) gettext(string)
 
@@ -52,12 +52,16 @@ static int _usage(void);
 /* browser */
 static int _browser(char const * filename, int view)
 {
+	BrowserWindow * window;
 	Browser * browser;
 
-	if((browser = browser_new(filename)) == NULL)
+	if((window = browserwindow_new(filename)) == NULL)
 		return -1;
 	if(view != -1)
+	{
+		browser = browserwindow_get_browser(window);
 		browser_set_view(browser, view);
+	}
 	return 0;
 }
 

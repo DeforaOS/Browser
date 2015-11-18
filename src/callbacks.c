@@ -50,27 +50,7 @@
 /* public */
 /* functions */
 /* callbacks */
-/* window */
-/* on_closex */
-gboolean on_closex(gpointer data)
-{
-	Browser * browser = data;
-
-	browser_delete(browser);
-	if(browser_cnt == 0)
-		gtk_main_quit();
-	return TRUE;
-}
-
-
 /* accelerators */
-/* on_close */
-void on_close(gpointer data)
-{
-	on_closex(data);
-}
-
-
 /* on_location */
 void on_location(gpointer data)
 {
@@ -95,188 +75,6 @@ void on_open_file(gpointer data)
 	Browser * browser = data;
 
 	browser_open(browser, NULL);
-}
-
-
-/* file menu */
-/* on_file_new_window */
-void on_file_new_window(gpointer data)
-{
-	on_new_window(data);
-}
-
-
-/* on_file_new_folder */
-void on_file_new_folder(gpointer data)
-{
-	Browser * browser = data;
-	char const * newfolder = _("New folder");
-	char const * location;
-	size_t len;
-	char * path;
-
-	if((location = browser_get_location(browser)) == NULL)
-		return;
-	len = strlen(location) + strlen(newfolder) + 2;
-	if((path = malloc(len)) == NULL)
-	{
-		browser_error(browser, strerror(errno), 1);
-		return;
-	}
-	snprintf(path, len, "%s/%s", location, newfolder);
-	if(mkdir(path, 0777) != 0)
-		browser_error(browser, strerror(errno), 1);
-	free(path);
-}
-
-
-/* on_file_new_symlink */
-void on_file_new_symlink(gpointer data)
-{
-	Browser * browser = data;
-	GtkWidget * window;
-	char const * location;
-
-	if((location = browser_get_location(browser)) == NULL)
-		return;
-	window = browser_get_window(browser);
-	if(_common_symlink(window, location) != 0)
-		browser_error(browser, strerror(errno), 1);
-}
-
-
-/* on_file_close */
-void on_file_close(gpointer data)
-{
-	on_closex(data);
-}
-
-
-/* on_file_open_file */
-void on_file_open_file(gpointer data)
-{
-	on_open_file(data);
-}
-
-
-/* edit menu */
-/* on_edit_copy */
-void on_edit_copy(gpointer data)
-{
-	on_copy(data);
-}
-
-
-/* on_edit_cut */
-void on_edit_cut(gpointer data)
-{
-	on_cut(data);
-}
-
-
-/* on_edit_delete */
-void on_edit_delete(gpointer data)
-{
-	Browser * browser = data;
-
-	browser_selection_delete(browser);
-}
-
-
-/* on_edit_paste */
-void on_edit_paste(gpointer data)
-{
-	on_paste(data);
-}
-
-
-/* on_edit_select_all */
-void on_edit_select_all(gpointer data)
-{
-	Browser * browser = data;
-
-	browser_select_all(browser);
-}
-
-
-/* on_edit_preferences */
-void on_edit_preferences(gpointer data)
-{
-	Browser * browser = data;
-
-	browser_show_preferences(browser);
-}
-
-
-/* on_edit_unselect_all */
-void on_edit_unselect_all(gpointer data)
-{
-	Browser * browser = data;
-
-	browser_unselect_all(browser);
-}
-
-
-/* view menu */
-/* on_view_home */
-void on_view_home(gpointer data)
-{
-	on_home(data);
-}
-
-
-#if GTK_CHECK_VERSION(2, 6, 0)
-/* on_view_details */
-void on_view_details(gpointer data)
-{
-	Browser * browser = data;
-
-	browser_set_view(browser, BV_DETAILS);
-}
-
-
-/* on_view_icons */
-void on_view_icons(gpointer data)
-{
-	Browser * browser = data;
-
-	browser_set_view(browser, BV_ICONS);
-}
-
-
-/* on_view_list */
-void on_view_list(gpointer data)
-{
-	Browser * browser = data;
-
-	browser_set_view(browser, BV_LIST);
-}
-
-
-/* on_view_thumbnails */
-void on_view_thumbnails(gpointer data)
-{
-	Browser * browser = data;
-
-	browser_set_view(browser, BV_THUMBNAILS);
-}
-#endif /* GTK_CHECK_VERSION(2, 6, 0) */
-
-
-/* help menu */
-/* on_help_about */
-void on_help_about(gpointer data)
-{
-	Browser * browser = data;
-
-	browser_about(browser);
-}
-
-
-/* on_help_contents */
-void on_help_contents(gpointer data)
-{
-	desktop_help_contents(PACKAGE, PROGNAME);
 }
 
 
@@ -308,6 +106,15 @@ void on_cut(gpointer data)
 }
 
 
+/* on_delete */
+void on_delete(gpointer data)
+{
+	Browser * browser = data;
+
+	browser_selection_delete(browser);
+}
+
+
 /* on_forward */
 void on_forward(gpointer data)
 {
@@ -323,6 +130,45 @@ void on_home(gpointer data)
 	Browser * browser = data;
 
 	browser_go_home(browser);
+}
+
+
+/* on_new_folder */
+void on_new_folder(gpointer data)
+{
+	Browser * browser = data;
+	char const * newfolder = _("New folder");
+	char const * location;
+	size_t len;
+	char * path;
+
+	if((location = browser_get_location(browser)) == NULL)
+		return;
+	len = strlen(location) + strlen(newfolder) + 2;
+	if((path = malloc(len)) == NULL)
+	{
+		browser_error(browser, strerror(errno), 1);
+		return;
+	}
+	snprintf(path, len, "%s/%s", location, newfolder);
+	if(mkdir(path, 0777) != 0)
+		browser_error(browser, strerror(errno), 1);
+	free(path);
+}
+
+
+/* on_new_symlink */
+void on_new_symlink(gpointer data)
+{
+	Browser * browser = data;
+	GtkWidget * window;
+	char const * location;
+
+	if((location = browser_get_location(browser)) == NULL)
+		return;
+	window = browser_get_window(browser);
+	if(_common_symlink(window, location) != 0)
+		browser_error(browser, strerror(errno), 1);
 }
 
 
@@ -409,6 +255,42 @@ void on_view_as(gpointer data)
 			browser_set_view(browser, BV_DETAILS);
 			break;
 	}
+}
+
+
+/* on_view_details */
+void on_view_details(gpointer data)
+{
+	Browser * browser = data;
+
+	browser_set_view(browser, BV_DETAILS);
+}
+
+
+/* on_view_icons */
+void on_view_icons(gpointer data)
+{
+	Browser * browser = data;
+
+	browser_set_view(browser, BV_ICONS);
+}
+
+
+/* on_view_list */
+void on_view_list(gpointer data)
+{
+	Browser * browser = data;
+
+	browser_set_view(browser, BV_LIST);
+}
+
+
+/* on_view_thumbnails */
+void on_view_thumbnails(gpointer data)
+{
+	Browser * browser = data;
+
+	browser_set_view(browser, BV_THUMBNAILS);
 }
 #endif
 
