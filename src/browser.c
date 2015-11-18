@@ -723,7 +723,8 @@ int browser_error(Browser * browser, char const * message, int ret)
 	gtk_label_set_text(GTK_LABEL(browser->infobar_label), message);
 	gtk_widget_show(browser->infobar);
 #else
-	dialog = gtk_message_dialog_new(GTK_WINDOW(browser->window),
+	dialog = gtk_message_dialog_new((browser->window == NULL)
+			? GTK_WINDOW(browser->window) : NULL,
 			GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR,
 			GTK_BUTTONS_CLOSE,
 # if GTK_CHECK_VERSION(2, 6, 0)
@@ -849,7 +850,9 @@ void browser_copy(Browser * browser)
 	GtkWidget * entry;
 
 	entry = gtk_bin_get_child(GTK_BIN(browser->tb_path));
-	if(gtk_window_get_focus(GTK_WINDOW(browser->window)) == entry)
+	if(browser->window != NULL
+			&& gtk_window_get_focus(GTK_WINDOW(browser->window))
+			== entry)
 	{
 		gtk_editable_copy_clipboard(GTK_EDITABLE(entry));
 		return;
@@ -867,7 +870,9 @@ void browser_cut(Browser * browser)
 	GtkWidget * entry;
 
 	entry = gtk_bin_get_child(GTK_BIN(browser->tb_path));
-	if(gtk_window_get_focus(GTK_WINDOW(browser->window)) == entry)
+	if(browser->window != NULL
+			&& gtk_window_get_focus(GTK_WINDOW(browser->window))
+			== entry)
 	{
 		gtk_editable_cut_clipboard(GTK_EDITABLE(entry));
 		return;
@@ -885,7 +890,9 @@ void browser_paste(Browser * browser)
 	GtkWidget * entry;
 
 	entry = gtk_bin_get_child(GTK_BIN(browser->tb_path));
-	if(gtk_window_get_focus(GTK_WINDOW(browser->window)) == entry)
+	if(browser->window != NULL
+			&& gtk_window_get_focus(GTK_WINDOW(browser->window))
+			== entry)
 	{
 		gtk_editable_paste_clipboard(GTK_EDITABLE(entry));
 		return;
@@ -1060,7 +1067,8 @@ void browser_open(Browser * browser, char const * path)
 	if(path == NULL)
 	{
 		dialog = gtk_file_chooser_dialog_new(_("Open file..."),
-				GTK_WINDOW(browser->window),
+				(browser->window != NULL)
+				? GTK_WINDOW(browser->window) : NULL,
 				GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
 				GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN,
 				GTK_RESPONSE_ACCEPT, NULL);
@@ -1089,7 +1097,8 @@ void browser_open_with(Browser * browser, char const * path)
 	pid_t pid;
 
 	dialog = gtk_file_chooser_dialog_new(_("Open with..."),
-			GTK_WINDOW(browser->window),
+			(browser->window != NULL)
+			? GTK_WINDOW(browser->window) : NULL,
 			GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
 			GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN,
 			GTK_RESPONSE_ACCEPT, NULL);
@@ -1767,7 +1776,9 @@ void browser_selection_delete(Browser * browser)
 		return;
 	if(browser->prefs.confirm_before_delete == TRUE)
 	{
-		dialog = gtk_message_dialog_new(GTK_WINDOW(browser->window),
+		dialog = gtk_message_dialog_new(
+				(browser->window != NULL)
+				? GTK_WINDOW(browser->window) : NULL,
 				GTK_DIALOG_MODAL
 				| GTK_DIALOG_DESTROY_WITH_PARENT,
 				GTK_MESSAGE_WARNING, GTK_BUTTONS_YES_NO,
@@ -1839,8 +1850,9 @@ void browser_show_about(Browser * browser, gboolean show)
 		return;
 	}
 	browser->ab_window = desktop_about_dialog_new();
-	gtk_window_set_transient_for(GTK_WINDOW(browser->ab_window), GTK_WINDOW(
-				browser->window));
+	if(browser->window != NULL)
+		gtk_window_set_transient_for(GTK_WINDOW(browser->ab_window),
+				GTK_WINDOW(browser->window));
 	desktop_about_dialog_set_authors(browser->ab_window, _authors);
 	desktop_about_dialog_set_comments(browser->ab_window,
 			_("File manager for the DeforaOS desktop"));
@@ -1899,7 +1911,8 @@ void browser_show_preferences(Browser * browser, gboolean show)
 		return;
 	}
 	browser->pr_window = gtk_dialog_new_with_buttons(_("Preferences"),
-			GTK_WINDOW(browser->window),
+			(browser->window != NULL)
+			? GTK_WINDOW(browser->window) : NULL,
 			GTK_DIALOG_DESTROY_WITH_PARENT,
 			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 			GTK_STOCK_APPLY, GTK_RESPONSE_APPLY,
@@ -3378,7 +3391,8 @@ static void _view_on_button_press_icon_run(gpointer data)
 	GError * error = NULL;
 	char * argv[2];
 
-	dialog = gtk_message_dialog_new(GTK_WINDOW(cb->browser->window),
+	dialog = gtk_message_dialog_new((cb->browser->window != NULL)
+			? GTK_WINDOW(cb->browser->window) : NULL,
 			GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING,
 			GTK_BUTTONS_YES_NO,
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -3759,6 +3773,8 @@ static void _refresh_title(Browser * browser)
 	GError * error = NULL;
 	char buf[256];
 
+	if(browser->window == NULL)
+		return;
 	title = browser_get_location(browser);
 	if((p = g_filename_to_utf8(title, -1, NULL, NULL, &error)) == NULL)
 	{
