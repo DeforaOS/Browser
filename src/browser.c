@@ -201,22 +201,6 @@ static char const * _authors[] =
 	NULL
 };
 
-static const DesktopAccel _browser_accel[] =
-{
-	{ G_CALLBACK(on_location), GDK_CONTROL_MASK, GDK_KEY_L },
-	{ G_CALLBACK(on_properties), GDK_MOD1_MASK, GDK_KEY_Return },
-#ifdef EMBEDDED
-	{ G_CALLBACK(on_close), GDK_CONTROL_MASK, GDK_KEY_W },
-	{ G_CALLBACK(on_copy), GDK_CONTROL_MASK, GDK_KEY_C },
-	{ G_CALLBACK(on_cut), GDK_CONTROL_MASK, GDK_KEY_X },
-	{ G_CALLBACK(on_new_window), GDK_CONTROL_MASK, GDK_KEY_N },
-	{ G_CALLBACK(on_open_file), GDK_CONTROL_MASK, GDK_KEY_O },
-	{ G_CALLBACK(on_paste), GDK_CONTROL_MASK, GDK_KEY_V },
-	{ G_CALLBACK(on_refresh), GDK_CONTROL_MASK, GDK_KEY_R },
-#endif
-	{ NULL, 0, 0 }
-};
-
 /* toolbar */
 static DesktopToolbar _browser_toolbar[] =
 {
