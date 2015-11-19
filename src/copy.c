@@ -148,10 +148,11 @@ static int _copy(Prefs * prefs, unsigned int filec, char * filev[])
 	pango_font_description_set_weight(bold, PANGO_WEIGHT_BOLD);
 #if GTK_CHECK_VERSION(3, 0, 0)
 	gtk_widget_override_font(widget, bold);
+	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
 #else
 	gtk_widget_modify_font(widget, bold);
+	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
 #endif
-	gtk_misc_set_alignment(GTK_MISC(widget), 0, 0);
 	gtk_size_group_add_widget(left, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	copy.filename = gtk_entry_new();
@@ -172,16 +173,21 @@ static int _copy(Prefs * prefs, unsigned int filec, char * filev[])
 	widget = gtk_label_new(_("Filename: "));
 #if GTK_CHECK_VERSION(3, 0, 0)
 	gtk_widget_override_font(widget, bold);
+	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
 #else
 	gtk_widget_modify_font(widget, bold);
+	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
 #endif
-	gtk_misc_set_alignment(GTK_MISC(widget), 0, 0);
 	gtk_size_group_add_widget(left, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	copy.flabel = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(copy.flabel), PANGO_ELLIPSIZE_START);
 	gtk_label_set_width_chars(GTK_LABEL(copy.flabel), 25);
-	gtk_misc_set_alignment(GTK_MISC(copy.flabel), 0, 0);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(copy.flabel, "halign", GTK_ALIGN_START, NULL);
+#else
+	gtk_misc_set_alignment(GTK_MISC(copy.flabel), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(right, copy.flabel);
 	gtk_box_pack_start(GTK_BOX(hbox), copy.flabel, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
@@ -194,14 +200,19 @@ static int _copy(Prefs * prefs, unsigned int filec, char * filev[])
 	widget = gtk_label_new(_("Copied: "));
 #if GTK_CHECK_VERSION(3, 0, 0)
 	gtk_widget_override_font(widget, bold);
+	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
 #else
 	gtk_widget_modify_font(widget, bold);
+	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
 #endif
-	gtk_misc_set_alignment(GTK_MISC(widget), 0, 0);
 	gtk_size_group_add_widget(left, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	copy.fspeed = gtk_label_new("");
-	gtk_misc_set_alignment(GTK_MISC(copy.fspeed), 0, 0);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(copy.fspeed, "halign", GTK_ALIGN_START, NULL);
+#else
+	gtk_misc_set_alignment(GTK_MISC(copy.fspeed), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(right, copy.fspeed);
 	gtk_box_pack_start(GTK_BOX(hbox), copy.fspeed, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
@@ -214,14 +225,19 @@ static int _copy(Prefs * prefs, unsigned int filec, char * filev[])
 	widget = gtk_label_new(_("Remaining: "));
 #if GTK_CHECK_VERSION(3, 0, 0)
 	gtk_widget_override_font(widget, bold);
+	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
 #else
 	gtk_widget_modify_font(widget, bold);
+	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
 #endif
-	gtk_misc_set_alignment(GTK_MISC(widget), 0, 0);
 	gtk_size_group_add_widget(left, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	copy.fremaining = gtk_label_new("");
-	gtk_misc_set_alignment(GTK_MISC(copy.fremaining), 0, 0);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(copy.fremaining, "halign", GTK_ALIGN_START, NULL);
+#else
+	gtk_misc_set_alignment(GTK_MISC(copy.fremaining), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(right, copy.fremaining);
 	gtk_box_pack_start(GTK_BOX(hbox), copy.fremaining, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);

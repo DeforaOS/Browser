@@ -2182,11 +2182,19 @@ static void _preferences_on_mime_edit(gpointer data)
 	hbox = gtk_hbox_new(FALSE, 4);
 #endif
 	widget = gtk_label_new(_("Type:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	widget = gtk_label_new(type);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
+#endif
 	gtk_box_pack_start(GTK_BOX(hbox), widget, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	/* open */
@@ -2196,7 +2204,11 @@ static void _preferences_on_mime_edit(gpointer data)
 	hbox = gtk_hbox_new(FALSE, 4);
 #endif
 	widget = gtk_label_new(_("Open with:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	open = gtk_entry_new();
@@ -2211,7 +2223,11 @@ static void _preferences_on_mime_edit(gpointer data)
 	hbox = gtk_hbox_new(FALSE, 4);
 #endif
 	widget = gtk_label_new(_("View with:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	view = gtk_entry_new();
@@ -2226,7 +2242,11 @@ static void _preferences_on_mime_edit(gpointer data)
 	hbox = gtk_hbox_new(FALSE, 4);
 #endif
 	widget = gtk_label_new(_("Edit with:"));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	edit = gtk_entry_new();

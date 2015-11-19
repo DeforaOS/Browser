@@ -141,16 +141,21 @@ static CVS * _cvs_init(BrowserPluginHelper * helper)
 	/* label */
 	cvs->name = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(cvs->name), PANGO_ELLIPSIZE_MIDDLE);
-	gtk_misc_set_alignment(GTK_MISC(cvs->name), 0.0, 0.5);
 #if GTK_CHECK_VERSION(3, 0, 0)
 	gtk_widget_override_font(cvs->name, font);
+	g_object_set(cvs->name, "halign", GTK_ALIGN_START, NULL);
 #else
 	gtk_widget_modify_font(cvs->name, font);
+	gtk_misc_set_alignment(GTK_MISC(cvs->name), 0.0, 0.5);
 #endif
 	gtk_box_pack_start(GTK_BOX(cvs->widget), cvs->name, FALSE, TRUE, 0);
 	cvs->status = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(cvs->status), PANGO_ELLIPSIZE_END);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(cvs->status, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(cvs->status), 0.0, 0.5);
+#endif
 	gtk_box_pack_start(GTK_BOX(cvs->widget), cvs->status, FALSE, TRUE, 0);
 	/* checkout */
 	cvs->checkout = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
@@ -266,12 +271,20 @@ static GtkWidget * _init_label(GtkSizeGroup * group, char const * label,
 
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
 	*widget = gtk_label_new(label);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(*widget, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(*widget), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, *widget);
 	gtk_box_pack_start(GTK_BOX(hbox), *widget, FALSE, TRUE, 0);
 	*widget = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(*widget), PANGO_ELLIPSIZE_MIDDLE);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(*widget, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(*widget), 0.0, 0.5);
+#endif
 	gtk_box_pack_start(GTK_BOX(hbox), *widget, TRUE, TRUE, 0);
 	return hbox;
 }
@@ -659,7 +672,11 @@ static GtkResponseType _cvs_prompt_checkout(char const * message, char ** path,
 # endif
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
 	label = gtk_label_new(_("Path: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 	epath = gtk_entry_new();
@@ -668,7 +685,11 @@ static GtkResponseType _cvs_prompt_checkout(char const * message, char ** path,
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
 	label = gtk_label_new(_("Module: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 	emodule = gtk_entry_new();

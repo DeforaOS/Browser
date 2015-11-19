@@ -137,7 +137,11 @@ static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_label_set_ellipsize(GTK_LABEL(delete.label), PANGO_ELLIPSIZE_END);
 	gtk_label_set_width_chars(GTK_LABEL(delete.label), 25);
 #endif
-	gtk_misc_set_alignment(GTK_MISC(delete.label), 0, 0);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(delete.label, "halign", GTK_ALIGN_START, NULL);
+#else
+	gtk_misc_set_alignment(GTK_MISC(delete.label), 0.0, 0.5);
+#endif
 	gtk_box_pack_start(GTK_BOX(hbox), delete.label, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 	/* progress bar */

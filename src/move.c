@@ -118,10 +118,11 @@ static int _move(Prefs * prefs, unsigned int filec, char * filev[])
 	pango_font_description_set_weight(bold, PANGO_WEIGHT_BOLD);
 #if GTK_CHECK_VERSION(3, 0, 0)
 	gtk_widget_override_font(widget, bold);
+	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
 #else
 	gtk_widget_modify_font(widget, bold);
-#endif
 	gtk_misc_set_alignment(GTK_MISC(widget), 0, 0);
+#endif
 	gtk_size_group_add_widget(left, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	move.label = gtk_label_new("");
@@ -129,7 +130,11 @@ static int _move(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_label_set_ellipsize(GTK_LABEL(move.label), PANGO_ELLIPSIZE_END);
 	gtk_label_set_width_chars(GTK_LABEL(move.label), 25);
 #endif
-	gtk_misc_set_alignment(GTK_MISC(move.label), 0, 0);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(move.label, "halign", GTK_ALIGN_START, NULL);
+#else
+	gtk_misc_set_alignment(GTK_MISC(move.label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(right, move.label);
 	gtk_box_pack_start(GTK_BOX(hbox), move.label, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);

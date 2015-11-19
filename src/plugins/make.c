@@ -138,16 +138,21 @@ static Make * _make_init(BrowserPluginHelper * helper)
 	/* label */
 	make->name = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(make->name), PANGO_ELLIPSIZE_MIDDLE);
-	gtk_misc_set_alignment(GTK_MISC(make->name), 0.0, 0.5);
 #if GTK_CHECK_VERSION(3, 0, 0)
 	gtk_widget_override_font(make->name, font);
+	g_object_set(make->name, "halign", GTK_ALIGN_START, NULL);
 #else
 	gtk_widget_modify_font(make->name, font);
+	gtk_misc_set_alignment(GTK_MISC(make->name), 0.0, 0.5);
 #endif
 	gtk_box_pack_start(GTK_BOX(make->widget), make->name, FALSE, TRUE, 0);
 	make->status = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(make->status), PANGO_ELLIPSIZE_END);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(make->status, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(make->status), 0.0, 0.5);
+#endif
 	gtk_box_pack_start(GTK_BOX(make->widget), make->status, FALSE, TRUE, 0);
 	/* directory */
 	make->directory = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);

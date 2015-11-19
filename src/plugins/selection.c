@@ -124,7 +124,11 @@ static Selection * _selection_init(BrowserPluginHelper * helper)
 	gtk_container_add(GTK_CONTAINER(widget), selection->view);
 	gtk_box_pack_start(GTK_BOX(selection->widget), widget, TRUE, TRUE, 0);
 	selection->status = gtk_label_new(NULL);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(selection->status, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(selection->status), 0.0, 0.5);
+#endif
 	gtk_box_pack_start(GTK_BOX(selection->widget), selection->status, FALSE,
 			TRUE, 0);
 	gtk_widget_show_all(selection->widget);

@@ -1818,7 +1818,11 @@ static void _preferences_background(Desktop * desktop, GtkWidget * notebook)
 	hbox = gtk_hbox_new(FALSE, 0);
 #endif
 	label = gtk_label_new(_("Default color: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 	desktop->pr_color = gtk_color_button_new();
@@ -1830,7 +1834,11 @@ static void _preferences_background(Desktop * desktop, GtkWidget * notebook)
 	hbox = gtk_hbox_new(FALSE, 0);
 #endif
 	label = gtk_label_new(_("Wallpaper: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 	desktop->pr_background = gtk_file_chooser_button_new(_("Background"),
@@ -1863,7 +1871,11 @@ static void _preferences_background(Desktop * desktop, GtkWidget * notebook)
 	hbox = gtk_hbox_new(FALSE, 0);
 #endif
 	label = gtk_label_new(_("Position: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 #if GTK_CHECK_VERSION(2, 24, 0)
@@ -1925,7 +1937,11 @@ static void _preferences_icons(Desktop * desktop, GtkWidget * notebook)
 	hbox = gtk_hbox_new(FALSE, 0);
 #endif
 	label = gtk_label_new(_("Layout: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 #if GTK_CHECK_VERSION(2, 24, 0)
@@ -1952,7 +1968,11 @@ static void _preferences_icons(Desktop * desktop, GtkWidget * notebook)
 	hbox = gtk_hbox_new(FALSE, 0);
 #endif
 	label = gtk_label_new(_("Monitor: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 #if GTK_CHECK_VERSION(2, 24, 0)
@@ -1969,7 +1989,11 @@ static void _preferences_icons(Desktop * desktop, GtkWidget * notebook)
 	hbox = gtk_hbox_new(FALSE, 0);
 #endif
 	label = gtk_label_new(_("Background color: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 	desktop->pr_ibcolor = gtk_color_button_new();
@@ -1982,7 +2006,11 @@ static void _preferences_icons(Desktop * desktop, GtkWidget * notebook)
 	hbox = gtk_hbox_new(FALSE, 0);
 #endif
 	label = gtk_label_new(_("Foreground color: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 	desktop->pr_ifcolor = gtk_color_button_new();
@@ -1995,7 +2023,11 @@ static void _preferences_icons(Desktop * desktop, GtkWidget * notebook)
 	hbox = gtk_hbox_new(FALSE, 0);
 #endif
 	label = gtk_label_new(_("Font: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 	desktop->pr_ifont = gtk_font_button_new();
@@ -2028,7 +2060,11 @@ static void _preferences_monitors(Desktop * desktop, GtkWidget * notebook)
 	hbox = gtk_hbox_new(FALSE, 0);
 #endif
 	label = gtk_label_new(_("Monitor: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 #if GTK_CHECK_VERSION(2, 24, 0)
@@ -2045,11 +2081,19 @@ static void _preferences_monitors(Desktop * desktop, GtkWidget * notebook)
 	hbox = gtk_hbox_new(FALSE, 0);
 #endif
 	label = gtk_label_new(_("Resolution: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 	desktop->pr_monitors_res = gtk_label_new(NULL);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(desktop->pr_monitors_res, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(desktop->pr_monitors_res), 0.0, 0.5);
+#endif
 	gtk_box_pack_start(GTK_BOX(hbox), desktop->pr_monitors_res, TRUE, TRUE,
 			0);
 	gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, TRUE, 0);
@@ -2060,11 +2104,20 @@ static void _preferences_monitors(Desktop * desktop, GtkWidget * notebook)
 	hbox = gtk_hbox_new(FALSE, 0);
 #endif
 	label = gtk_label_new(_("Size: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, label);
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 	desktop->pr_monitors_size = gtk_label_new(NULL);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(desktop->pr_monitors_size, "halign", GTK_ALIGN_START,
+			NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(desktop->pr_monitors_size), 0.0, 0.5);
+#endif
 	gtk_box_pack_start(GTK_BOX(hbox), desktop->pr_monitors_size, TRUE, TRUE,
 			0);
 	gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, TRUE, 0);

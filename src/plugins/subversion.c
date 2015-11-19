@@ -125,16 +125,21 @@ static SVN * _subversion_init(BrowserPluginHelper * helper)
 	/* label */
 	svn->name = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(svn->name), PANGO_ELLIPSIZE_MIDDLE);
-	gtk_misc_set_alignment(GTK_MISC(svn->name), 0.0, 0.5);
 #if GTK_CHECK_VERSION(3, 0, 0)
 	gtk_widget_override_font(svn->name, font);
+	g_object_set(svn->name, "halign", GTK_ALIGN_START, NULL);
 #else
 	gtk_widget_modify_font(svn->name, font);
+	gtk_misc_set_alignment(GTK_MISC(svn->name), 0.0, 0.5);
 #endif
 	gtk_box_pack_start(GTK_BOX(svn->widget), svn->name, FALSE, TRUE, 0);
 	svn->status = gtk_label_new("");
 	gtk_label_set_ellipsize(GTK_LABEL(svn->status), PANGO_ELLIPSIZE_END);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(svn->status, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(svn->status), 0.0, 0.5);
+#endif
 	gtk_box_pack_start(GTK_BOX(svn->widget), svn->status, FALSE, TRUE, 0);
 	/* directory */
 	svn->directory = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);

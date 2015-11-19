@@ -318,7 +318,11 @@ static GtkWidget * _new_label_left(GtkSizeGroup * group, char const * text)
 	ret = gtk_label_new(text);
 	if(group != NULL)
 		gtk_size_group_add_widget(group, ret);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(ret, "halign", GTK_ALIGN_START, NULL);
+#else
 	gtk_misc_set_alignment(GTK_MISC(ret), 0.0, 0.5);
+#endif
 	return ret;
 }
 
