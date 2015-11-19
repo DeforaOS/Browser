@@ -156,6 +156,7 @@ static CommonTask * _common_task_new(BrowserPluginHelper * helper,
 	char buf[256];
 	GtkWidget * vbox;
 	GtkWidget * widget;
+	(void) helper;
 
 	if((task = object_new(sizeof(*task))) == NULL)
 		return NULL;

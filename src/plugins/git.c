@@ -462,6 +462,8 @@ static void _git_on_blame(gpointer data)
 
 static void _blame_on_callback(Git * git, CommonTask * task, int ret)
 {
+	(void) git;
+
 	if(ret == 128)
 		_common_task_message(task, GTK_MESSAGE_ERROR,
 				_("This file is not managed by Git"), 1);
@@ -493,6 +495,8 @@ static void _git_on_clone(gpointer data)
 
 static void _clone_on_callback(Git * git, CommonTask * task, int ret)
 {
+	(void) git;
+
 	if(ret == 0)
 		_common_task_message(task, GTK_MESSAGE_INFO,
 				_("Repository cloned successfully"), 0);
@@ -527,6 +531,8 @@ static void _git_on_commit(gpointer data)
 
 static void _commit_on_callback(Git * git, CommonTask * task, int ret)
 {
+	(void) git;
+
 	if(ret != 0)
 		_common_task_message(task, GTK_MESSAGE_ERROR,
 				_("Could not commit the file or directory"), 1);
@@ -558,6 +564,7 @@ static void _git_on_diff(gpointer data)
 
 static void _diff_on_callback(Git * git, CommonTask * task, int ret)
 {
+	(void) git;
 #ifdef notyet
 	GtkTextBuffer * tbuf;
 #endif
@@ -632,6 +639,7 @@ static void _git_on_log(gpointer data)
 static void _log_on_callback(Git * git, CommonTask * task, int ret)
 {
 #ifdef notyet /* XXX race condition */
+	(void) git;
 	GtkTextBuffer * tbuf;
 
 	if(ret != 0)
@@ -640,6 +648,10 @@ static void _log_on_callback(Git * git, CommonTask * task, int ret)
 	if(gtk_text_buffer_get_char_count(tbuf) == 0)
 		_common_task_message(task, GTK_MESSAGE_ERROR,
 				_("This file is not managed by Git"), 1);
+#else
+	(void) git;
+	(void) task;
+	(void) ret;
 #endif
 }
 

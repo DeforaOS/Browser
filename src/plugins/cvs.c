@@ -765,6 +765,8 @@ static gboolean _add_is_binary(char const * type)
 
 static void _add_on_callback(CVS * cvs, CommonTask * task, int ret)
 {
+	(void) task;
+
 	if(ret == 0)
 		/* refresh upon success */
 		cvs->helper->refresh(cvs->helper->browser);
