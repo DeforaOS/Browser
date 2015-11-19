@@ -295,7 +295,7 @@ static Properties * _properties_new(BrowserPluginHelper * helper,
 	if(filename != NULL)
 		_properties_set_filename(properties, filename);
 	gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, TRUE, 0);
-	hbox = gtk_hbutton_box_new();
+	hbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
 	gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_START);
 	gtk_box_set_spacing(GTK_BOX(hbox), 4);
 	widget = gtk_button_new_from_stock(GTK_STOCK_REFRESH);
