@@ -333,7 +333,7 @@ static void _refresh_error(Make * make, char const * message)
 	BrowserPluginHelper * helper = make->helper;
 
 	error_set("%s: %s", message, strerror(errno));
-	helper->error(helper->browser, error_get(), 1);
+	helper->error(helper->browser, error_get(NULL), 1);
 }
 
 static void _refresh_file(Make * make)
@@ -459,7 +459,7 @@ static int _make_add_task(Make * make, char const * title,
 	make->tasks = p;
 	if((task = _common_task_new(helper, &plugin, title, directory, argv,
 					NULL, NULL)) == NULL)
-		return -helper->error(helper->browser, error_get(), 1);
+		return -helper->error(helper->browser, error_get(NULL), 1);
 	make->tasks[make->tasks_cnt++] = task;
 	return 0;
 }

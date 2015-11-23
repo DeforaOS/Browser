@@ -431,7 +431,7 @@ static void _refresh_error(CVS * cvs, char const * message)
 	BrowserPluginHelper * helper = cvs->helper;
 
 	error_set("%s: %s", message, strerror(errno));
-	helper->error(helper->browser, error_get(), 1);
+	helper->error(helper->browser, error_get(NULL), 1);
 }
 
 static void _refresh_file(CVS * cvs)
@@ -611,7 +611,7 @@ static int _cvs_add_task(CVS * cvs, char const * title, char const * directory,
 	cvs->tasks = p;
 	if((task = _common_task_new(helper, &plugin, title, directory, argv,
 					callback, cvs)) == NULL)
-		return -helper->error(helper->browser, error_get(), 1);
+		return -helper->error(helper->browser, error_get(NULL), 1);
 	cvs->tasks[cvs->tasks_cnt++] = task;
 	return 0;
 }

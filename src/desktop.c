@@ -1368,7 +1368,7 @@ static int _error_text(char const * message, char const * error, int ret)
 /* desktop_serror */
 static int _desktop_serror(Desktop * desktop, char const * message, int ret)
 {
-	return _desktop_error(desktop, message, error_get(), ret);
+	return _desktop_error(desktop, message, error_get(NULL), ret);
 }
 
 

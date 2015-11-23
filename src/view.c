@@ -524,7 +524,7 @@ static int _view_helper_set_location(View * view, char const * filename)
 	int res;
 
 	if((res = _view_set_location(view, filename)) != 0)
-		return -_view_error(view, error_get(), 1);
+		return -_view_error(view, error_get(NULL), 1);
 	return 0;
 }
 
@@ -682,7 +682,7 @@ int main(int argc, char * argv[])
 				return _usage();
 		}
 	if((mime = mime_new(NULL)) == NULL)
-		return _view_error(NULL, error_get(), 2);
+		return _view_error(NULL, error_get(NULL), 2);
 	if(optind == argc)
 		_view_new_open(mime);
 	else

@@ -203,11 +203,11 @@ static Properties * _properties_new(Mime * mime, char const * plugin,
 	gtk_container_add(GTK_CONTAINER(bbox), widget);
 	gtk_widget_show_all(bbox);
 	if(_new_load(properties, plugin) != 0)
-		_properties_error(properties, error_get(), -1);
+		_properties_error(properties, error_get(NULL), -1);
 	else if(filename != NULL)
 	{
 		if(_properties_set_location(properties, filename) != 0)
-			_properties_error(properties, error_get(), -1);
+			_properties_error(properties, error_get(NULL), -1);
 		else
 			gtk_widget_show(properties->window);
 	}
@@ -454,7 +454,7 @@ static int _properties_helper_set_location(Properties * properties,
 	int res;
 
 	if((res = _properties_set_location(properties, filename)) != 0)
-		return -_properties_error(properties, error_get(), 1);
+		return -_properties_error(properties, error_get(NULL), 1);
 	return 0;
 }
 

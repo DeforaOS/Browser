@@ -327,7 +327,7 @@ static void _refresh_error(Git * git, char const * message)
 	BrowserPluginHelper * helper = git->helper;
 
 	error_set("%s: %s", message, strerror(errno));
-	helper->error(helper->browser, error_get(), 1);
+	helper->error(helper->browser, error_get(NULL), 1);
 }
 
 static void _refresh_file(Git * git)
@@ -411,7 +411,7 @@ static int _git_add_task(Git * git, char const * title,
 	git->tasks = p;
 	if((task = _common_task_new(helper, &plugin, title, directory, argv,
 					callback, git)) == NULL)
-		return -helper->error(helper->browser, error_get(), 1);
+		return -helper->error(helper->browser, error_get(NULL), 1);
 	git->tasks[git->tasks_cnt++] = task;
 	return 0;
 }

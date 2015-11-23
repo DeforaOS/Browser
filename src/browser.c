@@ -779,7 +779,7 @@ int browser_config_load(Browser * browser)
 	if((filename = _common_config_filename(BROWSER_CONFIG_FILE)) == NULL)
 		return -1;
 	if(config_load(browser->config, filename) != 0)
-		browser_error(NULL, error_get(), 1);
+		browser_error(NULL, error_get(NULL), 1);
 	free(filename);
 #if GTK_CHECK_VERSION(2, 6, 0)
 	/* XXX deserves a rework (enum) */
@@ -1016,17 +1016,17 @@ int browser_load(Browser * browser, char const * plugin)
 	if(_browser_plugin_is_enabled(browser, plugin))
 		return 0;
 	if((p = plugin_new(LIBDIR, PACKAGE, "plugins", plugin)) == NULL)
-		return -browser_error(NULL, error_get(), 1);
+		return -browser_error(NULL, error_get(NULL), 1);
 	if((bpd = plugin_lookup(p, "plugin")) == NULL)
 	{
 		plugin_delete(p);
-		return -browser_error(NULL, error_get(), 1);
+		return -browser_error(NULL, error_get(NULL), 1);
 	}
 	if(bpd->init == NULL || bpd->destroy == NULL || bpd->get_widget == NULL
 			|| (bp = bpd->init(&browser->pl_helper)) == NULL)
 	{
 		plugin_delete(p);
-		return -browser_error(NULL, error_get(), 1);
+		return -browser_error(NULL, error_get(NULL), 1);
 	}
 	widget = bpd->get_widget(bp);
 	gtk_widget_hide(widget);
@@ -2462,7 +2462,7 @@ static char const * _browser_config_get(Browser * browser, char const * section,
 	if(section != NULL && (s = string_new_append("plugin::", section, NULL))
 			== NULL)
 	{
-		browser_error(NULL, error_get(), 1);
+		browser_error(NULL, error_get(NULL), 1);
 		return NULL;
 	}
 	ret = config_get(browser->config, s, variable);
@@ -2481,13 +2481,13 @@ static int _browser_config_set(Browser * browser, char const * section,
 
 	if(section != NULL && (s = string_new_append("plugin::", section, NULL))
 			== NULL)
-		return -browser_error(NULL, error_get(), 1);
+		return -browser_error(NULL, error_get(NULL), 1);
 	if((ret = config_set(browser->config, s, variable, value)) == 0
 			&& (filename = _common_config_filename(
 					BROWSER_CONFIG_FILE)) != NULL)
 	{
 		if(config_save(browser->config, filename) != 0)
-			browser_error(NULL, error_get(), 1);
+			browser_error(NULL, error_get(NULL), 1);
 		free(filename);
 	}
 	string_delete(s);

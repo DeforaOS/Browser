@@ -317,7 +317,7 @@ static void _refresh_error(SVN * svn, char const * message)
 	BrowserPluginHelper * helper = svn->helper;
 
 	error_set("%s: %s", message, strerror(errno));
-	helper->error(helper->browser, error_get(), 1);
+	helper->error(helper->browser, error_get(NULL), 1);
 }
 
 static void _refresh_hide(SVN * svn, gboolean name)
@@ -390,7 +390,7 @@ static int _subversion_add_task(SVN * svn, char const * title,
 	svn->tasks = p;
 	if((task = _common_task_new(helper, &plugin, title, directory, argv,
 					NULL, NULL)) == NULL)
-		return -helper->error(helper->browser, error_get(), 1);
+		return -helper->error(helper->browser, error_get(NULL), 1);
 	svn->tasks[svn->tasks_cnt++] = task;
 	return 0;
 }
