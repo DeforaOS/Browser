@@ -2737,6 +2737,10 @@ void browser_set_view(Browser * browser, BrowserView view)
 	_view_details(browser);
 #endif
 	browser->view = view;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	/* XXX necessary with Gtk+ 3 */
+	browser_refresh(browser);
+#endif
 }
 
 static void _view_details(Browser * browser)
