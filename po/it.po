@@ -1,5 +1,5 @@
 # $Id$
-# Copyright (c) 2010-2013 Pierre Pronchery <khorben@defora.org>
+# Copyright (c) 2010-2016 Pierre Pronchery <khorben@defora.org>
 # This file is distributed under the same license as the Browser package.
 # Pierre Pronchery <khorben@defora.org>, 2010.
 #
@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Browser 0.4.13\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-06 00:13+0200\n"
+"POT-Creation-Date: 2016-02-20 01:01+0100\n"
 "PO-Revision-Date: 2010-04-07 23:18+0200\n"
 "Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
 "Language-Team: Italian\n"
@@ -17,372 +17,270 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: ../src/browser.c:222
-msgid "_New window"
-msgstr ""
-
-#: ../src/browser.c:224
-msgid "New _folder"
-msgstr ""
-
-#: ../src/browser.c:226
-msgid "New _symbolic link..."
-msgstr ""
-
-#: ../src/browser.c:228
-msgid "_Open file..."
-msgstr ""
-
-#: ../src/browser.c:231 ../src/view.c:128
-msgid "_Properties"
-msgstr "Pr_oprietà"
-
-#: ../src/browser.c:234 ../src/view.c:117 ../src/view.c:131
-msgid "_Close"
-msgstr "_Chiudi"
-
-#: ../src/browser.c:241
-msgid "_Cut"
-msgstr "_Taglia"
-
-#: ../src/browser.c:243
-msgid "Cop_y"
-msgstr "_Copia"
-
-#: ../src/browser.c:245
-msgid "_Paste"
-msgstr "_Incolla"
-
-#: ../src/browser.c:248
-msgid "_Delete"
-msgstr "Eli_mina"
-
-#: ../src/browser.c:250
-msgid "Select _All"
-msgstr "_Seleziona tutto"
-
-#: ../src/browser.c:257
-msgid "_Unselect all"
-msgstr ""
-
-#: ../src/browser.c:259
-msgid "_Preferences"
-msgstr "Preferen_ze"
-
-#: ../src/browser.c:266
-msgid "_Refresh"
-msgstr "_Aggiorna"
-
-#: ../src/browser.c:269
-msgid "_Home"
-msgstr "_Home"
-
-#: ../src/browser.c:273
-msgid "_Details"
-msgstr ""
-
-#: ../src/browser.c:275
-msgid "_Icons"
-msgstr ""
-
-#: ../src/browser.c:276
-msgid "_List"
-msgstr ""
-
-#: ../src/browser.c:277
-msgid "_Thumbnails"
-msgstr ""
-
-#: ../src/browser.c:284
-msgid "_Contents"
-msgstr ""
-
-#: ../src/browser.c:287 ../src/browser.c:289 ../src/view.c:141
-#: ../src/view.c:143
-msgid "_About"
-msgstr "I_nformazioni"
-
-#: ../src/browser.c:296 ../src/view.c:150 ../src/view.c:157
-msgid "_File"
-msgstr ""
-
-#: ../src/browser.c:297 ../src/desktopicon.c:836 ../src/view.c:124
-msgid "_Edit"
-msgstr ""
-
-#: ../src/browser.c:298
-msgid "_View"
-msgstr ""
-
-#: ../src/browser.c:299 ../src/view.c:151 ../src/view.c:158
-msgid "_Help"
-msgstr ""
-
-#: ../src/browser.c:307 ../src/desktop.c:773 ../src/desktop.c:796
+#: ../src/browser.c:207 ../src/desktop.c:792 ../src/desktop.c:815
 msgid "Back"
 msgstr ""
 
-#: ../src/browser.c:309
+#: ../src/browser.c:209
 msgid "Up"
 msgstr ""
 
-#: ../src/browser.c:310
+#: ../src/browser.c:210
 msgid "Forward"
 msgstr ""
 
-#: ../src/browser.c:312
+#: ../src/browser.c:212
 msgid "Refresh"
 msgstr "Aggiorna"
 
-#: ../src/browser.c:315 ../src/desktop.c:842
+#: ../src/browser.c:215 ../src/desktop.c:861
 msgid "Home"
 msgstr "Home"
 
-#: ../src/browser.c:317
+#: ../src/browser.c:217
 msgid "Cut"
 msgstr "Taglia"
 
-#: ../src/browser.c:318 ../src/plugins/common.c:128
+#: ../src/browser.c:218 ../src/plugins/common.c:128
 msgid "Copy"
 msgstr "Copia"
 
-#: ../src/browser.c:319
+#: ../src/browser.c:219
 msgid "Paste"
 msgstr "Incolla"
 
-#: ../src/browser.c:321 ../src/view.c:176 ../src/plugins/properties.c:93
+#: ../src/browser.c:221 ../src/plugins/properties.c:93
 msgid "Properties"
 msgstr "Proprietà"
 
-#: ../src/browser.c:417
+#: ../src/browser.c:310
 msgid "Error while loading configuration"
 msgstr ""
 
-#: ../src/browser.c:456 ../src/browser.c:3858
-msgid "File manager"
-msgstr ""
-
-#: ../src/browser.c:479
+#: ../src/browser.c:357
 msgid "View as..."
 msgstr ""
 
-#: ../src/browser.c:483 ../src/browser.c:2020 ../src/browser.c:2028
+#: ../src/browser.c:361 ../src/browser.c:1945 ../src/browser.c:1953
 msgid "Details"
 msgstr ""
 
-#: ../src/browser.c:490 ../src/browser.c:2021 ../src/browser.c:2029
-#: ../src/desktop.c:1919
+#: ../src/browser.c:368 ../src/browser.c:1946 ../src/browser.c:1954
+#: ../src/desktop.c:2038
 msgid "Icons"
 msgstr ""
 
-#: ../src/browser.c:497 ../src/browser.c:2022 ../src/browser.c:2030
+#: ../src/browser.c:375 ../src/browser.c:1947 ../src/browser.c:1955
 msgid "List"
 msgstr ""
 
-#: ../src/browser.c:504 ../src/browser.c:2024 ../src/browser.c:2031
+#: ../src/browser.c:382 ../src/browser.c:1949 ../src/browser.c:1956
 msgid "Thumbnails"
 msgstr ""
 
-#: ../src/browser.c:525
+#: ../src/browser.c:403
 msgid " Location: "
 msgstr ""
 
-#: ../src/browser.c:839
-msgid "File manager for the DeforaOS desktop"
-msgstr ""
-
-#: ../src/browser.c:846
-msgid "translator-credits"
-msgstr ""
-
-#: ../src/browser.c:890 ../src/browser.c:894 ../src/copy.c:779
-#: ../src/copy.c:783 ../src/delete.c:437 ../src/delete.c:442
-#: ../src/desktop.c:1301 ../src/desktop.c:1306 ../src/move.c:468
-#: ../src/move.c:472 ../src/properties.c:359 ../src/properties.c:363
-#: ../src/view.c:452 ../src/view.c:457 ../src/plugins/common.c:364
-#: ../src/plugins/common.c:368
+#: ../src/browser.c:731 ../src/browser.c:735 ../src/copy.c:835
+#: ../src/copy.c:839 ../src/delete.c:445 ../src/delete.c:450
+#: ../src/desktop.c:1340 ../src/desktop.c:1345 ../src/move.c:477
+#: ../src/move.c:481 ../src/properties.c:358 ../src/properties.c:362
+#: ../src/view.c:428 ../src/view.c:433 ../src/plugins/common.c:366
+#: ../src/plugins/common.c:370
 msgid "Error"
 msgstr ""
 
-#: ../src/browser.c:1215
+#: ../src/browser.c:1069
 msgid "Open file..."
 msgstr ""
 
-#: ../src/browser.c:1244 ../src/desktopicon.c:1093 ../src/view.c:171
-#: ../src/view.c:515
+#: ../src/browser.c:1099 ../src/desktopicon.c:1130 ../src/view.c:491
 msgid "Open with..."
 msgstr ""
 
-#: ../src/browser.c:1253 ../src/view.c:521
+#: ../src/browser.c:1109 ../src/view.c:497
 msgid "Executable files"
 msgstr ""
 
-#: ../src/browser.c:1258 ../src/view.c:526
+#: ../src/browser.c:1114 ../src/view.c:502
 msgid "Shell scripts"
 msgstr ""
 
-#: ../src/browser.c:1262 ../src/desktop.c:1762 ../src/view.c:530
+#: ../src/browser.c:1118 ../src/desktop.c:1857 ../src/view.c:506
 msgid "All files"
 msgstr ""
 
-#: ../src/browser.c:1274
+#: ../src/browser.c:1130
 msgid "_Set as the default handler"
 msgstr ""
 
-#: ../src/browser.c:1386 ../src/browser.c:1718
+#: ../src/browser.c:1267 ../src/browser.c:1599
 msgid "Refreshing folder: "
 msgstr ""
 
-#: ../src/browser.c:1408
+#: ../src/browser.c:1289
 #, c-format
 msgid "%s%u file%c (%u hidden)"
 msgstr ""
 
-#: ../src/browser.c:1903 ../src/browser.c:1909 ../src/browser.c:3473
-#: ../src/browser.c:3477 ../src/desktopicon.c:1024 ../src/desktopicon.c:1029
-#: ../src/desktopicon.c:1211 ../src/desktopicon.c:1216
+#: ../src/browser.c:1786 ../src/browser.c:1792 ../src/browser.c:3423
+#: ../src/browser.c:3427 ../src/desktopicon.c:1061 ../src/desktopicon.c:1066
+#: ../src/desktopicon.c:1256 ../src/desktopicon.c:1261
 msgid "Warning"
 msgstr ""
 
-#: ../src/browser.c:1907
+#: ../src/browser.c:1790
 #, c-format
 msgid "Are you sure you want to delete %lu file(s)?"
 msgstr ""
 
-#: ../src/browser.c:1989
+#: ../src/browser.c:1858
+msgid "File manager for the DeforaOS desktop"
+msgstr ""
+
+#: ../src/browser.c:1865
+msgid "translator-credits"
+msgstr ""
+
+#: ../src/browser.c:1913
 msgid "Preferences"
 msgstr "Preferenze"
 
-#: ../src/browser.c:2014
+#: ../src/browser.c:1939
 msgid "Default view:"
 msgstr ""
 
-#: ../src/browser.c:2038
+#: ../src/browser.c:1963
 msgid "_Alternate row colors in detailed view"
 msgstr ""
 
-#: ../src/browser.c:2042
+#: ../src/browser.c:1967
 msgid "_Confirm before deletion"
 msgstr ""
 
-#: ../src/browser.c:2045
+#: ../src/browser.c:1970
 msgid "Sort _folders first"
 msgstr ""
 
-#: ../src/browser.c:2048
+#: ../src/browser.c:1973
 msgid "Show _hidden files"
 msgstr ""
 
-#: ../src/browser.c:2051
+#: ../src/browser.c:1976
 msgid "_Appearance"
 msgstr ""
 
-#: ../src/browser.c:2069
+#: ../src/browser.c:1994
 msgid "Type"
 msgstr ""
 
-#: ../src/browser.c:2093
+#: ../src/browser.c:2018
 msgid "_File associations"
 msgstr ""
 
-#: ../src/browser.c:2106
+#: ../src/browser.c:2031
 msgid "Enabled"
 msgstr ""
 
-#: ../src/browser.c:2114
+#: ../src/browser.c:2039
 msgid "Name"
 msgstr ""
 
-#: ../src/browser.c:2127
+#: ../src/browser.c:2052
 msgid "_Plug-ins"
 msgstr ""
 
-#: ../src/browser.c:2242
+#: ../src/browser.c:2167
 msgid "Edit file association"
 msgstr ""
 
-#: ../src/browser.c:2259
+#: ../src/browser.c:2184
 msgid "Type:"
 msgstr ""
 
-#: ../src/browser.c:2273
+#: ../src/browser.c:2206
 msgid "Open with:"
 msgstr ""
 
-#: ../src/browser.c:2288
+#: ../src/browser.c:2225
 msgid "View with:"
 msgstr ""
 
-#: ../src/browser.c:2303
+#: ../src/browser.c:2244
 msgid "Edit with:"
 msgstr ""
 
-#: ../src/browser.c:2860 ../src/plugins/trash.c:234
+#: ../src/browser.c:2809 ../src/plugins/trash.c:230
 msgid "Filename"
 msgstr ""
 
-#: ../src/browser.c:2864 ../src/plugins/volumes.c:192
+#: ../src/browser.c:2813 ../src/plugins/volumes.c:192
 msgid "Size"
 msgstr ""
 
-#: ../src/browser.c:2866
+#: ../src/browser.c:2815
 msgid "Owner"
 msgstr ""
 
-#: ../src/browser.c:2867
+#: ../src/browser.c:2816
 msgid "Group"
 msgstr ""
 
-#: ../src/browser.c:2868
+#: ../src/browser.c:2817
 msgid "Date"
 msgstr ""
 
-#: ../src/browser.c:2870
+#: ../src/browser.c:2819
 msgid "MIME type"
 msgstr ""
 
-#: ../src/browser.c:3302
+#: ../src/browser.c:3251
 msgid "Open in new _window"
 msgstr ""
 
-#: ../src/browser.c:3331
+#: ../src/browser.c:3280
 msgid "_Unmount"
 msgstr ""
 
-#: ../src/browser.c:3367 ../src/desktopicon.c:849 ../src/view.c:115
-#: ../src/view.c:126
+#: ../src/browser.c:3316 ../src/desktopicon.c:886 ../src/view.c:138
+#: ../src/view.c:150
 msgid "Open _with..."
 msgstr ""
 
-#: ../src/browser.c:3476 ../src/desktopicon.c:1028
+#: ../src/browser.c:3426 ../src/desktopicon.c:1065
 msgid "Are you sure you want to execute this file?"
 msgstr ""
 
-#: ../src/browser.c:3534
+#: ../src/browser.c:3484
 msgid "New"
 msgstr ""
 
-#: ../src/browser.c:3539 ../src/browser.c:3543 ../src/desktop.c:394
+#: ../src/browser.c:3489 ../src/browser.c:3493 ../src/desktop.c:409
 msgid "Folder"
 msgstr ""
 
-#: ../src/browser.c:3550 ../src/desktop.c:402
+#: ../src/browser.c:3500 ../src/desktop.c:417
 msgid "Symbolic link..."
 msgstr ""
 
-#: ../src/browser.c:3554 ../src/desktop.c:406
+#: ../src/browser.c:3504 ../src/desktop.c:421
 msgid "Text file"
 msgstr ""
 
-#: ../src/browser.c:3589 ../src/desktop.c:455
+#: ../src/browser.c:3539 ../src/desktop.c:470
 msgid "New text file.txt"
 msgstr ""
 
-#: ../src/browser.c:3830
+#: ../src/browser.c:3780
 msgid "Refreshing folder..."
 msgstr ""
 
-#: ../src/callbacks.c:113 ../src/desktop.c:436
+#: ../src/browser.c:3810 ../src/window.c:241
+msgid "File manager"
+msgstr ""
+
+#: ../src/callbacks.c:139 ../src/desktop.c:451
 msgid "New folder"
 msgstr ""
 
@@ -398,27 +296,27 @@ msgstr ""
 msgid " to \""
 msgstr ""
 
-#: ../src/common.c:238 ../src/copy.c:699 ../src/plugins/properties.c:469
+#: ../src/common.c:238 ../src/copy.c:755 ../src/plugins/properties.c:525
 #: ../src/plugins/volumes.c:419
 msgid "bytes"
 msgstr ""
 
-#: ../src/common.c:242 ../src/copy.c:706 ../src/plugins/properties.c:475
+#: ../src/common.c:242 ../src/copy.c:762 ../src/plugins/properties.c:531
 #: ../src/plugins/volumes.c:425
 msgid "kB"
 msgstr ""
 
-#: ../src/common.c:244 ../src/copy.c:713 ../src/plugins/properties.c:477
+#: ../src/common.c:244 ../src/copy.c:769 ../src/plugins/properties.c:533
 #: ../src/plugins/volumes.c:427
 msgid "MB"
 msgstr ""
 
-#: ../src/common.c:246 ../src/copy.c:720 ../src/plugins/properties.c:479
+#: ../src/common.c:246 ../src/copy.c:776 ../src/plugins/properties.c:535
 #: ../src/plugins/volumes.c:429
 msgid "GB"
 msgstr ""
 
-#: ../src/common.c:250 ../src/plugins/properties.c:483
+#: ../src/common.c:250 ../src/plugins/properties.c:539
 #: ../src/plugins/volumes.c:433
 msgid "TB"
 msgstr ""
@@ -435,62 +333,62 @@ msgstr ""
 msgid "Copy file(s)"
 msgstr ""
 
-#: ../src/copy.c:138
+#: ../src/copy.c:146
 msgid "Copying: "
 msgstr ""
 
-#: ../src/copy.c:156
+#: ../src/copy.c:173
 msgid "Filename: "
 msgstr ""
 
-#: ../src/copy.c:170
+#: ../src/copy.c:200
 msgid "Copied: "
 msgstr ""
 
-#: ../src/copy.c:182
+#: ../src/copy.c:225
 msgid "Remaining: "
 msgstr ""
 
-#: ../src/copy.c:222 ../src/delete.c:171 ../src/move.c:166
+#: ../src/copy.c:278 ../src/delete.c:179 ../src/move.c:175
 #, c-format
 msgid "File %u of %u"
 msgstr ""
 
-#: ../src/copy.c:355
+#: ../src/copy.c:411
 msgid "Omitting directory"
 msgstr ""
 
-#: ../src/copy.c:669
+#: ../src/copy.c:725
 msgid "0 bytes"
 msgstr ""
 
-#: ../src/copy.c:686
+#: ../src/copy.c:742
 #, c-format
 msgid "%.1f of %.1f %s (%.1f %s/s)"
 msgstr ""
 
-#: ../src/copy.c:810 ../src/copy.c:814 ../src/delete.c:339 ../src/delete.c:343
-#: ../src/delete.c:371 ../src/delete.c:376 ../src/move.c:499 ../src/move.c:503
-#: ../src/plugins/common.c:399 ../src/plugins/common.c:404
-#: ../src/plugins/common.c:607 ../src/plugins/common.c:612
-#: ../src/plugins/cvs.c:637 ../src/plugins/cvs.c:644 ../src/plugins/cvs.c:669
-#: ../src/plugins/cvs.c:674 ../src/plugins/trash.c:321
-#: ../src/plugins/trash.c:328
+#: ../src/copy.c:866 ../src/copy.c:870 ../src/delete.c:347 ../src/delete.c:351
+#: ../src/delete.c:379 ../src/delete.c:384 ../src/move.c:508 ../src/move.c:512
+#: ../src/plugins/common.c:401 ../src/plugins/common.c:406
+#: ../src/plugins/common.c:609 ../src/plugins/common.c:614
+#: ../src/plugins/cvs.c:630 ../src/plugins/cvs.c:637 ../src/plugins/cvs.c:662
+#: ../src/plugins/cvs.c:667 ../src/plugins/trash.c:317
+#: ../src/plugins/trash.c:324
 msgid "Question"
 msgstr ""
 
-#: ../src/copy.c:813 ../src/move.c:502
+#: ../src/copy.c:869 ../src/move.c:511
 #, c-format
 msgid ""
 "%s will be overwritten\n"
 "Proceed?"
 msgstr ""
 
-#: ../src/copy.c:845 ../src/copy.c:849
+#: ../src/copy.c:901 ../src/copy.c:905
 msgid "Information"
 msgstr ""
 
-#: ../src/copy.c:871
+#: ../src/copy.c:927
 msgid ""
 "Usage: copy [-fip] source_file target_file\n"
 "       copy [-fip] source_file ... target\n"
@@ -511,25 +409,25 @@ msgstr ""
 msgid "Deleting: "
 msgstr ""
 
-#: ../src/delete.c:342
+#: ../src/delete.c:350
 #, c-format
 msgid ""
 "%s is a directory.\n"
 "Recursively delete?"
 msgstr ""
 
-#: ../src/delete.c:344 ../src/delete.c:377
+#: ../src/delete.c:352 ../src/delete.c:385
 msgid "Yes to all"
 msgstr ""
 
-#: ../src/delete.c:374
+#: ../src/delete.c:382
 #, c-format
 msgid ""
 "%s will be permanently deleted.\n"
 "Continue?"
 msgstr ""
 
-#: ../src/delete.c:475
+#: ../src/delete.c:483
 msgid ""
 "Usage: delete [-fiRr] file...\n"
 "  -f\tDo not prompt for confirmation and ignore errors\n"
@@ -538,142 +436,142 @@ msgid ""
 "  -r\tEquivalent to -R\n"
 msgstr ""
 
-#: ../src/desktop.c:185
+#: ../src/desktop.c:195
 msgid "Do not draw icons"
 msgstr ""
 
-#: ../src/desktop.c:186 ../src/desktop.c:877
+#: ../src/desktop.c:196 ../src/desktop.c:896
 msgid "Applications"
 msgstr ""
 
-#: ../src/desktop.c:187
+#: ../src/desktop.c:197
 msgid "Categories"
 msgstr ""
 
-#: ../src/desktop.c:188
+#: ../src/desktop.c:198
 msgid "Desktop contents"
 msgstr ""
 
-#: ../src/desktop.c:189
+#: ../src/desktop.c:199
 msgid "Home screen"
 msgstr ""
 
-#: ../src/desktop.c:1350
+#: ../src/desktop.c:1389
 msgid "Could not load preferences"
 msgstr ""
 
-#: ../src/desktop.c:1684
+#: ../src/desktop.c:1771
 msgid "Desktop preferences"
 msgstr ""
 
-#: ../src/desktop.c:1733
+#: ../src/desktop.c:1820
 msgid "Default color: "
 msgstr ""
 
-#: ../src/desktop.c:1745
+#: ../src/desktop.c:1836
 msgid "Wallpaper: "
 msgstr ""
 
-#: ../src/desktop.c:1749 ../src/desktop.c:1816
+#: ../src/desktop.c:1844 ../src/desktop.c:1915
 msgid "Background"
 msgstr ""
 
-#: ../src/desktop.c:1752
+#: ../src/desktop.c:1847
 msgid "Picture files"
 msgstr ""
 
-#: ../src/desktop.c:1778
+#: ../src/desktop.c:1873
 msgid "Position: "
 msgstr ""
 
-#: ../src/desktop.c:1785 ../src/desktop.c:1798
+#: ../src/desktop.c:1884 ../src/desktop.c:1897
 msgid "Do not draw"
 msgstr ""
 
-#: ../src/desktop.c:1787 ../src/desktop.c:1800
+#: ../src/desktop.c:1886 ../src/desktop.c:1899
 msgid "Centered"
 msgstr ""
 
-#: ../src/desktop.c:1789 ../src/desktop.c:1802
+#: ../src/desktop.c:1888 ../src/desktop.c:1901
 msgid "Scaled"
 msgstr ""
 
-#: ../src/desktop.c:1792 ../src/desktop.c:1804
+#: ../src/desktop.c:1891 ../src/desktop.c:1903
 msgid "Scaled (keep ratio)"
 msgstr ""
 
-#: ../src/desktop.c:1794 ../src/desktop.c:1806
+#: ../src/desktop.c:1893 ../src/desktop.c:1905
 msgid "Tiled"
 msgstr ""
 
-#: ../src/desktop.c:1812
+#: ../src/desktop.c:1911
 msgid "E_xtend background to all monitors"
 msgstr ""
 
-#: ../src/desktop.c:1840
+#: ../src/desktop.c:1939
 msgid "Layout: "
 msgstr ""
 
-#: ../src/desktop.c:1867 ../src/desktop.c:1943
+#: ../src/desktop.c:1970 ../src/desktop.c:2062
 msgid "Monitor: "
 msgstr ""
 
-#: ../src/desktop.c:1884
+#: ../src/desktop.c:1991
 msgid "Background color: "
 msgstr ""
 
-#: ../src/desktop.c:1897
+#: ../src/desktop.c:2008
 msgid "Foreground color: "
 msgstr ""
 
-#: ../src/desktop.c:1910
+#: ../src/desktop.c:2025
 msgid "Font: "
 msgstr ""
 
-#: ../src/desktop.c:1960
+#: ../src/desktop.c:2083
 msgid "Resolution: "
 msgstr ""
 
-#: ../src/desktop.c:1975
+#: ../src/desktop.c:2106
 msgid "Size: "
 msgstr ""
 
-#: ../src/desktop.c:2002
+#: ../src/desktop.c:2142
 msgid "Monitors"
 msgstr ""
 
-#: ../src/desktop.c:2039
+#: ../src/desktop.c:2179
 msgid "Unknown size"
 msgstr ""
 
-#: ../src/desktop.c:2041
+#: ../src/desktop.c:2181
 #, c-format
 msgid "%dx%d (at %d,%d)"
 msgstr ""
 
-#: ../src/desktop.c:2046
+#: ../src/desktop.c:2186
 msgid "Unknown resolution"
 msgstr ""
 
-#: ../src/desktop.c:2048
+#: ../src/desktop.c:2188
 #, c-format
 msgid "%dx%d mm (%.0fx%.0f DPI)"
 msgstr ""
 
-#: ../src/desktop.c:2074 ../src/desktop.c:2079
+#: ../src/desktop.c:2214 ../src/desktop.c:2219
 msgid "Default monitor"
 msgstr ""
 
-#: ../src/desktop.c:2076 ../src/desktop.c:2081
+#: ../src/desktop.c:2216 ../src/desktop.c:2221
 msgid "Whole screen"
 msgstr ""
 
-#: ../src/desktop.c:2087
+#: ../src/desktop.c:2227
 #, c-format
 msgid "Monitor %d"
 msgstr ""
 
-#: ../src/desktop.c:2833
+#: ../src/desktop.c:2973
 #, c-format
 msgid ""
 "Usage: %s [-H|-V][-a|-c|-f|-h|-n][-m monitor][-N][-w]\n"
@@ -706,31 +604,35 @@ msgid ""
 "  -n\tDo not display icons on the desktop\n"
 msgstr ""
 
-#: ../src/desktopicon.c:807 ../src/desktopicon.c:858
+#: ../src/desktopicon.c:844 ../src/desktopicon.c:895
 msgid "_Rename..."
 msgstr ""
 
-#: ../src/desktopicon.c:1131 ../src/desktopicon.c:1132
+#: ../src/desktopicon.c:873 ../src/view.c:148 ../src/window.c:201
+msgid "_Edit"
+msgstr ""
+
+#: ../src/desktopicon.c:1168 ../src/desktopicon.c:1169
 msgid "Rename"
 msgstr ""
 
-#: ../src/desktopicon.c:1145
+#: ../src/desktopicon.c:1182
 msgid "Rename: "
 msgstr ""
 
-#: ../src/desktopicon.c:1160
+#: ../src/desktopicon.c:1201
 msgid "To: "
 msgstr ""
 
-#: ../src/desktopicon.c:1214
+#: ../src/desktopicon.c:1259
 msgid "Are you sure you want to delete "
 msgstr ""
 
-#: ../src/desktopicon.c:1215
+#: ../src/desktopicon.c:1260
 msgid " file(s)?"
 msgstr ""
 
-#: ../src/main.c:63
+#: ../src/main.c:82
 #, c-format
 msgid ""
 "Usage: %s [-D|-I|-L|-T] [directory...]\n"
@@ -740,7 +642,7 @@ msgid ""
 "  -T\tStart in thumbnail view\n"
 msgstr ""
 
-#: ../src/main.c:69
+#: ../src/main.c:88
 #, c-format
 msgid ""
 "Usage: %s [-D] [directory...]\n"
@@ -755,7 +657,7 @@ msgstr ""
 msgid "Moving: "
 msgstr ""
 
-#: ../src/move.c:529
+#: ../src/move.c:538
 msgid ""
 "Usage: move [-fi] source target\n"
 "       move [-fi] source... directory\n"
@@ -774,70 +676,158 @@ msgid ""
 "  -a\taction to call (default: \"open\")\n"
 msgstr ""
 
-#: ../src/properties.c:179
+#: ../src/properties.c:178
 msgid "Properties of "
 msgstr ""
 
-#: ../src/properties.c:483
+#: ../src/properties.c:482
 #, c-format
 msgid "Usage: %s [-p plug-in] file...\n"
 msgstr ""
 
-#: ../src/view.c:138
+#: ../src/view.c:141 ../src/view.c:156 ../src/window.c:132
+msgid "_Close"
+msgstr "_Chiudi"
+
+#: ../src/view.c:153 ../src/window.c:129
+msgid "_Properties"
+msgstr "Pr_oprietà"
+
+#: ../src/view.c:163
 msgid "Contents"
 msgstr ""
 
-#: ../src/view.c:173
-msgid "Edit"
+#: ../src/view.c:166 ../src/view.c:169 ../src/window.c:190 ../src/window.c:193
+msgid "_About"
+msgstr "I_nformazioni"
+
+#: ../src/view.c:176 ../src/view.c:183 ../src/window.c:200
+msgid "_File"
 msgstr ""
 
-#: ../src/view.c:229
+#: ../src/view.c:177 ../src/view.c:184 ../src/window.c:203
+msgid "_Help"
+msgstr ""
+
+#: ../src/view.c:239
 msgid "Unknown file type"
 msgstr ""
 
-#: ../src/view.c:236
+#: ../src/view.c:246
 msgid "View - "
 msgstr ""
 
-#: ../src/view.c:279
-msgid "Unable to view file type"
-msgstr ""
-
-#: ../src/view.c:362 ../src/plugins/common.c:131
-msgid "Select All"
-msgstr "Seleziona tutto"
-
-#: ../src/view.c:405
+#: ../src/view.c:314
 msgid "View file..."
 msgstr ""
 
-#: ../src/view.c:575 ../src/view.c:670
+#: ../src/view.c:563
 msgid "Could not edit file"
 msgstr ""
 
-#: ../src/view.c:710
+#: ../src/view.c:659
 #, c-format
 msgid "Usage: %s file...\n"
 msgstr ""
 
-#: ../src/plugins/common.c:125 ../src/plugins/common.c:446
+#: ../src/window.c:120
+msgid "_New window"
+msgstr ""
+
+#: ../src/window.c:122
+msgid "New _folder"
+msgstr ""
+
+#: ../src/window.c:124
+msgid "New _symbolic link..."
+msgstr ""
+
+#: ../src/window.c:126
+msgid "_Open file..."
+msgstr ""
+
+#: ../src/window.c:139
+msgid "_Cut"
+msgstr "_Taglia"
+
+#: ../src/window.c:141
+msgid "Cop_y"
+msgstr "_Copia"
+
+#: ../src/window.c:143
+msgid "_Paste"
+msgstr "_Incolla"
+
+#: ../src/window.c:146
+msgid "_Delete"
+msgstr "Eli_mina"
+
+#: ../src/window.c:149
+msgid "Select _All"
+msgstr "_Seleziona tutto"
+
+#: ../src/window.c:156
+msgid "_Unselect all"
+msgstr ""
+
+#: ../src/window.c:159
+msgid "_Preferences"
+msgstr "Preferen_ze"
+
+#: ../src/window.c:166
+msgid "_Refresh"
+msgstr "_Aggiorna"
+
+#: ../src/window.c:169
+msgid "_Home"
+msgstr "_Home"
+
+#: ../src/window.c:173
+msgid "_Details"
+msgstr ""
+
+#: ../src/window.c:175
+msgid "_Icons"
+msgstr ""
+
+#: ../src/window.c:177
+msgid "_List"
+msgstr ""
+
+#: ../src/window.c:179
+msgid "_Thumbnails"
+msgstr ""
+
+#: ../src/window.c:187
+msgid "_Contents"
+msgstr ""
+
+#: ../src/window.c:202
+msgid "_View"
+msgstr ""
+
+#: ../src/plugins/common.c:125 ../src/plugins/common.c:448
 msgid "Save as..."
 msgstr ""
 
-#: ../src/plugins/common.c:266
+#: ../src/plugins/common.c:131
+msgid "Select All"
+msgstr "Seleziona tutto"
+
+#: ../src/plugins/common.c:268
 msgid "Running command..."
 msgstr ""
 
-#: ../src/plugins/common.c:403
+#: ../src/plugins/common.c:405
 msgid "This file already exists. Overwrite?"
 msgstr ""
 
-#: ../src/plugins/common.c:497
+#: ../src/plugins/common.c:499
 #, c-format
 msgid "Command exited with error code %d"
 msgstr ""
 
-#: ../src/plugins/common.c:506
+#: ../src/plugins/common.c:508
 #, c-format
 msgid "Command exited with signal %d"
 msgstr ""
@@ -846,87 +836,87 @@ msgstr ""
 msgid "CVS"
 msgstr "CVS"
 
-#: ../src/plugins/cvs.c:161
+#: ../src/plugins/cvs.c:162
 msgid "Checkout..."
 msgstr ""
 
-#: ../src/plugins/cvs.c:173
+#: ../src/plugins/cvs.c:170
 msgid "Root:"
 msgstr ""
 
-#: ../src/plugins/cvs.c:175
+#: ../src/plugins/cvs.c:172
 msgid "Repository:"
 msgstr ""
 
-#: ../src/plugins/cvs.c:177
+#: ../src/plugins/cvs.c:174
 msgid "Tag:"
 msgstr ""
 
-#: ../src/plugins/cvs.c:180 ../src/plugins/cvs.c:213
+#: ../src/plugins/cvs.c:177 ../src/plugins/cvs.c:206
 msgid "Request diff"
 msgstr ""
 
-#: ../src/plugins/cvs.c:182 ../src/plugins/cvs.c:215 ../src/plugins/git.c:200
-#: ../src/plugins/subversion.c:173
+#: ../src/plugins/cvs.c:179 ../src/plugins/cvs.c:208 ../src/plugins/git.c:193
+#: ../src/plugins/subversion.c:170
 msgid "Annotate"
 msgstr ""
 
-#: ../src/plugins/cvs.c:185 ../src/plugins/cvs.c:218 ../src/plugins/git.c:169
-#: ../src/plugins/git.c:203 ../src/plugins/subversion.c:148
-#: ../src/plugins/subversion.c:176
+#: ../src/plugins/cvs.c:182 ../src/plugins/cvs.c:211 ../src/plugins/git.c:166
+#: ../src/plugins/git.c:196 ../src/plugins/subversion.c:149
+#: ../src/plugins/subversion.c:173
 msgid "View log"
 msgstr ""
 
-#: ../src/plugins/cvs.c:188 ../src/plugins/cvs.c:221 ../src/plugins/git.c:172
-#: ../src/plugins/subversion.c:151 ../src/plugins/subversion.c:179
+#: ../src/plugins/cvs.c:185 ../src/plugins/cvs.c:214 ../src/plugins/git.c:169
+#: ../src/plugins/subversion.c:152 ../src/plugins/subversion.c:176
 msgid "Status"
 msgstr ""
 
-#: ../src/plugins/cvs.c:191 ../src/plugins/cvs.c:224
-#: ../src/plugins/subversion.c:154 ../src/plugins/subversion.c:182
+#: ../src/plugins/cvs.c:188 ../src/plugins/cvs.c:217
+#: ../src/plugins/subversion.c:155 ../src/plugins/subversion.c:179
 msgid "Update"
 msgstr ""
 
-#: ../src/plugins/cvs.c:194 ../src/plugins/cvs.c:227
+#: ../src/plugins/cvs.c:191 ../src/plugins/cvs.c:220
 msgid "Delete"
 msgstr "Elimina"
 
-#: ../src/plugins/cvs.c:197 ../src/plugins/cvs.c:230 ../src/plugins/git.c:184
-#: ../src/plugins/git.c:212 ../src/plugins/subversion.c:157
-#: ../src/plugins/subversion.c:185
+#: ../src/plugins/cvs.c:194 ../src/plugins/cvs.c:223 ../src/plugins/git.c:181
+#: ../src/plugins/git.c:205 ../src/plugins/subversion.c:158
+#: ../src/plugins/subversion.c:182
 msgid "Commit"
 msgstr ""
 
-#: ../src/plugins/cvs.c:210
+#: ../src/plugins/cvs.c:203
 msgid "Revision:"
 msgstr ""
 
-#: ../src/plugins/cvs.c:237 ../src/plugins/subversion.c:192
+#: ../src/plugins/cvs.c:230 ../src/plugins/subversion.c:189
 msgid "Add to repository"
 msgstr ""
 
-#: ../src/plugins/cvs.c:400 ../src/plugins/cvs.c:452
+#: ../src/plugins/cvs.c:393 ../src/plugins/cvs.c:445
 msgid "Not a CVS repository"
 msgstr ""
 
-#: ../src/plugins/cvs.c:405 ../src/plugins/cvs.c:456
+#: ../src/plugins/cvs.c:398 ../src/plugins/cvs.c:449
 msgid "Not managed by CVS"
 msgstr ""
 
-#: ../src/plugins/cvs.c:640
+#: ../src/plugins/cvs.c:633
 #, c-format
 msgid "Do you really want to delete %s?"
 msgstr ""
 
-#: ../src/plugins/cvs.c:685
+#: ../src/plugins/cvs.c:674
 msgid "Path: "
 msgstr ""
 
-#: ../src/plugins/cvs.c:698
+#: ../src/plugins/cvs.c:687
 msgid "Module: "
 msgstr ""
 
-#: ../src/plugins/cvs.c:858 ../src/plugins/git.c:543
+#: ../src/plugins/cvs.c:853 ../src/plugins/git.c:538
 msgid "Could not commit the file or directory"
 msgstr ""
 
@@ -934,11 +924,15 @@ msgstr ""
 msgid "Directory tree"
 msgstr ""
 
-#: ../src/plugins/favorites.c:160
+#: ../src/plugins/favorites.c:81
+msgid "Favorites"
+msgstr ""
+
+#: ../src/plugins/favorites.c:164
 msgid "Add to bookmarks"
 msgstr ""
 
-#: ../src/plugins/favorites.c:168
+#: ../src/plugins/favorites.c:172
 msgid "Remove from bookmarks"
 msgstr ""
 
@@ -946,60 +940,60 @@ msgstr ""
 msgid "Git"
 msgstr ""
 
-#: ../src/plugins/git.c:151
+#: ../src/plugins/git.c:152
 msgid "Initialize"
 msgstr ""
 
-#: ../src/plugins/git.c:154
+#: ../src/plugins/git.c:155
 msgid "Clone..."
 msgstr ""
 
-#: ../src/plugins/git.c:167 ../src/plugins/git.c:198
-#: ../src/plugins/subversion.c:146 ../src/plugins/subversion.c:171
+#: ../src/plugins/git.c:164 ../src/plugins/git.c:191
+#: ../src/plugins/subversion.c:147 ../src/plugins/subversion.c:168
 msgid "Diff"
 msgstr ""
 
-#: ../src/plugins/git.c:175
+#: ../src/plugins/git.c:172
 msgid "Pull"
 msgstr ""
 
-#: ../src/plugins/git.c:178
+#: ../src/plugins/git.c:175
 msgid "Push"
 msgstr ""
 
-#: ../src/plugins/git.c:181 ../src/plugins/git.c:209
+#: ../src/plugins/git.c:178 ../src/plugins/git.c:202
 msgid "Reset"
 msgstr ""
 
-#: ../src/plugins/git.c:206
+#: ../src/plugins/git.c:199
 msgid "Stage"
 msgstr ""
 
-#: ../src/plugins/git.c:329
+#: ../src/plugins/git.c:318
 msgid "Not a Git repository"
 msgstr ""
 
-#: ../src/plugins/git.c:478 ../src/plugins/git.c:651
+#: ../src/plugins/git.c:469 ../src/plugins/git.c:650
 msgid "This file is not managed by Git"
 msgstr ""
 
-#: ../src/plugins/git.c:509
+#: ../src/plugins/git.c:502
 msgid "Repository cloned successfully"
 msgstr ""
 
-#: ../src/plugins/git.c:512
+#: ../src/plugins/git.c:505
 msgid "Could not clone repository"
 msgstr ""
 
-#: ../src/plugins/git.c:576
+#: ../src/plugins/git.c:574
 msgid "Could not diff the file or directory"
 msgstr ""
 
-#: ../src/plugins/git.c:583
+#: ../src/plugins/git.c:581
 msgid "No difference was found"
 msgstr ""
 
-#: ../src/plugins/git.c:614
+#: ../src/plugins/git.c:612
 msgid "Could not initialize repository"
 msgstr ""
 
@@ -1007,43 +1001,43 @@ msgstr ""
 msgid "Make"
 msgstr ""
 
-#: ../src/plugins/make.c:158 ../src/plugins/make.c:186
+#: ../src/plugins/make.c:159 ../src/plugins/make.c:183
 msgid "Build"
 msgstr ""
 
-#: ../src/plugins/make.c:161 ../src/plugins/make.c:189
+#: ../src/plugins/make.c:162 ../src/plugins/make.c:186
 msgid "Clean"
 msgstr ""
 
-#: ../src/plugins/make.c:164 ../src/plugins/make.c:192
+#: ../src/plugins/make.c:165 ../src/plugins/make.c:189
 msgid "Dist"
 msgstr ""
 
-#: ../src/plugins/make.c:167 ../src/plugins/make.c:195
+#: ../src/plugins/make.c:168 ../src/plugins/make.c:192
 msgid "Distclean"
 msgstr ""
 
-#: ../src/plugins/make.c:170 ../src/plugins/make.c:198
+#: ../src/plugins/make.c:171 ../src/plugins/make.c:195
 msgid "Install"
 msgstr ""
 
-#: ../src/plugins/make.c:173 ../src/plugins/make.c:201
+#: ../src/plugins/make.c:174 ../src/plugins/make.c:198
 msgid "Uninstall"
 msgstr ""
 
-#: ../src/plugins/make.c:209
+#: ../src/plugins/make.c:206
 msgid "Run configure"
 msgstr ""
 
-#: ../src/plugins/make.c:214
+#: ../src/plugins/make.c:211
 msgid "Run ./autogen.sh"
 msgstr ""
 
-#: ../src/plugins/make.c:219
+#: ../src/plugins/make.c:216
 msgid "Run ./configure"
 msgstr ""
 
-#: ../src/plugins/make.c:333 ../src/plugins/make.c:350
+#: ../src/plugins/make.c:326 ../src/plugins/make.c:343
 msgid "No Makefile found"
 msgstr ""
 
@@ -1051,47 +1045,47 @@ msgstr ""
 msgid "Preview"
 msgstr ""
 
-#: ../src/plugins/properties.c:178
+#: ../src/plugins/properties.c:182
 msgid "Size:"
 msgstr ""
 
-#: ../src/plugins/properties.c:183 ../src/plugins/properties.c:233
+#: ../src/plugins/properties.c:191 ../src/plugins/properties.c:273
 msgid "Owner:"
 msgstr ""
 
-#: ../src/plugins/properties.c:188 ../src/plugins/properties.c:236
+#: ../src/plugins/properties.c:200 ../src/plugins/properties.c:280
 msgid "Group:"
 msgstr ""
 
-#: ../src/plugins/properties.c:197
+#: ../src/plugins/properties.c:213
 msgid "Accessed:"
 msgstr ""
 
-#: ../src/plugins/properties.c:202
+#: ../src/plugins/properties.c:222
 msgid "Modified:"
 msgstr ""
 
-#: ../src/plugins/properties.c:207
+#: ../src/plugins/properties.c:231
 msgid "Changed:"
 msgstr ""
 
-#: ../src/plugins/properties.c:216
+#: ../src/plugins/properties.c:244
 msgid "Read:"
 msgstr ""
 
-#: ../src/plugins/properties.c:219
+#: ../src/plugins/properties.c:251
 msgid "Write:"
 msgstr ""
 
-#: ../src/plugins/properties.c:222
+#: ../src/plugins/properties.c:258
 msgid "Execute:"
 msgstr ""
 
-#: ../src/plugins/properties.c:239
+#: ../src/plugins/properties.c:287
 msgid "Others:"
 msgstr ""
 
-#: ../src/plugins/properties.c:388
+#: ../src/plugins/properties.c:444
 msgid "Unknown type"
 msgstr ""
 
@@ -1099,11 +1093,11 @@ msgstr ""
 msgid "Subversion"
 msgstr ""
 
-#: ../src/plugins/subversion.c:319
+#: ../src/plugins/subversion.c:312
 msgid "Not a Subversion repository"
 msgstr ""
 
-#: ../src/plugins/trash.c:579
+#: ../src/plugins/trash.c:575
 msgid ""
 "This will delete the file(s) selected.\n"
 "Do you really want to proceed?"
