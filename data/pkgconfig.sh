@@ -123,7 +123,11 @@ while [ $# -gt 0 ]; do
 	if [ "$install" -eq 1 ]; then
 		source="${target#$OBJDIR}"
 		$DEBUG $MKDIR -- "$PKGCONFIG"			|| exit 2
-		$DEBUG $INSTALL "$target" "$PKGCONFIG/$source"	|| exit 2
+		basename="$source"
+		if [ "${source##*/}" != "$source" ]; then
+			basename="${source##*/}"
+		fi
+		$DEBUG $INSTALL "$target" "$PKGCONFIG/$basename"|| exit 2
 		continue
 	fi
 

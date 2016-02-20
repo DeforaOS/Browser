@@ -195,7 +195,11 @@ while [ $# -gt 0 ]; do
 	#install
 	if [ "$install" -eq 1 ]; then
 		source="${target#$OBJDIR}"
-		$DEBUG $MKDIR -- "$instdir"			|| exit 2
+		dirname=
+		if [ "${source%/*}" != "$source" ]; then
+			dirname="/${source%/*}"
+		fi
+		$DEBUG $MKDIR -- "$instdir$dirname"		|| exit 2
 		$DEBUG $INSTALL "$target" "$instdir/$source"	|| exit 2
 		continue
 	fi
