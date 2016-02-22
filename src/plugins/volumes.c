@@ -369,23 +369,28 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 			total);
 #endif
 	dp = (flags & DF_NETWORK) ? DP_NETWORK : DP_HARDDISK;
-	for(i = 0; i < sizeof(ignore) / sizeof(*ignore); i++)
-		if(strcmp(ignore[i], filesystem) == 0)
-			return;
-	for(i = 0; i < sizeof(cdrom) / sizeof(*cdrom); i++)
-		if(strncmp(cdrom[i], device, strlen(cdrom[i])) == 0)
-		{
-			flags |= DF_REMOVABLE;
-			dp = DP_CDROM;
-			break;
-		}
-	for(i = 0; i < sizeof(removable) / sizeof(removable); i++)
-		if(strncmp(removable[i], device, strlen(removable[i])) == 0)
-		{
-			flags |= DF_REMOVABLE;
-			dp = DP_REMOVABLE;
-			break;
-		}
+	if(filesystem != NULL)
+		for(i = 0; i < sizeof(ignore) / sizeof(*ignore); i++)
+			if(strcmp(ignore[i], filesystem) == 0)
+				return;
+	if(device != NULL)
+	{
+		for(i = 0; i < sizeof(cdrom) / sizeof(*cdrom); i++)
+			if(strncmp(cdrom[i], device, strlen(cdrom[i])) == 0)
+			{
+				flags |= DF_REMOVABLE;
+				dp = DP_CDROM;
+				break;
+			}
+		for(i = 0; i < sizeof(removable) / sizeof(removable); i++)
+			if(strncmp(removable[i], device, strlen(removable[i]))
+					== 0)
+			{
+				flags |= DF_REMOVABLE;
+				dp = DP_REMOVABLE;
+				break;
+			}
+	}
 	if(name == NULL)
 	{
 		if(strcmp(mountpoint, "/") == 0)
