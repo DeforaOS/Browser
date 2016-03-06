@@ -357,7 +357,7 @@ static String const * _view_config_get(View * view, String const * section,
 			return "0";
 		if(strcmp(section, "preview") == 0
 				&& strcmp(variable, "size") == 0)
-			return "-1";
+			return "0";
 	}
 	return NULL;
 }
