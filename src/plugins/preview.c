@@ -27,17 +27,30 @@
 #define _(string) gettext(string)
 #define N_(string) (string)
 
+#ifndef max
+# define max(a, b) ((a) > (b) ? (a) : (b))
+#endif
+#ifndef min
+# define min(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
 
 /* Preview */
 /* private */
 /* types */
+typedef enum _PreviewImageHow
+{
+	PREVIEW_IMAGE_HOW_FIT = 0,
+	PREVIEW_IMAGE_HOW_ORIGINAL,
+	PREVIEW_IMAGE_HOW_SCALE
+} PreviewImageHow;
+
 typedef struct _BrowserPlugin
 {
 	BrowserPluginHelper * helper;
 
 	char * path;
 	guint source;
-	ssize_t size;
 
 	/* widgets */
 	GtkWidget * widget;
@@ -53,13 +66,17 @@ typedef struct _BrowserPlugin
 	GtkToolItem * zoom_in;
 	GtkWidget * view_image;
 	GtkWidget * view_image_image;
+	PreviewImageHow view_image_how;
+	gint view_image_height;
+	gint view_image_width;
+	gdouble view_image_scale;
 	GtkWidget * view_text;
 	GtkTextBuffer * view_text_tbuf;
 } Preview;
 
 
 /* constants */
-#define PREVIEW_DEFAULT_SIZE	96
+#define PREVIEW_IMAGE_SIZE_DEFAULT	96
 
 
 /* prototypes */
@@ -68,6 +85,12 @@ static Preview * _preview_init(BrowserPluginHelper * helper);
 static void _preview_destroy(Preview * preview);
 static GtkWidget * _preview_get_widget(Preview * preview);
 static void _preview_refresh(Preview * preview, GList * selection);
+
+/* accessors */
+static void _preview_get_image_size(Preview * preview, gint * width,
+		gint * height);
+static void _preview_get_widget_size(Preview * preview, gint * width,
+		gint * height);
 
 /* callbacks */
 static void _preview_on_copy(gpointer data);
@@ -113,9 +136,9 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 	preview->path = NULL;
 	preview->source = 0;
 	if((p = helper->config_get(helper->browser, "preview", "size")) != NULL)
-		preview->size = strtol(p, NULL, 0);
+		preview->view_image_how = strtol(p, NULL, 0);
 	else
-		preview->size = PREVIEW_DEFAULT_SIZE;
+		preview->view_image_how = PREVIEW_IMAGE_HOW_FIT;
 	/* widgets */
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
 	preview->widget = vbox;
@@ -207,6 +230,9 @@ static Preview * _preview_init(BrowserPluginHelper * helper)
 			GTK_SCROLLED_WINDOW(preview->view_image),
 			preview->view_image_image);
 #endif
+	preview->view_image_scale = 1.0;
+	preview->view_image_height = -1;
+	preview->view_image_width = -1;
 	gtk_box_pack_start(GTK_BOX(vbox), preview->view_image, TRUE, TRUE, 0);
 	/* text */
 	preview->view_text = gtk_scrolled_window_new(NULL, NULL);
@@ -335,6 +361,8 @@ static void _refresh_reset(Preview * preview)
 	if(preview->source != 0)
 		g_source_remove(preview->source);
 	preview->source = 0;
+	preview->view_image_width = -1;
+	preview->view_image_height = -1;
 	gtk_widget_hide(preview->toolbar);
 	gtk_widget_hide(GTK_WIDGET(preview->open));
 	gtk_widget_hide(GTK_WIDGET(preview->edit));
@@ -346,6 +374,79 @@ static void _refresh_reset(Preview * preview)
 	gtk_widget_hide(GTK_WIDGET(preview->zoom_in));
 	gtk_widget_hide(preview->view_image);
 	gtk_widget_hide(preview->view_text);
+}
+
+
+/* accessors */
+/* preview_get_image_size */
+static void _preview_get_image_size(Preview * preview, gint * width,
+		gint * height)
+{
+	BrowserPluginHelper * helper = preview->helper;
+	GdkPixbuf * pixbuf;
+	GError * error = NULL;
+
+	/* check if we have cached the values */
+	if(preview->view_image_width > 0
+			&& preview->view_image_height > 0)
+	{
+		*width = preview->view_image_width;
+		*height = preview->view_image_height;
+#ifdef DEBUG
+		fprintf(stderr, "DEBUG: %s() %dx%d (cached)\n", __func__,
+				*width, *height);
+#endif
+		return;
+	}
+	*width = PREVIEW_IMAGE_SIZE_DEFAULT;
+	*height = PREVIEW_IMAGE_SIZE_DEFAULT;
+	if(preview->path != NULL
+			&& (pixbuf = gdk_pixbuf_new_from_file(preview->path,
+					&error)) != NULL)
+	{
+		*width = gdk_pixbuf_get_width(pixbuf);
+		*height = gdk_pixbuf_get_height(pixbuf);
+		g_object_unref(pixbuf);
+		/* cache the values */
+		preview->view_image_width = *width;
+		preview->view_image_height = *height;
+	}
+	if(error != NULL)
+	{
+		helper->error(NULL, error->message, 1);
+		g_error_free(error);
+	}
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() %dx%d\n", __func__, *width, *height);
+#endif
+}
+
+
+/* preview_get_widget_size */
+static void _preview_get_widget_size(Preview * preview, gint * width,
+		gint * height)
+{
+#if GTK_CHECK_VERSION(2, 14, 0)
+	GdkWindow * window;
+
+	if((window = gtk_widget_get_window(preview->view_image)) != NULL)
+	{
+# if GTK_CHECK_VERSION(2, 24, 0)
+		*width = gdk_window_get_width(window);
+		*height = gdk_window_get_height(window);
+# else
+		gdk_drawable_get_size(GDK_DRAWABLE(window), width, height);
+# endif
+	}
+	else
+#endif
+	{
+		*width = PREVIEW_IMAGE_SIZE_DEFAULT;
+		*height = PREVIEW_IMAGE_SIZE_DEFAULT;
+	}
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() %dx%d\n", __func__, *width, *height);
+#endif
 }
 
 
@@ -375,6 +476,10 @@ static void _preview_on_edit(gpointer data)
 
 /* preview_on_idle_image */
 static void _idle_image_100(Preview * preview);
+static void _idle_image_fit(Preview * preview);
+static void _idle_image_load(Preview * preview, gint height, gint width);
+static void _idle_image_load_animation(Preview * preview);
+static void _idle_image_load_pixbuf(Preview * preview, gint width, gint height);
 static void _idle_image_scale(Preview * preview);
 
 static gboolean _preview_on_idle_image(gpointer data)
@@ -388,15 +493,61 @@ static gboolean _preview_on_idle_image(gpointer data)
 	gtk_widget_show(GTK_WIDGET(preview->zoom_out));
 	gtk_widget_show(GTK_WIDGET(preview->zoom_in));
 	gtk_widget_show(preview->toolbar);
-	if(preview->size < 0)
-		_idle_image_100(preview);
-	else
-		_idle_image_scale(preview);
+	switch(preview->view_image_how)
+	{
+		case PREVIEW_IMAGE_HOW_FIT:
+			_idle_image_fit(preview);
+			break;
+		case PREVIEW_IMAGE_HOW_ORIGINAL:
+			_idle_image_100(preview);
+			break;
+		case PREVIEW_IMAGE_HOW_SCALE:
+		default:
+			_idle_image_scale(preview);
+			break;
+	}
 	gtk_widget_show(preview->view_image);
 	return FALSE;
 }
 
 static void _idle_image_100(Preview * preview)
+{
+	_idle_image_load(preview, 0, 0);
+}
+
+static void _idle_image_fit(Preview * preview)
+{
+	gint iwidth;
+	gint iheight;
+	gint wwidth;
+	gint wheight;
+
+	_preview_get_image_size(preview, &iwidth, &iheight);
+	_preview_get_widget_size(preview, &wwidth, &wheight);
+	/* scale the image accordingly */
+	preview->view_image_scale = min((gdouble)wwidth / (gdouble)iwidth,
+			(gdouble)wheight / (gdouble)iheight);
+	_idle_image_load(preview, 0, 0);
+}
+
+static void _idle_image_load(Preview * preview, gint height, gint width)
+{
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%d, %d)\n", __func__, width, height);
+#endif
+	if(width <= 0 && height <= 0 && preview->view_image_scale == 1.0)
+		_idle_image_load_animation(preview);
+	else
+	{
+		if(width <= 0 || height <= 0)
+			_preview_get_image_size(preview, &width, &height);
+		_idle_image_load_pixbuf(preview,
+				width * preview->view_image_scale,
+				height * preview->view_image_scale);
+	}
+}
+
+static void _idle_image_load_animation(Preview * preview)
 {
 	BrowserPluginHelper * helper = preview->helper;
 	GdkPixbufAnimation * pixbuf;
@@ -419,20 +570,22 @@ static void _idle_image_100(Preview * preview)
 	g_object_unref(pixbuf);
 }
 
-static void _idle_image_scale(Preview * preview)
+static void _idle_image_load_pixbuf(Preview * preview, gint width, gint height)
 {
 	BrowserPluginHelper * helper = preview->helper;
 	GdkPixbuf * pixbuf;
 	GError * error = NULL;
 
+	if(width <= 0)
+		width = 1;
+	if(height <= 0)
+		height = 1;
 #if GTK_CHECK_VERSION(2, 6, 0)
-	if((pixbuf = gdk_pixbuf_new_from_file_at_scale(preview->path,
-					preview->size, preview->size, TRUE,
-					&error)) == NULL)
+	if((pixbuf = gdk_pixbuf_new_from_file_at_scale(preview->path, width,
+					height, TRUE, &error)) == NULL)
 #else
-	if((pixbuf = gdk_pixbuf_new_from_file_at_size(preview->path,
-					preview->size, preview->size, &error))
-			== NULL)
+	if((pixbuf = gdk_pixbuf_new_from_file_at_size(preview->path, width,
+					height, &error)) == NULL)
 #endif
 	{
 		helper->error(helper->browser, error->message, 1);
@@ -446,6 +599,11 @@ static void _idle_image_scale(Preview * preview)
 	}
 	gtk_image_set_from_pixbuf(GTK_IMAGE(preview->view_image_image), pixbuf);
 	g_object_unref(pixbuf);
+}
+
+static void _idle_image_scale(Preview * preview)
+{
+	_idle_image_load(preview, 0, 0);
 }
 
 
@@ -529,7 +687,8 @@ static void _preview_on_zoom_100(gpointer data)
 {
 	Preview * preview = data;
 
-	preview->size = -1;
+	preview->view_image_how = PREVIEW_IMAGE_HOW_ORIGINAL;
+	preview->view_image_scale = 1.0;
 	if(preview->source != 0)
 		g_source_remove(preview->source);
 	/* XXX may not always be an image */
@@ -542,7 +701,7 @@ static void _preview_on_zoom_fit(gpointer data)
 {
 	Preview * preview = data;
 
-	preview->size = PREVIEW_DEFAULT_SIZE;
+	preview->view_image_how = PREVIEW_IMAGE_HOW_FIT;
 	if(preview->source != 0)
 		g_source_remove(preview->source);
 	/* XXX may not always be an image */
@@ -555,8 +714,10 @@ static void _preview_on_zoom_in(gpointer data)
 {
 	Preview * preview = data;
 
-	preview->size = ((preview->size > 0) ? preview->size
-			: PREVIEW_DEFAULT_SIZE) * 2;
+	preview->view_image_how = PREVIEW_IMAGE_HOW_SCALE;
+	preview->view_image_scale *= 1.25;
+	if(preview->view_image_scale > 4.0)
+		preview->view_image_scale = 4.0;
 	if(preview->source != 0)
 		g_source_remove(preview->source);
 	/* XXX may not always be an image */
@@ -569,11 +730,10 @@ static void _preview_on_zoom_out(gpointer data)
 {
 	Preview * preview = data;
 
-	preview->size = ((preview->size > 0) ? preview->size
-			: PREVIEW_DEFAULT_SIZE) / 2;
-	/* stick with a minimum amount of pixels */
-	if(preview->size < 3)
-		preview->size = 3;
+	preview->view_image_how = PREVIEW_IMAGE_HOW_SCALE;
+	preview->view_image_scale /= 1.25;
+	if(preview->view_image_scale < 0.1)
+		preview->view_image_scale = 0.1;
 	if(preview->source != 0)
 		g_source_remove(preview->source);
 	/* XXX may not always be an image */
