@@ -548,8 +548,6 @@ static gboolean _view_on_closex(gpointer data)
 	View * view = data;
 
 	_view_delete(view);
-	if(_view_cnt == 0)
-		gtk_main_quit();
 	return FALSE;
 }
 
