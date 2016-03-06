@@ -237,6 +237,7 @@ static View * _view_new(Mime * mime, char const * filename)
 	if((type = mime_type(mime, filename)) == NULL)
 	{
 		_view_error(view, _("Unknown file type"), 1);
+		_view_delete(view);
 		return NULL;
 	}
 	group = gtk_accel_group_new();
