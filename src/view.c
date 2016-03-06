@@ -242,6 +242,8 @@ static View * _view_new(Mime * mime, char const * filename)
 	}
 	group = gtk_accel_group_new();
 	view->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	/* XXX fit the window to its content instead */
+	gtk_window_set_default_size(GTK_WINDOW(view->window), 600, 400);
 	gtk_window_add_accel_group(GTK_WINDOW(view->window), group);
 	g_object_unref(group);
 	snprintf(buf, sizeof(buf), "%s%s", _("View - "), filename);
@@ -268,8 +270,6 @@ static View * _view_new(Mime * mime, char const * filename)
 	}
 	gtk_box_pack_start(GTK_BOX(vbox), widget, TRUE, TRUE, 0);
 	gtk_container_add(GTK_CONTAINER(view->window), vbox);
-	/* XXX fit the window to its content */
-	gtk_window_set_default_size(GTK_WINDOW(view->window), 600, 400);
 	gtk_widget_show_all(view->window);
 	return view;
 }
