@@ -1408,8 +1408,8 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		}
 		else
 #endif
-		*icon96 = browser_vfs_mime_icon(browser->mime, path, *type, lst, st,
-				96);
+		*icon96 = browser_vfs_mime_icon(browser->mime, path, *type, lst,
+				st, 96);
 	}
 }
 
