@@ -180,7 +180,15 @@ void on_paste(gpointer data)
 }
 
 
-/* properties */
+/* on_preferences */
+void on_preferences(gpointer data)
+{
+	Browser * browser = data;
+
+	browser_show_preferences(browser, TRUE);
+}
+
+
 /* on_properties */
 void on_properties(gpointer data)
 {

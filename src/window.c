@@ -61,6 +61,7 @@ struct _BrowserWindow
 
 /* prototypes */
 /* callbacks */
+static void _browserwindow_on_close(gpointer data);
 static gboolean _browserwindow_on_closex(gpointer data);
 
 /* file menu */
@@ -103,7 +104,7 @@ static const DesktopAccel _browserwindow_accel[] =
 	{ G_CALLBACK(on_location), GDK_CONTROL_MASK, GDK_KEY_L },
 	{ G_CALLBACK(on_properties), GDK_MOD1_MASK, GDK_KEY_Return },
 #ifdef EMBEDDED
-	{ G_CALLBACK(on_close), GDK_CONTROL_MASK, GDK_KEY_W },
+	{ G_CALLBACK(_browserwindow_on_close), GDK_CONTROL_MASK, GDK_KEY_W },
 	{ G_CALLBACK(on_copy), GDK_CONTROL_MASK, GDK_KEY_C },
 	{ G_CALLBACK(on_cut), GDK_CONTROL_MASK, GDK_KEY_X },
 	{ G_CALLBACK(on_new_window), GDK_CONTROL_MASK, GDK_KEY_N },
@@ -311,14 +312,23 @@ void browserwindow_show_preferences(BrowserWindow * browser, gboolean show)
 /* private */
 /* functions */
 /* callbacks */
-/* browserwindow_on_closex */
-static gboolean _browserwindow_on_closex(gpointer data)
+/* browserwindow_on_close */
+static void _browserwindow_on_close(gpointer data)
 {
 	BrowserWindow * browser = data;
 
 	browserwindow_delete(browser);
 	if(browser_window_cnt == 0)
 		gtk_main_quit();
+}
+
+
+/* browserwindow_on_closex */
+static gboolean _browserwindow_on_closex(gpointer data)
+{
+	BrowserWindow * browser = data;
+
+	_browserwindow_on_close(browser);
 	return TRUE;
 }
 
@@ -329,7 +339,7 @@ static void _browserwindow_on_file_close(gpointer data)
 {
 	BrowserWindow * browser = data;
 
-	_browserwindow_on_closex(browser);
+	_browserwindow_on_close(browser);
 }
 
 
