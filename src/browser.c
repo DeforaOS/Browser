@@ -1289,9 +1289,11 @@ static int _refresh_new_loop(Browser * browser)
 		return 0;
 	}
 	if(S_ISLNK(lst.st_mode) && browser_vfs_stat(path, &st) == 0)
-		_loop_insert(browser, &iter, path, de->d_name, &lst, &st, 0);
+		_loop_insert(browser, &iter, path, de->d_name, &lst, &st,
+				FALSE);
 	else
-		_loop_insert(browser, &iter, path, de->d_name, &lst, &lst, 0);
+		_loop_insert(browser, &iter, path, de->d_name, &lst, &lst,
+				FALSE);
 	g_free(path);
 	return 0;
 }
@@ -1630,7 +1632,7 @@ static int _current_loop(Browser * browser)
 	if(S_ISLNK(lst.st_mode) && browser_vfs_stat(path, &st) == 0)
 		p = &st;
 	if(valid != TRUE)
-		_loop_insert(browser, &iter, path, de->d_name, &lst, p, 1);
+		_loop_insert(browser, &iter, path, de->d_name, &lst, p, TRUE);
 	else
 		_loop_update(browser, &iter, path, de->d_name, &lst, p);
 	g_free(path);
