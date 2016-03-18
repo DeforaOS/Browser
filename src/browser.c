@@ -1316,7 +1316,8 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		char const ** display, uint64_t * inode, uint64_t * size,
 		char const ** dsize, struct passwd ** pw, struct group ** gr,
 		char const ** ddate, char const ** type, char const * path,
-		GdkPixbuf ** icon24, GdkPixbuf ** icon48, GdkPixbuf ** icon96);
+		GdkPixbuf ** icon24, GdkPixbuf ** icon48, GdkPixbuf ** icon96,
+		gboolean update);
 
 static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 		char const * path, char const * display, struct stat * lst,
@@ -1343,14 +1344,14 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 	_insert_all(browser, lst, st, &display, &inode, &size, &dsize, &pw, &gr,
 			&ddate, &type, path, &icon24
 #if GTK_CHECK_VERSION(2, 6, 0)
-			, &icon48, &icon96);
+			, &icon48, &icon96, FALSE);
 	if(pw == NULL)
 		snprintf(uid, sizeof(uid), "%lu", (unsigned long)lst->st_uid);
 	if(gr == NULL)
 		snprintf(gid, sizeof(gid), "%lu", (unsigned long)lst->st_gid);
 	gtk_list_store_insert_with_values(browser->store, iter, -1,
 #else
-			, NULL, NULL);
+			, NULL, NULL, FALSE);
 	gtk_list_store_insert_after(browser->store, iter, NULL);
 	if(pw == NULL)
 		snprintf(uid, sizeof(uid), "%lu", (unsigned long)lst->st_uid);
@@ -1390,7 +1391,8 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		char const ** display, uint64_t * inode, uint64_t * size,
 		char const ** dsize, struct passwd ** pw, struct group ** gr,
 		char const ** ddate, char const ** type, char const * path,
-		GdkPixbuf ** icon24, GdkPixbuf ** icon48, GdkPixbuf ** icon96)
+		GdkPixbuf ** icon24, GdkPixbuf ** icon48, GdkPixbuf ** icon96,
+		gboolean update)
 {
 	const char image[6] = "image/";
 	char const * p;
@@ -1425,8 +1427,14 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		if(*type != NULL && strncmp(*type, image, sizeof(image)) == 0
 				&& browser->loading != NULL)
 		{
-			g_object_ref(browser->loading);
-			*icon96 = browser->loading;
+			if(update)
+				/* do not update the thumbnail */
+				*icon96 = NULL;
+			else
+			{
+				g_object_ref(browser->loading);
+				*icon96 = browser->loading;
+			}
 		}
 		else
 #endif
@@ -1659,6 +1667,7 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 	GdkPixbuf * icon24 = NULL;
 #if GTK_CHECK_VERSION(2, 6, 0)
 	GdkPixbuf * icon48 = NULL;
+	int bc96 = BC_PIXBUF_96;
 	GdkPixbuf * icon96 = NULL;
 #endif
 	char uid[16];
@@ -1668,15 +1677,18 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 	fprintf(stderr, "%s%s(\"%s\")\n", "DEBUG: ", __func__, display);
 #endif
 	_insert_all(browser, lst, st, &display, &inode, &size, &dsize, &pw, &gr,
-			&ddate, &type, path, &icon24
+			&ddate, &type, path, &icon24,
 #if GTK_CHECK_VERSION(2, 6, 0)
-			, &icon48, &icon96
+			&icon48, &icon96,
 #endif
-		   );
+		   TRUE);
 	if(pw == NULL)
 		snprintf(uid, sizeof(uid), "%lu", (unsigned long)lst->st_uid);
 	if(gr == NULL)
 		snprintf(gid, sizeof(gid), "%lu", (unsigned long)lst->st_gid);
+	if(icon96 == NULL)
+		/* do not update the thumbnail */
+		bc96 = -1;
 	gtk_list_store_set(browser->store, iter, BC_UPDATED, TRUE,
 			BC_PATH, path, BC_DISPLAY_NAME, display,
 			BC_INODE, inode, BC_IS_DIRECTORY, S_ISDIR(st->st_mode),
@@ -1684,15 +1696,16 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 			BC_IS_MOUNT_POINT, browser_vfs_is_mountpoint(lst,
 				browser->refresh_dev) ? TRUE : FALSE,
 			BC_PIXBUF_24, icon24,
-#if GTK_CHECK_VERSION(2, 6, 0)
-			BC_PIXBUF_48, icon48,
-			BC_PIXBUF_96, icon96,
-#endif
 			BC_SIZE, size, BC_DISPLAY_SIZE, dsize,
 			BC_OWNER, (pw != NULL) ? pw->pw_name : uid,
 			BC_GROUP, (gr != NULL) ? gr->gr_name : gid,
 			BC_DATE, lst->st_mtime, BC_DISPLAY_DATE, ddate,
-			BC_MIME_TYPE, (type != NULL) ? type : "", -1);
+#if GTK_CHECK_VERSION(2, 6, 0)
+			BC_PIXBUF_48, icon48,
+			bc96, icon96,
+#endif
+			BC_MIME_TYPE, (type != NULL) ? type : "",
+			-1);
 	/* FIXME refresh the plug-in if the icon is currently selected */
 }
 
