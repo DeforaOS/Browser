@@ -1334,22 +1334,28 @@ static void _loop_insert(Browser * browser, GtkTreeIter * iter,
 	GdkPixbuf * icon48 = NULL;
 	GdkPixbuf * icon96 = NULL;
 #endif
-	char uid[16] = "";
-	char gid[16] = "";
+	char uid[16];
+	char gid[16];
 
 #ifdef DEBUG
 	fprintf(stderr, "%s%s(\"%s\")\n", "DEBUG: ", __func__, display);
 #endif
-	snprintf(uid, sizeof(uid), "%lu", (unsigned long)lst->st_uid);
-	snprintf(gid, sizeof(gid), "%lu", (unsigned long)lst->st_gid);
 	_insert_all(browser, lst, st, &display, &inode, &size, &dsize, &pw, &gr,
 			&ddate, &type, path, &icon24
 #if GTK_CHECK_VERSION(2, 6, 0)
 			, &icon48, &icon96);
+	if(pw == NULL)
+		snprintf(uid, sizeof(uid), "%lu", (unsigned long)lst->st_uid);
+	if(gr == NULL)
+		snprintf(gid, sizeof(gid), "%lu", (unsigned long)lst->st_gid);
 	gtk_list_store_insert_with_values(browser->store, iter, -1,
 #else
 			, NULL, NULL);
 	gtk_list_store_insert_after(browser->store, iter, NULL);
+	if(pw == NULL)
+		snprintf(uid, sizeof(uid), "%lu", (unsigned long)lst->st_uid);
+	if(gr == NULL)
+		snprintf(gid, sizeof(gid), "%lu", (unsigned long)lst->st_gid);
 	gtk_list_store_set(browser->store, iter,
 #endif
 			BC_UPDATED, updated, BC_PATH, path,
@@ -1655,20 +1661,22 @@ static void _loop_update(Browser * browser, GtkTreeIter * iter,
 	GdkPixbuf * icon48 = NULL;
 	GdkPixbuf * icon96 = NULL;
 #endif
-	char uid[16] = "";
-	char gid[16] = "";
+	char uid[16];
+	char gid[16];
 
 #ifdef DEBUG
 	fprintf(stderr, "%s%s(\"%s\")\n", "DEBUG: ", __func__, display);
 #endif
-	snprintf(uid, sizeof(uid), "%lu", (unsigned long)lst->st_uid);
-	snprintf(gid, sizeof(gid), "%lu", (unsigned long)lst->st_gid);
 	_insert_all(browser, lst, st, &display, &inode, &size, &dsize, &pw, &gr,
 			&ddate, &type, path, &icon24
 #if GTK_CHECK_VERSION(2, 6, 0)
 			, &icon48, &icon96
 #endif
 		   );
+	if(pw == NULL)
+		snprintf(uid, sizeof(uid), "%lu", (unsigned long)lst->st_uid);
+	if(gr == NULL)
+		snprintf(gid, sizeof(gid), "%lu", (unsigned long)lst->st_gid);
 	gtk_list_store_set(browser->store, iter, BC_UPDATED, TRUE,
 			BC_PATH, path, BC_DISPLAY_NAME, display,
 			BC_INODE, inode, BC_IS_DIRECTORY, S_ISDIR(st->st_mode),
