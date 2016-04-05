@@ -10,7 +10,7 @@ static char const _license[] =
 "1. Redistributions of source code must retain the above copyright notice,\n"
 "   this list of conditions and the following disclaimer.\n"
 "\n"
-"2. Redistributions in binary form must reproduce the above copyright notice\n"
+"2. Redistributions in binary form must reproduce the above copyright notice,\n"
 "   this list of conditions and the following disclaimer in the documentation\n"
 "   and/or other materials provided with the distribution.\n"
 "\n"
