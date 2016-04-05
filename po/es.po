@@ -105,7 +105,7 @@ msgstr "Archivos ejecutables"
 
 #: ../src/browser.c:1114 ../src/view.c:502
 msgid "Shell scripts"
-msgstr "Shell cripts"
+msgstr "Shell scripts"
 
 #: ../src/browser.c:1118 ../src/desktop.c:1857 ../src/view.c:506
 msgid "All files"
