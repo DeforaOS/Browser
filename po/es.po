@@ -939,7 +939,7 @@ msgstr "No administrado por CVS"
 #: ../src/plugins/cvs.c:633
 #, c-format
 msgid "Do you really want to delete %s?"
-msgstr "Realmente desea eliminar %s?"
+msgstr "¿Realmente desea eliminar %s?"
 
 #: ../src/plugins/cvs.c:674
 msgid "Path: "
