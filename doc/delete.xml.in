@@ -9,12 +9,13 @@
 	<!ENTITY section   "1">
 	<!ENTITY title     "Browser User Manual">
 	<!ENTITY package   "DeforaOS Browser">
-	<!ENTITY name      "copy">
-	<!ENTITY purpose   "Copy files and directories">
+	<!ENTITY name      "delete">
+	<!ENTITY purpose   "Delete files and directories">
 ]>
 <refentry>
 	<refentryinfo>
 		<title>&title;</title>
+		<date>@DATE@</date>
 		<productname>&package;</productname>
 		<authorgroup>
 			<author>
@@ -51,39 +52,14 @@
 			<command>&name;</command>
 			<arg choice="opt"><option>-f</option></arg>
 			<arg choice="opt"><option>-i</option></arg>
-			<arg choice="opt"><option>-p</option></arg>
-			<arg choice="plain"><replaceable>source_file</replaceable></arg>
-			<arg choice="plain"><replaceable>target</replaceable></arg>
-		</cmdsynopsis>
-		<cmdsynopsis>
-			<command>&name;</command>
-			<arg choice="opt"><option>-f</option></arg>
-			<arg choice="opt"><option>-i</option></arg>
-			<arg choice="opt"><option>-p</option></arg>
-			<arg choice="plain" rep="repeat"><replaceable>source_file</replaceable></arg>
-			<arg choice="plain"><replaceable>target</replaceable></arg>
-		</cmdsynopsis>
-		<cmdsynopsis>
-			<command>&name;</command>
-			<group choice="plain">
-				<arg choice="plain"><option>-R</option></arg>
-				<arg choice="plain"><option>-r</option></arg>
-			</group>
-			<group choice="opt">
-				<arg choice="plain"><option>-H</option></arg>
-				<arg choice="plain"><option>-L</option></arg>
-				<arg choice="plain"><option>-P</option></arg>
-			</group>
-			<arg choice="opt"><option>-f</option></arg>
-			<arg choice="opt"><option>-i</option></arg>
-			<arg choice="opt"><option>-p</option></arg>
-			<arg choice="plain" rep="repeat"><replaceable>source_file</replaceable></arg>
-			<arg choice="plain" rep="repeat"><replaceable>target</replaceable></arg>
+			<arg choice="opt"><option>-r</option></arg>
+			<arg choice="opt"><option>-R</option></arg>
+			<arg choice="plain" rep="repeat"><replaceable>file</replaceable></arg>
 		</cmdsynopsis>
 	</refsynopsisdiv>
 	<refsect1 id="description">
 		<title>Description</title>
-		<para><command>&name;</command> copies files and directories specified from
+		<para><command>&name;</command> deletes files and directories specified from
 			the command line interface.</para>
 	</refsect1>
 	<refsect1 id="options">
@@ -93,19 +69,13 @@
 			<varlistentry>
 				<term><option>-f</option></term>
 				<listitem>
-					<para>Do not prompt for confirmation before overwriting files.</para>
+					<para>Do not prompt for confirmation and ignore errors.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>-i</option></term>
 				<listitem>
-					<para>Always ask before overwriting files.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>-p</option></term>
-				<listitem>
-					<para>Preserve attributes of the files copied.</para>
+					<para>Always ask before deleting or recursing to a sub-directory.</para>
 				</listitem>
 			</varlistentry>
 			<varlistentry>
@@ -129,11 +99,7 @@
 				<manvolnum>1</manvolnum>
 			</citerefentry>,
 			<citerefentry>
-				<refentrytitle>cp</refentrytitle>
-				<manvolnum>1</manvolnum>
-			</citerefentry>,
-			<citerefentry>
-				<refentrytitle>delete</refentrytitle>
+				<refentrytitle>copy</refentrytitle>
 				<manvolnum>1</manvolnum>
 			</citerefentry>,
 			<citerefentry>
@@ -154,6 +120,10 @@
 			</citerefentry>,
 			<citerefentry>
 				<refentrytitle>properties</refentrytitle>
+				<manvolnum>1</manvolnum>
+			</citerefentry>,
+			<citerefentry>
+				<refentrytitle>rm</refentrytitle>
 				<manvolnum>1</manvolnum>
 			</citerefentry>,
 			<citerefentry>

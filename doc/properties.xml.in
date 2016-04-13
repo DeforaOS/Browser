@@ -9,12 +9,13 @@
 	<!ENTITY section   "1">
 	<!ENTITY title     "Browser User Manual">
 	<!ENTITY package   "DeforaOS Browser">
-	<!ENTITY name      "delete">
-	<!ENTITY purpose   "Delete files and directories">
+	<!ENTITY name      "properties">
+	<!ENTITY purpose   "File and directory properties">
 ]>
 <refentry>
 	<refentryinfo>
 		<title>&title;</title>
+		<date>@DATE@</date>
 		<productname>&package;</productname>
 		<authorgroup>
 			<author>
@@ -49,38 +50,29 @@
 	<refsynopsisdiv>
 		<cmdsynopsis>
 			<command>&name;</command>
-			<arg choice="opt"><option>-f</option></arg>
-			<arg choice="opt"><option>-i</option></arg>
-			<arg choice="opt"><option>-r</option></arg>
-			<arg choice="opt"><option>-R</option></arg>
+			<arg choice="opt"><option>-p</option>
+				<replaceable>plug-in</replaceable></arg>
 			<arg choice="plain" rep="repeat"><replaceable>file</replaceable></arg>
 		</cmdsynopsis>
 	</refsynopsisdiv>
 	<refsect1 id="description">
 		<title>Description</title>
-		<para><command>&name;</command> deletes files and directories specified from
-			the command line interface.</para>
+		<para><command>&name;</command> is a modular, informative tool for files and
+			directories. It uses plug-ins from the
+			<citerefentry><refentrytitle>browser</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+			file manager to display information and interact with any part of the
+			filesystem. It defaults to the "properties" and "preview" plug-ins, notably
+			allowing the alteration of access privileges on the target file(s), according
+			to the user's own privileges.</para>
 	</refsect1>
 	<refsect1 id="options">
 		<title>Options</title>
 		<para>The following options are available:</para>
 		<variablelist>
 			<varlistentry>
-				<term><option>-f</option></term>
+				<term><option>-p</option></term>
 				<listitem>
-					<para>Do not prompt for confirmation and ignore errors.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>-i</option></term>
-				<listitem>
-					<para>Always ask before deleting or recursing to a sub-directory.</para>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term><option>-r, -R</option></term>
-				<listitem>
-					<para>Allow recursion through sub-directories.</para>
+					<para>Plug-in to load.</para>
 				</listitem>
 			</varlistentry>
 		</variablelist>
@@ -102,6 +94,10 @@
 				<manvolnum>1</manvolnum>
 			</citerefentry>,
 			<citerefentry>
+				<refentrytitle>delete</refentrytitle>
+				<manvolnum>1</manvolnum>
+			</citerefentry>,
+			<citerefentry>
 				<refentrytitle>desktop</refentrytitle>
 				<manvolnum>1</manvolnum>
 			</citerefentry>,
@@ -115,14 +111,6 @@
 			</citerefentry>,
 			<citerefentry>
 				<refentrytitle>open</refentrytitle>
-				<manvolnum>1</manvolnum>
-			</citerefentry>,
-			<citerefentry>
-				<refentrytitle>properties</refentrytitle>
-				<manvolnum>1</manvolnum>
-			</citerefentry>,
-			<citerefentry>
-				<refentrytitle>rm</refentrytitle>
 				<manvolnum>1</manvolnum>
 			</citerefentry>,
 			<citerefentry>
