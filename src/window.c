@@ -88,6 +88,7 @@ static void _browserwindow_on_paste(gpointer data);
 static void _browserwindow_on_refresh(gpointer data);
 #endif
 
+#ifndef EMBEDDED
 /* file menu */
 static void _browserwindow_on_file_close(gpointer data);
 static void _browserwindow_on_file_new_window(gpointer data);
@@ -112,11 +113,12 @@ static void _browserwindow_on_help_contents(gpointer data);
 /* view menu */
 static void _browserwindow_on_view_home(gpointer data);
 static void _browserwindow_on_view_refresh(gpointer data);
-#if GTK_CHECK_VERSION(2, 6, 0)
+# if GTK_CHECK_VERSION(2, 6, 0)
 static void _browserwindow_on_view_details(gpointer data);
 static void _browserwindow_on_view_icons(gpointer data);
 static void _browserwindow_on_view_list(gpointer data);
 static void _browserwindow_on_view_thumbnails(gpointer data);
+# endif
 #endif
 
 
@@ -433,6 +435,7 @@ static void _browserwindow_on_refresh(gpointer data)
 #endif
 
 
+#ifndef EMBEDDED
 /* file menu */
 /* browserwindow_on_file_close */
 static void _browserwindow_on_file_close(gpointer data)
@@ -571,7 +574,7 @@ static void _browserwindow_on_view_refresh(gpointer data)
 }
 
 
-#if GTK_CHECK_VERSION(2, 6, 0)
+# if GTK_CHECK_VERSION(2, 6, 0)
 /* browserwindow_on_view_details */
 static void _browserwindow_on_view_details(gpointer data)
 {
@@ -606,7 +609,7 @@ static void _browserwindow_on_view_thumbnails(gpointer data)
 
 	browser_set_view(browser->browser, BV_THUMBNAILS);
 }
-#endif /* GTK_CHECK_VERSION(2, 6, 0) */
+# endif /* GTK_CHECK_VERSION(2, 6, 0) */
 
 
 /* help menu */
@@ -626,3 +629,4 @@ static void _browserwindow_on_help_contents(gpointer data)
 
 	desktop_help_contents(PACKAGE, PROGNAME);
 }
+#endif
