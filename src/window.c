@@ -77,6 +77,16 @@ struct _BrowserWindow
 /* callbacks */
 static void _browserwindow_on_close(gpointer data);
 static gboolean _browserwindow_on_closex(gpointer data);
+static void _browserwindow_on_location(gpointer data);
+static void _browserwindow_on_properties(gpointer data);
+#ifdef EMBEDDED
+static void _browserwindow_on_copy(gpointer data);
+static void _browserwindow_on_cut(gpointer data);
+static void _browserwindow_on_new_window(gpointer data);
+static void _browserwindow_on_open_file(gpointer data);
+static void _browserwindow_on_paste(gpointer data);
+static void _browserwindow_on_refresh(gpointer data);
+#endif
 
 /* file menu */
 static void _browserwindow_on_file_close(gpointer data);
@@ -115,16 +125,18 @@ static void _browserwindow_on_view_thumbnails(gpointer data);
 
 static const DesktopAccel _browserwindow_accel[] =
 {
-	{ G_CALLBACK(on_location), GDK_CONTROL_MASK, GDK_KEY_L },
-	{ G_CALLBACK(on_properties), GDK_MOD1_MASK, GDK_KEY_Return },
+	{ G_CALLBACK(_browserwindow_on_location), GDK_CONTROL_MASK, GDK_KEY_L },
+	{ G_CALLBACK(_browserwindow_on_properties), GDK_MOD1_MASK,
+		GDK_KEY_Return },
 #ifdef EMBEDDED
 	{ G_CALLBACK(_browserwindow_on_close), GDK_CONTROL_MASK, GDK_KEY_W },
-	{ G_CALLBACK(on_copy), GDK_CONTROL_MASK, GDK_KEY_C },
-	{ G_CALLBACK(on_cut), GDK_CONTROL_MASK, GDK_KEY_X },
-	{ G_CALLBACK(on_new_window), GDK_CONTROL_MASK, GDK_KEY_N },
-	{ G_CALLBACK(on_open_file), GDK_CONTROL_MASK, GDK_KEY_O },
-	{ G_CALLBACK(on_paste), GDK_CONTROL_MASK, GDK_KEY_V },
-	{ G_CALLBACK(on_refresh), GDK_CONTROL_MASK, GDK_KEY_R },
+	{ G_CALLBACK(_browserwindow_on_copy), GDK_CONTROL_MASK, GDK_KEY_C },
+	{ G_CALLBACK(_browserwindow_on_cut), GDK_CONTROL_MASK, GDK_KEY_X },
+	{ G_CALLBACK(_browserwindow_on_new_window), GDK_CONTROL_MASK,
+		GDK_KEY_N },
+	{ G_CALLBACK(_browserwindow_on_open_file), GDK_CONTROL_MASK, GDK_KEY_O },
+	{ G_CALLBACK(_browserwindow_on_paste), GDK_CONTROL_MASK, GDK_KEY_V },
+	{ G_CALLBACK(_browserwindow_on_refresh), GDK_CONTROL_MASK, GDK_KEY_R },
 #endif
 	{ NULL, 0, 0 }
 };
@@ -278,7 +290,7 @@ BrowserWindow * browserwindow_new(String const * directory)
 			group);
 	gtk_box_pack_start(GTK_BOX(vbox), tb_menubar, FALSE, FALSE, 0);
 #endif
-	desktop_accel_create(_browserwindow_accel, browser->browser, group);
+	desktop_accel_create(_browserwindow_accel, browser, group);
 	gtk_box_pack_start(GTK_BOX(vbox), browser_get_widget(browser->browser),
 			TRUE, TRUE, 0);
 
@@ -345,6 +357,80 @@ static gboolean _browserwindow_on_closex(gpointer data)
 	_browserwindow_on_close(browser);
 	return TRUE;
 }
+
+
+/* browserwindow_on_location */
+static void _browserwindow_on_location(gpointer data)
+{
+	BrowserWindow * browser = data;
+
+	on_location(browser->browser);
+}
+
+
+/* browserwindow_on_properties */
+static void _browserwindow_on_properties(gpointer data)
+{
+	BrowserWindow * browser = data;
+
+	on_properties(browser->browser);
+}
+
+
+#ifdef EMBEDDED
+/* browserwindow_on_copy */
+static void _browserwindow_on_copy(gpointer data)
+{
+	BrowserWindow * browser = data;
+
+	on_copy(browser->browser);
+}
+
+
+/* browserwindow_on_cut */
+static void _browserwindow_on_cut(gpointer data)
+{
+	BrowserWindow * browser = data;
+
+	on_cut(browser->browser);
+}
+
+
+/* browserwindow_on_new_window */
+static void _browserwindow_on_new_window(gpointer data)
+{
+	BrowserWindow * browser = data;
+
+	on_new_window(browser->browser);
+}
+
+
+/* browserwindow_on_open_file */
+static void _browserwindow_on_open_file(gpointer data)
+{
+	BrowserWindow * browser = data;
+
+	on_open_file(browser->browser);
+}
+
+
+/* browserwindow_on_paste */
+static void _browserwindow_on_paste(gpointer data)
+{
+	BrowserWindow * browser = data;
+
+	on_paste(browser->browser);
+}
+
+
+/* browserwindow_on_refresh */
+static void _browserwindow_on_refresh(gpointer data)
+{
+	BrowserWindow * browser = data;
+
+	on_refresh(browser->browser);
+}
+#endif
 
 
 /* file menu */
