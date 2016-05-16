@@ -112,6 +112,7 @@ target="$1"
 $DATE > "$target"
 FAILED=
 echo "Performing tests:" 1>&2
+_test "pkgconfig.sh"
 _test "plugins"
 [ -z "$DISPLAY" ] || _test "vfs"
 #echo "Expected failures:" 1>&2
