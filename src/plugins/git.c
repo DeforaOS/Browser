@@ -83,6 +83,7 @@ static GtkWidget * _git_get_widget(Git * git);
 static void _git_refresh(Git * git, GList * selection);
 
 /* accessors */
+static String * _git_get_base(char const * filename);
 static gboolean _git_is_managed(char const * filename);
 
 /* useful */
@@ -372,11 +373,11 @@ static void _refresh_status(Git * git, char const * status)
 
 
 /* accessors */
-/* git_is_managed */
-static gboolean _git_is_managed(char const * filename)
+/* git_get_base */
+static String * _git_get_base(char const * filename)
 {
-	char * base = strdup(filename);
-	char * dir = base;
+	String * base;
+	String * dir;
 	String * p;
 	struct stat st;
 	int res;
@@ -384,28 +385,43 @@ static gboolean _git_is_managed(char const * filename)
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, filename);
 #endif
-	for(; strcmp(dir, ".") != 0; dir = dirname(dir))
+	base = string_new(filename);
+	dir = base;
+	for(; string_compare(dir, ".") != 0; dir = dirname(dir))
 	{
 		if((p = string_new_append(dir, "/.git", NULL)) == NULL)
 		{
-			free(base);
-			return FALSE;
+			string_delete(base);
+			return NULL;
 		}
 		res = lstat(p, &st);
 #ifdef DEBUG
 		fprintf(stderr, "DEBUG: %s() \"%s\" %d\n", __func__, p, res);
 #endif
-		string_delete(p);
 		if(res == 0)
 		{
-			/* FIXME really implement */
-			free(base);
-			return TRUE;
+			string_delete(base);
+			return p;
 		}
-		if(strcmp(dir, "/") == 0)
+		if(string_compare(dir, "/") == 0)
 			break;
 	}
-	free(base);
+	string_delete(base);
+	return NULL;
+}
+
+
+/* git_is_managed */
+static gboolean _git_is_managed(char const * filename)
+{
+	String * base;
+
+	if((base = _git_get_base(filename)) != NULL)
+	{
+		/* FIXME really implement */
+		string_delete(base);
+		return TRUE;
+	}
 	return FALSE;
 }
 
