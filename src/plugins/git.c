@@ -477,7 +477,7 @@ static gboolean _git_is_managed(char const * filename)
 
 	if((base = _git_get_base(filename)) != NULL)
 	{
-		/* FIXME really implement */
+		/* FIXME check if this file is managed */
 		string_delete(base);
 		return TRUE;
 	}
