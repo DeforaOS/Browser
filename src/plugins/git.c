@@ -87,6 +87,7 @@ static void _git_refresh(Git * git, GList * selection);
 static String * _git_get_base(char const * filename);
 static String * _git_get_head(char const * filename);
 static gboolean _git_is_managed(char const * filename);
+static void _git_set_status(Git * git, char const * status);
 
 /* useful */
 static int _git_add_task(Git * git, char const * title,
@@ -315,7 +316,6 @@ static void _refresh_dir(Git * git);
 static void _refresh_error(Git * git, char const * message);
 static void _refresh_file(Git * git);
 static void _refresh_hide(Git * git, gboolean name);
-static void _refresh_status(Git * git, char const * status);
 
 static void _git_refresh(Git * git, GList * selection)
 {
@@ -364,7 +364,7 @@ static void _refresh_dir(Git * git)
 		git->filename[len - 4] = '\0';
 	if(_git_is_managed(git->filename) != TRUE)
 	{
-		_refresh_status(git, _("Not a Git repository"));
+		_git_set_status(git, _("Not a Git repository"));
 		gtk_widget_show(git->init);
 		return;
 	}
@@ -393,21 +393,10 @@ static void _refresh_file(Git * git)
 static void _refresh_hide(Git * git, gboolean name)
 {
 	name ? gtk_widget_hide(git->name) : gtk_widget_show(git->name);
-	_refresh_status(git, NULL);
+	_git_set_status(git, NULL);
 	gtk_widget_hide(git->init);
 	gtk_widget_hide(git->directory);
 	gtk_widget_hide(git->file);
-}
-
-static void _refresh_status(Git * git, char const * status)
-{
-	if(status == NULL)
-		gtk_widget_hide(git->status);
-	else
-	{
-		gtk_label_set_text(GTK_LABEL(git->status), status);
-		gtk_widget_show(git->status);
-	}
 }
 
 
@@ -482,6 +471,19 @@ static gboolean _git_is_managed(char const * filename)
 		return TRUE;
 	}
 	return FALSE;
+}
+
+
+/* git_set_status */
+static void _git_set_status(Git * git, char const * status)
+{
+	if(status == NULL)
+		gtk_widget_hide(git->status);
+	else
+	{
+		gtk_label_set_text(GTK_LABEL(git->status), status);
+		gtk_widget_show(git->status);
+	}
 }
 
 
