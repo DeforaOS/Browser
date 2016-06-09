@@ -63,6 +63,7 @@ typedef struct _BrowserPlugin
 	GtkWidget * init;
 	/* directory */
 	GtkWidget * directory;
+	GtkWidget * d_tag;
 	/* file */
 	GtkWidget * file;
 
@@ -84,6 +85,7 @@ static void _git_refresh(Git * git, GList * selection);
 
 /* accessors */
 static String * _git_get_base(char const * filename);
+static String * _git_get_head(char const * filename);
 static gboolean _git_is_managed(char const * filename);
 
 /* useful */
@@ -125,6 +127,8 @@ BrowserPluginDefinition plugin =
 /* git_init */
 static GtkWidget * _init_button(GtkSizeGroup * group, char const * icon,
 		char const * label, GCallback callback, gpointer data);
+static GtkWidget * _init_label(GtkSizeGroup * group, char const * label,
+		GtkWidget ** widget);
 
 static Git * _git_init(BrowserPluginHelper * helper)
 {
@@ -175,6 +179,8 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	gtk_box_pack_start(GTK_BOX(git->widget), git->init, FALSE, TRUE, 0);
 	/* directory */
 	git->directory = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+	widget = _init_label(group, _("Head:"), &git->d_tag);
+	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
 	widget = _init_button(group, GTK_STOCK_FIND_AND_REPLACE,
 			_("Diff"), G_CALLBACK(_git_on_diff), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
@@ -257,6 +263,31 @@ static GtkWidget * _init_button(GtkSizeGroup * group, char const * icon,
 	return hbox;
 }
 
+static GtkWidget * _init_label(GtkSizeGroup * group, char const * label,
+		GtkWidget ** widget)
+{
+	GtkWidget * hbox;
+
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+	*widget = gtk_label_new(label);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(*widget, "halign", GTK_ALIGN_START, NULL);
+#else
+	gtk_misc_set_alignment(GTK_MISC(*widget), 0.0, 0.5);
+#endif
+	gtk_size_group_add_widget(group, *widget);
+	gtk_box_pack_start(GTK_BOX(hbox), *widget, FALSE, TRUE, 0);
+	*widget = gtk_label_new("");
+	gtk_label_set_ellipsize(GTK_LABEL(*widget), PANGO_ELLIPSIZE_MIDDLE);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(*widget, "halign", GTK_ALIGN_START, NULL);
+#else
+	gtk_misc_set_alignment(GTK_MISC(*widget), 0.0, 0.5);
+#endif
+	gtk_box_pack_start(GTK_BOX(hbox), *widget, TRUE, TRUE, 0);
+	return hbox;
+}
+
 
 /* git_destroy */
 static void _git_destroy(Git * git)
@@ -323,7 +354,10 @@ static void _refresh_dir(Git * git)
 {
 	char const dir[] = "/.git";
 	size_t len = strlen(git->filename);
+	String * head;
 
+	/* reset the interface */
+	gtk_label_set_text(GTK_LABEL(git->d_tag), NULL);
 	/* consider ".git" folders like their parent */
 	if((len = strlen(git->filename)) >= (sizeof(dir) - 1)
 			&& strcmp(&git->filename[len - 4], dir) == 0)
@@ -333,6 +367,11 @@ static void _refresh_dir(Git * git)
 		_refresh_status(git, _("Not a Git repository"));
 		gtk_widget_show(git->init);
 		return;
+	}
+	if((head = _git_get_head(git->filename)) != NULL)
+	{
+		gtk_label_set_text(GTK_LABEL(git->d_tag), head);
+		string_delete(head);
 	}
 	gtk_widget_show(git->directory);
 }
@@ -408,6 +447,26 @@ static String * _git_get_base(char const * filename)
 	}
 	string_delete(base);
 	return NULL;
+}
+
+
+/* git_get_head */
+static String * _git_get_head(char const * filename)
+{
+	String * base;
+	String * p;
+	String * head = NULL;
+
+	if((base = _git_get_base(filename)) == NULL)
+		return NULL;
+	p = string_new_append(base, "/HEAD", NULL);
+	string_delete(base);
+	if(p == NULL)
+		return NULL;
+	if(g_file_get_contents(p, &head, NULL, NULL) == TRUE)
+		string_rtrim(head, NULL);
+	string_delete(p);
+	return head;
 }
 
 
