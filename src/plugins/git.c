@@ -293,6 +293,7 @@ static void _git_refresh(Git * git, GList * selection)
 	char * path = (selection != NULL) ? selection->data : NULL;
 	struct stat st;
 	gchar * p;
+	String * head;
 
 	if(git->source != 0)
 		g_source_remove(git->source);
@@ -315,6 +316,11 @@ static void _git_refresh(Git * git, GList * selection)
 	gtk_label_set_text(GTK_LABEL(git->name), p);
 	g_free(p);
 	_refresh_hide(git, FALSE);
+	if((head = _git_get_head(git->filename)) != NULL)
+	{
+		_git_set_status(git, head);
+		string_delete(head);
+	}
 	if(S_ISDIR(st.st_mode))
 		_refresh_dir(git);
 	else
@@ -325,7 +331,6 @@ static void _refresh_dir(Git * git)
 {
 	char const dir[] = "/.git";
 	size_t len = strlen(git->filename);
-	String * head;
 
 	/* consider ".git" folders like their parent */
 	if((len = strlen(git->filename)) >= (sizeof(dir) - 1)
@@ -336,11 +341,6 @@ static void _refresh_dir(Git * git)
 		_git_set_status(git, _("Not a Git repository"));
 		gtk_widget_show(git->init);
 		return;
-	}
-	if((head = _git_get_head(git->filename)) != NULL)
-	{
-		_git_set_status(git, head);
-		string_delete(head);
 	}
 	gtk_widget_show(git->directory);
 }
