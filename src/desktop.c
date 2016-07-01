@@ -174,18 +174,18 @@ typedef enum _DesktopHows
 
 static DesktopCategory _desktop_categories[] =
 {
-	{ FALSE, "Audio",	"Audio",	"gnome-mime-audio",	},
-	{ FALSE, "Development",	"Development",	"applications-development"},
-	{ FALSE, "Education",	"Education",	"applications-science"	},
-	{ FALSE, "Game",	"Games",	"applications-games"	},
-	{ FALSE, "Graphics",	"Graphics",	"applications-graphics"	},
-	{ FALSE, "AudioVideo",	"Multimedia",	"applications-multimedia"},
-	{ FALSE, "Network",	"Network",	"applications-internet" },
-	{ FALSE, "Office",	"Office",	"applications-office"	},
-	{ FALSE, "Settings",	"Settings",	"gnome-settings"	},
-	{ FALSE, "System",	"System",	"applications-system"	},
-	{ FALSE, "Utility",	"Utilities",	"applications-utilities"},
-	{ FALSE, "Video",	"Video",	"video"			}
+	{ FALSE, "Audio",	N_("Audio"),	"gnome-mime-audio",	},
+	{ FALSE, "Development",	N_("Development"),"applications-development"},
+	{ FALSE, "Education",	N_("Education"),"applications-science"	},
+	{ FALSE, "Game",	N_("Games"),	"applications-games"	},
+	{ FALSE, "Graphics",	N_("Graphics"),	"applications-graphics"	},
+	{ FALSE, "AudioVideo",	N_("Multimedia"),"applications-multimedia"},
+	{ FALSE, "Network",	N_("Network"),	"applications-internet" },
+	{ FALSE, "Office",	N_("Office"),	"applications-office"	},
+	{ FALSE, "Settings",	N_("Settings"),	"gnome-settings"	},
+	{ FALSE, "System",	N_("System"),	"applications-system"	},
+	{ FALSE, "Utility",	N_("Utilities"),"applications-utilities"},
+	{ FALSE, "Video",	N_("Video"),	"video"			}
 };
 static const size_t _desktop_categories_cnt = sizeof(_desktop_categories)
 	/ sizeof(*_desktop_categories);
@@ -2686,7 +2686,7 @@ static void _refresh_done_categories(Desktop * desktop)
 		if(dc->show == TRUE)
 			continue;
 		dc->show = TRUE;
-		if((icon = desktopicon_new_category(desktop, dc->name,
+		if((icon = desktopicon_new_category(desktop, _(dc->name),
 						dc->icon)) == NULL)
 			continue;
 		desktopicon_set_callback(icon, _refresh_done_categories_open,
@@ -2700,7 +2700,7 @@ static void _refresh_done_categories_open(Desktop * desktop, gpointer data)
 	DesktopCategory * dc = data;
 
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, dc->name);
+	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, _(dc->name));
 #endif
 	desktop->category = dc;
 	desktop_set_icons(desktop, DESKTOP_ICONS_APPLICATIONS);
