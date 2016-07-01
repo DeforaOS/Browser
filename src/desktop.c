@@ -900,13 +900,14 @@ static int _icons_homescreen(Desktop * desktop)
 	{
 #ifdef EMBEDDED
 		/* FIXME let this be configurable */
-		DATADIR "/applications/deforaos-phone-contacts.desktop",
-		DATADIR "/applications/deforaos-phone-dialer.desktop",
-		DATADIR "/applications/deforaos-phone-messages.desktop",
+		"deforaos-phone-contacts.desktop",
+		"deforaos-phone-dialer.desktop",
+		"deforaos-phone-messages.desktop",
 #endif
 		NULL
 	};
 	char const ** p;
+	String * q;
 
 	if((desktopicon = desktopicon_new(desktop, _("Applications"), NULL))
 			== NULL)
@@ -919,10 +920,19 @@ static int _icons_homescreen(Desktop * desktop)
 		desktopicon_set_icon(desktopicon, icon);
 	_desktop_icon_add(desktop, desktopicon);
 	for(p = paths; *p != NULL; p++)
-		if(access(*p, R_OK) == 0
+	{
+		if((q = string_new_append(DATADIR "/applications/", *p, NULL))
+				== NULL)
+		{
+			_desktop_error(NULL, *p, error_get(NULL), 1);
+			continue;
+		}
+		if(access(q, R_OK) == 0
 				&& (desktopicon = desktopicon_new_application(
-						desktop, *p, DATADIR)) != NULL)
+						desktop, q, DATADIR)) != NULL)
 			_desktop_icon_add(desktop, desktopicon);
+		string_delete(q);
+	}
 	return 0;
 }
 
