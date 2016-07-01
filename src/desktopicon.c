@@ -620,13 +620,6 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 #else
 	vbox = gtk_vbox_new(FALSE, 4);
 #endif
-	geometry.min_width = DESKTOPICON_MIN_WIDTH;
-	geometry.min_height = DESKTOPICON_MIN_HEIGHT;
-	geometry.max_width = DESKTOPICON_MAX_WIDTH;
-	geometry.max_height = DESKTOPICON_MAX_HEIGHT;
-	geometry.base_width = DESKTOPICON_MIN_WIDTH;
-	geometry.base_height = DESKTOPICON_MIN_HEIGHT;
-	gtk_window_set_geometry_hints(window, vbox, &geometry, hints);
 	/* image */
 	desktopicon->image = gtk_image_new();
 	gtk_widget_set_size_request(desktopicon->image, DESKTOPICON_ICON_SIZE,
@@ -656,6 +649,14 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 	}
 	else
 		_desktopicon_set_icon(desktopicon, image);
+	memset(&geometry, 0, sizeof(geometry));
+	geometry.min_width = DESKTOPICON_MIN_WIDTH;
+	geometry.min_height = DESKTOPICON_MIN_HEIGHT;
+	geometry.max_width = DESKTOPICON_MAX_WIDTH;
+	geometry.max_height = DESKTOPICON_MAX_HEIGHT;
+	geometry.base_width = DESKTOPICON_MIN_WIDTH;
+	geometry.base_height = DESKTOPICON_MIN_HEIGHT;
+	gtk_window_set_geometry_hints(window, vbox, &geometry, hints);
 	_desktopicon_set_name(desktopicon, name);
 	_desktopicon_update_transparency(desktopicon);
 	return desktopicon;
