@@ -2975,7 +2975,7 @@ static int _refresh_loop_lookup(Desktop * desktop, char const * name)
 /* error */
 static int _error(char const * message, int ret)
 {
-	fputs("desktop: ", stderr);
+	fputs(PROGNAME ": ", stderr);
 	perror(message);
 	return ret;
 }
