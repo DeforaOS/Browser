@@ -767,6 +767,8 @@ static int _icons_categories(Desktop * desktop);
 static int _icons_files(Desktop * desktop);
 static int _icons_files_add_home(Desktop * desktop);
 static int _icons_homescreen(Desktop * desktop);
+static int _icons_homescreen_subdir(Desktop * desktop, char const * subdir,
+		char const * name);
 static void _icons_reset(Desktop * desktop);
 static void _icons_set_categories(Desktop * desktop, gpointer data);
 static void _icons_set_homescreen(Desktop * desktop, gpointer data);
@@ -907,7 +909,6 @@ static int _icons_homescreen(Desktop * desktop)
 		NULL
 	};
 	char const ** p;
-	String * q;
 
 	if((desktopicon = desktopicon_new(desktop, _("Applications"), NULL))
 			== NULL)
@@ -920,19 +921,23 @@ static int _icons_homescreen(Desktop * desktop)
 		desktopicon_set_icon(desktopicon, icon);
 	_desktop_icon_add(desktop, desktopicon);
 	for(p = paths; *p != NULL; p++)
-	{
-		if((q = string_new_append(DATADIR "/applications/", *p, NULL))
-				== NULL)
-		{
-			_desktop_error(NULL, *p, error_get(NULL), 1);
-			continue;
-		}
-		if(access(q, R_OK) == 0
-				&& (desktopicon = desktopicon_new_application(
-						desktop, q, DATADIR)) != NULL)
-			_desktop_icon_add(desktop, desktopicon);
-		string_delete(q);
-	}
+		_icons_homescreen_subdir(desktop, DATADIR "/applications", *p);
+	return 0;
+}
+
+static int _icons_homescreen_subdir(Desktop * desktop, char const * subdir,
+		char const * name)
+{
+	DesktopIcon * desktopicon;
+	String * q;
+
+	if((q = string_new_append(subdir, "/", name, NULL)) == NULL)
+		return -_desktop_error(NULL, name, error_get(NULL), 1);
+	if(access(q, R_OK) == 0
+			&& (desktopicon = desktopicon_new_application(desktop,
+					q, DATADIR)) != NULL)
+		_desktop_icon_add(desktop, desktopicon);
+	string_delete(q);
 	return 0;
 }
 
