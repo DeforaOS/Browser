@@ -896,16 +896,17 @@ static int _icons_homescreen(Desktop * desktop)
 {
 	DesktopIcon * desktopicon;
 	GdkPixbuf * icon;
-#ifdef EMBEDDED
 	char const * paths[] =
 	{
+#ifdef EMBEDDED
+		/* FIXME let this be configurable */
 		DATADIR "/applications/deforaos-phone-contacts.desktop",
 		DATADIR "/applications/deforaos-phone-dialer.desktop",
 		DATADIR "/applications/deforaos-phone-messages.desktop",
+#endif
 		NULL
 	};
 	char const ** p;
-#endif
 
 	if((desktopicon = desktopicon_new(desktop, _("Applications"), NULL))
 			== NULL)
@@ -917,13 +918,11 @@ static int _icons_homescreen(Desktop * desktop)
 	if(icon != NULL)
 		desktopicon_set_icon(desktopicon, icon);
 	_desktop_icon_add(desktop, desktopicon);
-#ifdef EMBEDDED
 	for(p = paths; *p != NULL; p++)
 		if(access(*p, R_OK) == 0
 				&& (desktopicon = desktopicon_new_application(
 						desktop, *p, DATADIR)) != NULL)
 			_desktop_icon_add(desktop, desktopicon);
-#endif
 	return 0;
 }
 
