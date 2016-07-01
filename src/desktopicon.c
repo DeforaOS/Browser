@@ -582,6 +582,9 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 	GtkWindow * window;
 	GtkWidget * vbox;
 	GdkGeometry geometry;
+	/* XXX check */
+	const unsigned int hints = GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE
+		| GDK_HINT_BASE_SIZE;
 
 	if((desktopicon = object_new(sizeof(*desktopicon))) == NULL)
 		return NULL;
@@ -623,9 +626,7 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 	geometry.max_height = DESKTOPICON_MAX_HEIGHT;
 	geometry.base_width = DESKTOPICON_MIN_WIDTH;
 	geometry.base_height = DESKTOPICON_MIN_HEIGHT;
-	gtk_window_set_geometry_hints(window, vbox, &geometry, /* XXX check */
-			GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE
-			| GDK_HINT_BASE_SIZE);
+	gtk_window_set_geometry_hints(window, vbox, &geometry, hints);
 	/* image */
 	desktopicon->image = gtk_image_new();
 	gtk_widget_set_size_request(desktopicon->image, DESKTOPICON_ICON_SIZE,
