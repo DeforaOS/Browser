@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Browser 0.4.13\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-04-15 01:05+0200\n"
+"POT-Creation-Date: 2016-07-01 18:56+0200\n"
 "PO-Revision-Date: 2010-03-29 23:28+0200\n"
 "Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
 "Language-Team: French\n"
@@ -457,6 +457,54 @@ msgstr ""
 "  -i\tDemander confirmation\n"
 "  -R\tSupprimer récursivement\n"
 "  -r\tÉquivalent de -R\n"
+
+#: ../src/desktop.c:177
+msgid "Audio"
+msgstr "Audio"
+
+#: ../src/desktop.c:178
+msgid "Development"
+msgstr "Développement"
+
+#: ../src/desktop.c:179
+msgid "Education"
+msgstr "Éducation"
+
+#: ../src/desktop.c:180
+msgid "Games"
+msgstr "Jeux"
+
+#: ../src/desktop.c:181
+msgid "Graphics"
+msgstr "Graphisme"
+
+#: ../src/desktop.c:182
+msgid "Multimedia"
+msgstr "Multimédia"
+
+#: ../src/desktop.c:183
+msgid "Network"
+msgstr "Réseau"
+
+#: ../src/desktop.c:184
+msgid "Office"
+msgstr "Bureautique"
+
+#: ../src/desktop.c:185
+msgid "Settings"
+msgstr "Préférences"
+
+#: ../src/desktop.c:186
+msgid "System"
+msgstr "Système"
+
+#: ../src/desktop.c:187
+msgid "Utilities"
+msgstr "Utilitaires"
+
+#: ../src/desktop.c:188
+msgid "Video"
+msgstr "Vidéo"
 
 #: ../src/desktop.c:209
 msgid "Do not draw icons"
@@ -916,18 +964,18 @@ msgstr "Tag :"
 msgid "Request diff"
 msgstr "Différences"
 
-#: ../src/plugins/cvs.c:193 ../src/plugins/cvs.c:222 ../src/plugins/git.c:207
+#: ../src/plugins/cvs.c:193 ../src/plugins/cvs.c:222 ../src/plugins/git.c:211
 #: ../src/plugins/subversion.c:184
 msgid "Annotate"
 msgstr "Annotations"
 
-#: ../src/plugins/cvs.c:196 ../src/plugins/cvs.c:225 ../src/plugins/git.c:180
-#: ../src/plugins/git.c:210 ../src/plugins/subversion.c:163
+#: ../src/plugins/cvs.c:196 ../src/plugins/cvs.c:225 ../src/plugins/git.c:184
+#: ../src/plugins/git.c:214 ../src/plugins/subversion.c:163
 #: ../src/plugins/subversion.c:187
 msgid "View log"
 msgstr "Journal"
 
-#: ../src/plugins/cvs.c:199 ../src/plugins/cvs.c:228 ../src/plugins/git.c:183
+#: ../src/plugins/cvs.c:199 ../src/plugins/cvs.c:228 ../src/plugins/git.c:187
 #: ../src/plugins/subversion.c:166 ../src/plugins/subversion.c:190
 msgid "Status"
 msgstr "État"
@@ -941,8 +989,8 @@ msgstr "Actualiser"
 msgid "Delete"
 msgstr "Supprimer"
 
-#: ../src/plugins/cvs.c:208 ../src/plugins/cvs.c:237 ../src/plugins/git.c:195
-#: ../src/plugins/git.c:219 ../src/plugins/subversion.c:172
+#: ../src/plugins/cvs.c:208 ../src/plugins/cvs.c:237 ../src/plugins/git.c:199
+#: ../src/plugins/git.c:223 ../src/plugins/subversion.c:172
 #: ../src/plugins/subversion.c:196
 msgid "Commit"
 msgstr "Soumettre"
@@ -976,7 +1024,7 @@ msgstr "Chemin : "
 msgid "Module: "
 msgstr "Module : "
 
-#: ../src/plugins/cvs.c:867 ../src/plugins/git.c:552
+#: ../src/plugins/cvs.c:867 ../src/plugins/git.c:598
 msgid "Could not commit the file or directory"
 msgstr "Impossible de committer le fichier ou dossier"
 
@@ -996,64 +1044,64 @@ msgstr "Ajouter aux favoris"
 msgid "Remove from bookmarks"
 msgstr "Retirer des favoris"
 
-#: ../src/plugins/git.c:112
+#: ../src/plugins/git.c:115
 msgid "Git"
 msgstr "Git"
 
-#: ../src/plugins/git.c:166
+#: ../src/plugins/git.c:169
 msgid "Initialize"
 msgstr "Initialiser"
 
-#: ../src/plugins/git.c:169
+#: ../src/plugins/git.c:172
 msgid "Clone..."
 msgstr "Cloner..."
 
-#: ../src/plugins/git.c:178 ../src/plugins/git.c:205
+#: ../src/plugins/git.c:182 ../src/plugins/git.c:209
 #: ../src/plugins/subversion.c:161 ../src/plugins/subversion.c:182
 msgid "Diff"
 msgstr "Diff"
 
-#: ../src/plugins/git.c:186
+#: ../src/plugins/git.c:190
 msgid "Pull"
 msgstr "Importer"
 
-#: ../src/plugins/git.c:189
+#: ../src/plugins/git.c:193
 msgid "Push"
 msgstr "Exporter"
 
-#: ../src/plugins/git.c:192 ../src/plugins/git.c:216
+#: ../src/plugins/git.c:196 ../src/plugins/git.c:220
 msgid "Reset"
 msgstr "Revenir"
 
-#: ../src/plugins/git.c:213
+#: ../src/plugins/git.c:217
 msgid "Stage"
 msgstr "Choisir"
 
-#: ../src/plugins/git.c:332
+#: ../src/plugins/git.c:341
 msgid "Not a Git repository"
 msgstr "Pas un dépôt Git"
 
-#: ../src/plugins/git.c:483 ../src/plugins/git.c:664
+#: ../src/plugins/git.c:529 ../src/plugins/git.c:710
 msgid "This file is not managed by Git"
 msgstr "Ce fichier n'est pas géré par Git"
 
-#: ../src/plugins/git.c:516
+#: ../src/plugins/git.c:562
 msgid "Repository cloned successfully"
 msgstr "Dépôt cloné avec succès"
 
-#: ../src/plugins/git.c:519
+#: ../src/plugins/git.c:565
 msgid "Could not clone repository"
 msgstr "Impossible de cloner le dépôt"
 
-#: ../src/plugins/git.c:588
+#: ../src/plugins/git.c:634
 msgid "Could not diff the file or directory"
 msgstr "Impossible de différencier le fichier ou dossier"
 
-#: ../src/plugins/git.c:595
+#: ../src/plugins/git.c:641
 msgid "No difference was found"
 msgstr "Aucune différence trouvée"
 
-#: ../src/plugins/git.c:626
+#: ../src/plugins/git.c:672
 msgid "Could not initialize repository"
 msgstr "Impossible d'initialiser le dépôt"
 
