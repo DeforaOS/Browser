@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Browser 0.4.13\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-04-15 01:05+0200\n"
+"POT-Creation-Date: 2016-08-25 22:45+0200\n"
 "PO-Revision-Date: 2015-10-05 01:19+0100\n"
 "Last-Translator: Ana Carolina Rocha <carolina@defora.org>\n"
 "Language-Team: Spanish\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: ../src/browser.c:221 ../src/desktop.c:806 ../src/desktop.c:829
+#: ../src/browser.c:221 ../src/desktop.c:825 ../src/desktop.c:848
 msgid "Back"
 msgstr "Atrás"
 
@@ -33,7 +33,7 @@ msgstr "Siguiente"
 msgid "Refresh"
 msgstr "Actualizar"
 
-#: ../src/browser.c:229 ../src/desktop.c:875
+#: ../src/browser.c:229 ../src/desktop.c:894
 msgid "Home"
 msgstr "Inicio"
 
@@ -66,7 +66,7 @@ msgid "Details"
 msgstr "Detalles"
 
 #: ../src/browser.c:382 ../src/browser.c:1983 ../src/browser.c:1991
-#: ../src/desktop.c:2052
+#: ../src/desktop.c:2083
 msgid "Icons"
 msgstr "Íconos"
 
@@ -84,7 +84,7 @@ msgstr " Dirección: "
 
 #: ../src/browser.c:745 ../src/browser.c:749 ../src/copy.c:849
 #: ../src/copy.c:853 ../src/delete.c:459 ../src/delete.c:464
-#: ../src/desktop.c:1354 ../src/desktop.c:1359 ../src/move.c:491
+#: ../src/desktop.c:1385 ../src/desktop.c:1390 ../src/move.c:491
 #: ../src/move.c:495 ../src/properties.c:372 ../src/properties.c:376
 #: ../src/view.c:443 ../src/view.c:448 ../src/plugins/common.c:380
 #: ../src/plugins/common.c:384
@@ -95,7 +95,7 @@ msgstr "Error"
 msgid "Open file..."
 msgstr "Abrir archivo..."
 
-#: ../src/browser.c:1113 ../src/desktopicon.c:1144 ../src/view.c:506
+#: ../src/browser.c:1113 ../src/desktopicon.c:1146 ../src/view.c:506
 msgid "Open with..."
 msgstr "Abrir con..."
 
@@ -107,7 +107,7 @@ msgstr "Archivos ejecutables"
 msgid "Shell scripts"
 msgstr "Shell scripts"
 
-#: ../src/browser.c:1132 ../src/desktop.c:1871 ../src/view.c:521
+#: ../src/browser.c:1132 ../src/desktop.c:1902 ../src/view.c:521
 msgid "All files"
 msgstr "Todos los archivos"
 
@@ -125,8 +125,8 @@ msgid "%s%u file%c (%u hidden)"
 msgstr "%s%u archivo%c (%u oculto)"
 
 #: ../src/browser.c:1823 ../src/browser.c:1829 ../src/browser.c:3461
-#: ../src/browser.c:3465 ../src/desktopicon.c:1075 ../src/desktopicon.c:1080
-#: ../src/desktopicon.c:1270 ../src/desktopicon.c:1275
+#: ../src/browser.c:3465 ../src/desktopicon.c:1077 ../src/desktopicon.c:1082
+#: ../src/desktopicon.c:1272 ../src/desktopicon.c:1277
 msgid "Warning"
 msgstr "Aviso"
 
@@ -243,12 +243,12 @@ msgstr "Abrir en nueva_ventana"
 msgid "_Unmount"
 msgstr "_Desmontar"
 
-#: ../src/browser.c:3354 ../src/desktopicon.c:900 ../src/view.c:152
+#: ../src/browser.c:3354 ../src/desktopicon.c:902 ../src/view.c:152
 #: ../src/view.c:164
 msgid "Open _with..."
 msgstr "Abrir _con..."
 
-#: ../src/browser.c:3464 ../src/desktopicon.c:1079
+#: ../src/browser.c:3464 ../src/desktopicon.c:1081
 msgid "Are you sure you want to execute this file?"
 msgstr "¿Está seguro que desea ejecutar este archivo?"
 
@@ -256,19 +256,19 @@ msgstr "¿Está seguro que desea ejecutar este archivo?"
 msgid "New"
 msgstr "Nuevo"
 
-#: ../src/browser.c:3527 ../src/browser.c:3531 ../src/desktop.c:423
+#: ../src/browser.c:3527 ../src/browser.c:3531 ../src/desktop.c:440
 msgid "Folder"
 msgstr "Carpeta"
 
-#: ../src/browser.c:3538 ../src/desktop.c:431
+#: ../src/browser.c:3538 ../src/desktop.c:448
 msgid "Symbolic link..."
 msgstr "Enlace simbólico..."
 
-#: ../src/browser.c:3542 ../src/desktop.c:435
+#: ../src/browser.c:3542 ../src/desktop.c:452
 msgid "Text file"
 msgstr "Archivo de texto"
 
-#: ../src/browser.c:3577 ../src/desktop.c:484
+#: ../src/browser.c:3577 ../src/desktop.c:501
 msgid "New text file.txt"
 msgstr "Nuevo archivo de texto.txt"
 
@@ -280,7 +280,7 @@ msgstr "Actualizar carpeta..."
 msgid "File manager"
 msgstr "Administrador de archivos"
 
-#: ../src/callbacks.c:153 ../src/desktop.c:465
+#: ../src/callbacks.c:153 ../src/desktop.c:482
 msgid "New folder"
 msgstr "Nueva carpeta"
 
@@ -456,11 +456,59 @@ msgstr ""
 "  -R\tRemover jerarquía de archivos\n"
 "  -r\tEquivalente a -R\n"
 
+#: ../src/desktop.c:177
+msgid "Audio"
+msgstr ""
+
+#: ../src/desktop.c:178
+msgid "Development"
+msgstr ""
+
+#: ../src/desktop.c:179
+msgid "Education"
+msgstr ""
+
+#: ../src/desktop.c:180
+msgid "Games"
+msgstr ""
+
+#: ../src/desktop.c:181
+msgid "Graphics"
+msgstr ""
+
+#: ../src/desktop.c:182
+msgid "Multimedia"
+msgstr ""
+
+#: ../src/desktop.c:183
+msgid "Network"
+msgstr ""
+
+#: ../src/desktop.c:184
+msgid "Office"
+msgstr ""
+
+#: ../src/desktop.c:185
+msgid "Settings"
+msgstr ""
+
+#: ../src/desktop.c:186
+msgid "System"
+msgstr ""
+
+#: ../src/desktop.c:187
+msgid "Utilities"
+msgstr ""
+
+#: ../src/desktop.c:188
+msgid "Video"
+msgstr ""
+
 #: ../src/desktop.c:209
 msgid "Do not draw icons"
 msgstr "No mostrar íconos"
 
-#: ../src/desktop.c:210 ../src/desktop.c:910
+#: ../src/desktop.c:210 ../src/desktop.c:930
 msgid "Applications"
 msgstr "Aplicaciones"
 
@@ -476,127 +524,128 @@ msgstr "Contenidos del Escritorio"
 msgid "Home screen"
 msgstr "Pantalla de Inicio"
 
-#: ../src/desktop.c:1403
+#: ../src/desktop.c:1434
 msgid "Could not load preferences"
 msgstr "No se pudieron cargar preferencias"
 
-#: ../src/desktop.c:1785
+#: ../src/desktop.c:1816
 msgid "Desktop preferences"
 msgstr "Desktop preferencias"
 
-#: ../src/desktop.c:1834
+#: ../src/desktop.c:1865
 msgid "Default color: "
 msgstr "Color predeterminado:"
 
-#: ../src/desktop.c:1850
+#: ../src/desktop.c:1881
 msgid "Wallpaper: "
 msgstr "Papel tapíz:"
 
-#: ../src/desktop.c:1858 ../src/desktop.c:1929
+#: ../src/desktop.c:1889 ../src/desktop.c:1960
 msgid "Background"
 msgstr "Fondo de pantalla"
 
-#: ../src/desktop.c:1861
+#: ../src/desktop.c:1892
 msgid "Picture files"
 msgstr "Archivos de imagen"
 
-#: ../src/desktop.c:1887
+#: ../src/desktop.c:1918
 msgid "Position: "
 msgstr "Posición:"
 
-#: ../src/desktop.c:1898 ../src/desktop.c:1911
+#: ../src/desktop.c:1929 ../src/desktop.c:1942
 msgid "Do not draw"
 msgstr "No mostrar"
 
-#: ../src/desktop.c:1900 ../src/desktop.c:1913
+#: ../src/desktop.c:1931 ../src/desktop.c:1944
 msgid "Centered"
 msgstr "Centrado"
 
-#: ../src/desktop.c:1902 ../src/desktop.c:1915
+#: ../src/desktop.c:1933 ../src/desktop.c:1946
 msgid "Scaled"
 msgstr "A escala"
 
-#: ../src/desktop.c:1905 ../src/desktop.c:1917
+#: ../src/desktop.c:1936 ../src/desktop.c:1948
 msgid "Scaled (keep ratio)"
 msgstr "A escala (manteniendo las proporciones)"
 
-#: ../src/desktop.c:1907 ../src/desktop.c:1919
+#: ../src/desktop.c:1938 ../src/desktop.c:1950
 msgid "Tiled"
 msgstr "Mosaico"
 
-#: ../src/desktop.c:1925
+#: ../src/desktop.c:1956
 msgid "E_xtend background to all monitors"
 msgstr "E_xtender fondo a todos los monitores"
 
-#: ../src/desktop.c:1953
+#: ../src/desktop.c:1984
 msgid "Layout: "
 msgstr "Disposición:"
 
-#: ../src/desktop.c:1984 ../src/desktop.c:2076
+#: ../src/desktop.c:2015 ../src/desktop.c:2107
 msgid "Monitor: "
 msgstr "Monitor:"
 
-#: ../src/desktop.c:2005
+#: ../src/desktop.c:2036
 msgid "Background color: "
 msgstr "Color de fondo:"
 
-#: ../src/desktop.c:2022
+#: ../src/desktop.c:2053
 msgid "Foreground color: "
 msgstr "Color del primer plano:"
 
-#: ../src/desktop.c:2039
+#: ../src/desktop.c:2070
 msgid "Font: "
 msgstr "Fuente:"
 
-#: ../src/desktop.c:2097
+#: ../src/desktop.c:2128
 msgid "Resolution: "
 msgstr "Resolución:"
 
-#: ../src/desktop.c:2120
+#: ../src/desktop.c:2151
 msgid "Size: "
 msgstr "Tamaño:"
 
-#: ../src/desktop.c:2156
+#: ../src/desktop.c:2187
 msgid "Monitors"
 msgstr "Monitores"
 
-#: ../src/desktop.c:2193
+#: ../src/desktop.c:2224
 msgid "Unknown size"
 msgstr "Tamaño desconocido"
 
-#: ../src/desktop.c:2195
+#: ../src/desktop.c:2226
 #, c-format
 msgid "%dx%d (at %d,%d)"
 msgstr "%dx%d (at %d,%d)"
 
-#: ../src/desktop.c:2200
+#: ../src/desktop.c:2231
 msgid "Unknown resolution"
 msgstr "Resolución desconocida"
 
-#: ../src/desktop.c:2202
+#: ../src/desktop.c:2233
 #, c-format
 msgid "%dx%d mm (%.0fx%.0f DPI)"
 msgstr "%dx%d mm (%.0fx%.0f DPI)"
 
-#: ../src/desktop.c:2228 ../src/desktop.c:2233
+#: ../src/desktop.c:2259 ../src/desktop.c:2264
 msgid "Default monitor"
 msgstr "Monitor predeterminado"
 
-#: ../src/desktop.c:2230 ../src/desktop.c:2235
+#: ../src/desktop.c:2261 ../src/desktop.c:2266
 msgid "Whole screen"
 msgstr "Toda la pantalla"
 
-#: ../src/desktop.c:2241
+#: ../src/desktop.c:2272
 #, c-format
 msgid "Monitor %d"
 msgstr "Monitor %d"
 
-#: ../src/desktop.c:2987
+#: ../src/desktop.c:3018
 #, c-format
 msgid ""
-"Usage: %s [-H|-V][-a|-c|-f|-h|-n][-m monitor][-N][-w]\n"
+"Usage: %s [-H|-V][-w|-W][-a|-c|-f|-h|-n][-m monitor][-N]\n"
 "  -H\tPlace icons horizontally\n"
 "  -V\tPlace icons vertically\n"
+"  -W\tDraw the desktop on the root window\n"
 "  -a\tDisplay the applications registered\n"
 "  -c\tSort the applications registered by category\n"
 "  -f\tDisplay contents of the desktop folder (default)\n"
@@ -609,6 +658,7 @@ msgstr ""
 "Usage: %s [-H|-V][-a|-c|-f|-h|-n][-m monitor][-N][-w]\n"
 "  -H\tOrganizar íconos horizontalmente\n"
 "  -V\tOrganizar íconos verticalmente\n"
+"  -W\tNo mostrar el escritorio como una ventana\n"
 "  -a\tMostrar las aplicaciones registradas\n"
 "  -c\tOrganizar las aplicaciones registradas por categorías\n"
 "  -f\tMostrar contenidos de la carpeta del escritorio (predeterminado)\n"
@@ -635,31 +685,31 @@ msgid ""
 "  -n\tDo not display icons on the desktop\n"
 msgstr ""
 
-#: ../src/desktopicon.c:858 ../src/desktopicon.c:909
+#: ../src/desktopicon.c:860 ../src/desktopicon.c:911
 msgid "_Rename..."
 msgstr "_Cambiar nombre"
 
-#: ../src/desktopicon.c:887 ../src/view.c:162 ../src/window.c:230
+#: ../src/desktopicon.c:889 ../src/view.c:162 ../src/window.c:230
 msgid "_Edit"
 msgstr "_Editar"
 
-#: ../src/desktopicon.c:1182 ../src/desktopicon.c:1183
+#: ../src/desktopicon.c:1184 ../src/desktopicon.c:1185
 msgid "Rename"
 msgstr "Cambiar nombre"
 
-#: ../src/desktopicon.c:1196
+#: ../src/desktopicon.c:1198
 msgid "Rename: "
 msgstr "Cambiar nombre:"
 
-#: ../src/desktopicon.c:1215
+#: ../src/desktopicon.c:1217
 msgid "To: "
 msgstr "A:"
 
-#: ../src/desktopicon.c:1273
+#: ../src/desktopicon.c:1275
 msgid "Are you sure you want to delete "
 msgstr "Está seguro que desea eliminar"
 
-#: ../src/desktopicon.c:1274
+#: ../src/desktopicon.c:1276
 msgid " file(s)?"
 msgstr "archivo(s)?"
 
@@ -889,18 +939,18 @@ msgstr "Etiquetar:"
 msgid "Request diff"
 msgstr "Pedido diff"
 
-#: ../src/plugins/cvs.c:193 ../src/plugins/cvs.c:222 ../src/plugins/git.c:207
+#: ../src/plugins/cvs.c:193 ../src/plugins/cvs.c:222 ../src/plugins/git.c:211
 #: ../src/plugins/subversion.c:184
 msgid "Annotate"
 msgstr "Comentar"
 
-#: ../src/plugins/cvs.c:196 ../src/plugins/cvs.c:225 ../src/plugins/git.c:180
-#: ../src/plugins/git.c:210 ../src/plugins/subversion.c:163
+#: ../src/plugins/cvs.c:196 ../src/plugins/cvs.c:225 ../src/plugins/git.c:184
+#: ../src/plugins/git.c:214 ../src/plugins/subversion.c:163
 #: ../src/plugins/subversion.c:187
 msgid "View log"
 msgstr "Ver log"
 
-#: ../src/plugins/cvs.c:199 ../src/plugins/cvs.c:228 ../src/plugins/git.c:183
+#: ../src/plugins/cvs.c:199 ../src/plugins/cvs.c:228 ../src/plugins/git.c:187
 #: ../src/plugins/subversion.c:166 ../src/plugins/subversion.c:190
 msgid "Status"
 msgstr "Estado"
@@ -914,8 +964,8 @@ msgstr "Actualizar"
 msgid "Delete"
 msgstr "Eliminar"
 
-#: ../src/plugins/cvs.c:208 ../src/plugins/cvs.c:237 ../src/plugins/git.c:195
-#: ../src/plugins/git.c:219 ../src/plugins/subversion.c:172
+#: ../src/plugins/cvs.c:208 ../src/plugins/cvs.c:237 ../src/plugins/git.c:199
+#: ../src/plugins/git.c:223 ../src/plugins/subversion.c:172
 #: ../src/plugins/subversion.c:196
 msgid "Commit"
 msgstr ""
@@ -949,7 +999,7 @@ msgstr "Ruta:"
 msgid "Module: "
 msgstr "Módulo:"
 
-#: ../src/plugins/cvs.c:867 ../src/plugins/git.c:552
+#: ../src/plugins/cvs.c:867 ../src/plugins/git.c:598
 msgid "Could not commit the file or directory"
 msgstr ""
 
@@ -969,64 +1019,64 @@ msgstr "Agregar a favoritos"
 msgid "Remove from bookmarks"
 msgstr "Eliminar de favoritos"
 
-#: ../src/plugins/git.c:112
+#: ../src/plugins/git.c:115
 msgid "Git"
 msgstr "Git"
 
-#: ../src/plugins/git.c:166
+#: ../src/plugins/git.c:169
 msgid "Initialize"
 msgstr "Inicializar"
 
-#: ../src/plugins/git.c:169
+#: ../src/plugins/git.c:172
 msgid "Clone..."
 msgstr "Clonar..."
 
-#: ../src/plugins/git.c:178 ../src/plugins/git.c:205
+#: ../src/plugins/git.c:182 ../src/plugins/git.c:209
 #: ../src/plugins/subversion.c:161 ../src/plugins/subversion.c:182
 msgid "Diff"
 msgstr "Diff"
 
-#: ../src/plugins/git.c:186
+#: ../src/plugins/git.c:190
 msgid "Pull"
 msgstr "Tirar"
 
-#: ../src/plugins/git.c:189
+#: ../src/plugins/git.c:193
 msgid "Push"
 msgstr "Empujar"
 
-#: ../src/plugins/git.c:192 ../src/plugins/git.c:216
+#: ../src/plugins/git.c:196 ../src/plugins/git.c:220
 msgid "Reset"
 msgstr "Reset"
 
-#: ../src/plugins/git.c:213
+#: ../src/plugins/git.c:217
 msgid "Stage"
 msgstr "Fase"
 
-#: ../src/plugins/git.c:332
+#: ../src/plugins/git.c:341
 msgid "Not a Git repository"
 msgstr "No es un repositorio Git"
 
-#: ../src/plugins/git.c:483 ../src/plugins/git.c:664
+#: ../src/plugins/git.c:529 ../src/plugins/git.c:710
 msgid "This file is not managed by Git"
 msgstr "Este archivo no es administrado por Git"
 
-#: ../src/plugins/git.c:516
+#: ../src/plugins/git.c:562
 msgid "Repository cloned successfully"
 msgstr "Repositorio clonado exitosamente"
 
-#: ../src/plugins/git.c:519
+#: ../src/plugins/git.c:565
 msgid "Could not clone repository"
 msgstr "No se pudo clonar repositorio"
 
-#: ../src/plugins/git.c:588
+#: ../src/plugins/git.c:634
 msgid "Could not diff the file or directory"
 msgstr "No se pudo diff el archivo o el directorio"
 
-#: ../src/plugins/git.c:595
+#: ../src/plugins/git.c:641
 msgid "No difference was found"
 msgstr "No se ha encontrado diferencia"
 
-#: ../src/plugins/git.c:626
+#: ../src/plugins/git.c:672
 msgid "Could not initialize repository"
 msgstr "No se ha podido inicializar repositorio"
 
