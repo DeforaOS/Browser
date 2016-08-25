@@ -248,6 +248,7 @@ static gboolean _desktop_on_refresh(gpointer data);
 static void _new_events(Desktop * desktop, GdkWindow * window,
 		GdkEventMask mask);
 static void _new_icons(Desktop * desktop);
+static void _new_window(Desktop * desktop, GdkEventMask * mask);
 static int _on_message(void * data, uint32_t value1, uint32_t value2,
 		uint32_t value3);
 static void _on_popup(gpointer data);
@@ -272,6 +273,7 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 	desktop->prefs.alignment = DESKTOP_ALIGNMENT_VERTICAL;
 	desktop->prefs.icons = DESKTOP_ICONS_FILES;
 	desktop->prefs.monitor = -1;
+	desktop->prefs.window = -1;
 	if(prefs != NULL)
 		desktop->prefs = *prefs;
 	desktop->font = NULL;
@@ -297,35 +299,7 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 			&desktop->window.y, &desktop->window.width,
 			&desktop->window.height, &depth);
 #endif
-	if(desktop->prefs.window)
-	{
-		/* create the desktop window */
-		desktop->desktop = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-		gtk_window_set_default_size(GTK_WINDOW(desktop->desktop),
-				desktop->window.width, desktop->window.height);
-		gtk_window_set_type_hint(GTK_WINDOW(desktop->desktop),
-				GDK_WINDOW_TYPE_HINT_DESKTOP);
-		/* support pop-up menus on the desktop window if enabled */
-		if(desktop->prefs.popup)
-			g_signal_connect_swapped(desktop->desktop, "popup-menu",
-					G_CALLBACK(_on_popup), desktop);
-		/* draw the icons and background when realized */
-		g_signal_connect_swapped(desktop->desktop, "realize",
-				G_CALLBACK(_on_realize), desktop);
-		gtk_window_move(GTK_WINDOW(desktop->desktop), desktop->window.x,
-				desktop->window.y);
-		gtk_widget_show(desktop->desktop);
-	}
-	else
-	{
-		desktop->desktop = NULL;
-		desktop->back = desktop->root;
-		/* draw the icons and background when idle */
-		desktop_reset(desktop);
-		/* support pop-up menus on the root window if enabled */
-		if(desktop->prefs.popup)
-			mask |= GDK_BUTTON_PRESS_MASK;
-	}
+	_new_window(desktop, &mask);
 	/* manage events on the root window */
 	_new_events(desktop, desktop->root, mask);
 	/* load the default icons */
@@ -361,6 +335,49 @@ static void _new_icons(Desktop * desktop)
 	for(p = folder; *p != NULL && desktop->folder == NULL; p++)
 		desktop->folder = gtk_icon_theme_load_icon(desktop->theme, *p,
 				DESKTOPICON_ICON_SIZE, 0, NULL);
+}
+
+static void _new_window(Desktop * desktop, GdkEventMask * mask)
+{
+	Config * config;
+	String const * p;
+
+	if(desktop->prefs.window < 0
+			&& (config = _desktop_get_config(desktop)) != NULL)
+	{
+		if((p = config_get(config, "background", "window")) != NULL)
+			desktop->prefs.window = strtol(p, NULL, 10);
+		config_delete(config);
+	}
+	if(desktop->prefs.window > 0)
+	{
+		/* create the desktop window */
+		desktop->desktop = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+		gtk_window_set_default_size(GTK_WINDOW(desktop->desktop),
+				desktop->window.width, desktop->window.height);
+		gtk_window_set_type_hint(GTK_WINDOW(desktop->desktop),
+				GDK_WINDOW_TYPE_HINT_DESKTOP);
+		/* support pop-up menus on the desktop window if enabled */
+		if(desktop->prefs.popup)
+			g_signal_connect_swapped(desktop->desktop, "popup-menu",
+					G_CALLBACK(_on_popup), desktop);
+		/* draw the icons and background when realized */
+		g_signal_connect_swapped(desktop->desktop, "realize",
+				G_CALLBACK(_on_realize), desktop);
+		gtk_window_move(GTK_WINDOW(desktop->desktop), desktop->window.x,
+				desktop->window.y);
+		gtk_widget_show(desktop->desktop);
+	}
+	else
+	{
+		desktop->desktop = NULL;
+		desktop->back = desktop->root;
+		/* draw the icons and background when idle */
+		desktop_reset(desktop);
+		/* support pop-up menus on the root window if enabled */
+		if(desktop->prefs.popup)
+			*mask |= GDK_BUTTON_PRESS_MASK;
+	}
 }
 
 static int _on_message(void * data, uint32_t value1, uint32_t value2,
@@ -2998,9 +3015,10 @@ static int _error(char const * message, int ret)
 /* usage */
 static int _usage(void)
 {
-	fprintf(stderr, _("Usage: %s [-H|-V][-a|-c|-f|-h|-n][-m monitor][-N][-w]\n"
+	fprintf(stderr, _("Usage: %s [-H|-V][-w|-W][-a|-c|-f|-h|-n][-m monitor][-N]\n"
 "  -H	Place icons horizontally\n"
 "  -V	Place icons vertically\n"
+"  -W	Draw the desktop on the root window\n"
 "  -a	Display the applications registered\n"
 "  -c	Sort the applications registered by category\n"
 "  -f	Display contents of the desktop folder (default)\n"
@@ -3029,9 +3047,9 @@ int main(int argc, char * argv[])
 	prefs.icons = -1;
 	prefs.monitor = -1;
 	prefs.popup = 1;
-	prefs.window = 0;
+	prefs.window = -1;
 	gtk_init(&argc, &argv);
-	while((o = getopt(argc, argv, "HVacfhm:nNw")) != -1)
+	while((o = getopt(argc, argv, "HVWacfhm:nNw")) != -1)
 		switch(o)
 		{
 			case 'H':
@@ -3039,6 +3057,9 @@ int main(int argc, char * argv[])
 				break;
 			case 'V':
 				prefs.alignment = DESKTOP_ALIGNMENT_VERTICAL;
+				break;
+			case 'W':
+				prefs.window = 0;
 				break;
 			case 'a':
 				prefs.icons = DESKTOP_ICONS_APPLICATIONS;
