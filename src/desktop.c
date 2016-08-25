@@ -2954,7 +2954,9 @@ static int _refresh_loop_files(Desktop * desktop)
 {
 	struct dirent * de;
 	String * p;
+	gchar * q;
 	DesktopIcon * desktopicon;
+	GError * error = NULL;
 
 	while((de = browser_vfs_readdir(desktop->refresh_dir)) != NULL)
 	{
@@ -2976,8 +2978,18 @@ static int _refresh_loop_files(Desktop * desktop)
 	if((p = string_new_append(desktop->path, "/", de->d_name, NULL))
 			== NULL)
 		return -_desktop_serror(desktop, de->d_name, 1);
-	if((desktopicon = desktopicon_new(desktop, de->d_name, p)) != NULL)
+	/* XXX not relative to the current folder */
+	if((q = g_filename_to_utf8(de->d_name, -1, NULL, NULL, &error)) != NULL)
+		desktopicon = desktopicon_new(desktop, q, p);
+	else
+	{
+		desktop_error(NULL, error->message, 1);
+		g_error_free(error);
+		desktopicon = desktopicon_new(desktop, de->d_name, p);
+	}
+	if(desktopicon != NULL)
 		desktop_icon_add(desktop, desktopicon);
+	g_free(q);
 	string_delete(p);
 	return 0;
 }
