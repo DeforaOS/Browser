@@ -46,21 +46,26 @@
 #include "../config.h"
 #define _(string) gettext(string)
 
-#define PROGNAME "desktop"
 #define COMMON_DND
 #define COMMON_EXEC
 #include "common.c"
 
 
 /* constants */
+#ifndef PROGNAME
+# define PROGNAME		"desktop"
+#endif
+#ifndef PROGNAME_DELETE
+# define PROGNAME_DELETE	"delete"
+#endif
 #ifndef PREFIX
-# define PREFIX		"/usr/local"
+# define PREFIX			"/usr/local"
 #endif
 #ifndef BINDIR
-# define BINDIR		PREFIX "/bin"
+# define BINDIR			PREFIX "/bin"
 #endif
 #ifndef DATADIR
-# define DATADIR	PREFIX "/share"
+# define DATADIR		PREFIX "/share"
 #endif
 
 
@@ -1284,8 +1289,8 @@ static void _on_icon_delete(gpointer data)
 	{
 		/* FIXME check if needs UTF-8 conversion */
 		selection = g_list_append(selection, desktopicon->path);
-		if(_common_exec("delete", "-ir", selection) != 0)
-			desktop_error(desktopicon->desktop, "delete",
+		if(_common_exec(PROGNAME_DELETE, "-ir", selection) != 0)
+			desktop_error(desktopicon->desktop, PROGNAME_DELETE,
 					strerror(errno), 1);
 		g_list_free(selection);
 	}
