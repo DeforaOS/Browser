@@ -217,6 +217,7 @@ static const char * _desktop_icons[DESKTOP_ICONS_COUNT] =
 /* prototypes */
 static int _desktop_error(Desktop * desktop, char const * message,
 		char const * error, int ret);
+static int _desktop_perror(Desktop * desktop, char const * message, int ret);
 static int _desktop_serror(Desktop * desktop, char const * message, int ret);
 
 /* accessors */
@@ -492,7 +493,7 @@ static void _on_popup_new_folder(gpointer data)
 		return;
 	}
 	if(mkdir(path, 0777) != 0)
-		desktop_error(desktop, path, 0);
+		_desktop_perror(desktop, path, 0);
 	string_delete(path);
 }
 
@@ -512,7 +513,7 @@ static void _on_popup_new_text_file(gpointer data)
 		return;
 	}
 	if((fd = creat(path, 0666)) < 0)
-		desktop_error(desktop, path, 0);
+		_desktop_perror(desktop, path, 0);
 	else
 		close(fd);
 	string_delete(path);
@@ -539,7 +540,7 @@ static void _on_popup_symlink(gpointer data)
 	Desktop * desktop = data;
 
 	if(_common_symlink(NULL, desktop->path) != 0)
-		desktop_error(desktop, "symlink", 0);
+		_desktop_perror(desktop, desktop->path, 0);
 }
 
 static void _on_realize(gpointer data)
@@ -872,7 +873,7 @@ static int _icons_files(Desktop * desktop)
 	_icons_files_add_home(desktop);
 	desktop->path_cnt = strlen(desktop->home) + 1 + sizeof(path);
 	if((desktop->path = malloc(desktop->path_cnt)) == NULL)
-		return -desktop_error(NULL, "malloc", 1);
+		return -_desktop_perror(NULL, NULL, 1);
 	snprintf(desktop->path, desktop->path_cnt, "%s/%s", desktop->home,
 			path);
 	if(stat(desktop->path, &st) == 0)
@@ -882,7 +883,7 @@ static int _icons_files(Desktop * desktop)
 					strerror(ENOTDIR), 1);
 	}
 	else if(errno != ENOENT || mkdir(desktop->path, 0777) != 0)
-		return desktop_error(NULL, desktop->path, 1);
+		return _desktop_perror(NULL, desktop->path, 1);
 	return 0;
 }
 
@@ -1028,10 +1029,10 @@ int desktop_set_layout(Desktop * desktop, DesktopLayout layout)
 
 /* useful */
 /* desktop_error */
-int desktop_error(Desktop * desktop, char const * message, int ret)
+int desktop_error(Desktop * desktop, char const * message, char const * error,
+		int ret)
 {
-	/* FIXME no longer assume errno is properly set */
-	return _desktop_error(desktop, message, strerror(errno), ret);
+	return _desktop_error(desktop, message, error, ret);
 }
 
 
@@ -1080,7 +1081,7 @@ static void _refresh_files(Desktop * desktop)
 	if((desktop->refresh_dir = browser_vfs_opendir(desktop->path, &st))
 			== NULL)
 	{
-		desktop_error(NULL, desktop->path, 1);
+		_desktop_perror(NULL, desktop->path, 1);
 		desktop->refresh_source = 0;
 		return;
 	}
@@ -1380,11 +1381,14 @@ static int _desktop_error(Desktop * desktop, char const * message,
 	if(desktop == NULL)
 		return _error_text(message, error, ret);
 	dialog = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_ERROR,
-			GTK_BUTTONS_CLOSE, "%s",
+			GTK_BUTTONS_CLOSE, "%s%s%s",
+			(message != NULL) ? message : "",
+			(message != NULL && error != NULL) ? ": " : "",
 #if GTK_CHECK_VERSION(2, 6, 0)
 			_("Error"));
 	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
-			"%s: %s", message,
+			"%s%s%s", (message != NULL) ? message : "",
+			(message != NULL && error != NULL) ? ": " : "",
 #endif
 			error);
 	gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
@@ -1407,6 +1411,13 @@ static int _error_text(char const * message, char const * error, int ret)
 			(message != NULL) ? message : "",
 			(message != NULL) ? ": " : "", error);
 	return ret;
+}
+
+
+/* desktop_perror */
+static int _desktop_perror(Desktop * desktop, char const * message, int ret)
+{
+	return _desktop_error(desktop, message, strerror(errno), ret);
 }
 
 
@@ -1721,7 +1732,7 @@ static void _background_monitor(Desktop * desktop, char const * filename,
 	}
 	if(error != NULL)
 	{
-		desktop_error(desktop, error->message, 1);
+		desktop_error(desktop, NULL, error->message, 1);
 		g_error_free(error);
 	}
 }
@@ -1745,7 +1756,7 @@ static int _desktop_icon_add(Desktop * desktop, DesktopIcon * icon)
 
 	if((p = realloc(desktop->icon, sizeof(*p) * (desktop->icon_cnt + 1)))
 			== NULL)
-		return -desktop_error(desktop, desktopicon_get_name(icon), 1);
+		return -_desktop_perror(desktop, desktopicon_get_name(icon), 1);
 	desktop->icon = p;
 	desktop->icon[desktop->icon_cnt++] = icon;
 	desktopicon_set_background(icon, &desktop->background);
@@ -2746,7 +2757,7 @@ static gboolean _refresh_done_timeout(gpointer data)
 	if(desktop->path == NULL)
 		return FALSE;
 	if(stat(desktop->path, &st) != 0)
-		return desktop_error(NULL, desktop->path, FALSE);
+		return _desktop_perror(NULL, desktop->path, FALSE);
 	if(st.st_mtime == desktop->refresh_mti)
 		return TRUE;
 	desktop_refresh(desktop);
@@ -2802,7 +2813,7 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 #endif
 	{
 		if(errno != ENOENT)
-			desktop_error(NULL, apppath, 1);
+			_desktop_perror(NULL, apppath, 1);
 		return;
 	}
 	if(st.st_mtime > desktop->refresh_mti)
@@ -2821,7 +2832,7 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 			continue;
 		if((p = realloc(name, strlen(apppath) + len + 2)) == NULL)
 		{
-			desktop_error(NULL, apppath, 1);
+			_desktop_perror(NULL, apppath, 1);
 			continue;
 		}
 		name = p;
@@ -2837,7 +2848,7 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 			config_reset(config);
 		if(config == NULL || config_load(config, name) != 0)
 		{
-			desktop_error(NULL, NULL, 1); /* XXX */
+			_desktop_serror(NULL, NULL, 1);
 			continue;
 		}
 		q = config_get(config, section, "Name");
@@ -2871,7 +2882,7 @@ static void _refresh_loop_categories_xdg(Desktop * desktop,
 		path = "/usr/local/share:/usr/share";
 	if((p = strdup(path)) == NULL)
 	{
-		desktop_error(NULL, "strdup", 1);
+		_desktop_perror(NULL, NULL, 1);
 		return;
 	}
 	for(i = 0, j = 0;; i++)
@@ -2914,7 +2925,7 @@ static void _refresh_loop_categories_xdg_home(Desktop * desktop,
 	len = strlen(homedir) + 1 + sizeof(fallback);
 	if((p = malloc(len)) == NULL)
 	{
-		desktop_error(NULL, homedir, 1);
+		_desktop_perror(NULL, homedir, 1);
 		return;
 	}
 	snprintf(p, len, "%s/%s", homedir, fallback);
@@ -2930,7 +2941,7 @@ static void _refresh_loop_categories_xdg_path(Desktop * desktop,
 	char * apppath;
 
 	if((apppath = string_new_append(path, applications, NULL)) == NULL)
-		desktop_error(NULL, path, 1);
+		_desktop_serror(NULL, path, 1);
 	callback(desktop, path, apppath);
 	string_delete(apppath);
 }
@@ -2983,7 +2994,7 @@ static int _refresh_loop_files(Desktop * desktop)
 		desktopicon = desktopicon_new(desktop, q, p);
 	else
 	{
-		desktop_error(NULL, error->message, 1);
+		desktop_error(NULL, NULL, error->message, 1);
 		g_error_free(error);
 		desktopicon = desktopicon_new(desktop, de->d_name, p);
 	}

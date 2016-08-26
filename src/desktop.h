@@ -77,7 +77,8 @@ void desktop_set_icons(Desktop * desktop, DesktopIcons icons);
 int desktop_set_layout(Desktop * desktop, DesktopLayout layout);
 
 /* useful */
-int desktop_error(Desktop * desktop, char const * message, int ret);
+int desktop_error(Desktop * desktop, char const * message, char const * error,
+		int ret);
 
 void desktop_refresh(Desktop * desktop);
 void desktop_reset(Desktop * desktop);
