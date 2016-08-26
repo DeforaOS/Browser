@@ -286,7 +286,7 @@ static int _common_symlink(GtkWidget * window, char const * cur)
 		newsymlink = _("New symbolic link");
 	len = strlen(cur) + strlen(newsymlink) + 2;
 	if((path = malloc(len)) == NULL)
-		return 1;
+		return -1;
 	snprintf(path, len, "%s/%s", cur, newsymlink);
 	dialog = gtk_dialog_new_with_buttons(newsymlink,
 			(window != NULL) ? GTK_WINDOW(window) : NULL,
@@ -315,7 +315,7 @@ static int _common_symlink(GtkWidget * window, char const * cur)
 	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_OK)
 		to = gtk_entry_get_text(GTK_ENTRY(widget));
 	if(to != NULL && strlen(to) > 0 && symlink(to, path) != 0)
-		ret = 1;
+		ret = -1;
 	gtk_widget_destroy(dialog);
 	free(path);
 	return ret;
