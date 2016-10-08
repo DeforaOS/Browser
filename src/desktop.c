@@ -1912,6 +1912,7 @@ static void _preferences_background(Desktop * desktop, GtkWidget * notebook)
 	gtk_file_filter_add_mime_type(filter, "image/pbm");
 	gtk_file_filter_add_mime_type(filter, "image/png");
 	gtk_file_filter_add_mime_type(filter, "image/svg+xml");
+	gtk_file_filter_add_mime_type(filter, "image/xpm");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(desktop->pr_background),
 			filter);
 	filter = gtk_file_filter_new();
