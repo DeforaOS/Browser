@@ -33,19 +33,11 @@
 # define BROWSER_DESKTOPICON_H
 
 # include <gtk/gtk.h>
-# include "desktop.h"
+# include "common.h"
 
 
 /* DesktopIcon */
 /* types */
-# ifndef Desktop
-#  define Desktop Desktop
-typedef struct _Desktop Desktop;
-# endif
-# ifndef DesktopIcon
-#  define DesktopIcon DesktopIcon
-typedef struct _DesktopIcon DesktopIcon;
-# endif
 typedef void (*DesktopIconCallback)(Desktop * desktop, gpointer data);
 
 
@@ -68,12 +60,15 @@ void desktopicon_delete(DesktopIcon * desktopicon);
 
 /* accessors */
 gboolean desktopicon_get_first(DesktopIcon * desktopicon);
+GtkWidget * desktopicon_get_image(DesktopIcon * desktopicon);
 gboolean desktopicon_get_immutable(DesktopIcon * desktopicon);
 gboolean desktopicon_get_isdir(DesktopIcon * desktopicon);
+GtkWidget * desktopicon_get_label(DesktopIcon * desktopicon);
 char const * desktopicon_get_name(DesktopIcon * desktopicon);
 char const * desktopicon_get_path(DesktopIcon * desktopicon);
 gboolean desktopicon_get_selected(DesktopIcon * desktopicon);
 gboolean desktopicon_get_updated(DesktopIcon * desktopicon);
+GtkWidget * desktopicon_get_widget(DesktopIcon * desktopicon);
 
 # if GTK_CHECK_VERSION(3, 0, 0)
 void desktopicon_set_background(DesktopIcon * desktopicon, GdkRGBA * color);
@@ -96,9 +91,5 @@ void desktopicon_set_icon(DesktopIcon * desktopicon, GdkPixbuf * icon);
 void desktopicon_set_immutable(DesktopIcon * desktopicon, gboolean immutable);
 void desktopicon_set_selected(DesktopIcon * desktopicon, gboolean selected);
 void desktopicon_set_updated(DesktopIcon * desktopicon, gboolean updated);
-
-/* useful */
-void desktopicon_move(DesktopIcon * desktopicon, int x, int y);
-void desktopicon_show(DesktopIcon * desktopicon);
 
 #endif /* !BROWSER_DESKTOPICON_H */
