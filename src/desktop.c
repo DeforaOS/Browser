@@ -350,7 +350,11 @@ static void _new_window(Desktop * desktop, GdkEventMask * mask)
 			desktop->prefs.window = strtol(p, NULL, 10);
 		config_delete(config);
 	}
+#if GTK_CHECK_VERSION(3, 0, 0)
+	if(desktop->prefs.window != 0)
+#else
 	if(desktop->prefs.window > 0)
+#endif
 	{
 		/* create the desktop window */
 		desktop->desktop = gtk_window_new(GTK_WINDOW_TOPLEVEL);
