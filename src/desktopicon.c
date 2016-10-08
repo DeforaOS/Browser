@@ -55,6 +55,9 @@
 #ifndef PROGNAME
 # define PROGNAME		"desktop"
 #endif
+#ifndef PROGNAME_BROWSER
+# define PROGNAME_BROWSER	"browser"
+#endif
 #ifndef PROGNAME_DELETE
 # define PROGNAME_DELETE	"delete"
 #endif
@@ -945,7 +948,8 @@ static void _on_icon_open(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
 	Mime * mime;
-	char * argv[] = { BINDIR "/browser", "browser", "--", NULL, NULL };
+	char * argv[] = { BINDIR "/" PROGNAME_BROWSER, PROGNAME_BROWSER, "--",
+		NULL, NULL };
 	const unsigned int flags = G_SPAWN_FILE_AND_ARGV_ZERO;
 	GError * error = NULL;
 
@@ -1098,8 +1102,9 @@ static void _run_directory(DesktopIcon * desktopicon)
 	const char section[] = "Desktop Entry";
 	char const * directory;
 	/* XXX open with the default file manager instead */
-	char * argv[] = { "browser", "--", NULL, NULL };
-	const unsigned int flags = G_SPAWN_SEARCH_PATH;
+	char * argv[] = { BINDIR "/" PROGNAME_BROWSER, PROGNAME_BROWSER, "--",
+		NULL, NULL };
+	const unsigned int flags = G_SPAWN_FILE_AND_ARGV_ZERO;
 	GError * error = NULL;
 
 	/* XXX this may not might the correct key */
