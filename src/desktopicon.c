@@ -61,6 +61,9 @@
 #ifndef PROGNAME_DELETE
 # define PROGNAME_DELETE	"delete"
 #endif
+#ifndef PROGNAME_HTMLAPP
+# define PROGNAME_HTMLAPP	"htmlapp"
+#endif
 #ifndef PREFIX
 # define PREFIX			"/usr/local"
 #endif
@@ -1127,7 +1130,7 @@ static void _run_url(DesktopIcon * desktopicon)
 	const char section[] = "Desktop Entry";
 	char const * url;
 	/* XXX open with the default web browser instead */
-	char * argv[] = { "htmlapp", "--", NULL, NULL };
+	char * argv[] = { PROGNAME_HTMLAPP, "--", NULL, NULL };
 	const unsigned int flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
 
