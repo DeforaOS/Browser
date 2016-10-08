@@ -2312,6 +2312,7 @@ static void _on_preferences_response(GtkWidget * widget, gint response,
 		gpointer data)
 {
 	Desktop * desktop = data;
+	(void) widget;
 
 	if(response == GTK_RESPONSE_OK)
 		_on_preferences_response_ok(desktop);
