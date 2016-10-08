@@ -393,6 +393,7 @@ static int _on_message(void * data, uint32_t value1, uint32_t value2,
 	DesktopAlignment alignment;
 	DesktopIcons icons;
 	DesktopLayout layout;
+	(void) value3;
 
 	switch((message = value1))
 	{
