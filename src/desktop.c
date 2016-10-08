@@ -829,7 +829,7 @@ static int _icons_applications(Desktop * desktop)
 	if(desktop->category == NULL)
 		return 0;
 	if((desktopicon = desktopicon_new(desktop, _("Back"), NULL)) == NULL)
-		return -_desktop_serror(desktop, "Back", 1);
+		return -_desktop_serror(desktop, _("Back"), 1);
 	desktopicon_set_callback(desktopicon, _icons_set_categories, NULL);
 	desktopicon_set_first(desktopicon, TRUE);
 	desktopicon_set_immutable(desktopicon, TRUE);
@@ -852,7 +852,7 @@ static int _icons_categories(Desktop * desktop)
 
 	desktop->category = NULL;
 	if((desktopicon = desktopicon_new(desktop, _("Back"), NULL)) == NULL)
-		return -_desktop_serror(desktop, "Back", 1);
+		return -_desktop_serror(desktop, _("Back"), 1);
 	desktopicon_set_callback(desktopicon, _icons_set_homescreen, NULL);
 	desktopicon_set_first(desktopicon, TRUE);
 	desktopicon_set_immutable(desktopicon, TRUE);
@@ -899,7 +899,7 @@ static int _icons_files_add_home(Desktop * desktop)
 
 	if((desktopicon = desktopicon_new(desktop, _("Home"), desktop->home))
 			== NULL)
-		return -_desktop_serror(desktop, "Home", 1);
+		return -_desktop_serror(desktop, _("Home"), 1);
 	desktopicon_set_first(desktopicon, TRUE);
 	desktopicon_set_immutable(desktopicon, TRUE);
 	icon = gtk_icon_theme_load_icon(desktop->theme, "gnome-home",
@@ -935,7 +935,7 @@ static int _icons_homescreen(Desktop * desktop)
 
 	if((desktopicon = desktopicon_new(desktop, _("Applications"), NULL))
 			== NULL)
-		return _desktop_serror(desktop, "Applications", 1);
+		return _desktop_serror(desktop, _("Applications"), 1);
 	desktopicon_set_callback(desktopicon, _icons_set_categories, NULL);
 	desktopicon_set_immutable(desktopicon, TRUE);
 	icon = gtk_icon_theme_load_icon(desktop->theme, "gnome-applications",
