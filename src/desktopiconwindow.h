@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011-2016 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2016 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,59 +29,22 @@
 
 
 
-#ifndef BROWSER_DESKTOP_H
-# define BROWSER_DESKTOP_H
+#ifndef BROWSER_DESKTOPICONWINDOW_H
+# define BROWSER_DESKTOPICONWINDOW_H
 
-# include <gtk/gtk.h>
-# include <Desktop.h>
-# include "../include/Browser.h"
 # include "common.h"
 
 
-/* Desktop */
-/* types */
-typedef struct _DesktopPrefs
-{
-	int alignment;
-	int icons;
-	int monitor;
-	int popup;
-	int window;
-} DesktopPrefs;
-
-
+/* DesktopIconWindow */
 /* functions */
-Desktop * desktop_new(DesktopPrefs * prefs);
-void desktop_delete(Desktop * desktop);
+DesktopIconWindow * desktopiconwindow_new(DesktopIcon * icon);
+void desktopiconwindow_delete(DesktopIconWindow * window);
 
 /* accessors */
-/* XXX most of these accessors expose internal structures somehow */
-int desktop_get_drag_data(Desktop * desktop, GtkSelectionData * seldata);
-GdkPixbuf * desktop_get_file(Desktop * desktop);
-GdkPixbuf * desktop_get_folder(Desktop * desktop);
-Mime * desktop_get_mime(Desktop * desktop);
-GtkIconTheme * desktop_get_theme(Desktop * desktop);
-
-void desktop_set_alignment(Desktop * desktop, DesktopAlignment alignment);
-void desktop_set_icons(Desktop * desktop, DesktopIcons icons);
-int desktop_set_layout(Desktop * desktop, DesktopLayout layout);
+DesktopIcon * desktopiconwindow_get_icon(DesktopIconWindow * window);
 
 /* useful */
-int desktop_error(Desktop * desktop, char const * message, char const * error,
-		int ret);
+void desktopiconwindow_move(DesktopIconWindow * window, int x, int y);
+void desktopiconwindow_show(DesktopIconWindow * window);
 
-void desktop_refresh(Desktop * desktop);
-void desktop_reset(Desktop * desktop);
-
-void desktop_icon_add(Desktop * desktop, DesktopIcon * icon);
-void desktop_icon_remove(Desktop * desktop, DesktopIcon * icon);
-
-void desktop_icons_align(Desktop * desktop);
-void desktop_icons_sort(Desktop * desktop);
-
-void desktop_select_all(Desktop * desktop);
-void desktop_select_above(Desktop * desktop, DesktopIcon * icon);
-void desktop_select_under(Desktop * desktop, DesktopIcon * icon);
-void desktop_unselect_all(Desktop * desktop);
-
-#endif /* !BROWSER_DESKTOP_H */
+#endif /* !BROWSER_DESKTOPICONWINDOW_H */
