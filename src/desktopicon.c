@@ -106,6 +106,12 @@ struct _DesktopIcon
 };
 
 
+/* constants */
+static const char _desktop_type_application[] = "Application";
+static const char _desktop_type_directory[] = "Directory";
+static const char _desktop_type_url[] = "URL";
+
+
 /* prototypes */
 static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 		char const * name);
@@ -236,9 +242,9 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
 			|| ((p = config_get(config, section, "Hidden")) != NULL
 				&& strcmp(p, "true") == 0)
 			|| (p = config_get(config, section, "Type")) == NULL
-			|| (strcmp(p, "Application") != 0
-				&& strcmp(p, "Directory") != 0
-				&& strcmp(p, "URL") != 0)
+			|| (strcmp(p, _desktop_type_application) != 0
+				&& strcmp(p, _desktop_type_directory) != 0
+				&& strcmp(p, _desktop_type_url) != 0)
 			|| (name = config_get(config, section, "Name")) == NULL
 			|| ((p = config_get(config, section, "NoDisplay"))
 				!= NULL && strcmp(p, "true") == 0)
@@ -904,11 +910,11 @@ static void _on_icon_run(gpointer data)
 		_run_binary(desktopicon);
 	else if((p = config_get(desktopicon->config, section, "Type")) == NULL)
 		return;
-	else if(strcmp(p, "Application") == 0)
+	else if(strcmp(p, _desktop_type_application) == 0)
 		_run_application(desktopicon);
-	else if(strcmp(p, "Directory") == 0)
+	else if(strcmp(p, _desktop_type_directory) == 0)
 		_run_directory(desktopicon);
-	else if(strcmp(p, "URL") == 0)
+	else if(strcmp(p, _desktop_type_url) == 0)
 		_run_url(desktopicon);
 }
 
@@ -1029,7 +1035,8 @@ static void _run_url(DesktopIcon * desktopicon)
 	const unsigned int flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
 
-	if((url = config_get(desktopicon->config, section, "URL")) == NULL)
+	if((url = config_get(desktopicon->config, section, _desktop_type_url))
+			== NULL)
 		return;
 	if((argv[2] = strdup(url)) == NULL)
 		desktop_error(desktopicon->desktop, NULL, strerror(errno), 1);
