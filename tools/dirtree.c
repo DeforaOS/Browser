@@ -42,13 +42,16 @@
 #include "../config.h"
 
 #ifndef PROGNAME
-# define PROGNAME	"dirtree"
+# define PROGNAME		"dirtree"
+#endif
+#ifndef PROGNAME_BROWSER
+# define PROGNAME_BROWSER	"browser"
 #endif
 #ifndef PREFIX
-# define PREFIX	"/usr/local"
+# define PREFIX			"/usr/local"
 #endif
 #ifndef BINDIR
-# define BINDIR	PREFIX "/bin"
+# define BINDIR			PREFIX "/bin"
 #endif
 
 
@@ -225,7 +228,7 @@ static void _on_dirtree_default(GtkTreeView * view, GtkTreePath * path,
 		else if(pid != 0)
 			return;
 	}
-	execl(BINDIR "/browser", "browser", location, NULL);
+	execl(BINDIR "/" PROGNAME_BROWSER, PROGNAME_BROWSER, location, NULL);
 	perror(PROGNAME_BROWSER);
 }
 
