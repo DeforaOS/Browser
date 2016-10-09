@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Browser 0.4.13\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-09 03:29+0200\n"
+"POT-Creation-Date: 2016-10-09 03:43+0200\n"
 "PO-Revision-Date: 2010-03-29 23:28+0200\n"
 "Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
 "Language-Team: German\n"
@@ -17,9 +17,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: ../src/browser/browser.c:221 ../src/desktop/desktop.c:835
-#: ../src/desktop/desktop.c:836 ../src/desktop/desktop.c:858
-#: ../src/desktop/desktop.c:859
+#: ../src/browser/browser.c:221 ../src/desktop/desktop.c:832
+#: ../src/desktop/desktop.c:833 ../src/desktop/desktop.c:855
+#: ../src/desktop/desktop.c:856
 msgid "Back"
 msgstr "Zurück"
 
@@ -35,8 +35,8 @@ msgstr "Vor"
 msgid "Refresh"
 msgstr "Aktualisieren"
 
-#: ../src/browser/browser.c:229 ../src/desktop/desktop.c:904
-#: ../src/desktop/desktop.c:906
+#: ../src/browser/browser.c:229 ../src/desktop/desktop.c:901
+#: ../src/desktop/desktop.c:903
 msgid "Home"
 msgstr "Persönlicher Ordner"
 
@@ -70,7 +70,7 @@ msgid "Details"
 msgstr ""
 
 #: ../src/browser/browser.c:382 ../src/browser/browser.c:1983
-#: ../src/browser/browser.c:1991 ../src/desktop/desktop.c:2134
+#: ../src/browser/browser.c:1991 ../src/desktop/desktop.c:2131
 msgid "Icons"
 msgstr ""
 
@@ -89,7 +89,7 @@ msgid " Location: "
 msgstr " Standort: "
 
 #: ../src/browser/browser.c:745 ../src/browser/browser.c:749
-#: ../src/desktop/desktop.c:1422 ../src/desktop/desktop.c:1428
+#: ../src/desktop/desktop.c:1419 ../src/desktop/desktop.c:1425
 #: ../src/copy.c:849 ../src/copy.c:853 ../src/delete.c:459 ../src/delete.c:464
 #: ../src/move.c:491 ../src/move.c:495 ../src/properties.c:372
 #: ../src/properties.c:376 ../src/view.c:443 ../src/view.c:448
@@ -114,7 +114,7 @@ msgstr ""
 msgid "Shell scripts"
 msgstr ""
 
-#: ../src/browser/browser.c:1132 ../src/desktop/desktop.c:1953
+#: ../src/browser/browser.c:1132 ../src/desktop/desktop.c:1950
 #: ../src/view.c:521
 msgid "All files"
 msgstr "Alle Dateien"
@@ -266,19 +266,19 @@ msgid "New"
 msgstr "Neu"
 
 #: ../src/browser/browser.c:3527 ../src/browser/browser.c:3531
-#: ../src/desktop/desktop.c:448
+#: ../src/desktop/desktop.c:445
 msgid "Folder"
 msgstr "Ordner"
 
-#: ../src/browser/browser.c:3538 ../src/desktop/desktop.c:456
+#: ../src/browser/browser.c:3538 ../src/desktop/desktop.c:453
 msgid "Symbolic link..."
 msgstr ""
 
-#: ../src/browser/browser.c:3542 ../src/desktop/desktop.c:460
+#: ../src/browser/browser.c:3542 ../src/desktop/desktop.c:457
 msgid "Text file"
 msgstr "Text Datei"
 
-#: ../src/browser/browser.c:3577 ../src/desktop/desktop.c:509
+#: ../src/browser/browser.c:3577 ../src/desktop/desktop.c:506
 msgid "New text file.txt"
 msgstr "Neu text Datei.txt"
 
@@ -290,7 +290,7 @@ msgstr "Aktualisierung..."
 msgid "File manager"
 msgstr ""
 
-#: ../src/browser/callbacks.c:153 ../src/desktop/desktop.c:490
+#: ../src/browser/callbacks.c:153 ../src/desktop/desktop.c:487
 msgid "New folder"
 msgstr "Neu Ordner"
 
@@ -415,206 +415,189 @@ msgstr "_Ansicht"
 msgid "_Help"
 msgstr "_Hilfe"
 
-#: ../src/desktop/desktop.c:179
+#: ../src/desktop/desktop.c:176
 msgid "Audio"
 msgstr ""
 
-#: ../src/desktop/desktop.c:180
+#: ../src/desktop/desktop.c:177
 msgid "Development"
 msgstr "Entwicklung"
 
-#: ../src/desktop/desktop.c:181
+#: ../src/desktop/desktop.c:178
 msgid "Education"
 msgstr ""
 
-#: ../src/desktop/desktop.c:182
+#: ../src/desktop/desktop.c:179
 msgid "Games"
 msgstr "Spiele"
 
-#: ../src/desktop/desktop.c:183
+#: ../src/desktop/desktop.c:180
 msgid "Graphics"
 msgstr ""
 
-#: ../src/desktop/desktop.c:184
+#: ../src/desktop/desktop.c:181
 msgid "Multimedia"
 msgstr ""
 
-#: ../src/desktop/desktop.c:185
+#: ../src/desktop/desktop.c:182
 msgid "Network"
 msgstr "Netzwerk"
 
-#: ../src/desktop/desktop.c:186
+#: ../src/desktop/desktop.c:183
 msgid "Office"
 msgstr ""
 
-#: ../src/desktop/desktop.c:187
+#: ../src/desktop/desktop.c:184
 msgid "Settings"
 msgstr "Einstellungen"
 
-#: ../src/desktop/desktop.c:188
+#: ../src/desktop/desktop.c:185
 msgid "System"
 msgstr ""
 
-#: ../src/desktop/desktop.c:189
+#: ../src/desktop/desktop.c:186
 msgid "Utilities"
 msgstr ""
 
-#: ../src/desktop/desktop.c:190
+#: ../src/desktop/desktop.c:187
 msgid "Video"
 msgstr ""
 
-#: ../src/desktop/desktop.c:211
+#: ../src/desktop/desktop.c:208
 msgid "Do not draw icons"
 msgstr ""
 
-#: ../src/desktop/desktop.c:212 ../src/desktop/desktop.c:940
-#: ../src/desktop/desktop.c:942
+#: ../src/desktop/desktop.c:209 ../src/desktop/desktop.c:937
+#: ../src/desktop/desktop.c:939
 msgid "Applications"
 msgstr "Applikationen"
 
-#: ../src/desktop/desktop.c:213
+#: ../src/desktop/desktop.c:210
 msgid "Categories"
 msgstr ""
 
-#: ../src/desktop/desktop.c:214
+#: ../src/desktop/desktop.c:211
 msgid "Desktop contents"
 msgstr "Desktop inhalt"
 
-#: ../src/desktop/desktop.c:215
+#: ../src/desktop/desktop.c:212
 msgid "Home screen"
 msgstr ""
 
-#: ../src/desktop/desktop.c:1479
+#: ../src/desktop/desktop.c:1476
 msgid "Could not load preferences"
 msgstr ""
 
-#: ../src/desktop/desktop.c:1866
+#: ../src/desktop/desktop.c:1863
 msgid "Desktop preferences"
 msgstr "Desktop Einstellungen"
 
-#: ../src/desktop/desktop.c:1915
+#: ../src/desktop/desktop.c:1912
 msgid "Default color: "
 msgstr ""
 
-#: ../src/desktop/desktop.c:1931
+#: ../src/desktop/desktop.c:1928
 msgid "Wallpaper: "
 msgstr ""
 
-#: ../src/desktop/desktop.c:1939 ../src/desktop/desktop.c:2011
+#: ../src/desktop/desktop.c:1936 ../src/desktop/desktop.c:2008
 msgid "Background"
 msgstr "Hintergrund"
 
-#: ../src/desktop/desktop.c:1942
+#: ../src/desktop/desktop.c:1939
 msgid "Picture files"
 msgstr "Bilder"
 
-#: ../src/desktop/desktop.c:1969
+#: ../src/desktop/desktop.c:1966
 msgid "Position: "
 msgstr "Position: "
 
-#: ../src/desktop/desktop.c:1980 ../src/desktop/desktop.c:1993
+#: ../src/desktop/desktop.c:1977 ../src/desktop/desktop.c:1990
 msgid "Do not draw"
 msgstr "Nicht zeigen"
 
-#: ../src/desktop/desktop.c:1982 ../src/desktop/desktop.c:1995
+#: ../src/desktop/desktop.c:1979 ../src/desktop/desktop.c:1992
 msgid "Centered"
 msgstr ""
 
-#: ../src/desktop/desktop.c:1984 ../src/desktop/desktop.c:1997
+#: ../src/desktop/desktop.c:1981 ../src/desktop/desktop.c:1994
 msgid "Scaled"
 msgstr ""
 
-#: ../src/desktop/desktop.c:1987 ../src/desktop/desktop.c:1999
+#: ../src/desktop/desktop.c:1984 ../src/desktop/desktop.c:1996
 msgid "Scaled (keep ratio)"
 msgstr ""
 
-#: ../src/desktop/desktop.c:1989 ../src/desktop/desktop.c:2001
+#: ../src/desktop/desktop.c:1986 ../src/desktop/desktop.c:1998
 msgid "Tiled"
 msgstr ""
 
-#: ../src/desktop/desktop.c:2007
+#: ../src/desktop/desktop.c:2004
 msgid "E_xtend background to all monitors"
 msgstr ""
 
-#: ../src/desktop/desktop.c:2035
+#: ../src/desktop/desktop.c:2032
 msgid "Layout: "
 msgstr ""
 
-#: ../src/desktop/desktop.c:2066 ../src/desktop/desktop.c:2158
+#: ../src/desktop/desktop.c:2063 ../src/desktop/desktop.c:2155
 msgid "Monitor: "
 msgstr "Bildschirm: "
 
-#: ../src/desktop/desktop.c:2087
+#: ../src/desktop/desktop.c:2084
 msgid "Background color: "
 msgstr ""
 
-#: ../src/desktop/desktop.c:2104
+#: ../src/desktop/desktop.c:2101
 msgid "Foreground color: "
 msgstr ""
 
-#: ../src/desktop/desktop.c:2121
+#: ../src/desktop/desktop.c:2118
 msgid "Font: "
 msgstr ""
 
-#: ../src/desktop/desktop.c:2179
+#: ../src/desktop/desktop.c:2176
 msgid "Resolution: "
 msgstr "Auflösung: "
 
-#: ../src/desktop/desktop.c:2202
+#: ../src/desktop/desktop.c:2199
 msgid "Size: "
 msgstr "Größe: "
 
-#: ../src/desktop/desktop.c:2238
+#: ../src/desktop/desktop.c:2235
 msgid "Monitors"
 msgstr "Bildschirme"
 
-#: ../src/desktop/desktop.c:2275
+#: ../src/desktop/desktop.c:2272
 msgid "Unknown size"
 msgstr "Unbekannte Größe"
 
-#: ../src/desktop/desktop.c:2277
+#: ../src/desktop/desktop.c:2274
 #, c-format
 msgid "%dx%d (at %d,%d)"
 msgstr ""
 
-#: ../src/desktop/desktop.c:2282
+#: ../src/desktop/desktop.c:2279
 msgid "Unknown resolution"
 msgstr "Unbekannte Auflösung"
 
-#: ../src/desktop/desktop.c:2284
+#: ../src/desktop/desktop.c:2281
 #, c-format
 msgid "%dx%d mm (%.0fx%.0f DPI)"
 msgstr ""
 
-#: ../src/desktop/desktop.c:2310 ../src/desktop/desktop.c:2315
+#: ../src/desktop/desktop.c:2307 ../src/desktop/desktop.c:2312
 msgid "Default monitor"
 msgstr ""
 
-#: ../src/desktop/desktop.c:2312 ../src/desktop/desktop.c:2317
+#: ../src/desktop/desktop.c:2309 ../src/desktop/desktop.c:2314
 msgid "Whole screen"
 msgstr ""
 
-#: ../src/desktop/desktop.c:2323
+#: ../src/desktop/desktop.c:2320
 #, c-format
 msgid "Monitor %d"
 msgstr "Bildschirm %d"
-
-#: ../src/desktop/desktop.c:3091
-#, c-format
-msgid ""
-"Usage: %s [-H|-V][-w|-W][-a|-c|-f|-h|-n][-m monitor][-N]\n"
-"  -H\tPlace icons horizontally\n"
-"  -V\tPlace icons vertically\n"
-"  -W\tDraw the desktop on the root window\n"
-"  -a\tDisplay the applications registered\n"
-"  -c\tSort the applications registered by category\n"
-"  -f\tDisplay contents of the desktop folder (default)\n"
-"  -h\tDisplay the homescreen\n"
-"  -m\tMonitor where to display the desktop\n"
-"  -n\tDo not display icons on the desktop\n"
-"  -N\tDo not intercept mouse clicks on the desktop\n"
-"  -w\tDraw the desktop as a window\n"
-msgstr ""
 
 #: ../src/desktop/desktopctl.c:85
 msgid ""
@@ -656,6 +639,23 @@ msgstr "Wollen Sie wirklich "
 #: ../src/desktop/desktopicon.c:1194
 msgid " file(s)?"
 msgstr " Datei(en) löschen?"
+
+#: ../src/desktop/main.c:77
+#, c-format
+msgid ""
+"Usage: %s [-H|-V][-w|-W][-a|-c|-f|-h|-n][-m monitor][-N]\n"
+"  -H\tPlace icons horizontally\n"
+"  -V\tPlace icons vertically\n"
+"  -W\tDraw the desktop on the root window\n"
+"  -a\tDisplay the applications registered\n"
+"  -c\tSort the applications registered by category\n"
+"  -f\tDisplay contents of the desktop folder (default)\n"
+"  -h\tDisplay the homescreen\n"
+"  -m\tMonitor where to display the desktop\n"
+"  -n\tDo not display icons on the desktop\n"
+"  -N\tDo not intercept mouse clicks on the desktop\n"
+"  -w\tDraw the desktop as a window\n"
+msgstr ""
 
 #: ../src/common.c:125
 msgid "copying"
