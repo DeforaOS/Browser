@@ -228,7 +228,8 @@ static void _on_dirtree_default(GtkTreeView * view, GtkTreePath * path,
 		else if(pid != 0)
 			return;
 	}
-	execl(BINDIR "/" PROGNAME_BROWSER, PROGNAME_BROWSER, location, NULL);
+	execl(BINDIR "/" PROGNAME_BROWSER, PROGNAME_BROWSER, "--", location,
+			NULL);
 	perror(PROGNAME_BROWSER);
 }
 
