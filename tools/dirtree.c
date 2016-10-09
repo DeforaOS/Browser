@@ -48,8 +48,8 @@
 /* dirtree */
 /* types */
 typedef int Prefs;
-#define PREFS_p		01
-#define PREFS_u		02
+#define PREFS_p		0x1
+#define PREFS_u		0x2
 
 
 /* variables */
