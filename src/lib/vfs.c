@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <libgen.h>
-#include "../include/Browser/vfs.h"
+#include "../../include/Browser/vfs.h"
 
 
 /* public */

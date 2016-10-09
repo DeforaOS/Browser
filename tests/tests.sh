@@ -54,7 +54,7 @@ _run()
 	echo -n "$test:" 1>&2
 	(echo
 	echo "Testing: $OBJDIR$test" "$@"
-	LD_LIBRARY_PATH="$OBJDIR../src" "$OBJDIR$test" "$@") >> "$target" 2>&1
+	LD_LIBRARY_PATH="$OBJDIR../src/lib" "$OBJDIR$test" "$@") >> "$target" 2>&1
 	res=$?
 	if [ $res -ne 0 ]; then
 		echo " FAIL (error $res)"
