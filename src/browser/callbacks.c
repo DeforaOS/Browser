@@ -49,7 +49,7 @@
 #include <libintl.h>
 #include "callbacks.h"
 #include "browser.h"
-#include "../config.h"
+#include "../../config.h"
 #define _(string) gettext(string)
 
 /* constants */
@@ -57,7 +57,7 @@
 # define PROGNAME "browser"
 #endif
 #define COMMON_SYMLINK
-#include "common.c"
+#include "../common.c"
 
 
 /* public */

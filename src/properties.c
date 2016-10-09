@@ -42,7 +42,7 @@
 #include <System.h>
 #include "../include/Browser/vfs.h"
 #define Browser Properties /* XXX */
-#include "browser.h"
+#include "browser/browser.h"
 #include "../config.h"
 #define _(string) gettext(string)
 #define N_(string) (string)

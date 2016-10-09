@@ -35,7 +35,7 @@
 #include <Desktop.h>
 #include "callbacks.h"
 #include "window.h"
-#include "../config.h"
+#include "../../config.h"
 #define _(string) gettext(string)
 #define N_(string) (string)
 

@@ -45,7 +45,7 @@ static char const _license[] =
 #include <Desktop.h>
 #include "../include/Browser/vfs.h"
 #define Browser View /* XXX */
-#include "browser.h"
+#include "browser/browser.h"
 #include "../config.h"
 #define _(string) gettext(string)
 #define N_(string) (string)

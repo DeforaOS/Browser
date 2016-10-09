@@ -32,18 +32,18 @@
 #include <gtk/gtk.h>
 #include <System.h>
 #include <Desktop.h>
-#include "../browser.h"
-#include "../callbacks.h"
+#include "../browser/browser.h"
+#include "../browser/callbacks.h"
 
-#include "../browser.c"
+#include "../browser/browser.c"
 /* XXX */
 #undef COMMON_CONFIG_FILENAME
 #undef COMMON_DND
 #undef COMMON_EXEC
 #undef COMMON_GET_ABSOLUTE_PATH
 #undef COMMON_SIZE
-#include "../callbacks.c"
-#include "../window.c"
+#include "../browser/callbacks.c"
+#include "../browser/window.c"
 
 
 /* BrowserWidget */

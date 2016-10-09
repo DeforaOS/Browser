@@ -36,7 +36,7 @@
 #include <locale.h>
 #include <libintl.h>
 #include "window.h"
-#include "../config.h"
+#include "../../config.h"
 #define _(string) gettext(string)
 
 /* constants */

@@ -36,7 +36,7 @@
 # include <gtk/gtk.h>
 # include <System.h>
 # include <Desktop.h>
-# include "../include/Browser.h"
+# include "../../include/Browser.h"
 
 
 /* Browser */

@@ -51,7 +51,7 @@ static char const _license[] =
 #include "callbacks.h"
 #include "window.h"
 #include "browser.h"
-#include "../config.h"
+#include "../../config.h"
 #define _(string) gettext(string)
 #define N_(string) (string)
 
@@ -60,7 +60,7 @@ static char const _license[] =
 #define COMMON_EXEC
 #define COMMON_GET_ABSOLUTE_PATH
 #define COMMON_SIZE
-#include "common.c"
+#include "../common.c"
 
 /* constants */
 #ifndef PROGNAME
