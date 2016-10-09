@@ -40,16 +40,16 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 #include <System.h>
-#include "../include/Browser/desktop.h"
-#include "../include/Browser/vfs.h"
+#include "../../include/Browser/desktop.h"
+#include "../../include/Browser/vfs.h"
 #include "desktop.h"
 #include "desktopicon.h"
-#include "../config.h"
+#include "../../config.h"
 #define _(string) gettext(string)
 
 #define COMMON_DND
 #define COMMON_EXEC
-#include "common.c"
+#include "../common.c"
 
 
 /* constants */

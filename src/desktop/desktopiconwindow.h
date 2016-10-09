@@ -32,7 +32,7 @@
 #ifndef BROWSER_DESKTOPICONWINDOW_H
 # define BROWSER_DESKTOPICONWINDOW_H
 
-# include "common.h"
+# include "../common.h"
 
 
 /* DesktopIconWindow */

@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011-2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2011-2016 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -36,8 +36,8 @@
 #include <libintl.h>
 #include <gtk/gtk.h>
 #include <Desktop.h>
-#include "../include/Browser/desktop.h"
-#include "../config.h"
+#include "../../include/Browser/desktop.h"
+#include "../../config.h"
 #define _(string) gettext(string)
 
 /* constants */

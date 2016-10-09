@@ -50,17 +50,17 @@
 #include <X11/Xatom.h>
 #include <X11/extensions/Xrandr.h>
 #include <System.h>
-#include "../include/Browser/desktop.h"
-#include "../include/Browser/vfs.h"
+#include "../../include/Browser/desktop.h"
+#include "../../include/Browser/vfs.h"
 #include "desktopicon.h"
 #include "desktopiconwindow.h"
 #include "desktop.h"
-#include "../config.h"
+#include "../../config.h"
 #define _(string) gettext(string)
 #define N_(string) string
 
 #define COMMON_SYMLINK
-#include "common.c"
+#include "../common.c"
 
 
 /* constants */

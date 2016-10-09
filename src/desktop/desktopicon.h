@@ -33,7 +33,7 @@
 # define BROWSER_DESKTOPICON_H
 
 # include <gtk/gtk.h>
-# include "common.h"
+# include "../common.h"
 
 
 /* DesktopIcon */

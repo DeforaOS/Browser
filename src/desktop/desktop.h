@@ -34,8 +34,8 @@
 
 # include <gtk/gtk.h>
 # include <Desktop.h>
-# include "../include/Browser.h"
-# include "common.h"
+# include "../../include/Browser.h"
+# include "../common.h"
 
 
 /* Desktop */
