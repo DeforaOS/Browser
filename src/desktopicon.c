@@ -695,6 +695,7 @@ static gboolean _on_icon_button_press(GtkWidget * widget,
 	DesktopIcon * desktopicon = data;
 	GtkWidget * menu;
 	GtkWidget * menuitem;
+	(void) widget;
 
 	if(event->state & GDK_CONTROL_MASK)
 		desktopicon_set_selected(desktopicon, !desktopicon_get_selected(
@@ -894,7 +895,7 @@ static void _on_icon_edit(gpointer data)
 /* on_icon_run */
 static void _run_application(DesktopIcon * desktopicon);
 static void _run_binary(DesktopIcon * desktopicon);
-static gboolean _run_confirm(DesktopIcon * desktopicon);
+static gboolean _run_confirm(void);
 static void _run_directory(DesktopIcon * desktopicon);
 static void _run_url(DesktopIcon * desktopicon);
 
@@ -904,7 +905,7 @@ static void _on_icon_run(gpointer data)
 	const char section[] = "Desktop Entry";
 	char const * p;
 
-	if(desktopicon->confirm != FALSE && _run_confirm(desktopicon) != TRUE)
+	if(desktopicon->confirm != FALSE && _run_confirm() != TRUE)
 		return;
 	if(desktopicon->config == NULL)
 		_run_binary(desktopicon);
@@ -982,7 +983,7 @@ static void _run_binary(DesktopIcon * desktopicon)
 	}
 }
 
-static gboolean _run_confirm(DesktopIcon * desktopicon)
+static gboolean _run_confirm(void)
 {
 	GtkWidget * dialog;
 	int res;
@@ -1231,6 +1232,7 @@ static gboolean _on_icon_key_press(GtkWidget * widget, GdkEventKey * event,
 	/* FIXME handle shift and control */
 {
 	DesktopIcon * desktopicon = data;
+	(void) widget;
 
 	if(event->type != GDK_KEY_PRESS)
 		return FALSE;
@@ -1256,6 +1258,10 @@ static void _on_icon_drag_data_get(GtkWidget * widget, GdkDragContext * context,
 		gpointer data)
 {
 	DesktopIcon * desktopicon = data;
+	(void) widget;
+	(void) context;
+	(void) info;
+	(void) time;
 
 	desktop_get_drag_data(desktopicon->desktop, seldata);
 }
@@ -1268,6 +1274,11 @@ static void _on_icon_drag_data_received(GtkWidget * widget,
 		gpointer data)
 {
 	DesktopIcon * desktopicon = data;
+	(void) widget;
+	(void) x;
+	(void) y;
+	(void) info;
+	(void) time;
 
 	if(_common_drag_data_received(context, seldata, desktopicon->path) != 0)
 		desktop_error(desktopicon->desktop, NULL, strerror(errno), 1);
