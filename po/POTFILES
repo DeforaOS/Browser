@@ -5,6 +5,7 @@
 ../src/desktop/desktop.c
 ../src/desktop/desktopctl.c
 ../src/desktop/desktopicon.c
+../src/desktop/main.c
 ../src/common.c
 ../src/copy.c
 ../src/delete.c

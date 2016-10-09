@@ -73,9 +73,6 @@
 #ifndef DATADIR
 # define DATADIR	PREFIX "/share"
 #endif
-#ifndef LOCALEDIR
-# define LOCALEDIR	DATADIR "/locale"
-#endif
 
 
 /* Desktop */
@@ -3072,105 +3069,5 @@ static int _refresh_loop_lookup(Desktop * desktop, char const * name)
 		desktopicon_set_updated(icon, TRUE);
 		return 1;
 	}
-	return 0;
-}
-
-
-/* error */
-static int _error(char const * message, int ret)
-{
-	fputs(PROGNAME ": ", stderr);
-	perror(message);
-	return ret;
-}
-
-
-/* usage */
-static int _usage(void)
-{
-	fprintf(stderr, _("Usage: %s [-H|-V][-w|-W][-a|-c|-f|-h|-n][-m monitor][-N]\n"
-"  -H	Place icons horizontally\n"
-"  -V	Place icons vertically\n"
-"  -W	Draw the desktop on the root window\n"
-"  -a	Display the applications registered\n"
-"  -c	Sort the applications registered by category\n"
-"  -f	Display contents of the desktop folder (default)\n"
-"  -h	Display the homescreen\n"
-"  -m	Monitor where to display the desktop\n"
-"  -n	Do not display icons on the desktop\n"
-"  -N	Do not intercept mouse clicks on the desktop\n"
-"  -w	Draw the desktop as a window\n"), PROGNAME);
-	return 1;
-}
-
-
-/* main */
-int main(int argc, char * argv[])
-{
-	int o;
-	Desktop * desktop;
-	DesktopPrefs prefs;
-	char * p;
-
-	if(setlocale(LC_ALL, "") == NULL)
-		_error("setlocale", 1);
-	bindtextdomain(PACKAGE, LOCALEDIR);
-	textdomain(PACKAGE);
-	prefs.alignment = -1;
-	prefs.icons = -1;
-	prefs.monitor = -1;
-	prefs.popup = 1;
-	prefs.window = -1;
-	gtk_init(&argc, &argv);
-	while((o = getopt(argc, argv, "HVWacfhm:nNw")) != -1)
-		switch(o)
-		{
-			case 'H':
-				prefs.alignment = DESKTOP_ALIGNMENT_HORIZONTAL;
-				break;
-			case 'V':
-				prefs.alignment = DESKTOP_ALIGNMENT_VERTICAL;
-				break;
-			case 'W':
-				prefs.window = 0;
-				break;
-			case 'a':
-				prefs.icons = DESKTOP_ICONS_APPLICATIONS;
-				break;
-			case 'c':
-				prefs.icons = DESKTOP_ICONS_CATEGORIES;
-				break;
-			case 'f':
-				prefs.icons = DESKTOP_ICONS_FILES;
-				break;
-			case 'h':
-				prefs.icons = DESKTOP_ICONS_HOMESCREEN;
-				break;
-			case 'm':
-				prefs.monitor = strtol(optarg, &p, 0);
-				if(optarg[0] == '\0' || *p != '\0')
-					return _usage();
-				break;
-			case 'n':
-				prefs.icons = DESKTOP_ICONS_NONE;
-				break;
-			case 'N':
-				prefs.popup = 0;
-				break;
-			case 'w':
-				prefs.window = 1;
-				break;
-			default:
-				return _usage();
-		}
-	if(optind < argc)
-		return _usage();
-	if((desktop = desktop_new(&prefs)) == NULL)
-	{
-		gtk_main();
-		return 2;
-	}
-	gtk_main();
-	desktop_delete(desktop);
 	return 0;
 }
