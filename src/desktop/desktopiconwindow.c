@@ -189,7 +189,8 @@ static void _desktopiconwindow_update_transparency(DesktopIconWindow * window)
 	gdk_draw_drawable(mask, gc, iconmask, 0, 0, (width - iwidth) / 2,
 			(DESKTOPICON_ICON_SIZE - iheight) / 2, -1, -1);
 	gdk_gc_set_foreground(gc, &white);
-	gtk_widget_size_request(desktopicon->label, &req);
+	widget = desktopicon_get_label(icon);
+	gtk_widget_size_request(widget, &req);
 # ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\") label is %dx%d\n", __func__,
 			desktopicon->name, req.width, req.height);
@@ -198,7 +199,8 @@ static void _desktopiconwindow_update_transparency(DesktopIconWindow * window)
 	gdk_draw_rectangle(mask, gc, TRUE, (width - req.width - 8) / 2,
 			offset /* + ((height - offset - req.height - 8)
 				/ 2) */, req.width + 8, req.height + 8);
-	gtk_widget_shape_combine_mask(desktopicon->widget, mask, 0, 0);
+	widget = desktopicon_get_widget(icon);
+	gtk_widget_shape_combine_mask(widget, mask, 0, 0);
 	g_object_unref(gc);
 	g_object_unref(iconmask);
 	g_object_unref(mask);
