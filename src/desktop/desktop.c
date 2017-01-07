@@ -675,7 +675,7 @@ int desktop_get_drag_data(Desktop * desktop, GtkSelectionData * seldata)
 	seldata->format = 0;
 	seldata->data = NULL;
 	seldata->length = 0;
-	for(i = 0; i < desktop->icon_cnt; i++)
+	for(i = 0; i < desktop->icons_cnt; i++)
 	{
 		icon = desktopiconwindow_get_icon(desktop->icons[i]);
 		if(desktopicon_get_selected(icon) != TRUE)
