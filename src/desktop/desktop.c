@@ -2490,7 +2490,9 @@ static void _on_preferences_update_preview(gpointer data)
 #endif
 		if(error != NULL)
 		{
+#ifdef DEBUG
 			_desktop_error(NULL, NULL, error->message, 1);
+#endif
 			g_error_free(error);
 		}
 		if(pixbuf != NULL)
