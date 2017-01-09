@@ -117,6 +117,7 @@ static const char _desktop_type_url[] = "URL";
 static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 		char const * name);
 
+/* accessors */
 static void _desktopicon_set_icon(DesktopIcon * desktopicon, GdkPixbuf * icon);
 static int _desktopicon_set_name(DesktopIcon * desktopicon, char const * name);
 
@@ -649,6 +650,7 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 }
 
 
+/* accessors */
 /* desktopicon_set_icon */
 static void _desktopicon_set_icon(DesktopIcon * desktopicon, GdkPixbuf * icon)
 {
