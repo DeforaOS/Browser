@@ -100,6 +100,7 @@ struct _DesktopIcon
 	gboolean selected;
 	gboolean updated;		/* XXX for desktop refresh */
 
+	GtkWidget * window;		/* XXX for transparency */
 	GtkWidget * image;
 	GtkWidget * event;
 	GtkWidget * label;
@@ -118,6 +119,9 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 
 static void _desktopicon_set_icon(DesktopIcon * desktopicon, GdkPixbuf * icon);
 static int _desktopicon_set_name(DesktopIcon * desktopicon, char const * name);
+
+/* useful */
+static void _desktopicon_update_transparency(DesktopIcon * desktopicon);
 
 /* callbacks */
 static gboolean _on_icon_button_press(GtkWidget * widget,
@@ -529,9 +533,7 @@ void desktopicon_set_foreground(DesktopIcon * desktopicon, GdkColor * color)
 void desktopicon_set_icon(DesktopIcon * desktopicon, GdkPixbuf * icon)
 {
 	_desktopicon_set_icon(desktopicon, icon);
-#if 0
 	_desktopicon_update_transparency(desktopicon);
-#endif
 }
 
 
@@ -547,9 +549,7 @@ int desktopicon_set_name(DesktopIcon * desktopicon, char const * name)
 {
 	if(_desktopicon_set_name(desktopicon, name) != 0)
 		return 1;
-#if 0
 	_desktopicon_update_transparency(desktopicon);
-#endif
 	return 0;
 }
 
@@ -580,6 +580,15 @@ void desktopicon_set_updated(DesktopIcon * desktopicon, gboolean updated)
 }
 
 
+/* desktopicon_set_window */
+void desktopicon_set_window(DesktopIcon * desktopicon, GtkWidget * window)
+{
+	desktopicon->window = window;
+	if(window != NULL)
+		_desktopicon_update_transparency(desktopicon);
+}
+
+
 /* private */
 /* desktopicon_new_do */
 static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
@@ -595,6 +604,7 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 	desktopicon->confirm = TRUE;
 	desktopicon->updated = TRUE;
 	/* widget */
+	desktopicon->window = NULL;
 #if GTK_CHECK_VERSION(3, 0, 0)
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
 #else
@@ -634,9 +644,7 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 	else
 		_desktopicon_set_icon(desktopicon, image);
 	_desktopicon_set_name(desktopicon, name);
-#if 0
 	_desktopicon_update_transparency(desktopicon);
-#endif
 	return desktopicon;
 }
 
@@ -676,6 +684,69 @@ static int _desktopicon_set_name(DesktopIcon * desktopicon, char const * name)
 	desktopicon->name = p;
 	gtk_label_set_text(GTK_LABEL(desktopicon->label), p);
 	return 0;
+}
+
+
+/* useful */
+/* desktopicon_update_transparency */
+static void _desktopicon_update_transparency(DesktopIcon * desktopicon)
+{
+	GdkPixbuf * pixbuf;
+	int width;
+	int height;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	GdkRGBA black = { 0.0, 0.0, 0.0, 1.0 };
+	GdkRGBA white = { 1.0, 1.0, 1.0, 1.0 };
+#else
+	int iwidth;
+	int iheight;
+	GdkBitmap * mask;
+	GdkBitmap * iconmask;
+	GdkGC * gc;
+	GdkColor black = { 0, 0, 0, 0 };
+	GdkColor white = { 0xffffffff, 0xffff, 0xffff, 0xffff };
+	int offset;
+#endif
+	GtkRequisition req;
+
+	if(desktopicon->window == NULL)
+		return;
+	if((pixbuf = gtk_image_get_pixbuf(GTK_IMAGE(desktopicon->image)))
+			== NULL)
+		return; /* XXX report error */
+	gtk_window_get_size(GTK_WINDOW(desktopicon->window), &width, &height);
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\") window is %dx%d\n", __func__,
+			desktopicon->name, width, height);
+#endif
+#if GTK_CHECK_VERSION(3, 0, 0)
+	/* FIXME re-implement */
+	gtk_widget_get_preferred_size(desktopicon->label, NULL, &req);
+#else
+	iwidth = gdk_pixbuf_get_width(pixbuf);
+	iheight = gdk_pixbuf_get_height(pixbuf);
+	mask = gdk_pixmap_new(NULL, width, height, 1);
+	gdk_pixbuf_render_pixmap_and_mask(pixbuf, NULL, &iconmask, 255);
+	gc = gdk_gc_new(mask);
+	gdk_gc_set_foreground(gc, &black);
+	gdk_draw_rectangle(mask, gc, TRUE, 0, 0, width, height);
+	gdk_draw_drawable(mask, gc, iconmask, 0, 0, (width - iwidth) / 2,
+			(DESKTOPICON_ICON_SIZE - iheight) / 2, -1, -1);
+	gdk_gc_set_foreground(gc, &white);
+	gtk_widget_size_request(desktopicon->label, &req);
+# ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\") label is %dx%d\n", __func__,
+			desktopicon->name, req.width, req.height);
+# endif
+	offset = DESKTOPICON_ICON_SIZE + 4;
+	gdk_draw_rectangle(mask, gc, TRUE, (width - req.width - 8) / 2,
+			offset /* + ((height - offset - req.height - 8)
+				/ 2) */, req.width + 8, req.height + 8);
+	gtk_widget_shape_combine_mask(desktopicon->window, mask, 0, 0);
+	g_object_unref(gc);
+	g_object_unref(iconmask);
+	g_object_unref(mask);
+#endif
 }
 
 

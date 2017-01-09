@@ -91,5 +91,6 @@ void desktopicon_set_icon(DesktopIcon * desktopicon, GdkPixbuf * icon);
 void desktopicon_set_immutable(DesktopIcon * desktopicon, gboolean immutable);
 void desktopicon_set_selected(DesktopIcon * desktopicon, gboolean selected);
 void desktopicon_set_updated(DesktopIcon * desktopicon, gboolean updated);
+void desktopicon_set_window(DesktopIcon * desktopicon, GtkWidget * window);
 
 #endif /* !BROWSER_DESKTOPICON_H */
