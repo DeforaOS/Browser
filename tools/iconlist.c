@@ -81,9 +81,10 @@ static int _iconlist_list(GtkIconTheme * icontheme)
 		return 1;
 	for(p = list; p != NULL; p = p->next)
 	{
-		printf("%s:", (char*)p->data);
-		if((sizes = gtk_icon_theme_get_icon_sizes(icontheme, p->data))
-				== NULL)
+		printf("%s:", (char *)p->data);
+		sizes = gtk_icon_theme_get_icon_sizes(icontheme, p->data);
+		g_free(p->data);
+		if(sizes == NULL)
 		{
 			puts(" unknown");
 			continue;
@@ -93,7 +94,6 @@ static int _iconlist_list(GtkIconTheme * icontheme)
 		putchar('\n');
 		g_free(sizes);
 	}
-	g_list_foreach(list, (GFunc)g_free, NULL);
 	g_list_free(list);
 	return 0;
 }
