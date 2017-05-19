@@ -94,7 +94,7 @@ static int _iconlist_list(GtkIconTheme * icontheme)
 		g_free(sizes);
 	}
 	g_list_foreach(list, (GFunc)g_free, NULL);
-	g_free(list);
+	g_list_free(list);
 	return 0;
 }
 
@@ -206,7 +206,7 @@ static void _do_iconview(GtkWidget * iconview, GtkIconTheme * icontheme)
 				COL_NAME, p->data, COL_PIXBUF, pixbuf, -1);
 		g_free(p->data);
 	}
-	g_free(list);
+	g_list_free(list);
 }
 
 
