@@ -102,7 +102,7 @@ static int _delete_filename_error(Delete * delete, char const * filename,
 static void _delete_refresh(Delete * delete, char const * filename);
 /* callbacks */
 static void _delete_on_cancel(gpointer data);
-static void _delete_on_closex(gpointer data);
+static gboolean _delete_on_closex(gpointer data);
 static gboolean _delete_idle(gpointer data);
 
 static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
@@ -126,7 +126,7 @@ static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 	delete.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_resizable(GTK_WINDOW(delete.window), FALSE);
 	gtk_window_set_title(GTK_WINDOW(delete.window), _("Delete file(s)"));
-	g_signal_connect(G_OBJECT(delete.window), "delete-event", G_CALLBACK(
+	g_signal_connect_swapped(delete.window, "delete-event", G_CALLBACK(
 			_delete_on_closex), &delete);
 #if GTK_CHECK_VERSION(3, 0, 0)
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
@@ -171,7 +171,7 @@ static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 	hbox = gtk_hbox_new(FALSE, 4);
 #endif
 	widget = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-	g_signal_connect(G_OBJECT(widget), "clicked", G_CALLBACK(
+	g_signal_connect_swapped(widget, "clicked", G_CALLBACK(
 				_delete_on_cancel), &delete);
 	gtk_box_pack_end(GTK_BOX(hbox), widget, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
@@ -219,11 +219,12 @@ static void _delete_on_cancel(gpointer data)
 	gtk_main_quit();
 }
 
-static void _delete_on_closex(gpointer data)
+static gboolean _delete_on_closex(gpointer data)
 {
 	Delete * delete = data;
 
 	_delete_on_cancel(delete);
+	return FALSE;
 }
 
 static int _idle_do(Delete * delete);
