@@ -636,6 +636,8 @@ static gboolean _channel_out(Copy * copy, GIOChannel * source)
 static gboolean _channel_out_error(Copy * copy, GIOChannel * source,
 		GError * error)
 {
+	(void) source;
+
 	_copy_filename_error(copy, copy->filev[copy->cur], 0);
 	g_error_free(error);
 	gtk_main_quit(); /* XXX ugly */
