@@ -68,22 +68,37 @@ typedef int Prefs;
 
 typedef struct _DeleteDir DeleteDir;
 
+typedef enum _DeleteMode
+{
+	DM_COUNT = 0,
+	DM_DELETE
+} DeleteMode;
+
 typedef struct _Delete
 {
+	DeleteMode mode;
+
 	Prefs * prefs;
 	unsigned int filec;
 	char ** filev;
 	unsigned int file_cur;
+
+	size_t count_cnt;
+	size_t count_cur;
+	struct timeval count_tv;
 
 	struct dirent * de;
 	DeleteDir ** dirv;
 	size_t dirv_cnt;
 
 	/* widgets */
-	guint source;
+	guint idle;
+	guint timeout;
 
 	GtkWidget * window;
 	GtkWidget * label;
+	GtkWidget * hbox;
+	GtkWidget * entry;
 	GtkWidget * progress;
 } Delete;
 
@@ -98,14 +113,16 @@ static int _delete_error(Delete * delete, char const * message, int ret);
 static int _delete_filename_error(Delete * delete, char const * filename,
 		int ret);
 
+static void _delete_refresh(Delete * delete, char const * filename);
+
 
 /* functions */
 /* delete */
-static void _delete_refresh(Delete * delete, char const * filename);
 /* callbacks */
 static void _delete_on_cancel(gpointer data);
 static gboolean _delete_on_closex(gpointer data);
 static gboolean _delete_idle(gpointer data);
+static gboolean _delete_timeout(gpointer data);
 
 static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 {
@@ -117,10 +134,13 @@ static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 
 	if(filec < 1 || filev == NULL)
 		return 1;
+	delete.mode = DM_COUNT;
 	delete.prefs = prefs;
 	delete.filec = filec;
 	delete.filev = filev;
 	delete.file_cur = 0;
+	delete.count_cnt = 0;
+	delete.count_cur = 0;
 	delete.de = NULL;
 	delete.dirv = NULL;
 	delete.dirv_cnt = 0;
@@ -135,13 +155,23 @@ static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 #else
 	vbox = gtk_vbox_new(FALSE, 4);
 #endif
+	/* counter */
+	delete.label = gtk_label_new(_("Counting files..."));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(delete.label, "halign", GTK_ALIGN_START, NULL);
+#else
+	gtk_misc_set_alignment(GTK_MISC(delete.label), 0.0, 0.5);
+#endif
+	gtk_box_pack_start(GTK_BOX(vbox), delete.label, FALSE, TRUE, 0);
 	/* current argument */
 #if GTK_CHECK_VERSION(3, 0, 0)
-	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+	delete.hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
 #else
-	hbox = gtk_hbox_new(FALSE, 4);
+	delete.hbox = gtk_hbox_new(FALSE, 4);
 #endif
-	widget = gtk_label_new(_("Deleting: "));
+	hbox = delete.hbox;
+	gtk_widget_set_no_show_all(hbox, TRUE);
+	widget = gtk_label_new(_("File: "));
 	bold = pango_font_description_new();
 	pango_font_description_set_weight(bold, PANGO_WEIGHT_BOLD);
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -150,18 +180,12 @@ static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_widget_modify_font(widget, bold);
 #endif
 	pango_font_description_free(bold);
+	gtk_widget_show(widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
-	delete.label = gtk_label_new("");
-#if GTK_CHECK_VERSION(2, 6, 0)
-	gtk_label_set_ellipsize(GTK_LABEL(delete.label), PANGO_ELLIPSIZE_END);
-	gtk_label_set_width_chars(GTK_LABEL(delete.label), 25);
-#endif
-#if GTK_CHECK_VERSION(3, 0, 0)
-	g_object_set(delete.label, "halign", GTK_ALIGN_START, NULL);
-#else
-	gtk_misc_set_alignment(GTK_MISC(delete.label), 0.0, 0.5);
-#endif
-	gtk_box_pack_start(GTK_BOX(hbox), delete.label, TRUE, TRUE, 0);
+	delete.entry = gtk_entry_new();
+	gtk_editable_set_editable(GTK_EDITABLE(delete.entry), FALSE);
+	gtk_widget_show(delete.entry);
+	gtk_box_pack_start(GTK_BOX(hbox), delete.entry, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 	/* progress bar */
 	delete.progress = gtk_progress_bar_new();
@@ -180,32 +204,14 @@ static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_container_set_border_width(GTK_CONTAINER(delete.window), 4);
 	gtk_container_add(GTK_CONTAINER(delete.window), vbox);
 #ifdef DEBUG
-	delete.source = g_timeout_add(10, _delete_idle, &delete);
+	delete.idle = g_timeout_add(10, _delete_idle, &delete);
 #else
-	delete.source = g_idle_add(_delete_idle, &delete);
+	delete.idle = g_idle_add(_delete_idle, &delete);
 #endif
+	delete.timeout = g_timeout_add(500, _delete_timeout, &delete);
 	_delete_refresh(&delete, "");
 	gtk_widget_show_all(delete.window);
 	return 0;
-}
-
-static void _delete_refresh(Delete * delete, char const * filename)
-{
-	char * p;
-	char buf[64];
-	double fraction;
-
-	if((p = g_filename_to_utf8(filename, -1, NULL, NULL, NULL)) != NULL)
-		filename = p;
-	gtk_label_set_text(GTK_LABEL(delete->label), filename);
-	free(p);
-	snprintf(buf, sizeof(buf), _("File %u of %u"), delete->file_cur + 1,
-			delete->filec);
-	fraction = delete->file_cur;
-	fraction /= delete->filec;
-	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(delete->progress), buf);
-	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(delete->progress),
-			fraction);
 }
 
 static void _delete_on_cancel(gpointer data)
@@ -222,8 +228,10 @@ static void _delete_on_cancel(gpointer data)
 		free(delete->dirv[i - 1]);
 	}
 	free(delete->dirv);
-	if(delete->source != 0)
-		g_source_remove(delete->source);
+	if(delete->idle != 0)
+		g_source_remove(delete->idle);
+	if(delete->timeout != 0)
+		g_source_remove(delete->timeout);
 	gtk_main_quit();
 }
 
@@ -235,18 +243,45 @@ static gboolean _delete_on_closex(gpointer data)
 	return FALSE;
 }
 
+static gboolean _idle_count(Delete * delete);
+static gboolean _idle_delete(Delete * delete);
 static int _idle_do(Delete * delete);
 static gboolean _delete_idle(gpointer data)
 {
+	gboolean ret = FALSE;
 	Delete * delete = data;
 
 	_idle_do(delete);
+	switch(delete->mode)
+	{
+		case DM_COUNT:
+			ret = _idle_count(delete);
+			break;
+		case DM_DELETE:
+			ret = _idle_delete(delete);
+			break;
+	}
+	if(ret == FALSE)
+		gtk_main_quit();
+	return ret;
+}
+
+static gboolean _idle_count(Delete * delete)
+{
 	if(delete->file_cur == delete->filec)
 	{
-		gtk_main_quit();
-		return FALSE;
+		delete->mode = DM_DELETE;
+		delete->file_cur = 0;
+		gtk_label_set_text(GTK_LABEL(delete->label),
+				_("Deleting files..."));
+		gtk_widget_show(delete->hbox);
 	}
 	return TRUE;
+}
+
+static gboolean _idle_delete(Delete * delete)
+{
+	return (delete->file_cur == delete->filec) ? FALSE : TRUE;
 }
 
 static int _idle_do_file(Delete * delete, char const * filename);
@@ -272,6 +307,8 @@ static int _idle_do(Delete * delete)
 	return ret;
 }
 
+static int _idle_do_file_count(Delete * delete);
+static int _idle_do_file_delete(Delete * delete, char const * filename);
 static int _idle_do_file(Delete * delete, char const * filename)
 {
 	struct stat st;
@@ -297,7 +334,27 @@ static int _idle_do_file(Delete * delete, char const * filename)
 				|| _idle_ask_recursive(delete, filename) == 0)
 			return _idle_do_opendir(delete, filename);
 	}
-	else if((*(delete->prefs) & PREFS_f)
+	else
+		switch(delete->mode)
+		{
+			case DM_COUNT:
+				return _idle_do_file_count(delete);
+			case DM_DELETE:
+				return _idle_do_file_delete(delete, filename);
+		}
+	return 0;
+}
+
+static int _idle_do_file_count(Delete * delete)
+{
+	delete->count_cnt++;
+	return 0;
+}
+
+static int _idle_do_file_delete(Delete * delete, char const * filename)
+{
+	delete->count_cur++;
+	if((*(delete->prefs) & PREFS_f)
 			|| _idle_ask(delete, filename) == 0)
 #ifdef DEBUG
 		fprintf(stderr, "DEBUG: unlink(\"%s\")\n", filename);
@@ -334,17 +391,23 @@ static int _idle_do_readdir(Delete * delete)
 	return ret;
 }
 
+static int _idle_do_closedir_count(Delete * delete);
+static int _idle_do_closedir_delete(Delete * delete, DeleteDir * dd);
 static int _idle_do_closedir(Delete * delete)
 {
+	int ret = 0;
 	DeleteDir * dd = delete->dirv[delete->dirv_cnt - 1];
 
 	closedir(dd->dir);
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: rmdir(\"%s\")\n", dd->filename);
-#else
-	if(rmdir(dd->filename) != 0)
-		_delete_filename_error(delete, dd->filename, 1);
-#endif
+	switch(delete->mode)
+	{
+		case DM_COUNT:
+			ret = _idle_do_closedir_count(delete);
+			break;
+		case DM_DELETE:
+			ret = _idle_do_closedir_delete(delete, dd);
+			break;
+	}
 	free(dd->filename);
 	free(dd);
 	if(--delete->dirv_cnt == 0)
@@ -353,6 +416,24 @@ static int _idle_do_closedir(Delete * delete)
 		delete->dirv = NULL;
 		delete->file_cur++;
 	}
+	return ret;
+}
+
+static int _idle_do_closedir_count(Delete * delete)
+{
+	delete->count_cnt++;
+	return 0;
+}
+
+static int _idle_do_closedir_delete(Delete * delete, DeleteDir * dd)
+{
+	delete->count_cur++;
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: rmdir(\"%s\")\n", dd->filename);
+#else
+	if(rmdir(dd->filename) != 0)
+		_delete_filename_error(delete, dd->filename, 1);
+#endif
 	return 0;
 }
 
@@ -362,6 +443,13 @@ static int _idle_ask_recursive(Delete * delete, char const * filename)
 	GtkWidget * dialog;
 	int res;
 
+	switch(delete->mode)
+	{
+		case DM_COUNT:
+			return 0;
+		case DM_DELETE:
+			break;
+	}
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, filename);
 #endif
@@ -454,6 +542,23 @@ static int _idle_do_opendir(Delete * delete, char const * filename)
 	return 0;
 }
 
+static gboolean _delete_timeout(gpointer data)
+{
+	Delete * delete = data;
+
+	switch(delete->mode)
+	{
+		case DM_COUNT:
+			gtk_progress_bar_pulse(GTK_PROGRESS_BAR(
+						delete->progress));
+			return TRUE;
+		case DM_DELETE:
+			break;
+	}
+	delete->timeout = 0;
+	return FALSE;
+}
+
 
 /* delete_error */
 static int _error_text(char const * message, int ret);
@@ -501,6 +606,44 @@ static int _delete_filename_error(Delete * delete, char const * filename,
 	ret = _delete_error(delete, filename, ret);
 	free(p);
 	return ret;
+}
+
+
+/* delete_refresh */
+static void _refresh_delete(Delete * delete, char const * filename);
+
+static void _delete_refresh(Delete * delete, char const * filename)
+{
+	switch(delete->mode)
+	{
+		case DM_COUNT:
+			break;
+		case DM_DELETE:
+			_refresh_delete(delete, filename);
+			break;
+	}
+}
+
+static void _refresh_delete(Delete * delete, char const * filename)
+{
+	char * p;
+	char buf[64];
+	double fraction;
+
+	if((p = g_filename_to_utf8(filename, -1, NULL, NULL, NULL)) != NULL)
+		filename = p;
+	gtk_entry_set_text(GTK_ENTRY(delete->entry), filename);
+	free(p);
+	snprintf(buf, sizeof(buf), _("File %u of %u"), delete->file_cur + 1,
+			delete->filec);
+	fraction = MIN(delete->count_cur, delete->count_cnt);
+	fraction /= MAX(delete->count_cnt, 1);
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() %f\n", __func__, fraction);
+#endif
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(delete->progress), buf);
+	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(delete->progress),
+			fraction);
 }
 
 
