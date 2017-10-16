@@ -156,13 +156,22 @@ static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 	vbox = gtk_vbox_new(FALSE, 4);
 #endif
 	/* counter */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
+	hbox = gtk_hbox_new(FALSE, 4);
+#endif
+	widget = gtk_image_new_from_stock(GTK_STOCK_DELETE,
+			GTK_ICON_SIZE_DIALOG);
+	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	delete.label = gtk_label_new(_("Counting files..."));
 #if GTK_CHECK_VERSION(3, 0, 0)
 	g_object_set(delete.label, "halign", GTK_ALIGN_START, NULL);
 #else
 	gtk_misc_set_alignment(GTK_MISC(delete.label), 0.0, 0.5);
 #endif
-	gtk_box_pack_start(GTK_BOX(vbox), delete.label, FALSE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), delete.label, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	/* current argument */
 #if GTK_CHECK_VERSION(3, 0, 0)
 	delete.hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
