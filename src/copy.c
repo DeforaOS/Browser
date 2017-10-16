@@ -52,6 +52,9 @@
 
 
 /* constants */
+#ifndef PROGNAME_COPY
+# define PROGNAME_COPY	"copy"
+#endif
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
 #endif
@@ -385,8 +388,8 @@ static int _copy_single(Copy * copy, char const * src, char const * dst)
 	{
 		if(st.st_dev == st2.st_dev && st.st_ino == st2.st_ino)
 		{
-			fprintf(stderr, "%s: %s: \"%s\"%s\n", "copy", dst, src,
-					" is identical (not copied)");
+			fprintf(stderr, "%s: %s: \"%s\"%s\n", PROGNAME_COPY,
+					dst, src, " is identical (not copied)");
 			return 0;
 		}
 		if(*(copy->prefs) & PREFS_i
@@ -858,7 +861,7 @@ static int _copy_error(Copy * copy, char const * message, int ret)
 
 static int _error_text(char const * message, int ret)
 {
-	fputs("copy: ", stderr);
+	fputs(PROGNAME_COPY ": ", stderr);
 	perror(message);
 	return ret;
 }
@@ -938,15 +941,16 @@ static void _copy_filename_info(Copy * copy, char const * filename,
 /* usage */
 static int _usage(void)
 {
-	fputs(_("Usage: copy [-fip] source_file target_file\n\
-       copy [-fip] source_file ... target\n\
-       copy -R [-H | -L | -P][-fip] source_file ... target\n\
-       copy -r [-H | -L | -P][-fip] source_file ... target\n\
+	fprintf(stderr, _("Usage: %s [-fip] source_file target_file\n\
+       %s [-fip] source_file ... target\n\
+       %s -R [-H | -L | -P][-fip] source_file ... target\n\
+       %s -r [-H | -L | -P][-fip] source_file ... target\n\
   -f	Do not prompt for confirmation if the destination path exists\n\
   -i	Prompt for confirmation if the destination path exists\n\
   -p	Duplicate characteristics of the source files\n\
   -R	Copy file hierarchies\n\
-  -r	Copy file hierarchies\n"), stderr);
+  -r	Copy file hierarchies\n"), PROGNAME_COPY, PROGNAME_COPY, PROGNAME_COPY,
+			PROGNAME_COPY);
 	return 1;
 }
 
