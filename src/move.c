@@ -113,7 +113,7 @@ static int _move(Prefs * prefs, unsigned int filec, char * filev[])
 	move.cur = 0;
 	/* graphical interface */
 	move.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_icon_name(GTK_WINDOW(move.window), GTK_STOCK_CUT);
+	gtk_window_set_icon_name(GTK_WINDOW(move.window), "stock_cut");
 	gtk_window_set_resizable(GTK_WINDOW(move.window), FALSE);
 	gtk_window_set_title(GTK_WINDOW(move.window), _("Move file(s)"));
 	g_signal_connect(G_OBJECT(move.window), "delete-event", G_CALLBACK(

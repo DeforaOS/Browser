@@ -143,7 +143,7 @@ static int _copy(Prefs * prefs, unsigned int filec, char * filev[])
 	copy.cur = 0;
 	/* graphical interface */
 	copy.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_icon_name(GTK_WINDOW(copy.window), GTK_STOCK_COPY);
+	gtk_window_set_icon_name(GTK_WINDOW(copy.window), "stock_copy");
 	gtk_window_set_resizable(GTK_WINDOW(copy.window), FALSE);
 	gtk_window_set_title(GTK_WINDOW(copy.window), _("Copy file(s)"));
 	g_signal_connect(G_OBJECT(copy.window), "delete-event", G_CALLBACK(

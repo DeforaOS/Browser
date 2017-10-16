@@ -146,7 +146,7 @@ static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 	delete.dirv_cnt = 0;
 	/* graphical interface */
 	delete.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_icon_name(GTK_WINDOW(delete.window), GTK_STOCK_DELETE);
+	gtk_window_set_icon_name(GTK_WINDOW(delete.window), "stock_delete");
 	gtk_window_set_resizable(GTK_WINDOW(delete.window), FALSE);
 	gtk_window_set_title(GTK_WINDOW(delete.window), _("Delete file(s)"));
 	g_signal_connect_swapped(delete.window, "delete-event", G_CALLBACK(
@@ -162,7 +162,7 @@ static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 #else
 	hbox = gtk_hbox_new(FALSE, 4);
 #endif
-	widget = gtk_image_new_from_stock(GTK_STOCK_DELETE,
+	widget = gtk_image_new_from_icon_name("stock_delete",
 			GTK_ICON_SIZE_DIALOG);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	delete.label = gtk_label_new(_("Counting files..."));
