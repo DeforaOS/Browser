@@ -333,9 +333,10 @@ static int _idle_do_closedir(Delete * delete)
 	closedir(dd->dir);
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: rmdir(\"%s\")\n", dd->filename);
-#endif
+#else
 	if(rmdir(dd->filename) != 0)
 		_delete_filename_error(delete, dd->filename, 1);
+#endif
 	free(dd->filename);
 	free(dd);
 	if(--delete->dirv_cnt == 0)
