@@ -48,6 +48,9 @@
 
 
 /* constants */
+#ifndef PROGNAME_MOVE
+# define PROGNAME_MOVE	"move"
+#endif
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
 #endif
@@ -500,7 +503,7 @@ static int _move_error(Move * move, char const * message, int ret)
 
 static int _error_text(char const * message, int ret)
 {
-	fputs("move: ", stderr);
+	fputs(PROGNAME_MOVE ": ", stderr);
 	perror(message);
 	return ret;
 }
@@ -549,10 +552,11 @@ static int _move_filename_error(Move * move, char const * filename, int ret)
 /* usage */
 static int _usage(void)
 {
-	fputs(_("Usage: move [-fi] source target\n"
-"       move [-fi] source... directory\n"
+	fprintf(stderr, _("Usage: %s [-fi] source target\n"
+"       %s [-fi] source... directory\n"
 "  -f	Do not prompt for confirmation if the destination path exists\n"
-"  -i	Prompt for confirmation if the destination path exists\n"), stderr);
+"  -i	Prompt for confirmation if the destination path exists\n"),
+			PROGNAME_MOVE, PROGNAME_MOVE);
 	return 1;
 }
 
