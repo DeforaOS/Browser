@@ -44,6 +44,9 @@
 
 
 /* constants */
+#ifndef PROGNAME_DELETE
+# define PROGNAME_DELETE	"delete"
+#endif
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
 #endif
@@ -469,7 +472,7 @@ static int _delete_error(Delete * delete, char const * message, int ret)
 
 static int _error_text(char const * message, int ret)
 {
-	fputs("delete: ", stderr);
+	fputs(PROGNAME_DELETE ": ", stderr);
 	perror(message);
 	return ret;
 }
@@ -494,11 +497,11 @@ static int _delete_filename_error(Delete * delete, char const * filename,
 /* usage */
 static int _usage(void)
 {
-	fputs(_("Usage: delete [-fiRr] file...\n\
+	fprintf(stderr, _("Usage: %s [-fiRr] file...\n\
   -f	Do not prompt for confirmation and ignore errors\n\
   -i	Prompt for confirmation\n\
   -R	Remove file hierarchies\n\
-  -r	Equivalent to -R\n"), stderr);
+  -r	Equivalent to -R\n"), PROGNAME_DELETE);
 	return 1;
 }
 
