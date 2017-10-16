@@ -80,6 +80,8 @@ typedef struct _Delete
 	size_t dirv_cnt;
 
 	/* widgets */
+	guint source;
+
 	GtkWidget * window;
 	GtkWidget * label;
 	GtkWidget * progress;
@@ -178,9 +180,9 @@ static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_container_set_border_width(GTK_CONTAINER(delete.window), 4);
 	gtk_container_add(GTK_CONTAINER(delete.window), vbox);
 #ifdef DEBUG
-	g_timeout_add(10, _delete_idle, &delete);
+	delete.source = g_timeout_add(10, _delete_idle, &delete);
 #else
-	g_idle_add(_delete_idle, &delete);
+	delete.source = g_idle_add(_delete_idle, &delete);
 #endif
 	_delete_refresh(&delete, "");
 	gtk_widget_show_all(delete.window);
@@ -220,6 +222,8 @@ static void _delete_on_cancel(gpointer data)
 		free(delete->dirv[i - 1]);
 	}
 	free(delete->dirv);
+	if(delete->source != 0)
+		g_source_remove(delete->source);
 	gtk_main_quit();
 }
 
