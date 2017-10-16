@@ -146,6 +146,7 @@ static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 	delete.dirv_cnt = 0;
 	/* graphical interface */
 	delete.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_icon_name(GTK_WINDOW(delete.window), GTK_STOCK_DELETE);
 	gtk_window_set_resizable(GTK_WINDOW(delete.window), FALSE);
 	gtk_window_set_title(GTK_WINDOW(delete.window), _("Delete file(s)"));
 	g_signal_connect_swapped(delete.window, "delete-event", G_CALLBACK(

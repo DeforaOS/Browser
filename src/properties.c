@@ -192,6 +192,8 @@ static Properties * _properties_new(Mime * mime, char const * plugin,
 	snprintf(buf, sizeof(buf), "%s%s", _("Properties of "), p);
 	g_free(p);
 	gtk_window_set_default_size(GTK_WINDOW(properties->window), 300, 400);
+	gtk_window_set_icon_name(GTK_WINDOW(properties->window),
+			GTK_STOCK_PROPERTIES);
 	gtk_window_set_title(GTK_WINDOW(properties->window), buf);
 	g_signal_connect_swapped(properties->window, "delete-event",
 			G_CALLBACK(_properties_on_closex), properties);
