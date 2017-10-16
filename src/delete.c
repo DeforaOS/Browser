@@ -177,7 +177,11 @@ static int _delete(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	gtk_container_set_border_width(GTK_CONTAINER(delete.window), 4);
 	gtk_container_add(GTK_CONTAINER(delete.window), vbox);
+#ifdef DEBUG
+	g_timeout_add(10, _delete_idle, &delete);
+#else
 	g_idle_add(_delete_idle, &delete);
+#endif
 	_delete_refresh(&delete, "");
 	gtk_widget_show_all(delete.window);
 	return 0;
