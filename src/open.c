@@ -38,6 +38,9 @@
 #define _(string) gettext(string)
 
 /* constants */
+#ifndef PROGNAME_OPEN
+# define PROGNAME_OPEN	"open"
+#endif
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
 #endif
@@ -79,7 +82,7 @@ static int _open(char const * type, char const * action, int filec,
 		}
 		else if(mime_action_type(mime, action, filev[i], type) == 0)
 			continue;
-		fprintf(stderr, "%s%s%s%s%s", "open: ", filev[i],
+		fprintf(stderr, "%s%s%s%s%s", PROGNAME_OPEN ": ", filev[i],
 				_(": Could not perform action \""), action,
 				"\"\n");
 		ret = 1;
@@ -92,7 +95,7 @@ static int _open(char const * type, char const * action, int filec,
 /* open_error */
 static int _open_error(char const * message, int ret)
 {
-	fputs("open: ", stderr);
+	fputs(PROGNAME_OPEN ": ", stderr);
 	perror(message);
 	return ret;
 }
@@ -101,9 +104,9 @@ static int _open_error(char const * message, int ret)
 /* usage */
 static int _usage(void)
 {
-	fputs(_("Usage: open [-m mime type][-a action] file...\n"
+	fprintf(stderr, _("Usage: %s [-m mime type][-a action] file...\n"
 "  -m	MIME type to force (default: auto-detected)\n"
-"  -a	action to call (default: \"open\")\n"), stderr);
+"  -a	action to call (default: \"open\")\n"), PROGNAME_OPEN);
 	return 1;
 }
 
