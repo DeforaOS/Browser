@@ -53,8 +53,8 @@ static char const _license[] =
 #include "common.c"
 
 /* constants */
-#ifndef PROGNAME
-# define PROGNAME	"view"
+#ifndef PROGNAME_VIEW
+# define PROGNAME_VIEW	"view"
 #endif
 #ifndef PROGNAME_PROPERTIES
 # define PROGNAME_PROPERTIES	"properties"
@@ -463,7 +463,7 @@ static void _error_response(GtkWidget * widget, gint arg, gpointer data)
 
 static int _error_text(char const * message, int ret)
 {
-	fprintf(stderr, "%s: %s\n", PROGNAME, message);
+	fprintf(stderr, "%s: %s\n", PROGNAME_VIEW, message);
 	return ret;
 }
 
@@ -607,7 +607,7 @@ static void _view_on_file_close(gpointer data)
 /* view_on_help_contents */
 static void _view_on_help_contents(gpointer data)
 {
-	desktop_help_contents(PACKAGE, PROGNAME);
+	desktop_help_contents(PACKAGE, PROGNAME_VIEW);
 }
 
 
@@ -669,7 +669,7 @@ static void _view_on_properties(gpointer data)
 /* usage */
 static int _usage(void)
 {
-	fprintf(stderr, _("Usage: %s file...\n"), PROGNAME);
+	fprintf(stderr, _("Usage: %s file...\n"), PROGNAME_VIEW);
 	return 1;
 }
 
