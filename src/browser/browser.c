@@ -2194,7 +2194,7 @@ static void _preferences_on_mime_edit(gpointer data)
 	GtkWidget * open;
 	GtkWidget * view;
 	GtkWidget * edit;
-	char const * p;
+	MimeHandler * handler;
 
 	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(
 				browser->pr_mime_view));
@@ -2249,8 +2249,10 @@ static void _preferences_on_mime_edit(gpointer data)
 	gtk_size_group_add_widget(group, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	open = gtk_entry_new();
-	p = mime_get_handler(browser->mime, type, "open");
-	gtk_entry_set_text(GTK_ENTRY(open), (p != NULL) ? p : "");
+	handler = mime_get_handler(browser->mime, type, "open");
+	gtk_entry_set_text(GTK_ENTRY(open), (handler != NULL)
+			? mimehandler_get_name(handler) : "");
+	mimehandler_delete(handler);
 	gtk_box_pack_start(GTK_BOX(hbox), open, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	/* view */
@@ -2268,8 +2270,10 @@ static void _preferences_on_mime_edit(gpointer data)
 	gtk_size_group_add_widget(group, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	view = gtk_entry_new();
-	p = mime_get_handler(browser->mime, type, "view");
-	gtk_entry_set_text(GTK_ENTRY(view), (p != NULL) ? p : "");
+	handler = mime_get_handler(browser->mime, type, "view");
+	gtk_entry_set_text(GTK_ENTRY(view), (handler != NULL)
+			? mimehandler_get_name(handler) : "");
+	mimehandler_delete(handler);
 	gtk_box_pack_start(GTK_BOX(hbox), view, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	/* edit */
@@ -2287,8 +2291,10 @@ static void _preferences_on_mime_edit(gpointer data)
 	gtk_size_group_add_widget(group, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	edit = gtk_entry_new();
-	p = mime_get_handler(browser->mime, type, "edit");
-	gtk_entry_set_text(GTK_ENTRY(edit), (p != NULL) ? p : "");
+	handler = mime_get_handler(browser->mime, type, "edit");
+	gtk_entry_set_text(GTK_ENTRY(edit), (handler != NULL)
+			? mimehandler_get_name(handler) : "");
+	mimehandler_delete(handler);
 	gtk_box_pack_start(GTK_BOX(hbox), edit, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	gtk_widget_show_all(vbox);
