@@ -270,7 +270,7 @@ char const * browser_vfs_mime_type(Mime * mime, char const * filename,
 	char const * ret = NULL;
 	struct stat st;
 	struct stat pst;
-	char * p = NULL;
+	String * p = NULL;
 
 	if(mode == 0 && filename != NULL
 			&& browser_vfs_lstat(filename, &st) == 0)
@@ -278,15 +278,16 @@ char const * browser_vfs_mime_type(Mime * mime, char const * filename,
 	if(S_ISDIR(mode))
 	{
 		/* look for mountpoints */
-		if(filename != NULL && (p = strdup(filename)) != NULL
+		if(filename != NULL
 				&& browser_vfs_lstat(filename, &st) == 0
+				&& (p = string_new(filename)) != NULL
 				&& browser_vfs_lstat(dirname(p), &pst) == 0
 				&& (st.st_dev != pst.st_dev
 					|| st.st_ino == pst.st_ino))
 			ret = "inode/mountpoint";
 		else
 			ret = "inode/directory";
-		free(p);
+		string_delete(p);
 		return ret;
 	}
 	else if(S_ISBLK(mode))
