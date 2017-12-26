@@ -1416,11 +1416,11 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 	if(browser->mime == NULL)
 		return;
 	if(icon24 != NULL)
-		*icon24 = browser_vfs_mime_icon(browser->mime, path, *type, lst, st,
-				24);
+		*icon24 = browser_vfs_mime_icon(browser->mime, path, *type, lst,
+				st, 24);
 	if(icon48 != NULL)
-		*icon48 = browser_vfs_mime_icon(browser->mime, path, *type, lst, st,
-				48);
+		*icon48 = browser_vfs_mime_icon(browser->mime, path, *type, lst,
+				st, 48);
 	if(icon96 != NULL)
 	{
 #if GTK_CHECK_VERSION(2, 6, 0)
