@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <locale.h>
 #include <libintl.h>
+#include <System/error.h>
 #include <Desktop.h>
 #include "../config.h"
 #define _(string) gettext(string)
@@ -57,6 +58,7 @@
 /* prototypes */
 static int _open(char const * type, char const * action, int filec,
 		char * filev[]);
+static int _open_detect(int filec, char * filev[]);
 static int _open_error(char const * message, int ret);
 
 static int _usage(void);
@@ -92,6 +94,26 @@ static int _open(char const * type, char const * action, int filec,
 }
 
 
+/* open_detect */
+static int _open_detect(int filec, char * filev[])
+{
+	int ret = 0;
+	Mime * mime;
+	int i;
+	char const * type;
+
+	if((mime = mime_new(NULL)) == NULL)
+		return -1;
+	for(i = 0; i < filec; i++)
+		if((type = mime_type(mime, filev[i])) != NULL)
+			printf("%s: %s\n", filev[i], type);
+		else
+			ret |= error_print(PROGNAME_OPEN);
+	mime_delete(mime);
+	return ret;
+}
+
+
 /* open_error */
 static int _open_error(char const * message, int ret)
 {
@@ -105,8 +127,10 @@ static int _open_error(char const * message, int ret)
 static int _usage(void)
 {
 	fprintf(stderr, _("Usage: %s [-m mime type][-a action] file...\n"
+"       %s -t file...\n"
+"  -t	Detect the type of files\n"
 "  -m	MIME type to force (default: auto-detected)\n"
-"  -a	action to call (default: \"open\")\n"), PROGNAME_OPEN);
+"  -a	action to call (default: \"open\")\n"), PROGNAME_OPEN, PROGNAME_OPEN);
 	return 1;
 }
 
@@ -118,6 +142,7 @@ int main(int argc, char * argv[])
 {
 	int o;
 	char const * action = "open";
+	int detect = 0;
 	char const * type = NULL;
 
 	if(setlocale(LC_ALL, "") == NULL)
@@ -125,7 +150,7 @@ int main(int argc, char * argv[])
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 	gtk_init(&argc, &argv);
-	while((o = getopt(argc, argv, "a:m:")) != -1)
+	while((o = getopt(argc, argv, "a:m:t")) != -1)
 		switch(o)
 		{
 			case 'a':
@@ -134,10 +159,16 @@ int main(int argc, char * argv[])
 			case 'm':
 				type = optarg;
 				break;
+			case 't':
+				detect = 1;
+				break;
 			default:
 				return _usage();
 		}
 	if(optind == argc)
 		return _usage();
+	if(detect)
+		return (_open_detect(argc - optind, &argv[optind]) == 0)
+			? 0 : 2;
 	return (_open(type, action, argc - optind, &argv[optind]) == 0) ? 0 : 2;
 }
