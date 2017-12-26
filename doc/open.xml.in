@@ -69,7 +69,8 @@
 	<refsect1 id="description">
 		<title>Description</title>
 		<para><command>&name;</command> automatically chooses the registered handler
-			to open one or more files from the command line interface.</para>
+			to open one or more files from the command line interface. To do so, it
+			attempts to guess the MIME type of each file listed.</para>
 	</refsect1>
 	<refsect1 id="options">
 		<title>Options</title>
