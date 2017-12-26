@@ -72,7 +72,7 @@ static int _open(char const * type, char const * action, int filec,
 	int ret = 0;
 
 	if((mime = mime_new(NULL)) == NULL)
-		return 1;
+		return -1;
 	for(i = 0; i < filec; i++)
 	{
 		if(type == NULL)
@@ -85,7 +85,7 @@ static int _open(char const * type, char const * action, int filec,
 		fprintf(stderr, "%s%s%s%s%s", PROGNAME_OPEN ": ", filev[i],
 				_(": Could not perform action \""), action,
 				"\"\n");
-		ret = 1;
+		ret = -1;
 	}
 	mime_delete(mime);
 	return ret;
