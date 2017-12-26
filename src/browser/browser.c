@@ -2251,7 +2251,7 @@ static void _preferences_on_mime_edit(gpointer data)
 	open = gtk_entry_new();
 	handler = mime_get_handler(browser->mime, type, "open");
 	gtk_entry_set_text(GTK_ENTRY(open), (handler != NULL)
-			? mimehandler_get_name(handler) : "");
+			? mimehandler_get_name(handler, 0) : "");
 	mimehandler_delete(handler);
 	gtk_box_pack_start(GTK_BOX(hbox), open, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
@@ -2272,7 +2272,7 @@ static void _preferences_on_mime_edit(gpointer data)
 	view = gtk_entry_new();
 	handler = mime_get_handler(browser->mime, type, "view");
 	gtk_entry_set_text(GTK_ENTRY(view), (handler != NULL)
-			? mimehandler_get_name(handler) : "");
+			? mimehandler_get_name(handler, 0) : "");
 	mimehandler_delete(handler);
 	gtk_box_pack_start(GTK_BOX(hbox), view, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
@@ -2293,7 +2293,7 @@ static void _preferences_on_mime_edit(gpointer data)
 	edit = gtk_entry_new();
 	handler = mime_get_handler(browser->mime, type, "edit");
 	gtk_entry_set_text(GTK_ENTRY(edit), (handler != NULL)
-			? mimehandler_get_name(handler) : "");
+			? mimehandler_get_name(handler, 0) : "");
 	mimehandler_delete(handler);
 	gtk_box_pack_start(GTK_BOX(hbox), edit, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
