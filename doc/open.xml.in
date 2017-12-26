@@ -60,6 +60,11 @@
 			<arg choice="opt"><option>-a</option> <replaceable>action</replaceable></arg>
 			<arg choice="plain" rep="repeat"><replaceable>file</replaceable></arg>
 		</cmdsynopsis>
+		<cmdsynopsis>
+			<command>&name;</command>
+			<arg choice="plain"><option>-t</option></arg>
+			<arg choice="plain" rep="repeat"><replaceable>file</replaceable></arg>
+		</cmdsynopsis>
 	</refsynopsisdiv>
 	<refsect1 id="description">
 		<title>Description</title>
@@ -81,6 +86,12 @@
 				<listitem>
 					<para>MIME type to force. The default behavior is to determine the MIME
 						type according to the respective file extension.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-t</option></term>
+				<listitem>
+					<para>Detect the type of the files listed.</para>
 				</listitem>
 			</varlistentry>
 		</variablelist>
