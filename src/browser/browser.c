@@ -31,6 +31,7 @@ static char const _license[] =
 /* TODO:
  * - re-implement MIME preferences
  * - use the friendly-name for MIME types in the browser view
+ * - add a progress bar in the entry
  * - allow plug-ins to be re-ordered */
 
 
