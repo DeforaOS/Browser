@@ -39,6 +39,7 @@
 #include <locale.h>
 #include <libintl.h>
 #include <gtk/gtk.h>
+#include "Browser/vfs.h"
 #include "../config.h"
 #define _(string) gettext(string)
 
@@ -233,7 +234,7 @@ static void _delete_on_cancel(gpointer data)
 	for(i = delete->dirv_cnt; i >= 1; i--)
 	{
 		if(delete->dirv[i - 1]->dir != NULL)
-			closedir(delete->dirv[i - 1]->dir);
+			browser_vfs_closedir(delete->dirv[i - 1]->dir);
 		free(delete->dirv[i - 1]->filename);
 		free(delete->dirv[i - 1]);
 	}
@@ -327,7 +328,7 @@ static int _idle_do_file(Delete * delete, char const * filename)
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, filename);
 #endif
 	_delete_refresh(delete, filename);
-	if(lstat(filename, &st) != 0 && errno == ENOENT)
+	if(browser_vfs_lstat(filename, &st) != 0 && errno == ENOENT)
 	{
 		if(!(*(delete->prefs) & PREFS_f))
 			return _delete_filename_error(delete, filename, 1);
@@ -408,7 +409,7 @@ static int _idle_do_closedir(Delete * delete)
 	int ret = 0;
 	DeleteDir * dd = delete->dirv[delete->dirv_cnt - 1];
 
-	closedir(dd->dir);
+	browser_vfs_closedir(dd->dir);
 	switch(delete->mode)
 	{
 		case DM_COUNT:
@@ -542,7 +543,7 @@ static int _idle_do_opendir(Delete * delete, char const * filename)
 		free(dd);
 		return _delete_filename_error(delete, filename, 1);
 	}
-	if((dd->dir = opendir(filename)) == NULL)
+	if((dd->dir = browser_vfs_opendir(filename, NULL)) == NULL)
 	{
 		free(dd);
 		return _delete_filename_error(delete, filename, 1);
