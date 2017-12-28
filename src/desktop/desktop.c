@@ -2916,8 +2916,7 @@ static void _refresh_loop_categories_xdg(Desktop * desktop,
 	size_t j;
 
 	if((path = getenv("XDG_DATA_DIRS")) == NULL || strlen(path) == 0)
-		/* FIXME use DATADIR */
-		path = "/usr/local/share:/usr/share";
+		path = "/usr/local/share:" DATADIR ":/usr/share";
 	if((p = strdup(path)) == NULL)
 	{
 		_desktop_perror(NULL, NULL, 1);
