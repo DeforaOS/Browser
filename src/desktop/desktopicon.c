@@ -110,7 +110,7 @@ struct _DesktopIcon
 /* constants */
 static const char _desktop_type_application[] = "Application";
 static const char _desktop_type_directory[] = "Directory";
-static const char _desktop_type_url[] = "URL";
+static const char _desktop_type_link[] = "URL";
 
 
 /* prototypes */
@@ -249,7 +249,7 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
 			|| (p = config_get(config, section, "Type")) == NULL
 			|| (strcmp(p, _desktop_type_application) != 0
 				&& strcmp(p, _desktop_type_directory) != 0
-				&& strcmp(p, _desktop_type_url) != 0)
+				&& strcmp(p, _desktop_type_link) != 0)
 			|| (name = config_get(config, section, "Name")) == NULL
 			|| ((p = config_get(config, section, "NoDisplay"))
 				!= NULL && strcmp(p, "true") == 0)
@@ -970,7 +970,7 @@ static void _run_application(DesktopIcon * desktopicon);
 static void _run_binary(DesktopIcon * desktopicon);
 static gboolean _run_confirm(void);
 static void _run_directory(DesktopIcon * desktopicon);
-static void _run_url(DesktopIcon * desktopicon);
+static void _run_link(DesktopIcon * desktopicon);
 
 static void _on_icon_run(gpointer data)
 {
@@ -988,8 +988,8 @@ static void _on_icon_run(gpointer data)
 		_run_application(desktopicon);
 	else if(strcmp(p, _desktop_type_directory) == 0)
 		_run_directory(desktopicon);
-	else if(strcmp(p, _desktop_type_url) == 0)
-		_run_url(desktopicon);
+	else if(strcmp(p, _desktop_type_link) == 0)
+		_run_link(desktopicon);
 }
 
 static void _run_application(DesktopIcon * desktopicon)
@@ -1100,7 +1100,7 @@ static void _run_directory(DesktopIcon * desktopicon)
 	free(argv[2]);
 }
 
-static void _run_url(DesktopIcon * desktopicon)
+static void _run_link(DesktopIcon * desktopicon)
 {
 	const char section[] = "Desktop Entry";
 	char const * url;
@@ -1109,8 +1109,7 @@ static void _run_url(DesktopIcon * desktopicon)
 	const unsigned int flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
 
-	if((url = config_get(desktopicon->config, section, _desktop_type_url))
-			== NULL)
+	if((url = config_get(desktopicon->config, section, "URL")) == NULL)
 		return;
 	if((argv[2] = strdup(url)) == NULL)
 		desktop_error(desktopicon->desktop, NULL, strerror(errno), 1);
