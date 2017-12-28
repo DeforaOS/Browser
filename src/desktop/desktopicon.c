@@ -110,7 +110,7 @@ struct _DesktopIcon
 /* constants */
 static const char _desktop_type_application[] = "Application";
 static const char _desktop_type_directory[] = "Directory";
-static const char _desktop_type_link[] = "URL";
+static const char _desktop_type_link[] = "Link";
 
 
 /* prototypes */
