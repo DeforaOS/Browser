@@ -2896,7 +2896,8 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 		{
 			if(handler != NULL)
 				mimehandler_delete(handler);
-			_desktop_serror(NULL, NULL, 1);
+			else
+				_desktop_serror(NULL, NULL, 1);
 			continue;
 		}
 		desktop->apps = g_slist_insert_sorted(desktop->apps, handler,
