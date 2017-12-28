@@ -43,6 +43,7 @@
 #include <locale.h>
 #include <libintl.h>
 #include <gtk/gtk.h>
+#include "Browser/vfs.h"
 #include "../config.h"
 #define _(string) gettext(string)
 
@@ -217,7 +218,7 @@ static gboolean _move_idle_first(gpointer data)
 	char const * filename = move->filev[move->filec - 1];
 	struct stat st;
 
-	if(stat(move->filev[move->filec - 1], &st) != 0)
+	if(browser_vfs_stat(move->filev[move->filec - 1], &st) != 0)
 	{
 		if(errno != ENOENT)
 			_move_filename_error(move, filename, 0);
@@ -259,9 +260,10 @@ static int _move_single(Move * move, char const * src, char const * dst)
 	int ret;
 	struct stat st;
 
-	if(lstat(src, &st) != 0 && errno == ENOENT) /* XXX TOCTOU */
+	if(browser_vfs_lstat(src, &st) != 0 && errno == ENOENT) /* XXX TOCTOU */
 		return _move_filename_error(move, src, 1);
-	if(*(move->prefs) & PREFS_i && (lstat(dst, &st) == 0 || errno != ENOENT)
+	if(*(move->prefs) & PREFS_i
+			&& (browser_vfs_lstat(dst, &st) == 0 || errno != ENOENT)
 			&& _move_filename_confirm(move, dst) != 1)
 		return 0;
 	if(rename(src, dst) == 0)
@@ -270,7 +272,7 @@ static int _move_single(Move * move, char const * src, char const * dst)
 		return _move_filename_error(move, src, 1);
 	if(unlink(dst) != 0 && errno != ENOENT)
 		return _move_filename_error(move, dst, 1);
-	if(lstat(src, &st) != 0)
+	if(browser_vfs_lstat(src, &st) != 0)
 		return _move_filename_error(move, dst, 1);
 	if(S_ISDIR(st.st_mode))
 		ret = _single_dir(move, src, dst);
@@ -320,9 +322,9 @@ static int _single_recurse(Move * move, char const * src, char const * dst)
 		return _move_filename_error(move, dst, 1);
 	srclen = strlen(src);
 	dstlen = strlen(dst);
-	if((dir = opendir(src)) == NULL)
+	if((dir = browser_vfs_opendir(src, NULL)) == NULL)
 		return _move_filename_error(move, src, 1);
-	while((de = readdir(dir)) != NULL)
+	while((de = browser_vfs_readdir(dir)) != NULL)
 	{
 		if(de->d_name[0] == '.' && (de->d_name[1] == '\0'
 					|| (de->d_name[1] == '.'
@@ -344,7 +346,7 @@ static int _single_recurse(Move * move, char const * src, char const * dst)
 		sprintf(sdst, "%s/%s", dst, de->d_name);
 		ret |= _move_single(move, ssrc, sdst);
 	}
-	closedir(dir);
+	browser_vfs_closedir(dir);
 	free(ssrc);
 	free(sdst);
 	return ret;
