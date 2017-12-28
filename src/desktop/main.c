@@ -29,7 +29,10 @@
 
 
 
+#include <unistd.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include <locale.h>
 #include <libintl.h>
 #include <gtk/gtk.h>
