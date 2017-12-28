@@ -29,7 +29,7 @@
 /* TODO:
  * - let the user define the desktop folder (possibly default to FDO's)
  * - track multiple selection on delete/properties
- * - avoid code duplication with DeforaOS Panel ("main" applet) */
+ * - avoid code duplication with DeforaOS Panel ("menu" applet) */
 
 
 
