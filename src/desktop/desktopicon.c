@@ -53,14 +53,14 @@
 
 
 /* constants */
-#ifndef PROGNAME
-# define PROGNAME		"desktop"
-#endif
 #ifndef PROGNAME_BROWSER
 # define PROGNAME_BROWSER	"browser"
 #endif
 #ifndef PROGNAME_DELETE
 # define PROGNAME_DELETE	"delete"
+#endif
+#ifndef PROGNAME_DESKTOP
+# define PROGNAME_DESKTOP	"desktop"
 #endif
 #ifndef PROGNAME_HTMLAPP
 # define PROGNAME_HTMLAPP	"htmlapp"
@@ -186,7 +186,8 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 		if((p = g_filename_to_utf8(path, -1, NULL, NULL, &error))
 				== NULL)
 		{
-			fprintf(stderr, "%s%s\n", "desktop: ", error->message);
+			fprintf(stderr, "%s: %s\n", PROGNAME_DESKTOP,
+					error->message);
 			name = path;
 		}
 		else

@@ -64,14 +64,14 @@
 
 
 /* constants */
-#ifndef PROGNAME
-# define PROGNAME	"desktop"
+#ifndef PROGNAME_DESKTOP
+# define PROGNAME_DESKTOP	"desktop"
 #endif
 #ifndef PREFIX
-# define PREFIX		"/usr/local"
+# define PREFIX			"/usr/local"
 #endif
 #ifndef DATADIR
-# define DATADIR	PREFIX "/share"
+# define DATADIR		PREFIX "/share"
 #endif
 
 
@@ -1438,7 +1438,7 @@ static int _desktop_error(Desktop * desktop, char const * message,
 
 static int _error_text(char const * message, char const * error, int ret)
 {
-	fprintf(stderr, "%s: %s%s%s\n", PROGNAME,
+	fprintf(stderr, "%s: %s%s%s\n", PROGNAME_DESKTOP,
 			(message != NULL) ? message : "",
 			(message != NULL) ? ": " : "", error);
 	return ret;
@@ -2443,7 +2443,7 @@ static void _on_preferences_response_apply(gpointer data)
 	{
 		/* FIXME save configuration in _on_preferences_ok() instead */
 		if(config_save(config, p) != 0)
-			error_print(PROGNAME);
+			error_print(PROGNAME_DESKTOP);
 		string_delete(p);
 	}
 	config_delete(config);
