@@ -52,10 +52,6 @@
 #include "../../config.h"
 #define _(string) gettext(string)
 
-/* constants */
-#ifndef PROGNAME
-# define PROGNAME "browser"
-#endif
 #define COMMON_SYMLINK
 #include "../common.c"
 
