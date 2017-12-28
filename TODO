@@ -9,8 +9,14 @@
 - browse sub-directories when idle
 - copy files when data is available
 
+[delete.c]
+- use the VFS code from libBrowser
+
 [desktop.c]
 - enable drag and drop as a source
+
+[move.c]
+- use the VFS code from libBrowser
 
 [properties.c]
 - add an option to count files altogether
