@@ -47,6 +47,7 @@
 #include <locale.h>
 #include <libintl.h>
 #include <gtk/gtk.h>
+#include "Browser/vfs.h"
 #include "../config.h"
 #define _(string) gettext(string)
 
@@ -323,7 +324,7 @@ static gboolean _copy_idle_first(gpointer data)
 	char const * filename = copy->filev[copy->filec - 1];
 	struct stat st;
 
-	if(stat(filename, &st) != 0)
+	if(browser_vfs_stat(filename, &st) != 0)
 	{
 		if(errno != ENOENT)
 			_copy_filename_error(copy, filename, 0);
@@ -378,14 +379,16 @@ static int _copy_single(Copy * copy, char const * src, char const * dst)
 	free(p);
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(copy->fprogress), 0.0);
 	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(copy->fprogress), " ");
-	if(*(copy->prefs) & PREFS_P) /* don't follow symlinks */
+	if(*(copy->prefs) & PREFS_P)
 	{
-		if(lstat(src, &st) != 0 && errno == ENOENT)
+		/* do not follow symlinks */
+		if(browser_vfs_lstat(src, &st) != 0 && errno == ENOENT)
 			return _copy_filename_error(copy, src, 1);
 	}
-	else if(stat(src, &st) != 0 && errno == ENOENT) /* follow symlinks */
+	else if(browser_vfs_stat(src, &st) != 0 && errno == ENOENT)
+		/* follow symlinks */
 		return _copy_filename_error(copy, src, 1);
-	if(lstat(dst, &st2) == 0)
+	if(browser_vfs_lstat(dst, &st2) == 0)
 	{
 		if(st.st_dev == st2.st_dev && st.st_ino == st2.st_ino)
 		{
@@ -449,10 +452,10 @@ static int _single_recurse(Copy * copy, char const * src, char const * dst)
 		return _copy_filename_error(copy, dst, 1);
 	srclen = strlen(src);
 	dstlen = strlen(dst);
-	if((dir = opendir(src)) == NULL)
+	if((dir = browser_vfs_opendir(src, NULL)) == NULL)
 		return _copy_filename_error(copy, src, 1);
 	prefs2 |= (prefs2 & PREFS_H) ? PREFS_P : 0;
-	while((de = readdir(dir)) != NULL)
+	while((de = browser_vfs_readdir(dir)) != NULL)
 	{
 		if(de->d_name[0] == '.' && (de->d_name[1] == '\0'
 					|| (de->d_name[1] == '.'
@@ -474,7 +477,7 @@ static int _single_recurse(Copy * copy, char const * src, char const * dst)
 		sprintf(sdst, "%s/%s", dst, de->d_name);
 		ret |= _copy_single(&copy2, ssrc, sdst);
 	}
-	closedir(dir);
+	browser_vfs_closedir(dir);
 	free(ssrc);
 	free(sdst);
 	return ret;
