@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Open folder
+Comment=Open folder in file manager
+TryExec=browser
+Exec=browser %F
+Icon=inode-directory
+Type=Application
+NoDisplay=true
+MimeTypes=inode/directory;
+Categories=System;Core;FileManager;GTK;
+StartupNotify=true
