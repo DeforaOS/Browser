@@ -651,7 +651,7 @@ void desktop_delete(Desktop * desktop)
 	free(desktop->icons);
 	if(desktop->mime != NULL)
 		mime_delete(desktop->mime);
-	g_slist_foreach(desktop->apps, (GFunc)config_delete, NULL);
+	g_slist_foreach(desktop->apps, (GFunc)mimehandler_delete, NULL);
 	g_slist_free(desktop->apps);
 	free(desktop->path);
 	if(desktop->font != NULL)
@@ -1074,7 +1074,7 @@ void desktop_refresh(Desktop * desktop)
 
 static void _refresh_categories(Desktop * desktop)
 {
-	g_slist_foreach(desktop->apps, (GFunc)config_delete, NULL);
+	g_slist_foreach(desktop->apps, (GFunc)mimehandler_delete, NULL);
 	g_slist_free(desktop->apps);
 	desktop->apps = NULL;
 	desktop->refresh_source = g_idle_add(_desktop_on_refresh, desktop);
@@ -2702,31 +2702,31 @@ static gboolean _refresh_done(Desktop * desktop)
 static void _refresh_done_applications(Desktop * desktop)
 {
 	GSList * p;
-	Config * config;
-	const char section[] = "Desktop Entry";
-	char const * q;
-	char const * r;
+	MimeHandler * handler;
 	DesktopCategory * dc = desktop->category;
-	char const * path;
+	String const ** categories;
+	size_t i;
+	String const * filename;
 	DesktopIcon * icon;
 
 	for(p = desktop->apps; p != NULL; p = p->next)
 	{
-		config = p->data;
+		handler = p->data;
 		if(dc != NULL)
 		{
-			if((q = config_get(config, section, "Categories"))
-					== NULL)
+			if((categories = mimehandler_get_categories(handler))
+					== NULL || categories[0] == NULL)
 				continue;
-			if((r = string_find(q, dc->category)) == NULL)
-				continue;
-			r += string_length(dc->category);
-			if(*r != '\0' && *r != ';')
+			for(i = 0; categories[i] != NULL; i++)
+				if(string_compare(categories[i], dc->category)
+						== 0)
+					break;
+			if(categories[i] == NULL)
 				continue;
 		}
-		path = config_get(config, NULL, "path");
-		q = config_get(config, NULL, "datadir");
-		if((icon = desktopicon_new_application(desktop, path, q))
+		filename = mimehandler_get_filename(handler);
+		/* FIXME keep track of the datadir */
+		if((icon = desktopicon_new_application(desktop, filename, NULL))
 				== NULL)
 			continue;
 		_desktop_icon_add(desktop, icon);
@@ -2736,39 +2736,44 @@ static void _refresh_done_applications(Desktop * desktop)
 static void _refresh_done_categories(Desktop * desktop)
 {
 	GSList * p;
-	Config * config;
-	const char section[] = "Desktop Entry";
-	char const * q;
-	char const * r;
-	size_t i;
+	MimeHandler * handler;
 	DesktopCategory * dc;
-	char const * path;
+	String const ** categories;
+	size_t i;
+	size_t j;
+	String const * filename;
 	DesktopIcon * icon;
 
 	for(p = desktop->apps; p != NULL; p = p->next)
 	{
-		config = p->data;
-		path = config_get(config, NULL, "path");
-		if((q = config_get(config, section, "Categories")) == NULL)
+		handler = p->data;
+		filename = mimehandler_get_filename(handler);
+		if((categories = mimehandler_get_categories(handler)) == NULL
+				|| categories[0] == NULL)
 		{
-			if((icon = desktopicon_new_application(desktop, path,
-							NULL)) != NULL)
+			/* FIXME keep track of the datadir */
+			if((icon = desktopicon_new_application(desktop,
+							filename, NULL))
+					!= NULL)
 				_desktop_icon_add(desktop, icon);
 			continue;
 		}
 		for(i = 0; i < _desktop_categories_cnt; i++)
 		{
 			dc = &_desktop_categories[i];
-			if((r = string_find(q, dc->category)) == NULL)
-				continue;
-			r += string_length(dc->category);
-			if(*r == '\0' || *r == ';')
+			for(j = 0; categories[j] != NULL; j++)
+				if(string_compare(categories[j], dc->category)
+						== 0)
+					break;
+			if(categories[j] != NULL)
 				break;
 		}
 		if(i == _desktop_categories_cnt)
 		{
-			if((icon = desktopicon_new_application(desktop, path,
-					NULL)) != NULL)
+			/* FIXME keep track of the datadir */
+			if((icon = desktopicon_new_application(desktop,
+							filename, NULL))
+					!= NULL)
 				_desktop_icon_add(desktop, icon);
 			continue;
 		}
@@ -2842,12 +2847,9 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 	struct dirent * de;
 	size_t len;
 	const char ext[] = ".desktop";
-	const char section[] = "Desktop Entry";
 	char * name = NULL;
 	char * p;
-	Config * config = NULL;
-	String const * q;
-	String const * r;
+	MimeHandler * handler;
 
 #if defined(__sun)
 	if((fd = open(apppath, O_RDONLY)) < 0
@@ -2889,30 +2891,19 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 		fprintf(stderr, "DEBUG: %s() name=\"%s\" path=\"%s\"\n",
 				__func__, name, path);
 #endif
-		if(config == NULL)
-			config = config_new();
-		else
-			config_reset(config);
-		if(config == NULL || config_load(config, name) != 0)
+		if((handler = mimehandler_new_load(name)) == NULL
+				|| mimehandler_can_display(handler) == 0)
 		{
+			if(handler != NULL)
+				mimehandler_delete(handler);
 			_desktop_serror(NULL, NULL, 1);
 			continue;
 		}
-		q = config_get(config, section, "Name");
-		r = config_get(config, section, "Type");
-		if(q == NULL || r == NULL)
-			continue;
-		/* remember the path */
-		config_set(config, NULL, "path", name);
-		config_set(config, NULL, "datadir", path);
-		desktop->apps = g_slist_insert_sorted(desktop->apps, config,
+		desktop->apps = g_slist_insert_sorted(desktop->apps, handler,
 				_categories_apps_compare);
-		config = NULL;
 	}
 	free(name);
 	closedir(dir);
-	if(config != NULL)
-		config_delete(config);
 }
 
 static void _refresh_loop_categories_xdg(Desktop * desktop,
@@ -2995,17 +2986,16 @@ static void _refresh_loop_categories_xdg_path(Desktop * desktop,
 
 static gint _categories_apps_compare(gconstpointer a, gconstpointer b)
 {
-	Config * ca = (Config *)a;
-	Config * cb = (Config *)b;
-	char const * cap;
-	char const * cbp;
-	const char section[] = "Desktop Entry";
-	const char variable[] = "Name";
+	MimeHandler * mha = (MimeHandler *)a;
+	MimeHandler * mhb = (MimeHandler *)b;
+	String const * mhas;
+	String const * mhbs;
 
-	/* these should not fail */
-	cap = config_get(ca, section, variable);
-	cbp = config_get(cb, section, variable);
-	return string_compare(cap, cbp);
+	if((mhas = mimehandler_get_generic_name(mha, 1)) == NULL)
+		mhas = mimehandler_get_name(mha, 1);
+	if((mhbs = mimehandler_get_generic_name(mhb, 1)) == NULL)
+		mhbs = mimehandler_get_name(mhb, 1);
+	return string_compare(mhas, mhbs);
 }
 
 static int _refresh_loop_files(Desktop * desktop)
