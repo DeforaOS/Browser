@@ -9,9 +9,6 @@
 - browse sub-directories when idle
 - copy files when data is available
 
-[delete.c]
-- use the VFS code from libBrowser
-
 [desktop.c]
 - enable drag and drop as a source
 
