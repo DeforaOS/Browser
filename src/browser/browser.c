@@ -1903,7 +1903,7 @@ void browser_show_about(Browser * browser, gboolean show)
 			_("translator-credits"));
 	desktop_about_dialog_set_version(browser->ab_window, VERSION);
 	desktop_about_dialog_set_website(browser->ab_window,
-			"http://www.defora.org/");
+			"https://www.defora.org/");
 	g_signal_connect_swapped(browser->ab_window, "delete-event",
 			G_CALLBACK(_about_on_closex), browser);
 	gtk_widget_show(browser->ab_window);
