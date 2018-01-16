@@ -2356,6 +2356,29 @@ static void _on_preferences_response(GtkWidget * widget, gint response,
 static void _on_preferences_response_apply(gpointer data)
 {
 	Desktop * desktop = data;
+	int i;
+
+	/* XXX not very efficient */
+	desktop_reset(desktop);
+	/* icons */
+	desktop->prefs.icons = gtk_combo_box_get_active(
+			GTK_COMBO_BOX(desktop->pr_ilayout));
+	/* monitor */
+	i = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_imonitor));
+	desktop->prefs.monitor = (i >= 0) ? i - 1 : i;
+}
+
+static void _on_preferences_response_cancel(gpointer data)
+{
+	Desktop * desktop = data;
+
+	gtk_widget_hide(desktop->pr_window);
+	_preferences_set(desktop);
+}
+
+static void _on_preferences_response_ok(gpointer data)
+{
+	Desktop * desktop = data;
 	Config * config;
 #if GTK_CHECK_VERSION(3, 0, 0)
 	GdkRGBA color;
@@ -2367,10 +2390,10 @@ static void _on_preferences_response_apply(gpointer data)
 	int i;
 	char buf[12];
 
+	gtk_widget_hide(desktop->pr_window);
+	_on_preferences_response_apply(desktop);
 	if((config = _desktop_get_config(desktop)) == NULL)
 		return;
-	/* XXX not very efficient */
-	desktop_reset(desktop);
 	/* background */
 	p = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
 				desktop->pr_background));
@@ -2397,9 +2420,10 @@ static void _on_preferences_response_apply(gpointer data)
 	config_set(config, "background", "extend", p);
 	/* icons */
 	i = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_ilayout));
-	if(i >= 0 && i < DESKTOP_ICONS_COUNT)
-		config_set(config, "icons", "layout", _desktop_icons_config[i]);
-	desktop->prefs.icons = i; /* applied by _new_idle() */
+	if(desktop->prefs.icons >= 0
+			&& desktop->prefs.icons < DESKTOP_ICONS_COUNT)
+		config_set(config, "icons", "layout",
+				_desktop_icons_config[desktop->prefs.icons]);
 #if GTK_CHECK_VERSION(3, 4, 0)
 	gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(desktop->pr_ibcolor),
 			&color);
@@ -2432,8 +2456,7 @@ static void _on_preferences_response_apply(gpointer data)
 	g_free(p);
 	q = gtk_font_button_get_font_name(GTK_FONT_BUTTON(desktop->pr_ifont));
 	config_set(config, "icons", "font", q);
-	i = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_imonitor));
-	desktop->prefs.monitor = (i >= 0) ? i - 1 : i;
+	/* monitor */
 	snprintf(buf, sizeof(buf), "%d", desktop->prefs.monitor);
 	config_set(config, "icons", "monitor", buf);
 	config_set(config, "icons", "show_hidden", desktop->show_hidden
@@ -2441,28 +2464,11 @@ static void _on_preferences_response_apply(gpointer data)
 	/* XXX code duplication */
 	if((p = string_new_append(desktop->home, "/" DESKTOPRC, NULL)) != NULL)
 	{
-		/* FIXME save configuration in _on_preferences_ok() instead */
 		if(config_save(config, p) != 0)
 			error_print(PROGNAME_DESKTOP);
 		string_delete(p);
 	}
 	config_delete(config);
-}
-
-static void _on_preferences_response_cancel(gpointer data)
-{
-	Desktop * desktop = data;
-
-	gtk_widget_hide(desktop->pr_window);
-	_preferences_set(desktop);
-}
-
-static void _on_preferences_response_ok(gpointer data)
-{
-	Desktop * desktop = data;
-
-	gtk_widget_hide(desktop->pr_window);
-	_on_preferences_response_apply(desktop);
 }
 
 static void _on_preferences_update_preview(gpointer data)
