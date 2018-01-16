@@ -45,7 +45,7 @@ typedef struct _BrowserPlugin
 
 	GtkWidget * widget;
 
-	/* FIXME implement */
+	/* TODO implement */
 } Template;
 
 
@@ -80,7 +80,7 @@ static Template * _template_init(BrowserPluginHelper * helper)
 	if((template = object_new(sizeof(*template))) == NULL)
 		return NULL;
 	template->helper = helper;
-	/* FIXME implement */
+	/* TODO implement */
 	template->widget = gtk_label_new("Template");
 	return template;
 }
@@ -89,7 +89,7 @@ static Template * _template_init(BrowserPluginHelper * helper)
 /* template_destroy */
 static void _template_destroy(Template * template)
 {
-	/* FIXME implement */
+	/* TODO implement */
 	object_delete(template);
 }
 
@@ -104,5 +104,5 @@ static GtkWidget * _template_get_widget(Template * template)
 /* template_refresh */
 static void _template_refresh(Template * template, GList * selection)
 {
-	/* FIXME implement */
+	/* TODO implement */
 }
