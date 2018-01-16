@@ -200,7 +200,7 @@ static void _selection_refresh(Selection * selection, GList * selected)
 		if(plst != NULL)
 			size += lst.st_size;
 	}
-	snprintf(buf, sizeof(buf), "%lu selected (%s)", cnt,
+	snprintf(buf, sizeof(buf), "%zu selected (%s)", cnt,
 			_common_size(size));
 	gtk_label_set_text(GTK_LABEL(selection->status), buf);
 }
