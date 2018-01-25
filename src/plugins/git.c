@@ -83,9 +83,9 @@ static GtkWidget * _git_get_widget(Git * git);
 static void _git_refresh(Git * git, GList * selection);
 
 /* accessors */
-static String * _git_get_base(char const * filename);
-static String * _git_get_head(char const * filename);
-static gboolean _git_is_managed(char const * filename);
+static String * _git_get_base(Git * git, char const * filename);
+static String * _git_get_head(Git * git, char const * filename);
+static gboolean _git_is_managed(Git * git, char const * filename);
 static void _git_set_status(Git * git, char const * status);
 
 /* useful */
@@ -316,7 +316,7 @@ static void _git_refresh(Git * git, GList * selection)
 	gtk_label_set_text(GTK_LABEL(git->name), p);
 	g_free(p);
 	_refresh_hide(git, FALSE);
-	if((head = _git_get_head(git->filename)) != NULL)
+	if((head = _git_get_head(git, git->filename)) != NULL)
 	{
 		_git_set_status(git, head);
 		string_delete(head);
@@ -336,7 +336,7 @@ static void _refresh_dir(Git * git)
 	if((len = strlen(git->filename)) >= (sizeof(dir) - 1)
 			&& strcmp(&git->filename[len - 4], dir) == 0)
 		git->filename[len - 4] = '\0';
-	if(_git_is_managed(git->filename) != TRUE)
+	if(_git_is_managed(git, git->filename) != TRUE)
 	{
 		_git_set_status(git, _("Not a Git repository"));
 		gtk_widget_show(git->init);
@@ -371,8 +371,9 @@ static void _refresh_hide(Git * git, gboolean name)
 
 /* accessors */
 /* git_get_base */
-static String * _git_get_base(char const * filename)
+static String * _git_get_base(Git * git, char const * filename)
 {
+	BrowserPluginHelper * helper = git->helper;
 	String * base;
 	String * dir;
 	String * p;
@@ -382,7 +383,11 @@ static String * _git_get_base(char const * filename)
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, filename);
 #endif
-	base = string_new(filename);
+	if((base = string_new(filename)) == NULL)
+	{
+		helper->error(helper->browser, error_get(NULL), 1);
+		return NULL;
+	}
 	dir = base;
 	for(; string_compare(dir, ".") != 0; dir = dirname(dir))
 	{
@@ -409,13 +414,13 @@ static String * _git_get_base(char const * filename)
 
 
 /* git_get_head */
-static String * _git_get_head(char const * filename)
+static String * _git_get_head(Git * git, char const * filename)
 {
 	String * base;
 	String * p;
 	String * head = NULL;
 
-	if((base = _git_get_base(filename)) == NULL)
+	if((base = _git_get_base(git, filename)) == NULL)
 		return NULL;
 	p = string_new_append(base, "/HEAD", NULL);
 	string_delete(base);
@@ -429,11 +434,11 @@ static String * _git_get_head(char const * filename)
 
 
 /* git_is_managed */
-static gboolean _git_is_managed(char const * filename)
+static gboolean _git_is_managed(Git * git, char const * filename)
 {
 	String * base;
 
-	if((base = _git_get_base(filename)) != NULL)
+	if((base = _git_get_base(git, filename)) != NULL)
 	{
 		/* FIXME check if this file is managed */
 		string_delete(base);
