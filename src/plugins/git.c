@@ -31,13 +31,13 @@
 
 
 
-#include <System.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <string.h>
 #include <libgen.h>
 #include <errno.h>
+#include <System.h>
 #define COMMON_PROMPT
 #include "common.c"
 
