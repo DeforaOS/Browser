@@ -1412,7 +1412,7 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 	*pw = getpwuid(lst->st_uid);
 	*gr = getgrgid(lst->st_gid);
 	*ddate = _insert_date(lst->st_mtime);
-	*type = _browser_get_type(browser, path, lst->st_mode);
+	*type = _browser_get_type(browser, path, st->st_mode);
 	/* load the icons */
 	if(browser->mime == NULL)
 		return;

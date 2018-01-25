@@ -273,9 +273,6 @@ char const * browser_vfs_mime_type(Mime * mime, char const * filename,
 	struct stat pst;
 	String * p = NULL;
 
-	if(mode == 0 && filename != NULL
-			&& browser_vfs_lstat(filename, &st) == 0)
-		mode = st.st_mode;
 	if(S_ISDIR(mode))
 	{
 		/* look for mountpoints */

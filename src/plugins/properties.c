@@ -395,7 +395,8 @@ static int _properties_error(Properties * properties, char const * message,
 
 /* properties_do_refresh */
 static void _refresh_name(GtkWidget * widget, char const * filename);
-static void _refresh_type(Properties * properties, struct stat * lst);
+static void _refresh_type(Properties * properties, struct stat * lst,
+		struct stat * st);
 static void _refresh_mode(GtkWidget ** widget, mode_t mode, gboolean sensitive);
 static void _refresh_owner(Properties * properties, uid_t uid);
 static int _refresh_group(Properties * properties, gid_t gid,
@@ -406,28 +407,32 @@ static void _refresh_apply(GtkWidget * widget, gboolean sensitive);
 
 static int _properties_do_refresh(Properties * properties)
 {
+	struct stat lst;
 	struct stat st;
 	char * parent;
 	gboolean writable;
 
 	parent = dirname(properties->filename);
-	if(lstat(properties->filename, &st) != 0)
+	if(lstat(properties->filename, &lst) != 0
+			|| stat(properties->filename, &st) != 0)
 		return _properties_error(properties, properties->filename, 0)
 			+ 1;
 	_refresh_name(properties->name, properties->filename);
-	_refresh_type(properties, &st);
-	properties->uid = st.st_uid;
-	properties->gid = st.st_gid;
+	_refresh_type(properties, &lst, &st);
+	properties->uid = lst.st_uid;
+	properties->gid = lst.st_gid;
 	writable = (access(parent, W_OK) == 0) ? TRUE : FALSE;
-	_refresh_mode(&properties->mode[6], (st.st_mode & 0700) >> 6, writable);
-	_refresh_mode(&properties->mode[3], (st.st_mode & 0070) >> 3, writable);
-	_refresh_mode(&properties->mode[0], st.st_mode & 0007, writable);
-	_refresh_owner(properties, st.st_uid);
-	_refresh_group(properties, st.st_gid, writable);
-	_refresh_size(properties, st.st_size);
-	_refresh_time(properties->atime, st.st_atime);
-	_refresh_time(properties->mtime, st.st_mtime);
-	_refresh_time(properties->ctime, st.st_ctime);
+	_refresh_mode(&properties->mode[6], (lst.st_mode & 0700) >> 6,
+			writable);
+	_refresh_mode(&properties->mode[3], (lst.st_mode & 0070) >> 3,
+			writable);
+	_refresh_mode(&properties->mode[0], lst.st_mode & 0007, writable);
+	_refresh_owner(properties, lst.st_uid);
+	_refresh_group(properties, lst.st_gid, writable);
+	_refresh_size(properties, lst.st_size);
+	_refresh_time(properties->atime, lst.st_atime);
+	_refresh_time(properties->mtime, lst.st_mtime);
+	_refresh_time(properties->ctime, lst.st_ctime);
 	_refresh_apply(properties->apply, writable);
 	return 0;
 }
@@ -441,7 +446,8 @@ static void _refresh_name(GtkWidget * widget, char const * filename)
 	g_free(gfilename);
 }
 
-static void _refresh_type(Properties * properties, struct stat * lst)
+static void _refresh_type(Properties * properties, struct stat * lst,
+		struct stat * st)
 {
 	BrowserPluginHelper * helper = properties->helper;
 	char const * type = NULL;
@@ -449,7 +455,7 @@ static void _refresh_type(Properties * properties, struct stat * lst)
 	const int iconsize = 48;
 
 	type = helper->get_type(helper->browser, properties->filename,
-			lst->st_mode);
+			st->st_mode);
 	pixbuf = helper->get_icon(helper->browser, properties->filename, type,
 			lst, NULL, iconsize);
 	gtk_image_set_from_pixbuf(GTK_IMAGE(properties->image), pixbuf);
