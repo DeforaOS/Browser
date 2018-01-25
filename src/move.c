@@ -159,7 +159,10 @@ static int _move(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 	/* progress bar */
 	move.progress = gtk_progress_bar_new();
-	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(move.progress), " ");
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(move.progress), TRUE);
+#endif
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(move.progress), "");
 	gtk_box_pack_start(GTK_BOX(vbox), move.progress, TRUE, TRUE, 0);
 #if GTK_CHECK_VERSION(3, 0, 0)
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);

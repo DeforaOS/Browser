@@ -181,7 +181,10 @@ static int _copy(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 	/* progress bar */
 	copy.progress = gtk_progress_bar_new();
-	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(copy.progress), " ");
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(copy.progress), TRUE);
+#endif
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(copy.progress), "");
 	gtk_box_pack_start(GTK_BOX(vbox), copy.progress, TRUE, TRUE, 0);
 	/* file copy */
 #if GTK_CHECK_VERSION(3, 0, 0)
