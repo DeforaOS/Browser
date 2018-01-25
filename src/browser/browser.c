@@ -1139,7 +1139,7 @@ void browser_open_with(Browser * browser, char const * path)
 #else
 	vbox = GTK_DIALOG(dialog)->vbox;
 #endif
-	if(browser_vfs_mime_type(browser->mime, path, 0) != NULL)
+	if(_browser_get_type(browser, path, 0) != NULL)
 	{
 		widget = gtk_check_button_new_with_mnemonic(
 				_("_Set as the default handler"));
@@ -1412,7 +1412,7 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 	*pw = getpwuid(lst->st_uid);
 	*gr = getgrgid(lst->st_gid);
 	*ddate = _insert_date(lst->st_mtime);
-	*type = browser_vfs_mime_type(browser->mime, path, lst->st_mode);
+	*type = _browser_get_type(browser, path, lst->st_mode);
 	/* load the icons */
 	if(browser->mime == NULL)
 		return;
