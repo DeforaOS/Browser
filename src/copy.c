@@ -341,7 +341,8 @@ static int _single_dir(Copy * copy, char const * src, char const * dst,
 		mode_t mode);
 static int _single_fifo(Copy * copy, char const * dst, mode_t mode);
 static int _single_symlink(Copy * copy, char const * src, char const * dst);
-static int _single_regular(Copy * copy, char const * src, char const * dst);
+static int _single_regular(Copy * copy, char const * src, char const * dst,
+		mode_t mode);
 static int _single_p(Copy * copy, char const * dst, struct stat const * st);
 static void _single_remaining(Copy * copy, guint64 rate);
 static gboolean _single_timeout(gpointer data);
@@ -395,7 +396,7 @@ static int _copy_single(Copy * copy, char const * src, char const * dst)
 		ret = _single_symlink(copy, src, dst);
 	else
 	{
-		ret = _single_regular(copy, src, dst);
+		ret = _single_regular(copy, src, dst, st.st_mode & 0777);
 		timeout = g_timeout_add(250, _single_timeout, copy);
 		gtk_main(); /* XXX ugly */
 		g_source_remove(timeout);
@@ -494,7 +495,8 @@ static int _single_symlink(Copy * copy, char const * src, char const * dst)
 static gboolean _regular_idle_in(gpointer data);
 static gboolean _regular_idle_out(gpointer data);
 
-static int _single_regular(Copy * copy, char const * src, char const * dst)
+static int _single_regular(Copy * copy, char const * src, char const * dst,
+		mode_t mode)
 {
 	int ret = 0;
 	int in_fd;
@@ -505,7 +507,7 @@ static int _single_regular(Copy * copy, char const * src, char const * dst)
 		return _copy_error(copy, "gettimeofday", 1);
 	if((in_fd = open(src, O_RDONLY)) < 0)
 		return _copy_filename_error(copy, src, 1);
-	if((out_fd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0644)) < 0)
+	if((out_fd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, mode)) < 0)
 	{
 		ret = _copy_filename_error(copy, src, 1);
 		close(in_fd);
