@@ -669,26 +669,26 @@ static gboolean _regular_idle_out(gpointer data)
 static int _single_p(Copy * copy, char const * dst, struct stat const * st)
 {
 	struct timeval tv[2];
-	int (*own)(const char * path, uid_t uid, gid_t git);
-	int (*mod)(const char * path, mode_t mode);
-	int (*ut)(const char * path, const struct timeval times[2]);
+	int (*_chown)(const char * path, uid_t uid, gid_t git);
+	int (*_chmod)(const char * path, mode_t mode);
+	int (*_utimes)(const char * path, const struct timeval times[2]);
 
-	own = S_ISLNK(st->st_mode) ? lchown : chown;
-	mod = S_ISLNK(st->st_mode) ? lchmod : chmod;
-	ut = S_ISLNK(st->st_mode) ? lutimes : utimes;
-	if(own(dst, st->st_uid, st->st_gid) != 0)
+	_chown = S_ISLNK(st->st_mode) ? lchown : chown;
+	_chmod = S_ISLNK(st->st_mode) ? lchmod : chmod;
+	_utimes = S_ISLNK(st->st_mode) ? lutimes : utimes;
+	if(_chown(dst, st->st_uid, st->st_gid) != 0)
 	{
 		_copy_filename_error(copy, dst, 0);
-		if(mod(dst, st->st_mode & ~(S_ISUID | S_ISGID)) != 0)
+		if(_chmod(dst, st->st_mode & ~(S_ISUID | S_ISGID)) != 0)
 			_copy_filename_error(copy, dst, 0);
 	}
-	else if(mod(dst, st->st_mode) != 0)
+	else if(_chmod(dst, st->st_mode) != 0)
 		_copy_filename_error(copy, dst, 0);
 	tv[0].tv_sec = st->st_atime;
 	tv[0].tv_usec = 0;
 	tv[1].tv_sec = st->st_mtime;
 	tv[1].tv_usec = 0;
-	if(ut(dst, tv) != 0)
+	if(_utimes(dst, tv) != 0)
 		_copy_filename_error(copy, dst, 0);
 	return 0;
 }
