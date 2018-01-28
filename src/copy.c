@@ -337,7 +337,8 @@ static gboolean _copy_idle_first(gpointer data)
 
 /* copy_single
  * XXX TOCTOU all over the place (*stat) but seems impossible to avoid */
-static int _single_dir(Copy * copy, char const * src, char const * dst);
+static int _single_dir(Copy * copy, char const * src, char const * dst,
+		mode_t mode);
 static int _single_fifo(Copy * copy, char const * dst, mode_t mode);
 static int _single_symlink(Copy * copy, char const * src, char const * dst);
 static int _single_regular(Copy * copy, char const * src, char const * dst);
@@ -387,7 +388,7 @@ static int _copy_single(Copy * copy, char const * src, char const * dst)
 			return _copy_filename_error(copy, dst, 1);
 	}
 	if(S_ISDIR(st.st_mode))
-		ret = _single_dir(copy, src, dst);
+		ret = _single_dir(copy, src, dst, st.st_mode & 0777);
 	else if(S_ISFIFO(st.st_mode))
 		ret = _single_fifo(copy, dst, st.st_mode & 0666);
 	else if(S_ISLNK(st.st_mode))
@@ -407,17 +408,20 @@ static int _copy_single(Copy * copy, char const * src, char const * dst)
 }
 
 /* single_dir */
-static int _single_recurse(Copy * copy, char const * src, char const * dst);
+static int _single_recurse(Copy * copy, char const * src, char const * dst,
+		mode_t mode);
 
-static int _single_dir(Copy * copy, char const * src, char const * dst)
+static int _single_dir(Copy * copy, char const * src, char const * dst,
+		mode_t mode)
 {
 	if(*(copy->prefs) & PREFS_R)
-		return _single_recurse(copy, src, dst);
+		return _single_recurse(copy, src, dst, mode);
 	_copy_filename_info(copy, src, _("Omitting directory"));
 	return 0;
 }
 
-static int _single_recurse(Copy * copy, char const * src, char const * dst)
+static int _single_recurse(Copy * copy, char const * src, char const * dst,
+		mode_t mode)
 {
 	int ret = 0;
 	Copy copy2;
@@ -432,8 +436,10 @@ static int _single_recurse(Copy * copy, char const * src, char const * dst)
 
 	memcpy(&copy2, copy, sizeof(copy2));
 	copy2.prefs = &prefs2;
-	if(mkdir(dst, 0777) != 0 && errno != EEXIST)
+	if(mkdir(dst, mode) != 0 && errno != EEXIST)
 		return _copy_filename_error(copy, dst, 1);
+	if(*(copy->prefs) & PREFS_p && chmod(dst, mode) != 0)
+		_copy_filename_error(copy, dst, 0);
 	srclen = strlen(src);
 	dstlen = strlen(dst);
 	if((dir = browser_vfs_opendir(src, NULL)) == NULL)
