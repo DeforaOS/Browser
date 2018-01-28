@@ -972,8 +972,7 @@ int main(int argc, char * argv[])
 				prefs |= PREFS_i;
 				break;
 			case 'p':
-				prefs -= prefs & PREFS_p;
-				prefs |= PREFS_i;
+				prefs |= PREFS_p;
 				break;
 			case 'R':
 			case 'r':
