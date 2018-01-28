@@ -376,7 +376,8 @@ static int _copy_single(Copy * copy, char const * src, char const * dst)
 		if(st.st_dev == st2.st_dev && st.st_ino == st2.st_ino)
 		{
 			fprintf(stderr, "%s: %s: \"%s\"%s\n", PROGNAME_COPY,
-					dst, src, " is identical (not copied)");
+					dst, src,
+					_(" is identical (not copied)"));
 			return 0;
 		}
 		if(*(copy->prefs) & PREFS_i
