@@ -338,7 +338,7 @@ static gboolean _copy_idle_first(gpointer data)
 /* copy_single
  * XXX TOCTOU all over the place (*stat) but seems impossible to avoid */
 static int _single_dir(Copy * copy, char const * src, char const * dst);
-static int _single_fifo(Copy * copy, char const * dst);
+static int _single_fifo(Copy * copy, char const * dst, mode_t mode);
 static int _single_symlink(Copy * copy, char const * src, char const * dst);
 static int _single_regular(Copy * copy, char const * src, char const * dst);
 static int _single_p(Copy * copy, char const * dst, struct stat const * st);
@@ -389,7 +389,7 @@ static int _copy_single(Copy * copy, char const * src, char const * dst)
 	if(S_ISDIR(st.st_mode))
 		ret = _single_dir(copy, src, dst);
 	else if(S_ISFIFO(st.st_mode))
-		ret = _single_fifo(copy, dst);
+		ret = _single_fifo(copy, dst, st.st_mode & 0666);
 	else if(S_ISLNK(st.st_mode))
 		ret = _single_symlink(copy, src, dst);
 	else
@@ -467,10 +467,12 @@ static int _single_recurse(Copy * copy, char const * src, char const * dst)
 	return ret;
 }
 
-static int _single_fifo(Copy * copy, char const * dst)
+static int _single_fifo(Copy * copy, char const * dst, mode_t mode)
 {
-	if(mkfifo(dst, 0666) != 0) /* XXX use mode from source? */
+	if(mkfifo(dst, mode) != 0)
 		return _copy_filename_error(copy, dst, 1);
+	if(*(copy->prefs) & PREFS_p && chmod(dst, mode) != 0)
+		return _copy_filename_error(copy, dst, 0);
 	return 0;
 }
 
