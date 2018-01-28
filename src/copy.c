@@ -265,7 +265,10 @@ static int _copy(Prefs * prefs, unsigned int filec, char * filev[])
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 	/* file progress bar */
 	copy.fprogress = gtk_progress_bar_new();
-	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(copy.fprogress), " ");
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(copy.fprogress), TRUE);
+#endif
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(copy.fprogress), "");
 	gtk_box_pack_start(GTK_BOX(vbox), copy.fprogress, TRUE, TRUE, 0);
 #if GTK_CHECK_VERSION(3, 0, 0)
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
@@ -381,7 +384,7 @@ static int _copy_single(Copy * copy, char const * src, char const * dst)
 		gtk_label_set_text(GTK_LABEL(copy->flabel), src);
 	free(p);
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(copy->fprogress), 0.0);
-	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(copy->fprogress), " ");
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(copy->fprogress), "");
 	if(*(copy->prefs) & PREFS_P)
 	{
 		/* do not follow symlinks */
