@@ -438,8 +438,6 @@ static int _single_recurse(Copy * copy, char const * src, char const * dst,
 	copy2.prefs = &prefs2;
 	if(mkdir(dst, mode) != 0 && errno != EEXIST)
 		return _copy_filename_error(copy, dst, 1);
-	if(*(copy->prefs) & PREFS_p && chmod(dst, mode) != 0)
-		_copy_filename_error(copy, dst, 0);
 	srclen = strlen(src);
 	dstlen = strlen(dst);
 	if((dir = browser_vfs_opendir(src, NULL)) == NULL)
@@ -477,8 +475,6 @@ static int _single_fifo(Copy * copy, char const * dst, mode_t mode)
 {
 	if(mkfifo(dst, mode) != 0)
 		return _copy_filename_error(copy, dst, 1);
-	if(*(copy->prefs) & PREFS_p && chmod(dst, mode) != 0)
-		return _copy_filename_error(copy, dst, 0);
 	return 0;
 }
 
