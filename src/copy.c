@@ -398,12 +398,17 @@ static int _copy_single(Copy * copy, char const * src, char const * dst)
 		ret = _single_nod(copy, src, dst, st.st_mode, st.st_rdev);
 	else if(S_ISLNK(st.st_mode))
 		ret = _single_symlink(copy, src, dst);
-	else
+	else if(S_ISREG(st.st_mode))
 	{
 		ret = _single_regular(copy, src, dst, st.st_mode & 0777);
 		timeout = g_timeout_add(250, _single_timeout, copy);
 		gtk_main(); /* XXX ugly */
 		g_source_remove(timeout);
+	}
+	else
+	{
+		errno = ENOSYS;
+		return _copy_error(copy, src, 1);
 	}
 	if(ret != 0)
 		return ret;
