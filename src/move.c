@@ -250,12 +250,15 @@ static gboolean _move_idle_first(gpointer data)
 }
 
 /* move_single */
-static int _single_dir(Move * move, char const * src, char const * dst);
-static int _single_fifo(Move * move, char const * src, char const * dst);
+static int _single_dir(Move * move, char const * src, char const * dst,
+		mode_t mode);
+static int _single_fifo(Move * move, char const * src, char const * dst,
+		mode_t mode);
 static int _single_nod(Move * move, char const * src, char const * dst,
 		mode_t mode, dev_t rdev);
 static int _single_symlink(Move * move, char const * src, char const * dst);
-static int _single_regular(Move * move, char const * src, char const * dst);
+static int _single_regular(Move * move, char const * src, char const * dst,
+		mode_t mode);
 static int _single_p(Move * move, char const * dst, struct stat const * st);
 
 static int _move_single(Move * move, char const * src, char const * dst)
@@ -278,20 +281,20 @@ static int _move_single(Move * move, char const * src, char const * dst)
 	if(browser_vfs_lstat(src, &st) != 0)
 		return _move_filename_error(move, dst, 1);
 	if(S_ISDIR(st.st_mode))
-		ret = _single_dir(move, src, dst);
+		ret = _single_dir(move, src, dst, st.st_mode & 0777);
 	else if(S_ISFIFO(st.st_mode))
-		ret = _single_fifo(move, src, dst);
+		ret = _single_fifo(move, src, dst, st.st_mode & 0666);
 	else if(S_ISCHR(st.st_mode) || S_ISBLK(st.st_mode))
 		ret = _single_nod(move, src, dst, st.st_mode, st.st_rdev);
 	else if(S_ISLNK(st.st_mode))
 		ret = _single_symlink(move, src, dst);
-	else if(!S_ISREG(st.st_mode)) /* FIXME not implemented */
+	else if(S_ISREG(st.st_mode))
+		ret = _single_regular(move, src, dst, st.st_mode & 0777);
+	else
 	{
 		errno = ENOSYS;
 		return _move_filename_error(move, src, 1);
 	}
-	else
-		ret = _single_regular(move, src, dst);
 	if(ret != 0)
 		return ret;
 	_single_p(move, dst, &st);
@@ -299,18 +302,21 @@ static int _move_single(Move * move, char const * src, char const * dst)
 }
 
 /* single_dir */
-static int _single_recurse(Move * move, char const * src, char const * dst);
+static int _single_recurse(Move * move, char const * src, char const * dst,
+		mode_t mode);
 
-static int _single_dir(Move * move, char const * src, char const * dst)
+static int _single_dir(Move * move, char const * src, char const * dst,
+		mode_t mode)
 {
-	if(_single_recurse(move, src, dst) != 0)
+	if(_single_recurse(move, src, dst, mode) != 0)
 		return 1;
 	if(rmdir(src) != 0) /* FIXME probably gonna fail, recurse before */
 		_move_filename_error(move, src, 0);
 	return 0;
 }
 
-static int _single_recurse(Move * move, char const * src, char const * dst)
+static int _single_recurse(Move * move, char const * src, char const * dst,
+		mode_t mode)
 {
 	int ret = 0;
 	size_t srclen;
@@ -321,7 +327,7 @@ static int _single_recurse(Move * move, char const * src, char const * dst)
 	char * sdst = NULL;
 	char * p;
 
-	if(mkdir(dst, 0777) != 0) /* XXX use mode from source? */
+	if(mkdir(dst, mode) != 0)
 		return _move_filename_error(move, dst, 1);
 	srclen = strlen(src);
 	dstlen = strlen(dst);
@@ -355,9 +361,10 @@ static int _single_recurse(Move * move, char const * src, char const * dst)
 	return ret;
 }
 
-static int _single_fifo(Move * move, char const * src, char const * dst)
+static int _single_fifo(Move * move, char const * src, char const * dst,
+		mode_t mode)
 {
-	if(mkfifo(dst, 0666) != 0) /* XXX use mode from source? */
+	if(mkfifo(dst, mode) != 0)
 		return _move_filename_error(move, dst, 1);
 	if(unlink(src) != 0)
 		_move_filename_error(move, src, 0);
@@ -389,19 +396,24 @@ static int _single_symlink(Move * move, char const * src, char const * dst)
 	return 0;
 }
 
-static int _single_regular(Move * move, char const * src, char const * dst)
+static int _single_regular(Move * move, char const * src, char const * dst,
+		mode_t mode)
 {
 	int ret = 0;
 	FILE * fsrc;
+	int fd;
 	FILE * fdst;
 	char buf[BUFSIZ];
 	size_t size;
 
 	if((fsrc = fopen(src, "r")) == NULL)
 		return _move_filename_error(move, dst, 1);
-	if((fdst = fopen(dst, "w")) == NULL)
+	if((fd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, mode)) < 0
+			|| (fdst = fdopen(fd, "w")) == NULL)
 	{
 		ret |= _move_filename_error(move, dst, 1);
+		if(fd >= 0)
+			close(fd);
 		fclose(fsrc);
 		return ret;
 	}
@@ -426,16 +438,16 @@ static int _single_p(Move * move, char const * dst, struct stat const * st)
 	if(lchown(dst, st->st_uid, st->st_gid) != 0) /* XXX TOCTOU */
 	{
 		_move_filename_error(move, dst, 0);
-		if(chmod(dst, st->st_mode & ~(S_ISUID | S_ISGID)) != 0)
+		if(lchmod(dst, st->st_mode & ~(S_ISUID | S_ISGID)) != 0)
 			_move_filename_error(move, dst, 0);
 	}
-	else if(chmod(dst, st->st_mode) != 0)
+	else if(lchmod(dst, st->st_mode) != 0)
 		_move_filename_error(move, dst, 0);
 	tv[0].tv_sec = st->st_atime;
 	tv[0].tv_usec = 0;
 	tv[1].tv_sec = st->st_mtime;
 	tv[1].tv_usec = 0;
-	if(utimes(dst, tv) != 0)
+	if(lutimes(dst, tv) != 0)
 		_move_filename_error(move, dst, 0);
 	return 0;
 }
