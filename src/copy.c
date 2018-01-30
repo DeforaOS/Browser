@@ -340,6 +340,8 @@ static gboolean _copy_idle_first(gpointer data)
 static int _single_dir(Copy * copy, char const * src, char const * dst,
 		mode_t mode);
 static int _single_fifo(Copy * copy, char const * dst, mode_t mode);
+static int _single_nod(Copy * copy, char const * src, char const * dst,
+		mode_t mode, dev_t rdev);
 static int _single_symlink(Copy * copy, char const * src, char const * dst);
 static int _single_regular(Copy * copy, char const * src, char const * dst,
 		mode_t mode);
@@ -392,6 +394,8 @@ static int _copy_single(Copy * copy, char const * src, char const * dst)
 		ret = _single_dir(copy, src, dst, st.st_mode & 0777);
 	else if(S_ISFIFO(st.st_mode))
 		ret = _single_fifo(copy, dst, st.st_mode & 0666);
+	else if(S_ISCHR(st.st_mode) || S_ISBLK(st.st_mode))
+		ret = _single_nod(copy, src, dst, st.st_mode, st.st_rdev);
 	else if(S_ISLNK(st.st_mode))
 		ret = _single_symlink(copy, src, dst);
 	else
@@ -476,6 +480,16 @@ static int _single_fifo(Copy * copy, char const * dst, mode_t mode)
 {
 	if(mkfifo(dst, mode) != 0)
 		return _copy_filename_error(copy, dst, 1);
+	return 0;
+}
+
+static int _single_nod(Copy * copy, char const * src, char const * dst,
+		mode_t mode, dev_t rdev)
+{
+	if(mknod(dst, mode, rdev) != 0)
+		return _copy_error(copy, dst, 1);
+	if(unlink(src) != 0)
+		_copy_error(copy, src, 0);
 	return 0;
 }
 
