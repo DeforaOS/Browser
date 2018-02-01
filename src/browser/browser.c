@@ -3654,14 +3654,26 @@ static void _view_on_detail_default_do(Browser * browser, GtkTreePath * path)
 	char * location;
 	GtkTreeIter iter;
 	gboolean is_dir;
+	gboolean is_exec;
+	IconCallback ic;
 
 	if(gtk_tree_model_get_iter(GTK_TREE_MODEL(browser->store), &iter, path)
 			== FALSE)
 		return;
 	gtk_tree_model_get(GTK_TREE_MODEL(browser->store), &iter, BC_PATH,
-			&location, BC_IS_DIRECTORY, &is_dir, -1);
+			&location, BC_IS_DIRECTORY, &is_dir,
+			BC_IS_EXECUTABLE, &is_exec, -1);
 	if(is_dir)
 		browser_set_location(browser, location);
+	else if(is_exec)
+	{
+		/* XXX use a more generic function */
+		ic.browser = browser;
+		ic.isdir = is_dir;
+		ic.isexec = is_exec;
+		ic.path = location;
+		_view_on_button_press_icon_run(&ic);
+	}
 	else if(browser->mime == NULL
 			|| mime_action(browser->mime, "open", location) != 0)
 		browser_open_with(browser, location);
