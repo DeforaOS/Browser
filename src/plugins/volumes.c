@@ -135,6 +135,7 @@ static int _volumes_can_mount(unsigned int flags);
 static int _volumes_can_unmount(unsigned int flags);
 
 /* useful */
+static int _volumes_eject(Volumes * volumes, char const * mountpoint);
 static void _volumes_list(Volumes * volumes);
 static int _volumes_mount(Volumes * volumes, char const * mountpoint);
 static int _volumes_unmount(Volumes * volumes, char const * mountpoint);
@@ -347,6 +348,30 @@ static int _volumes_can_unmount(unsigned int flags)
 
 
 /* useful */
+/* volumes_eject */
+static int _volumes_eject(Volumes * volumes, char const * device)
+{
+	BrowserPluginHelper * helper = volumes->helper;
+	int ret = 0;
+	char * argv[] = { "eject", "--", NULL, NULL };
+	const unsigned int flags = G_SPAWN_SEARCH_PATH;
+	GError * error = NULL;
+
+	if(device == NULL)
+		return -helper->error(helper->browser, strerror(EINVAL), 1);
+	if((argv[2] = strdup(device)) == NULL)
+		return -helper->error(helper->browser, strerror(errno), 1);
+	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
+			!= TRUE)
+	{
+		ret = -helper->error(helper->browser, error->message, 1);
+		g_error_free(error);
+	}
+	free(argv[2]);
+	return ret;
+}
+
+
 /* volumes_list */
 static void _list_add(Volumes * volumes, char const * name, char const * device,
 		char const * filesystem, unsigned int flags,
@@ -867,21 +892,10 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 static void _volumes_on_eject(GtkWidget * widget, gpointer data)
 {
 	Volumes * volumes = data;
-	BrowserPluginHelper * helper = volumes->helper;
 	gchar * device;
-	char * argv[] = { "eject", "--", NULL, NULL };
-	const unsigned int flags = G_SPAWN_SEARCH_PATH;
-	GError * error = NULL;
 
 	device = g_object_get_data(G_OBJECT(widget), "device");
-	/* FIXME use the device node instead */
-	argv[2] = device;
-	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
-			!= TRUE)
-	{
-		helper->error(helper->browser, error->message, 1);
-		g_error_free(error);
-	}
+	_volumes_eject(volumes, device);
 	g_free(device);
 }
 
