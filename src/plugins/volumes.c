@@ -214,18 +214,21 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 			renderer, "text", DC_NAME, "ellipsize", DC_ELLIPSIZE,
 			"ellipsize-set", DC_ELLIPSIZE_SET, NULL);
 	gtk_tree_view_column_set_resizable(column, TRUE);
+	gtk_tree_view_column_set_sort_column_id(column, DC_FILESYSTEM);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(volumes->view), column);
 	/* column: size */
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes(_("Size"), renderer,
 			"text", DC_SIZE_DISPLAY, NULL);
 	gtk_tree_view_column_set_resizable(column, TRUE);
+	gtk_tree_view_column_set_sort_column_id(column, DC_SIZE);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(volumes->view), column);
 	/* column: free space */
 	renderer = gtk_cell_renderer_progress_new();
 	column = gtk_tree_view_column_new_with_attributes(_("Used"), renderer,
 			"text", DC_FREE_DISPLAY, "value", DC_FREE, NULL);
 	gtk_tree_view_column_set_resizable(column, TRUE);
+	gtk_tree_view_column_set_sort_column_id(column, DC_FREE);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(volumes->view), column);
 	/* selection */
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(volumes->view));
