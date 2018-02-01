@@ -111,6 +111,10 @@ typedef struct _BrowserPlugin
 {
 	BrowserPluginHelper * helper;
 	guint source;
+	GtkWidget * widget;
+	GtkToolItem * tb_mount;
+	GtkToolItem * tb_unmount;
+	GtkToolItem * tb_eject;
 	GtkWidget * window;
 	GtkListStore * store;
 	GtkWidget * view;
@@ -141,7 +145,10 @@ static int _volumes_mount(Volumes * volumes, char const * mountpoint);
 static int _volumes_unmount(Volumes * volumes, char const * mountpoint);
 
 /* callbacks */
+static void _volumes_on_eject_selection(gpointer data);
+static void _volumes_on_mount_selection(gpointer data);
 static gboolean _volumes_on_timeout(gpointer data);
+static void _volumes_on_unmount_selection(gpointer data);
 static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 		GdkEventButton * event, gpointer data);
 static gboolean _volumes_on_view_popup_menu(GtkWidget * widget, gpointer data);
@@ -173,6 +180,7 @@ static int _init_sort(GtkTreeModel * model, GtkTreeIter * a, GtkTreeIter * b,
 static Volumes * _volumes_init(BrowserPluginHelper * helper)
 {
 	Volumes * volumes;
+	GtkWidget * widget;
 	GtkCellRenderer * renderer;
 	GtkTreeViewColumn * column;
 	GtkTreeSelection * treesel;
@@ -185,6 +193,60 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 		return NULL;
 	volumes->helper = helper;
 	volumes->source = 0;
+	volumes->widget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	widget = gtk_toolbar_new();
+	/* mount */
+#if GTK_CHECK_VERSION(2, 8, 0)
+	volumes->tb_mount = gtk_tool_button_new(NULL, _("Mount"));
+	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(volumes->tb_mount),
+			"hdd_unmount");
+# if GTK_CHECK_VERSION(2, 12, 0)
+	gtk_widget_set_tooltip_text(GTK_WIDGET(volumes->tb_mount),
+			_("Mount the volume"));
+# endif
+#else
+	volumes->tb_mount = gtk_tool_button_new(gtk_image_new_from_icon_name(
+				"hdd_unmount", GTK_ICON_SIZE_SMALL_TOOLBAR),
+			_("Mount"));
+#endif
+	g_signal_connect_swapped(volumes->tb_mount, "clicked", G_CALLBACK(
+				_volumes_on_mount_selection), volumes);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), volumes->tb_mount, -1);
+	/* unmount */
+#if GTK_CHECK_VERSION(2, 8, 0)
+	volumes->tb_unmount = gtk_tool_button_new(NULL, _("Unmount"));
+	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(volumes->tb_unmount),
+			"hdd_unmount");
+# if GTK_CHECK_VERSION(2, 12, 0)
+	gtk_widget_set_tooltip_text(GTK_WIDGET(volumes->tb_unmount),
+			_("Unmount the volume"));
+# endif
+#else
+	volumes->tb_unmount = gtk_tool_button_new(gtk_image_new_from_icon_name(
+				"hdd_unmount", GTK_ICON_SIZE_SMALL_TOOLBAR),
+			_("Unmount"));
+#endif
+	g_signal_connect_swapped(volumes->tb_unmount, "clicked", G_CALLBACK(
+				_volumes_on_unmount_selection), volumes);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), volumes->tb_unmount, -1);
+	/* eject */
+#if GTK_CHECK_VERSION(2, 8, 0)
+	volumes->tb_eject = gtk_tool_button_new(NULL, _("Eject"));
+	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(volumes->tb_eject),
+			"media-eject");
+# if GTK_CHECK_VERSION(2, 12, 0)
+	gtk_widget_set_tooltip_text(GTK_WIDGET(volumes->tb_eject),
+			_("Unmount the volume"));
+# endif
+#else
+	volumes->tb_eject = gtk_tool_button_new(gtk_image_new_from_icon_name(
+				"media-eject", GTK_ICON_SIZE_SMALL_TOOLBAR),
+			_("Eject"));
+#endif
+	g_signal_connect_swapped(volumes->tb_eject, "clicked", G_CALLBACK(
+				_volumes_on_eject_selection), volumes);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), volumes->tb_eject, -1);
+	gtk_box_pack_start(GTK_BOX(volumes->widget), widget, FALSE, TRUE, 0);
 	volumes->window = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(volumes->window),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -248,7 +310,9 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 		volumes->icons[i] = gtk_icon_theme_load_icon(icontheme,
 				icons[i], volumes->width,
 				GTK_ICON_LOOKUP_USE_BUILTIN, NULL);
-	gtk_widget_show_all(volumes->window);
+	gtk_box_pack_start(GTK_BOX(volumes->widget), volumes->window, TRUE,
+			TRUE, 0);
+	gtk_widget_show_all(volumes->widget);
 	return volumes;
 }
 
@@ -295,7 +359,7 @@ static void _volumes_destroy(Volumes * volumes)
 /* volumes_get_widget */
 static GtkWidget * _volumes_get_widget(Volumes * volumes)
 {
-	return volumes->window;
+	return volumes->widget;
 }
 
 
@@ -793,6 +857,46 @@ static int _volumes_unmount(Volumes * volumes, char const * mountpoint)
 
 
 /* callbacks */
+/* volumes_on_eject_selection */
+static void _volumes_on_eject_selection(gpointer data)
+{
+	Volumes * volumes = data;
+	GtkTreeSelection * treesel;
+	GtkTreeModel * model;
+	GtkTreeIter iter;
+	gchar * device;
+
+	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(volumes->view));
+	if(gtk_tree_selection_get_selected(treesel, &model, &iter) != TRUE)
+		return;
+	gtk_tree_model_get(model, &iter, DC_DEVICE, &device, -1);
+	if(device == NULL)
+		return;
+	_volumes_eject(volumes, device);
+	g_free(device);
+}
+
+
+/* volumes_on_mount_selection */
+static void _volumes_on_mount_selection(gpointer data)
+{
+	Volumes * volumes = data;
+	GtkTreeSelection * treesel;
+	GtkTreeModel * model;
+	GtkTreeIter iter;
+	gchar * mountpoint;
+
+	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(volumes->view));
+	if(gtk_tree_selection_get_selected(treesel, &model, &iter) != TRUE)
+		return;
+	gtk_tree_model_get(model, &iter, DC_MOUNTPOINT, &mountpoint, -1);
+	if(mountpoint == NULL)
+		return;
+	_volumes_mount(volumes, mountpoint);
+	g_free(mountpoint);
+}
+
+
 /* volumes_on_timeout */
 static gboolean _volumes_on_timeout(gpointer data)
 {
@@ -803,6 +907,26 @@ static gboolean _volumes_on_timeout(gpointer data)
 #endif
 	_volumes_list(volumes);
 	return TRUE;
+}
+
+
+/* volumes_on_unmount_selection */
+static void _volumes_on_unmount_selection(gpointer data)
+{
+	Volumes * volumes = data;
+	GtkTreeSelection * treesel;
+	GtkTreeModel * model;
+	GtkTreeIter iter;
+	gchar * mountpoint;
+
+	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(volumes->view));
+	if(gtk_tree_selection_get_selected(treesel, &model, &iter) != TRUE)
+		return;
+	gtk_tree_model_get(model, &iter, DC_MOUNTPOINT, &mountpoint, -1);
+	if(mountpoint == NULL)
+		return;
+	_volumes_unmount(volumes, mountpoint);
+	g_free(mountpoint);
 }
 
 
