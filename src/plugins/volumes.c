@@ -50,6 +50,7 @@
 # include <sys/param.h>
 # include <sys/types.h>
 # include <sys/statvfs.h>
+# include <fstab.h>
 #endif
 #include "Browser.h"
 #include "../../config.h"
@@ -303,7 +304,8 @@ static GdkPixbuf * _list_get_icon_removable(Volumes * volumes, VolumesPixbuf dp,
 		char const * mountpoint);
 static void _list_get_iter(Volumes * volumes, GtkTreeIter * iter,
 		char const * mountpoint);
-static void _list_loop_mounted(Volumes * volumes);
+static void _list_loop_mounted(Volumes * volumes, int reset);
+static int _list_loop_unmounted(Volumes * volumes);
 static void _list_purge(Volumes * volumes);
 static void _list_reset(Volumes * volumes);
 
@@ -312,7 +314,8 @@ static void _volumes_list(Volumes * volumes)
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
-	_list_loop_mounted(volumes);
+	_list_loop_mounted(volumes,
+			_list_loop_unmounted(volumes));
 	_list_purge(volumes);
 }
 
@@ -531,7 +534,7 @@ static void _list_get_iter(Volumes * volumes, GtkTreeIter * iter,
 	gtk_list_store_append(volumes->store, iter);
 }
 
-static void _list_loop_mounted(Volumes * volumes)
+static void _list_loop_mounted(Volumes * volumes, int reset)
 {
 #if defined(ST_NOWAIT)
 	struct statvfs * mnt;
@@ -541,7 +544,8 @@ static void _list_loop_mounted(Volumes * volumes)
 
 	if((res = getmntinfo(&mnt, ST_NOWAIT)) <= 0)
 		return;
-	_list_reset(volumes);
+	if(reset)
+		_list_reset(volumes);
 	for(i = 0; i < res; i++)
 	{
 		flags = (mnt[i].f_flag & ST_LOCAL) ? 0 : DF_NETWORK;
@@ -562,7 +566,8 @@ static void _list_loop_mounted(Volumes * volumes)
 
 	if((res = getmntinfo(&mnt, MNT_NOWAIT)) <= 0)
 		return;
-	_list_reset(volumes);
+	if(reset)
+		_list_reset(volumes);
 	for(i = 0; i < res; i++)
 	{
 		flags = (mnt[i].f_flags & MNT_LOCAL) ? 0 : DF_NETWORK;
@@ -574,8 +579,40 @@ static void _list_loop_mounted(Volumes * volumes)
 				mnt[i].f_bavail, mnt[i].f_blocks);
 	}
 #else
-	_list_reset(volumes);
+	if(reset)
+		_list_reset(volumes);
 	_list_add(volumes, _("Root filesystem"), NULL, NULL, 0, "/", 0, 0, 0);
+#endif
+}
+
+static int _list_loop_unmounted(Volumes * volumes)
+{
+#if defined(_PATH_FSTAB)
+	struct fstab * f;
+	unsigned int flags;
+
+	if(setfsent() != 1)
+		return -1;
+	_list_reset(volumes);
+	while((f = getfsent()) != NULL)
+	{
+		if(strcmp(f->fs_type, "sw") == 0
+				|| strcmp(f->fs_type, "xx") == 0)
+			continue;
+		flags = (strcmp(f->fs_vfstype, "nfs") == 0
+				|| strcmp(f->fs_vfstype, "smbfs") == 0)
+			? DF_NETWORK : 0;
+		flags |= (strcmp(f->fs_type, "ro") == 0) ? DF_READONLY : 0;
+		_list_add(volumes, (strcmp(f->fs_file, "/") == 0)
+				? _("Root filesystem") : NULL,
+				f->fs_spec, f->fs_vfstype,
+				flags, f->fs_file, 0, 0, 0);
+	}
+	return 0;
+#else
+	(void) volumes;
+
+	return -1;
 #endif
 }
 
