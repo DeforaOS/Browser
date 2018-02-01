@@ -135,6 +135,8 @@ static int _volumes_can_unmount(unsigned int flags);
 
 /* useful */
 static void _volumes_list(Volumes * volumes);
+static int _volumes_mount(Volumes * volumes, char const * mountpoint);
+static int _volumes_unmount(Volumes * volumes, char const * mountpoint);
 
 /* callbacks */
 static gboolean _volumes_on_timeout(gpointer data);
@@ -665,6 +667,30 @@ static void _list_reset(Volumes * volumes)
 }
 
 
+/* volumes_mount */
+static int _volumes_mount(Volumes * volumes, char const * mountpoint)
+{
+#ifndef mount
+	errno = ENOSYS;
+	return -1;
+#else
+	return mount(mountpoint, 0);
+#endif
+}
+
+
+/* volumes_unmount */
+static int _volumes_unmount(Volumes * volumes, char const * mountpoint)
+{
+#ifndef unmount
+	errno = ENOSYS;
+	return -1;
+#else
+	return unmount(mountpoint, 0);
+#endif
+}
+
+
 /* callbacks */
 /* volumes_on_timeout */
 static gboolean _volumes_on_timeout(gpointer data)
@@ -810,11 +836,7 @@ static void _volumes_on_mount(GtkWidget * widget, gpointer data)
 	gchar * mountpoint;
 
 	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
-#ifndef mount
-	errno = ENOSYS;
-#else
-	if(mount(mountpoint, 0) != 0)
-#endif
+	if(_volumes_mount(volumes, mountpoint) != 0)
 		volumes->helper->error(volumes->helper->browser,
 				strerror(errno), 1);
 	g_free(mountpoint);
@@ -826,11 +848,7 @@ static void _volumes_on_unmount(GtkWidget * widget, gpointer data)
 	gchar * mountpoint;
 
 	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
-#ifndef unmount
-	errno = ENOSYS;
-#else
-	if(unmount(mountpoint, 0) != 0)
-#endif
+	if(_volumes_unmount(volumes, mountpoint) != 0)
 		volumes->helper->error(volumes->helper->browser,
 				strerror(errno), 1);
 	g_free(mountpoint);
