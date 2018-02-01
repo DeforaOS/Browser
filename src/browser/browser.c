@@ -2129,8 +2129,10 @@ static void _preferences_set_plugins(Browser * browser)
 	DIR * dir;
 	struct dirent * de;
 	GtkIconTheme * theme;
-#ifdef __APPLE__
+#if defined(__APPLE__)
 	char const ext[] = ".dylib";
+#elif defined(__WIN32__)
+	char const ext[] = ".dll";
 #else
 	char const ext[] = ".so";
 #endif

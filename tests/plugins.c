@@ -58,6 +58,8 @@ static int _plugins(void)
 	const char path[] = "../src/plugins"; /* FIXME broken with OBJDIR */
 #ifdef __APPLE__
 	const char ext[] = ".dylib";
+#elif defined(__WIN32__)
+	const char ext[] = ".dll";
 #else
 	const char ext[] = ".so";
 #endif
