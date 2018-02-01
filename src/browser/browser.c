@@ -3475,7 +3475,7 @@ static void _view_on_button_press_icon_run(gpointer data)
 	GtkWidget * dialog;
 	int res;
 	GError * error = NULL;
-	char * argv[2];
+	char * argv[2] = { NULL, NULL };
 
 	dialog = gtk_message_dialog_new((ic->browser->window != NULL)
 			? GTK_WINDOW(ic->browser->window) : NULL,
