@@ -765,6 +765,7 @@ static void _volumes_on_view_row_activated(GtkWidget * widget,
 	GtkTreeModel * model;
 	GtkTreeIter iter;
 	gchar * location;
+	(void) column;
 
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
 	if(gtk_tree_model_get_iter(model, &iter, path) != TRUE)
