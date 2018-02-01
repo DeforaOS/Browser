@@ -3435,50 +3435,50 @@ static gboolean _view_on_button_press_show(Browser * browser, GdkEventButton * e
 
 static void _view_on_button_press_icon_delete(gpointer data)
 {
-	IconCallback * cb = data;
+	IconCallback * ic = data;
 
 	/* FIXME not selected => cursor */
-	on_delete(cb->browser);
+	on_delete(ic->browser);
 }
 
 static void _view_on_button_press_icon_open(gpointer data)
 {
-	IconCallback * cb = data;
+	IconCallback * ic = data;
 
-	if(cb->isdir)
-		browser_set_location(cb->browser, cb->path);
-	else if(cb->browser->mime != NULL)
-		mime_action(cb->browser->mime, "open", cb->path);
+	if(ic->isdir)
+		browser_set_location(ic->browser, ic->path);
+	else if(ic->browser->mime != NULL)
+		mime_action(ic->browser->mime, "open", ic->path);
 }
 
 static void _view_on_button_press_icon_open_new_window(gpointer data)
 {
-	IconCallback * cb = data;
+	IconCallback * ic = data;
 
-	if(!cb->isdir)
+	if(!ic->isdir)
 		return;
-	browserwindow_new(cb->path);
+	browserwindow_new(ic->path);
 }
 
 static void _view_on_button_press_icon_edit(gpointer data)
 {
-	IconCallback * cb = data;
+	IconCallback * ic = data;
 
-	if(cb->browser->mime != NULL)
-		mime_action(cb->browser->mime, "edit", cb->path);
+	if(ic->browser->mime != NULL)
+		mime_action(ic->browser->mime, "edit", ic->path);
 }
 
 static void _view_on_button_press_icon_run(gpointer data)
 	/* FIXME does not work with scripts */
 {
-	IconCallback * cb = data;
+	IconCallback * ic = data;
 	GtkWidget * dialog;
 	int res;
 	GError * error = NULL;
 	char * argv[2];
 
-	dialog = gtk_message_dialog_new((cb->browser->window != NULL)
-			? GTK_WINDOW(cb->browser->window) : NULL,
+	dialog = gtk_message_dialog_new((ic->browser->window != NULL)
+			? GTK_WINDOW(ic->browser->window) : NULL,
 			GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING,
 			GTK_BUTTONS_YES_NO,
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -3491,45 +3491,45 @@ static void _view_on_button_press_icon_run(gpointer data)
 	gtk_widget_destroy(dialog);
 	if(res != GTK_RESPONSE_YES)
 		return;
-	argv[0] = cb->path;
+	argv[0] = ic->path;
 	if(g_spawn_async(NULL, argv, NULL, 0, NULL, NULL, NULL, &error) != TRUE)
 	{
-		browser_error(cb->browser, error->message, 1);
+		browser_error(ic->browser, error->message, 1);
 		g_error_free(error);
 	}
 }
 
 static void _view_on_button_press_icon_open_with(gpointer data)
 {
-	IconCallback * cb = data;
+	IconCallback * ic = data;
 
-	browser_open_with(cb->browser, cb->path);
+	browser_open_with(ic->browser, ic->path);
 }
 
 static void _view_on_button_press_icon_paste(gpointer data)
 {
-	IconCallback * cb = data;
+	IconCallback * ic = data;
 	char const * location;
 
-	if((location = browser_get_location(cb->browser)) == NULL)
+	if((location = browser_get_location(ic->browser)) == NULL)
 		return;
 	/* XXX the following assignments are totally ugly */
-	if(cb->path != NULL)
-		cb->browser->current->data = cb->path;
-	browser_selection_paste(cb->browser);
-	cb->browser->current->data = location;
+	if(ic->path != NULL)
+		ic->browser->current->data = ic->path;
+	browser_selection_paste(ic->browser);
+	ic->browser->current->data = location;
 }
 
 static void _view_on_button_press_icon_unmount(gpointer data)
 {
-	IconCallback * cb = data;
+	IconCallback * ic = data;
 
 #ifndef unmount
 	errno = ENOSYS;
 #else
-	if(unmount(cb->path, 0) != 0)
+	if(unmount(ic->path, 0) != 0)
 #endif
-		browser_error(cb->browser, strerror(errno), 1);
+		browser_error(ic->browser, strerror(errno), 1);
 }
 
 static gboolean _view_on_button_press_popup(Browser * browser,
