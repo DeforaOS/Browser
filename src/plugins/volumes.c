@@ -165,6 +165,9 @@ BrowserPluginDefinition plugin =
 /* functions */
 /* plug-in */
 /* volumes_init */
+static int _init_sort(GtkTreeModel * model, GtkTreeIter * a, GtkTreeIter * b,
+		gpointer data);
+
 static Volumes * _volumes_init(BrowserPluginHelper * helper)
 {
 	Volumes * volumes;
@@ -188,6 +191,11 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 			G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_UINT,
 			G_TYPE_STRING, G_TYPE_UINT64, G_TYPE_STRING,
 			G_TYPE_UINT, G_TYPE_STRING, G_TYPE_BOOLEAN);
+	gtk_tree_sortable_set_default_sort_func(GTK_TREE_SORTABLE(
+				volumes->store), _init_sort, volumes, NULL);
+	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(volumes->store),
+			GTK_TREE_SORTABLE_DEFAULT_SORT_COLUMN_ID,
+			GTK_SORT_ASCENDING);
 	volumes->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				volumes->store));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(volumes->view), TRUE);
@@ -237,6 +245,31 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 				GTK_ICON_LOOKUP_USE_BUILTIN, NULL);
 	gtk_widget_show_all(volumes->window);
 	return volumes;
+}
+
+static int _init_sort(GtkTreeModel * model, GtkTreeIter * a, GtkTreeIter * b,
+		gpointer data)
+{
+	Volumes * volumes = data;
+	gchar * name_a;
+	gchar * name_b;
+	unsigned int flags_a;
+	unsigned int flags_b;
+	int ret = 0;
+
+	gtk_tree_model_get(model, a, DC_MOUNTPOINT, &name_a, DC_FLAGS, &flags_a,
+			-1);
+	gtk_tree_model_get(model, b, DC_MOUNTPOINT, &name_b, DC_FLAGS, &flags_b,
+			-1);
+	if((flags_a & DF_REMOVABLE) != 0 && (flags_b & DF_REMOVABLE) == 0)
+		ret = 1;
+	else if((flags_a & DF_REMOVABLE) == 0 && (flags_b & DF_REMOVABLE) != 0)
+		ret = -1;
+	if(ret == 0)
+		ret = strcmp(name_a, name_b);
+	g_free(name_a);
+	g_free(name_b);
+	return ret;
 }
 
 
