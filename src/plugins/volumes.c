@@ -704,26 +704,84 @@ static void _list_reset(Volumes * volumes)
 
 
 /* volumes_mount */
+static void _mount_child_setup(gpointer data);
+
 static int _volumes_mount(Volumes * volumes, char const * mountpoint)
 {
-#ifndef mount
-	errno = ENOSYS;
-	return -1;
-#else
-	return mount(mountpoint, 0);
-#endif
+	BrowserPluginHelper * helper = volumes->helper;
+	char * argv[] = { "sudo", "-A", "/sbin/mount", "--", NULL, NULL };
+	GError * error = NULL;
+	gboolean root;
+
+	if(mountpoint == NULL)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+	if((argv[4] = strdup(mountpoint)) == NULL)
+		return -1;
+	root = (geteuid() == 0) ? TRUE : FALSE;
+	if(g_spawn_async(NULL, root ? &argv[2] : argv, NULL,
+				root ? 0 : G_SPAWN_SEARCH_PATH,
+				_mount_child_setup, NULL, NULL, &error) != TRUE)
+	{
+		helper->error(helper->browser, error->message, 1);
+		g_error_free(error);
+	}
+	free(argv[4]);
+	return 0;
+}
+
+static void _mount_child_setup(gpointer data)
+{
+	(void) data;
+
+	fclose(stdin);
 }
 
 
 /* volumes_unmount */
+static void _unmount_child_setup(gpointer data);
+
 static int _volumes_unmount(Volumes * volumes, char const * mountpoint)
 {
-#ifndef unmount
-	errno = ENOSYS;
-	return -1;
-#else
-	return unmount(mountpoint, 0);
+	BrowserPluginHelper * helper = volumes->helper;
+	int res;
+	char * argv[] = { "sudo", "-A", "/sbin/umount", "--", NULL, NULL };
+	GError * error = NULL;
+	gboolean root;
+
+	if(mountpoint == NULL)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+#ifdef unmount
+	if((res = unmount(mountpoint, 0)) == 0)
+		return 0;
+	if(errno != EPERM)
+		return -1;
 #endif
+	if((argv[4] = strdup(mountpoint)) == NULL)
+		return -1;
+	root = (geteuid() == 0) ? TRUE : FALSE;
+	if(g_spawn_async(NULL, root ? &argv[2] : argv, NULL,
+				root ? 0 : G_SPAWN_SEARCH_PATH,
+				_unmount_child_setup, NULL, NULL, &error)
+			!= TRUE)
+	{
+		helper->error(helper->browser, error->message, 1);
+		g_error_free(error);
+	}
+	free(argv[4]);
+	return 0;
+}
+
+static void _unmount_child_setup(gpointer data)
+{
+	(void) data;
+
+	fclose(stdin);
 }
 
 
