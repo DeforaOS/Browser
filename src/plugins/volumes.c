@@ -303,60 +303,16 @@ static GdkPixbuf * _list_get_icon_removable(Volumes * volumes, VolumesPixbuf dp,
 		char const * mountpoint);
 static void _list_get_iter(Volumes * volumes, GtkTreeIter * iter,
 		char const * mountpoint);
+static void _list_loop_mounted(Volumes * volumes);
 static void _list_purge(Volumes * volumes);
 static void _list_reset(Volumes * volumes);
 
 static void _volumes_list(Volumes * volumes)
 {
-#if defined(ST_NOWAIT)
-	struct statvfs * mnt;
-	int res;
-	int i;
-	unsigned int flags;
-#elif defined(MNT_NOWAIT)
-	struct statfs * mnt;
-	int res;
-	int i;
-	unsigned int flags;
-#endif
-
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
-#if defined(ST_NOWAIT)
-	if((res = getmntinfo(&mnt, ST_NOWAIT)) <= 0)
-		return;
-	_list_reset(volumes);
-	for(i = 0; i < res; i++)
-	{
-		flags = (mnt[i].f_flag & ST_LOCAL) ? 0 : DF_NETWORK;
-		flags |= (mnt[i].f_flag & (ST_EXRDONLY | ST_EXPORTED))
-			? DF_SHARED : 0;
-		flags |= (mnt[i].f_flag & ST_RDONLY) ? DF_READONLY : 0;
-		_list_add(volumes, (mnt[i].f_flag & ST_ROOTFS)
-				? _("Root filesystem") : NULL,
-				mnt[i].f_mntfromname, mnt[i].f_fstypename,
-				flags, mnt[i].f_mntonname, mnt[i].f_frsize,
-				mnt[i].f_bavail, mnt[i].f_blocks);
-	}
-#elif defined(MNT_NOWAIT)
-	if((res = getmntinfo(&mnt, MNT_NOWAIT)) <= 0)
-		return;
-	_list_reset(volumes);
-	for(i = 0; i < res; i++)
-	{
-		flags = (mnt[i].f_flags & MNT_LOCAL) ? 0 : DF_NETWORK;
-		flags |= (mnt[i].f_flags & MNT_RDONLY) ? DF_READONLY : 0;
-		_list_add(volumes, (mnt[i].f_flags & MNT_ROOTFS)
-				? _("Root filesystem") : NULL,
-				mnt[i].f_mntfromname, mnt[i].f_fstypename,
-				flags, mnt[i].f_mntonname, mnt[i].f_bsize,
-				mnt[i].f_bavail, mnt[i].f_blocks);
-	}
-#else
-	_list_reset(volumes);
-	_list_add(volumes, _("Root filesystem"), NULL, NULL, 0, "/", 0, 0, 0);
-#endif
+	_list_loop_mounted(volumes);
 	_list_purge(volumes);
 }
 
@@ -573,6 +529,54 @@ static void _list_get_iter(Volumes * volumes, GtkTreeIter * iter,
 			return;
 	}
 	gtk_list_store_append(volumes->store, iter);
+}
+
+static void _list_loop_mounted(Volumes * volumes)
+{
+#if defined(ST_NOWAIT)
+	struct statvfs * mnt;
+	int res;
+	int i;
+	unsigned int flags;
+
+	if((res = getmntinfo(&mnt, ST_NOWAIT)) <= 0)
+		return;
+	_list_reset(volumes);
+	for(i = 0; i < res; i++)
+	{
+		flags = (mnt[i].f_flag & ST_LOCAL) ? 0 : DF_NETWORK;
+		flags |= (mnt[i].f_flag & (ST_EXRDONLY | ST_EXPORTED))
+			? DF_SHARED : 0;
+		flags |= (mnt[i].f_flag & ST_RDONLY) ? DF_READONLY : 0;
+		_list_add(volumes, (mnt[i].f_flag & ST_ROOTFS)
+				? _("Root filesystem") : NULL,
+				mnt[i].f_mntfromname, mnt[i].f_fstypename,
+				flags, mnt[i].f_mntonname, mnt[i].f_frsize,
+				mnt[i].f_bavail, mnt[i].f_blocks);
+	}
+#elif defined(MNT_NOWAIT)
+	struct statfs * mnt;
+	int res;
+	int i;
+	unsigned int flags;
+
+	if((res = getmntinfo(&mnt, MNT_NOWAIT)) <= 0)
+		return;
+	_list_reset(volumes);
+	for(i = 0; i < res; i++)
+	{
+		flags = (mnt[i].f_flags & MNT_LOCAL) ? 0 : DF_NETWORK;
+		flags |= (mnt[i].f_flags & MNT_RDONLY) ? DF_READONLY : 0;
+		_list_add(volumes, (mnt[i].f_flags & MNT_ROOTFS)
+				? _("Root filesystem") : NULL,
+				mnt[i].f_mntfromname, mnt[i].f_fstypename,
+				flags, mnt[i].f_mntonname, mnt[i].f_bsize,
+				mnt[i].f_bavail, mnt[i].f_blocks);
+	}
+#else
+	_list_reset(volumes);
+	_list_add(volumes, _("Root filesystem"), NULL, NULL, 0, "/", 0, 0, 0);
+#endif
 }
 
 static void _list_purge(Volumes * volumes)
