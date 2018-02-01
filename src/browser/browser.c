@@ -2102,8 +2102,9 @@ void browser_show_preferences(Browser * browser, gboolean show)
 #endif
 	gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 	_preferences_set(browser);
-	/* FIXME implement show */
-	gtk_widget_show_all(browser->pr_window);
+	gtk_widget_show_all(vbox);
+	if(show)
+		gtk_widget_show(browser->pr_window);
 }
 
 static void _preferences_set(Browser * browser)
