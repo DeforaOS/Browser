@@ -352,7 +352,7 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 				dp = DP_CDROM;
 				break;
 			}
-		for(i = 0; i < sizeof(removable) / sizeof(removable); i++)
+		for(i = 0; i < sizeof(removable) / sizeof(*removable); i++)
 			if(strncmp(removable[i], device, strlen(removable[i]))
 					== 0)
 			{
