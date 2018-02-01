@@ -192,7 +192,7 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 			G_TYPE_STRING, G_TYPE_UINT64, G_TYPE_STRING,
 			G_TYPE_UINT, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	gtk_tree_sortable_set_default_sort_func(GTK_TREE_SORTABLE(
-				volumes->store), _init_sort, volumes, NULL);
+				volumes->store), _init_sort, NULL, NULL);
 	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(volumes->store),
 			GTK_TREE_SORTABLE_DEFAULT_SORT_COLUMN_ID,
 			GTK_SORT_ASCENDING);
@@ -253,12 +253,12 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 static int _init_sort(GtkTreeModel * model, GtkTreeIter * a, GtkTreeIter * b,
 		gpointer data)
 {
-	Volumes * volumes = data;
 	gchar * name_a;
 	gchar * name_b;
 	unsigned int flags_a;
 	unsigned int flags_b;
 	int ret = 0;
+	(void) data;
 
 	gtk_tree_model_get(model, a, DC_MOUNTPOINT, &name_a, DC_FLAGS, &flags_a,
 			-1);
