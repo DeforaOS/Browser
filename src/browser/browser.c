@@ -1884,7 +1884,10 @@ void browser_show_about(Browser * browser, gboolean show)
 {
 	if(browser->ab_window != NULL)
 	{
-		gtk_window_present(GTK_WINDOW(browser->ab_window));
+		if(show)
+			gtk_window_present(GTK_WINDOW(browser->ab_window));
+		else
+			gtk_widget_hide(browser->ab_window);
 		return;
 	}
 	browser->ab_window = desktop_about_dialog_new();
@@ -1906,7 +1909,8 @@ void browser_show_about(Browser * browser, gboolean show)
 			"https://www.defora.org/");
 	g_signal_connect_swapped(browser->ab_window, "delete-event",
 			G_CALLBACK(_about_on_closex), browser);
-	gtk_widget_show(browser->ab_window);
+	if(show)
+		gtk_widget_show(browser->ab_window);
 }
 
 static gboolean _about_on_closex(gpointer data)
@@ -1945,7 +1949,10 @@ void browser_show_preferences(Browser * browser, gboolean show)
 
 	if(browser->pr_window != NULL)
 	{
-		gtk_window_present(GTK_WINDOW(browser->pr_window));
+		if(show)
+			gtk_window_present(GTK_WINDOW(browser->pr_window));
+		else
+			gtk_widget_hide(show);
 		return;
 	}
 	browser->pr_window = gtk_dialog_new_with_buttons(_("Preferences"),
@@ -2095,6 +2102,7 @@ void browser_show_preferences(Browser * browser, gboolean show)
 #endif
 	gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 	_preferences_set(browser);
+	/* FIXME implement show */
 	gtk_widget_show_all(browser->pr_window);
 }
 
