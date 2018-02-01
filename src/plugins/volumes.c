@@ -89,10 +89,11 @@ enum _VolumesColumn
 
 typedef enum _VolumesFlag
 {
-	DF_NETWORK	= 0x1,
-	DF_READONLY	= 0x2,
-	DF_REMOVABLE	= 0x4,
-	DF_SHARED	= 0x8
+	DF_MOUNTED	= 0x01,
+	DF_NETWORK	= 0x02,
+	DF_READONLY	= 0x04,
+	DF_REMOVABLE	= 0x08,
+	DF_SHARED	= 0x10
 } VolumesFlag;
 
 typedef enum _VolumesPixbuf
@@ -129,6 +130,8 @@ static void _volumes_refresh(Volumes * volumes, GList * selection);
 
 /* accessors */
 static int _volumes_can_eject(unsigned int flags);
+static int _volumes_can_mount(unsigned int flags);
+static int _volumes_can_unmount(unsigned int flags);
 
 /* useful */
 static void _volumes_list(Volumes * volumes);
@@ -285,6 +288,22 @@ static void _volumes_refresh(Volumes * volumes, GList * selection)
 static int _volumes_can_eject(unsigned int flags)
 {
 	return ((flags & DF_REMOVABLE) != 0) ? 1 : 0;
+}
+
+
+/* volumes_can_mount */
+static int _volumes_can_mount(unsigned int flags)
+{
+	return ((flags & DF_REMOVABLE) != 0
+			&& (flags & DF_MOUNTED) == 0) ? 1 : 0;
+}
+
+
+/* volumes_can_unmount */
+static int _volumes_can_unmount(unsigned int flags)
+{
+	return ((flags & DF_REMOVABLE) != 0
+			&& (flags & DF_MOUNTED) != 0) ? 1 : 0;
 }
 
 
@@ -548,7 +567,8 @@ static void _list_loop_mounted(Volumes * volumes, int reset)
 		_list_reset(volumes);
 	for(i = 0; i < res; i++)
 	{
-		flags = (mnt[i].f_flag & ST_LOCAL) ? 0 : DF_NETWORK;
+		flags = DF_MOUNTED;
+		flags |= (mnt[i].f_flag & ST_LOCAL) ? 0 : DF_NETWORK;
 		flags |= (mnt[i].f_flag & (ST_EXRDONLY | ST_EXPORTED))
 			? DF_SHARED : 0;
 		flags |= (mnt[i].f_flag & ST_RDONLY) ? DF_READONLY : 0;
@@ -570,7 +590,8 @@ static void _list_loop_mounted(Volumes * volumes, int reset)
 		_list_reset(volumes);
 	for(i = 0; i < res; i++)
 	{
-		flags = (mnt[i].f_flags & MNT_LOCAL) ? 0 : DF_NETWORK;
+		flags = DF_MOUNTED;
+		flags |= (mnt[i].f_flags & MNT_LOCAL) ? 0 : DF_NETWORK;
 		flags |= (mnt[i].f_flags & MNT_RDONLY) ? DF_READONLY : 0;
 		_list_add(volumes, (mnt[i].f_flags & MNT_ROOTFS)
 				? _("Root filesystem") : NULL,
@@ -661,6 +682,7 @@ static gboolean _volumes_on_timeout(gpointer data)
 /* volumes_on_view_button_press */
 static void _volumes_on_eject(GtkWidget * widget, gpointer data);
 static void _volumes_on_properties(GtkWidget * widget, gpointer data);
+static void _volumes_on_mount(GtkWidget * widget, gpointer data);
 static void _volumes_on_unmount(GtkWidget * widget, gpointer data);
 
 static gboolean _volumes_on_view_button_press(GtkWidget * widget,
@@ -687,14 +709,29 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 		return FALSE;
 	menu = gtk_menu_new();
 	/* unmount */
-	widget = gtk_image_menu_item_new_with_label(_("Unmount"));
-	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(widget),
-			gtk_image_new_from_icon_name("hdd_unmount",
-				GTK_ICON_SIZE_MENU));
-	g_object_set_data(G_OBJECT(widget), "mountpoint", mountpoint);
-	g_signal_connect(widget, "activate", G_CALLBACK(
-				_volumes_on_unmount), volumes);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
+	if(_volumes_can_unmount(flags))
+	{
+		widget = gtk_image_menu_item_new_with_label(_("Unmount"));
+		gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(widget),
+				gtk_image_new_from_icon_name("hdd_unmount",
+					GTK_ICON_SIZE_MENU));
+		g_object_set_data(G_OBJECT(widget), "mountpoint", mountpoint);
+		g_signal_connect(widget, "activate", G_CALLBACK(
+					_volumes_on_unmount), volumes);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
+	}
+	/* mount */
+	else if(_volumes_can_mount(flags))
+	{
+		widget = gtk_image_menu_item_new_with_label(_("Mount"));
+		gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(widget),
+				gtk_image_new_from_icon_name("hdd_unmount",
+					GTK_ICON_SIZE_MENU));
+		g_object_set_data(G_OBJECT(widget), "mountpoint", mountpoint);
+		g_signal_connect(widget, "activate", G_CALLBACK(
+					_volumes_on_mount), volumes);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
+	}
 	/* eject */
 	if(_volumes_can_eject(flags))
 	{
@@ -764,6 +801,22 @@ static void _volumes_on_properties(GtkWidget * widget, gpointer data)
 		helper->error(helper->browser, error->message, 1);
 		g_error_free(error);
 	}
+	g_free(mountpoint);
+}
+
+static void _volumes_on_mount(GtkWidget * widget, gpointer data)
+{
+	Volumes * volumes = data;
+	gchar * mountpoint;
+
+	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
+#ifndef mount
+	errno = ENOSYS;
+#else
+	if(mount(mountpoint, 0) != 0)
+#endif
+		volumes->helper->error(volumes->helper->browser,
+				strerror(errno), 1);
 	g_free(mountpoint);
 }
 
