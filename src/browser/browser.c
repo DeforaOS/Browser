@@ -2327,6 +2327,8 @@ static void _preferences_on_mime_foreach(void * data, char const * name,
 {
 	Browser * browser = data;
 	GtkTreeIter iter;
+	(void) icon48;
+	(void) icon96;
 
 #if GTK_CHECK_VERSION(2, 6, 0)
 	gtk_list_store_insert_with_values(browser->pr_mime_store, &iter, -1,
@@ -3038,6 +3040,10 @@ static void _view_icons_on_icon_drag_data_get(GtkWidget * widget,
 	size_t l;
 	char * p = NULL;
 	char * q;
+	(void) widget;
+	(void) context;
+	(void) info;
+	(void) time;
 
 	selection = browser_selection_copy(browser);
 	for(s = selection; s != NULL; s = s->next)
@@ -3067,6 +3073,9 @@ static void _view_icons_on_icon_drag_data_received(GtkWidget * widget,
 	GtkTreeIter iter;
 	char const * location;
 	gchar * p = NULL;
+	(void) widget;
+	(void) info;
+	(void) time;
 
 	path = gtk_icon_view_get_path_at_pos(GTK_ICON_VIEW(browser->iconview),
 			x, y);
@@ -3633,6 +3642,7 @@ static void _view_on_detail_default(GtkTreeView * view, GtkTreePath * path,
 		GtkTreeViewColumn * column, gpointer data)
 {
 	Browser * browser = data;
+	(void) column;
 
 	if(GTK_TREE_VIEW(browser->detailview) != view)
 		return;
@@ -3670,6 +3680,7 @@ static void _view_on_filename_edited(GtkCellRendererText * renderer,
 	char * q;
 	char * f = filename;
 	GError * error = NULL;
+	(void) renderer;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\") \"%s\"\n", __func__, path,
