@@ -705,8 +705,6 @@ static void _list_reset(Volumes * volumes)
 
 
 /* volumes_mount */
-static void _mount_child_setup(gpointer data);
-
 static int _volumes_mount(Volumes * volumes, char const * mountpoint)
 {
 	BrowserPluginHelper * helper = volumes->helper;
@@ -724,7 +722,7 @@ static int _volumes_mount(Volumes * volumes, char const * mountpoint)
 	root = (geteuid() == 0) ? TRUE : FALSE;
 	if(g_spawn_async(NULL, root ? &argv[2] : argv, NULL,
 				root ? 0 : G_SPAWN_SEARCH_PATH,
-				_mount_child_setup, NULL, NULL, &error) != TRUE)
+				NULL, NULL, NULL, &error) != TRUE)
 	{
 		helper->error(helper->browser, error->message, 1);
 		g_error_free(error);
@@ -733,17 +731,8 @@ static int _volumes_mount(Volumes * volumes, char const * mountpoint)
 	return 0;
 }
 
-static void _mount_child_setup(gpointer data)
-{
-	(void) data;
-
-	fclose(stdin);
-}
-
 
 /* volumes_unmount */
-static void _unmount_child_setup(gpointer data);
-
 static int _volumes_unmount(Volumes * volumes, char const * mountpoint)
 {
 	BrowserPluginHelper * helper = volumes->helper;
@@ -768,21 +757,13 @@ static int _volumes_unmount(Volumes * volumes, char const * mountpoint)
 	root = (geteuid() == 0) ? TRUE : FALSE;
 	if(g_spawn_async(NULL, root ? &argv[2] : argv, NULL,
 				root ? 0 : G_SPAWN_SEARCH_PATH,
-				_unmount_child_setup, NULL, NULL, &error)
-			!= TRUE)
+				NULL, NULL, NULL, &error) != TRUE)
 	{
 		helper->error(helper->browser, error->message, 1);
 		g_error_free(error);
 	}
 	free(argv[4]);
 	return 0;
-}
-
-static void _unmount_child_setup(gpointer data)
-{
-	(void) data;
-
-	fclose(stdin);
 }
 
 
