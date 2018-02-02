@@ -240,7 +240,7 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 			"media-eject");
 # if GTK_CHECK_VERSION(2, 12, 0)
 	gtk_widget_set_tooltip_text(GTK_WIDGET(volumes->tb_eject),
-			_("Unmount the volume"));
+			_("Eject the volume"));
 # endif
 #else
 	volumes->tb_eject = gtk_tool_button_new(gtk_image_new_from_icon_name(
