@@ -49,6 +49,7 @@
 #if defined(__FreeBSD__)
 # include <sys/param.h>
 # include <sys/ucred.h>
+# include <fstab.h>
 #elif defined(__NetBSD__)
 # include <sys/param.h>
 # include <sys/types.h>
