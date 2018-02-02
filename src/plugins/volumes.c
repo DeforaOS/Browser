@@ -154,6 +154,8 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 static gboolean _volumes_on_view_popup_menu(GtkWidget * widget, gpointer data);
 static void _volumes_on_view_row_activated(GtkWidget * widget,
 		GtkTreePath * path, GtkTreeViewColumn * column, gpointer data);
+static void _volumes_on_view_row_changed(GtkTreeSelection * treesel,
+		gpointer data);
 
 
 /* public */
@@ -209,6 +211,7 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 				"hdd_unmount", GTK_ICON_SIZE_SMALL_TOOLBAR),
 			_("Mount"));
 #endif
+	gtk_widget_set_sensitive(GTK_WIDGET(volumes->tb_mount), FALSE);
 	g_signal_connect_swapped(volumes->tb_mount, "clicked", G_CALLBACK(
 				_volumes_on_mount_selection), volumes);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), volumes->tb_mount, -1);
@@ -226,6 +229,7 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 				"hdd_unmount", GTK_ICON_SIZE_SMALL_TOOLBAR),
 			_("Unmount"));
 #endif
+	gtk_widget_set_sensitive(GTK_WIDGET(volumes->tb_unmount), FALSE);
 	g_signal_connect_swapped(volumes->tb_unmount, "clicked", G_CALLBACK(
 				_volumes_on_unmount_selection), volumes);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), volumes->tb_unmount, -1);
@@ -243,6 +247,7 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 				"media-eject", GTK_ICON_SIZE_SMALL_TOOLBAR),
 			_("Eject"));
 #endif
+	gtk_widget_set_sensitive(GTK_WIDGET(volumes->tb_eject), FALSE);
 	g_signal_connect_swapped(volumes->tb_eject, "clicked", G_CALLBACK(
 				_volumes_on_eject_selection), volumes);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), volumes->tb_eject, -1);
@@ -297,6 +302,8 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	/* selection */
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(volumes->view));
 	gtk_tree_selection_set_mode(treesel, GTK_SELECTION_SINGLE);
+	g_signal_connect(treesel, "changed", G_CALLBACK(
+				_volumes_on_view_row_changed), volumes);
 	g_signal_connect(volumes->view, "row-activated", G_CALLBACK(
 				_volumes_on_view_row_activated), volumes);
 	gtk_container_add(GTK_CONTAINER(volumes->window), volumes->view);
@@ -464,6 +471,8 @@ static void _volumes_list(Volumes * volumes)
 	_list_loop_mounted(volumes,
 			_list_loop_unmounted(volumes));
 	_list_purge(volumes);
+	_volumes_on_view_row_changed(gtk_tree_view_get_selection(
+				GTK_TREE_VIEW(volumes->view)), volumes);
 }
 
 static void _list_add(Volumes * volumes, char const * name, char const * device,
@@ -1099,4 +1108,27 @@ static void _volumes_on_view_row_activated(GtkWidget * widget,
 	gtk_tree_model_get(model, &iter, DC_MOUNTPOINT, &location, -1);
 	volumes->helper->set_location(volumes->helper->browser, location);
 	g_free(location);
+}
+
+
+/* volumes_on_view_row_changed */
+static void _volumes_on_view_row_changed(GtkTreeSelection * treesel,
+		gpointer data)
+{
+	Volumes * volumes = data;
+	GtkTreeModel * model;
+	GtkTreeIter iter;
+	unsigned int flags = 0;
+	gboolean sensitive = TRUE;
+
+	if(gtk_tree_selection_get_selected(treesel, &model, &iter) != TRUE)
+		sensitive = FALSE;
+	else
+		gtk_tree_model_get(model, &iter, DC_FLAGS, &flags, -1);
+	gtk_widget_set_sensitive(GTK_WIDGET(volumes->tb_mount),
+			sensitive && _volumes_can_mount(flags));
+	gtk_widget_set_sensitive(GTK_WIDGET(volumes->tb_unmount),
+			sensitive && _volumes_can_unmount(flags));
+	gtk_widget_set_sensitive(GTK_WIDGET(volumes->tb_eject),
+			sensitive && _volumes_can_eject(flags));
 }
