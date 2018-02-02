@@ -54,6 +54,8 @@
 # include <sys/types.h>
 # include <sys/statvfs.h>
 # include <fstab.h>
+#elif defined(__OpenBSD__)
+# include <fstab.h>
 #endif
 #include "Browser.h"
 #include "../../config.h"
