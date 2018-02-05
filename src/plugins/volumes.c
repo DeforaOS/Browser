@@ -539,7 +539,10 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 		f = fraction * 100;
 		snprintf(buf, sizeof(buf), "%.1f%%", fraction * 100.0);
 	}
-	_list_add_size(buf2, sizeof(buf2), bsize, total);
+	if(bsize > 0)
+		_list_add_size(buf2, sizeof(buf2), bsize, total);
+	else
+		buf2[0] = '\0';
 	_list_get_iter(volumes, &iter, mountpoint);
 	pixbuf = _list_get_icon(volumes, dp, flags, mountpoint);
 	gtk_list_store_set(volumes->store, &iter, DC_DEVICE, device,
