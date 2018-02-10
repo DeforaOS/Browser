@@ -407,7 +407,7 @@ static gboolean _subversion_is_managed(SVN * svn, char const * filename)
 
 
 /* useful */
-/* svn_add_task */
+/* subversion_add_task */
 static int _subversion_add_task(SVN * svn, char const * title,
 		char const * directory, char * argv[])
 {
@@ -427,7 +427,7 @@ static int _subversion_add_task(SVN * svn, char const * title,
 
 
 /* callbacks */
-/* svn_on_add */
+/* subversion_on_add */
 static void _subversion_on_add(gpointer data)
 {
 	SVN * svn = data;
@@ -468,7 +468,7 @@ static void _subversion_on_blame(gpointer data)
 }
 
 
-/* svn_on_commit */
+/* subversion_on_commit */
 static void _subversion_on_commit(gpointer data)
 {
 	SVN * svn = data;
@@ -490,7 +490,7 @@ static void _subversion_on_commit(gpointer data)
 }
 
 
-/* svn_on_diff */
+/* subversion_on_diff */
 static void _subversion_on_diff(gpointer data)
 {
 	SVN * svn = data;
@@ -512,7 +512,7 @@ static void _subversion_on_diff(gpointer data)
 }
 
 
-/* svn_on_log */
+/* subversion_on_log */
 static void _subversion_on_log(gpointer data)
 {
 	SVN * svn = data;
@@ -534,7 +534,7 @@ static void _subversion_on_log(gpointer data)
 }
 
 
-/* svn_on_status */
+/* subversion_on_status */
 static void _subversion_on_status(gpointer data)
 {
 	SVN * svn = data;
@@ -556,7 +556,7 @@ static void _subversion_on_status(gpointer data)
 }
 
 
-/* svn_on_update */
+/* subversion_on_update */
 static void _subversion_on_update(gpointer data)
 {
 	SVN * svn = data;
