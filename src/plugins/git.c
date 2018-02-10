@@ -373,42 +373,37 @@ static void _refresh_hide(Git * git, gboolean name)
 /* git_get_base */
 static String * _git_get_base(Git * git, char const * filename)
 {
-	BrowserPluginHelper * helper = git->helper;
-	String * base;
+	String * cur;
 	String * dir;
 	String * p;
 	struct stat st;
 	int res;
+	(void) git;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, filename);
 #endif
-	if((base = string_new(filename)) == NULL)
+	cur = g_path_get_dirname(filename);
+	for(dir = cur; string_compare(dir, ".") != 0;
+			dir = g_path_get_dirname(cur))
 	{
-		helper->error(helper->browser, error_get(NULL), 1);
-		return NULL;
-	}
-	dir = base;
-	for(; string_compare(dir, ".") != 0; dir = dirname(dir))
-	{
+		g_free(cur);
+		cur = dir;
 		if((p = string_new_append(dir, "/.git", NULL)) == NULL)
-		{
-			string_delete(base);
-			return NULL;
-		}
+			break;
 		res = lstat(p, &st);
 #ifdef DEBUG
 		fprintf(stderr, "DEBUG: %s() \"%s\" %d\n", __func__, p, res);
 #endif
 		if(res == 0)
 		{
-			string_delete(base);
+			g_free(cur);
 			return p;
 		}
 		if(string_compare(dir, "/") == 0)
 			break;
 	}
-	string_delete(base);
+	g_free(cur);
 	return NULL;
 }
 
