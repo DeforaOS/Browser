@@ -31,13 +31,13 @@
 
 
 
-#include <System.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <string.h>
 #include <libgen.h>
 #include <errno.h>
+#include <System.h>
 #include "common.c"
 
 
@@ -82,7 +82,8 @@ static GtkWidget * _subversion_get_widget(SVN * svn);
 static void _subversion_refresh(SVN * svn, GList * selection);
 
 /* accessors */
-static gboolean _subversion_is_managed(char const * filename);
+static String * _subversion_get_base(SVN * svn, char const * filename);
+static gboolean _subversion_is_managed(SVN * svn, char const * filename);
 
 /* useful */
 static int _subversion_add_task(SVN * svn, char const * title,
@@ -320,7 +321,7 @@ static void _refresh_dir(SVN * svn)
 	}
 	free(p);
 	/* check if it is a newer SVN repository */
-	if(_subversion_is_managed(svn->filename))
+	if(_subversion_is_managed(svn, svn->filename))
 		gtk_widget_show(svn->directory);
 	else
 		_refresh_status(svn, _("Not a Subversion repository"));
@@ -352,40 +353,55 @@ static void _refresh_status(SVN * svn, char const * status)
 
 
 /* accessors */
-/* subversion_is_managed */
-static gboolean _subversion_is_managed(char const * filename)
+/* subversion_get_base */
+static String * _subversion_get_base(SVN * svn, char const * filename)
 {
-	char * base = strdup(filename);
-	char * dir = base;
+	String * cur;
+	String * dir;
 	String * p;
 	struct stat st;
 	int res;
+	(void) svn;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, filename);
 #endif
-	for(; strcmp(dir, ".") != 0; dir = dirname(dir))
+	cur = g_path_get_dirname(filename);
+	for(dir = cur; string_compare(dir, ".") != 0;
+			dir = g_path_get_dirname(cur))
 	{
+		g_free(cur);
+		cur = dir;
 		if((p = string_new_append(dir, "/.svn", NULL)) == NULL)
-		{
-			free(base);
-			return FALSE;
-		}
+			break;
 		res = lstat(p, &st);
 #ifdef DEBUG
 		fprintf(stderr, "DEBUG: %s() \"%s\" %d\n", __func__, p, res);
 #endif
-		string_delete(p);
 		if(res == 0)
 		{
-			/* FIXME really implement */
-			free(base);
-			return TRUE;
+			g_free(cur);
+			return p;
 		}
-		if(strcmp(dir, "/") == 0)
+		if(string_compare(dir, "/") == 0)
 			break;
 	}
-	free(base);
+	g_free(cur);
+	return NULL;
+}
+
+
+/* subversion_is_managed */
+static gboolean _subversion_is_managed(SVN * svn, char const * filename)
+{
+	String * base;
+
+	if((base = _subversion_get_base(svn, filename)) != NULL)
+	{
+		/* FIXME check if this file is managed */
+		string_delete(base);
+		return TRUE;
+	}
 	return FALSE;
 }
 
