@@ -53,6 +53,9 @@ DIR * browser_vfs_opendir(char const * filename, struct stat * st);
 int browser_vfs_closedir(DIR * dir);
 struct dirent * browser_vfs_readdir(DIR * dir);
 
+int browser_vfs_mount(char const * mountpoint);
+int browser_vfs_unmount(char const * mountpoint);
+
 /* Mime */
 GdkPixbuf * browser_vfs_mime_icon(Mime * mime, char const * filename,
 		char const * type, struct stat * lst, struct stat * st,

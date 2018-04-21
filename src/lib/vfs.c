@@ -44,9 +44,20 @@
 # include <fcntl.h>
 # include <unistd.h>
 #endif
+#ifndef __GNU__ /* XXX hurd portability */
+# include <sys/mount.h>
+# if defined(__linux__) || defined(__CYGWIN__)
+#  define unmount(a, b) umount(a)
+# endif
+# ifndef unmount
+#  define unmount unmount
+# endif
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <libgen.h>
+#include <errno.h>
+#include <System/error.h>
 #include <System/string.h>
 #include "../../include/Browser/vfs.h"
 
@@ -368,6 +379,34 @@ char const * browser_vfs_mime_type(Mime * mime, char const * filename,
 }
 
 
+/* browser_vfs_mount */
+int browser_vfs_mount(char const * mountpoint)
+{
+	int ret = 0;
+	char * argv[] = { "sudo", "-A", "/sbin/mount", "--", NULL, NULL };
+	GError * error = NULL;
+	gboolean root;
+
+	if(mountpoint == NULL)
+		return error_set_code(-EINVAL, "%s: %s", mountpoint,
+				strerror(EINVAL));
+	if((argv[4] = strdup(mountpoint)) == NULL)
+		return error_set_code(-errno, "%s: %s", mountpoint,
+				strerror(errno));
+	root = (geteuid() == 0) ? TRUE : FALSE;
+	if(g_spawn_async(NULL, root ? &argv[2] : argv, NULL,
+				root ? 0 : G_SPAWN_SEARCH_PATH,
+				NULL, NULL, NULL, &error) != TRUE)
+	{
+		error_set("%s: %s", mountpoint, error->message);
+		g_error_free(error);
+		ret = -1;
+	}
+	free(argv[4]);
+	return ret;
+}
+
+
 /* browser_vfs_opendir */
 DIR * browser_vfs_opendir(char const * filename, struct stat * st)
 {
@@ -415,6 +454,42 @@ int browser_vfs_stat(char const * filename, struct stat * st)
 }
 
 
+/* browser_vfs_unmount */
+int browser_vfs_unmount(char const * mountpoint)
+{
+	int ret = 0;
+	int res;
+	char * argv[] = { "sudo", "-A", "/sbin/umount", "--", NULL, NULL };
+	GError * error = NULL;
+	gboolean root;
+
+	if(mountpoint == NULL)
+		return error_set_code(-EINVAL, "%s: %s", mountpoint,
+				strerror(EINVAL));
+#ifdef unmount
+	if((res = unmount(mountpoint, 0)) == 0)
+		return 0;
+	if(errno != EPERM)
+		return error_set_code(-errno, "%s: %s", mountpoint,
+				strerror(errno));
+#endif
+	if((argv[4] = strdup(mountpoint)) == NULL)
+		return error_set_code(-errno, "%s: %s", mountpoint,
+				strerror(errno));
+	root = (geteuid() == 0) ? TRUE : FALSE;
+	if(g_spawn_async(NULL, root ? &argv[2] : argv, NULL,
+				root ? 0 : G_SPAWN_SEARCH_PATH,
+				NULL, NULL, NULL, &error) != TRUE)
+	{
+		error_set("%s: %s", mountpoint, error->message);
+		g_error_free(error);
+		ret = -1;
+	}
+	free(argv[4]);
+	return ret;
+}
+
+
 /* private */
 /* functions */
 /* browser_vfs_get_flags_mountpoint */
@@ -446,7 +521,6 @@ static unsigned int _browser_vfs_get_flags_mountpoint(char const * mountpoint)
 	struct statfs * mnt;
 	int res;
 	int i;
-	unsigned int flags;
 
 	if((res = getmntinfo(&mnt, MNT_NOWAIT)) <= 0)
 		return 0;
