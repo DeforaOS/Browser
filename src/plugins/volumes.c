@@ -416,26 +416,13 @@ static int _volumes_can_unmount(unsigned int flags)
 
 /* useful */
 /* volumes_eject */
-static int _volumes_eject(Volumes * volumes, char const * device)
+static int _volumes_eject(Volumes * volumes, char const * mountpoint)
 {
 	BrowserPluginHelper * helper = volumes->helper;
-	int ret = 0;
-	char * argv[] = { "eject", "--", NULL, NULL };
-	const unsigned int flags = G_SPAWN_SEARCH_PATH;
-	GError * error = NULL;
 
-	if(device == NULL)
-		return -helper->error(helper->browser, strerror(EINVAL), 1);
-	if((argv[2] = strdup(device)) == NULL)
-		return -helper->error(helper->browser, strerror(errno), 1);
-	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
-			!= TRUE)
-	{
-		ret = -helper->error(helper->browser, error->message, 1);
-		g_error_free(error);
-	}
-	free(argv[2]);
-	return ret;
+	if(browser_vfs_eject(mountpoint) != 0)
+		return helper->error(helper->browser, error_get(NULL), 1);
+	return 0;
 }
 
 
@@ -910,7 +897,6 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 	GtkTreeSelection * treesel;
 	GtkTreeModel * model;
 	GtkTreeIter iter;
-	gchar * device;
 	unsigned int flags;
 	gchar * mountpoint;
 	GtkWidget * menu;
@@ -921,8 +907,8 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
 	if(gtk_tree_selection_get_selected(treesel, &model, &iter) != TRUE)
 		return FALSE;
-	gtk_tree_model_get(model, &iter, DC_DEVICE, &device,
-			DC_MOUNTPOINT, &mountpoint, DC_FLAGS, &flags, -1);
+	gtk_tree_model_get(model, &iter, DC_MOUNTPOINT, &mountpoint,
+			DC_FLAGS, &flags, -1);
 	if(mountpoint == NULL)
 		return FALSE;
 	menu = gtk_menu_new();
@@ -957,7 +943,6 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 		gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(widget),
 				gtk_image_new_from_icon_name("media-eject",
 					GTK_ICON_SIZE_MENU));
-		g_object_set_data(G_OBJECT(widget), "device", device);
 		g_signal_connect(widget, "activate", G_CALLBACK(
 					_volumes_on_eject), volumes);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
@@ -974,7 +959,6 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button,
 			event->time);
 #if 0 /* XXX memory leak (for g_object_set_data() above) */
-	g_free(device);
 	g_free(mountpoint);
 #endif
 	return TRUE;
@@ -983,11 +967,25 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 static void _volumes_on_eject(GtkWidget * widget, gpointer data)
 {
 	Volumes * volumes = data;
-	gchar * device;
+	gchar * mountpoint;
 
-	device = g_object_get_data(G_OBJECT(widget), "device");
-	_volumes_eject(volumes, device);
-	g_free(device);
+	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
+	if(_volumes_eject(volumes, mountpoint) != 0)
+		volumes->helper->error(volumes->helper->browser,
+				error_get(NULL), 1);
+	g_free(mountpoint);
+}
+
+static void _volumes_on_mount(GtkWidget * widget, gpointer data)
+{
+	Volumes * volumes = data;
+	gchar * mountpoint;
+
+	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
+	if(_volumes_mount(volumes, mountpoint) != 0)
+		volumes->helper->error(volumes->helper->browser,
+				error_get(NULL), 1);
+	g_free(mountpoint);
 }
 
 static void _volumes_on_properties(GtkWidget * widget, gpointer data)
@@ -1011,18 +1009,6 @@ static void _volumes_on_properties(GtkWidget * widget, gpointer data)
 	g_free(mountpoint);
 }
 
-static void _volumes_on_mount(GtkWidget * widget, gpointer data)
-{
-	Volumes * volumes = data;
-	gchar * mountpoint;
-
-	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
-	if(_volumes_mount(volumes, mountpoint) != 0)
-		volumes->helper->error(volumes->helper->browser,
-				strerror(errno), 1);
-	g_free(mountpoint);
-}
-
 static void _volumes_on_unmount(GtkWidget * widget, gpointer data)
 {
 	Volumes * volumes = data;
@@ -1031,7 +1017,7 @@ static void _volumes_on_unmount(GtkWidget * widget, gpointer data)
 	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
 	if(_volumes_unmount(volumes, mountpoint) != 0)
 		volumes->helper->error(volumes->helper->browser,
-				strerror(errno), 1);
+				error_get(NULL), 1);
 	g_free(mountpoint);
 }
 
