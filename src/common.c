@@ -258,10 +258,12 @@ static char const * _common_size(off_t size)
 		unit = N_("MB");
 	else if((sz /= 1024) < 1024)
 		unit = N_("GB");
+	else if((sz /= 1024) < 1024)
+		unit = N_("TB");
 	else
 	{
 		sz /= 1024;
-		unit = N_("TB");
+		unit = N_("PB");
 	}
 	snprintf(buf, sizeof(buf), "%.1f %s", sz, _(unit));
 	return buf;

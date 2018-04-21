@@ -553,10 +553,12 @@ static void _refresh_size(Properties * properties, size_t size)
 		unit = _("MB");
 	else if((sz /= 1024) < 1024)
 		unit = _("GB");
+	else if((sz /= 1024) < 1024)
+		unit = _("TB");
 	else
 	{
 		sz /= 1024;
-		unit = _("TB");
+		unit = _("PB");
 	}
 	snprintf(buf, sizeof(buf), format, sz, unit);
 	gtk_label_set_text(GTK_LABEL(properties->size), buf);

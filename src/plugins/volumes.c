@@ -545,10 +545,12 @@ static void _list_add_size(char * buf, size_t len, unsigned long bsize,
 		unit = _("MB");
 	else if((sz /= 1024) < 1024)
 		unit = _("GB");
+	else if((sz /= 1024) < 1024)
+		unit = _("TB");
 	else
 	{
 		sz /= 1024;
-		unit = _("TB");
+		unit = _("PB");
 	}
 	snprintf(buf, len, format, sz, unit);
 }
