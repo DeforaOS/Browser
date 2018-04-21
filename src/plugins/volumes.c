@@ -37,15 +37,6 @@
 #include <string.h>
 #include <errno.h>
 #include <libintl.h>
-#ifndef __GNU__ /* XXX hurd portability */
-# include <sys/mount.h>
-# if defined(__linux__) || defined(__CYGWIN__)
-#  define unmount(a, b) umount(a)
-# endif
-# ifndef unmount
-#  define unmount unmount
-# endif
-#endif
 #if defined(__FreeBSD__)
 # include <sys/param.h>
 # include <sys/ucred.h>
@@ -814,26 +805,9 @@ static void _list_reset(Volumes * volumes)
 static int _volumes_mount(Volumes * volumes, char const * mountpoint)
 {
 	BrowserPluginHelper * helper = volumes->helper;
-	char * argv[] = { "sudo", "-A", "/sbin/mount", "--", NULL, NULL };
-	GError * error = NULL;
-	gboolean root;
 
-	if(mountpoint == NULL)
-	{
-		errno = EINVAL;
-		return -1;
-	}
-	if((argv[4] = strdup(mountpoint)) == NULL)
-		return -1;
-	root = (geteuid() == 0) ? TRUE : FALSE;
-	if(g_spawn_async(NULL, root ? &argv[2] : argv, NULL,
-				root ? 0 : G_SPAWN_SEARCH_PATH,
-				NULL, NULL, NULL, &error) != TRUE)
-	{
-		helper->error(helper->browser, error->message, 1);
-		g_error_free(error);
-	}
-	free(argv[4]);
+	if(browser_vfs_mount(mountpoint) != 0)
+		return helper->error(helper->browser, error_get(NULL), 1);
 	return 0;
 }
 
@@ -842,33 +816,9 @@ static int _volumes_mount(Volumes * volumes, char const * mountpoint)
 static int _volumes_unmount(Volumes * volumes, char const * mountpoint)
 {
 	BrowserPluginHelper * helper = volumes->helper;
-	int res;
-	char * argv[] = { "sudo", "-A", "/sbin/umount", "--", NULL, NULL };
-	GError * error = NULL;
-	gboolean root;
 
-	if(mountpoint == NULL)
-	{
-		errno = EINVAL;
-		return -1;
-	}
-#ifdef unmount
-	if((res = unmount(mountpoint, 0)) == 0)
-		return 0;
-	if(errno != EPERM)
-		return -1;
-#endif
-	if((argv[4] = strdup(mountpoint)) == NULL)
-		return -1;
-	root = (geteuid() == 0) ? TRUE : FALSE;
-	if(g_spawn_async(NULL, root ? &argv[2] : argv, NULL,
-				root ? 0 : G_SPAWN_SEARCH_PATH,
-				NULL, NULL, NULL, &error) != TRUE)
-	{
-		helper->error(helper->browser, error->message, 1);
-		g_error_free(error);
-	}
-	free(argv[4]);
+	if(browser_vfs_unmount(mountpoint) != 0)
+		return helper->error(helper->browser, error_get(NULL), 1);
 	return 0;
 }
 
