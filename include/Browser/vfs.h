@@ -53,6 +53,7 @@ DIR * browser_vfs_opendir(char const * filename, struct stat * st);
 int browser_vfs_closedir(DIR * dir);
 struct dirent * browser_vfs_readdir(DIR * dir);
 
+int browser_vfs_eject(char const * mountpoint);
 int browser_vfs_mount(char const * mountpoint);
 int browser_vfs_unmount(char const * mountpoint);
 

@@ -76,6 +76,8 @@ typedef enum _VFSFlag
 
 /* prototypes */
 /* accessors */
+static String * _browser_vfs_get_device(char const * mountpoint);
+
 static unsigned int _browser_vfs_get_flags_mountpoint(char const * mountpoint);
 
 
@@ -133,6 +135,29 @@ int browser_vfs_lstat(char const * filename, struct stat * st)
 int browser_vfs_closedir(DIR * dir)
 {
 	return closedir(dir);
+}
+
+
+/* browser_vfs_eject */
+int browser_vfs_eject(char const * mountpoint)
+{
+	int ret = 0;
+	char * argv[] = { "eject", "--", NULL, NULL };
+	const unsigned int flags = G_SPAWN_SEARCH_PATH;
+	GError * error = NULL;
+
+	if(mountpoint == NULL)
+		return error_set_code(-EINVAL, "%s", strerror(EINVAL));
+	if((argv[2] = _browser_vfs_get_device(mountpoint)) == NULL)
+		return error_get_code();
+	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
+			!= TRUE)
+	{
+		ret = -error_set_code(1, "%s: %s", mountpoint, error->message);
+		g_error_free(error);
+	}
+	free(argv[2]);
+	return ret;
 }
 
 
@@ -492,6 +517,43 @@ int browser_vfs_unmount(char const * mountpoint)
 
 /* private */
 /* functions */
+/* browser_vfs_get_device */
+static String * _browser_vfs_get_device(char const * mountpoint)
+{
+#if defined(_PATH_FSTAB)
+	struct fstab * f;
+#endif
+#if defined(ST_NOWAIT)
+	struct statvfs * mnt;
+	int res;
+	int i;
+
+	if((res = getmntinfo(&mnt, ST_NOWAIT)) > 0)
+		for(i = 0; i < res; i++)
+			if(strcmp(mnt[i].f_mntfromname, mountpoint) == 0)
+				return string_new(mnt[i].f_mntfromname);
+#elif defined(MNT_NOWAIT)
+	struct statfs * mnt;
+	int res;
+	int i;
+
+	if((res = getmntinfo(&mnt, MNT_NOWAIT)) > 0)
+		for(i = 0; i < res; i++)
+			if(strcmp(mnt[i].f_mntfromname, mountpoint) == 0)
+				return string_new(mnt[i].f_mntfromname);
+#endif
+#if defined(_PATH_FSTAB)
+	if(setfsent() != 1)
+		return NULL;
+	while((f = getfsent()) != NULL)
+		if(strcmp(f->fs_file, mountpoint) == 0)
+			return string_new(f->fs_spec);
+#endif
+	error_set_code(1, "%s: %s", mountpoint, "Device not found");
+	return NULL;
+}
+
+
 /* browser_vfs_get_flags_mountpoint */
 static unsigned int _browser_vfs_get_flags_mountpoint(char const * mountpoint)
 {
