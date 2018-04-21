@@ -41,6 +41,10 @@
 /* public */
 /* functions */
 /* accessors */
+int browser_vfs_can_eject(char const * mountpoint);
+int browser_vfs_can_mount(char const * mountpoint);
+int browser_vfs_can_unmount(char const * mountpoint);
+
 int browser_vfs_is_mountpoint(struct stat * lst, dev_t parent);
 
 /* useful */

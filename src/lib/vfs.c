@@ -29,7 +29,18 @@
 
 
 
-#if defined(__sun)
+#if defined(__FreeBSD__)
+# include <sys/param.h>
+# include <sys/ucred.h>
+# include <fstab.h>
+#elif defined(__NetBSD__)
+# include <sys/param.h>
+# include <sys/types.h>
+# include <sys/statvfs.h>
+# include <fstab.h>
+#elif defined(__OpenBSD__)
+# include <fstab.h>
+#elif defined(__sun)
 # include <fcntl.h>
 # include <unistd.h>
 #endif
@@ -40,9 +51,58 @@
 #include "../../include/Browser/vfs.h"
 
 
+/* private */
+/* types */
+typedef enum _VFSFlag
+{
+	VF_MOUNTED	= 0x01,
+	VF_NETWORK	= 0x02,
+	VF_READONLY	= 0x04,
+	VF_REMOVABLE	= 0x08,
+	VF_SHARED	= 0x10
+} VFSFlag;
+
+
+/* prototypes */
+/* accessors */
+static unsigned int _browser_vfs_get_flags_mountpoint(char const * mountpoint);
+
+
 /* public */
 /* functions */
 /* accessors */
+/* browser_vfs_can_eject */
+int browser_vfs_can_eject(char const * mountpoint)
+{
+	unsigned int flags;
+
+	flags = _browser_vfs_get_flags_mountpoint(mountpoint);
+	return ((flags & VF_REMOVABLE) != 0) ? 1 : 0;
+}
+
+
+/* browser_vfs_can_mount */
+int browser_vfs_can_mount(char const * mountpoint)
+{
+	unsigned int flags;
+
+	flags = _browser_vfs_get_flags_mountpoint(mountpoint);
+	return ((flags & VF_REMOVABLE) != 0
+			&& (flags & VF_MOUNTED) == 0) ? 1 : 0;
+}
+
+
+/* browser_vfs_can_unmount */
+int browser_vfs_can_unmount(char const * mountpoint)
+{
+	unsigned int flags;
+
+	flags = _browser_vfs_get_flags_mountpoint(mountpoint);
+	return ((flags & VF_REMOVABLE) != 0
+			&& (flags & VF_MOUNTED) != 0) ? 1 : 0;
+}
+
+
 /* browser_vfs_is_mountpoint */
 int browser_vfs_is_mountpoint(struct stat * lst, dev_t parent)
 {
@@ -352,4 +412,69 @@ struct dirent * browser_vfs_readdir(DIR * dir)
 int browser_vfs_stat(char const * filename, struct stat * st)
 {
 	return stat(filename, st);
+}
+
+
+/* private */
+/* functions */
+/* browser_vfs_get_flags_mountpoint */
+static unsigned int _browser_vfs_get_flags_mountpoint(char const * mountpoint)
+{
+	unsigned int flags;
+#if defined(_PATH_FSTAB)
+	struct fstab * f;
+#endif
+#if defined(ST_NOWAIT)
+	struct statvfs * mnt;
+	int res;
+	int i;
+
+	if((res = getmntinfo(&mnt, ST_NOWAIT)) <= 0)
+		return 0;
+	for(i = 0; i < res; i++)
+	{
+		if(strcmp(mnt[i].f_mntfromname, mountpoint) != 0)
+			continue;
+		flags = VF_MOUNTED;
+		flags |= (mnt[i].f_flag & ST_LOCAL) ? 0 : VF_NETWORK;
+		flags |= (mnt[i].f_flag & (ST_EXRDONLY | ST_EXPORTED))
+			? VF_SHARED : 0;
+		flags |= (mnt[i].f_flag & ST_RDONLY) ? VF_READONLY : 0;
+		return flags;
+	}
+#elif defined(MNT_NOWAIT)
+	struct statfs * mnt;
+	int res;
+	int i;
+	unsigned int flags;
+
+	if((res = getmntinfo(&mnt, MNT_NOWAIT)) <= 0)
+		return 0;
+	for(i = 0; i < res; i++)
+	{
+		if(strcmp(mnt[i].f_mntonname, mountpoint) != 0)
+			continue;
+		flags = VF_MOUNTED;
+		flags |= (mnt[i].f_flags & MNT_LOCAL) ? 0 : VF_NETWORK;
+		flags |= (mnt[i].f_flags & MNT_RDONLY) ? VF_READONLY : 0;
+		return flags;
+	}
+#endif
+#if defined(_PATH_FSTAB)
+	if(setfsent() != 1)
+		return -1;
+	while((f = getfsent()) != NULL)
+	{
+		if(strcmp(f->fs_file, mountpoint) != 0
+				|| strcmp(f->fs_type, "sw") == 0
+				|| strcmp(f->fs_type, "xx") == 0)
+			continue;
+		flags = (strcmp(f->fs_vfstype, "nfs") == 0
+				|| strcmp(f->fs_vfstype, "smbfs") == 0)
+			? VF_NETWORK : 0;
+		flags |= (strcmp(f->fs_type, "ro") == 0) ? VF_READONLY : 0;
+		return flags;
+	}
+#endif
+	return 0;
 }
