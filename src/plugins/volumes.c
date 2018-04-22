@@ -740,9 +740,14 @@ static int _list_loop_unmounted(Volumes * volumes)
 	_list_reset(volumes);
 	while((f = getfsent()) != NULL)
 	{
-		if(strcmp(f->fs_type, "sw") == 0
-				|| strcmp(f->fs_type, "xx") == 0)
+# if defined(FSTAB_SW)
+		if(strcmp(f->fs_type, FSTAB_SW) == 0)
 			continue;
+# endif
+# if defined(FSTAB_XX)
+		if(strcmp(f->fs_type, FSTAB_XX) == 0)
+			continue;
+# endif
 		flags = (strcmp(f->fs_vfstype, "nfs") == 0
 				|| strcmp(f->fs_vfstype, "smbfs") == 0)
 			? DF_NETWORK : 0;
