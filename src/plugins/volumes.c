@@ -952,6 +952,7 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 		gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(widget),
 				gtk_image_new_from_icon_name("media-eject",
 					GTK_ICON_SIZE_MENU));
+		g_object_set_data(G_OBJECT(widget), "mountpoint", mountpoint);
 		g_signal_connect(widget, "activate", G_CALLBACK(
 					_volumes_on_eject), volumes);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
