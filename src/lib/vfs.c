@@ -152,10 +152,16 @@ int browser_vfs_eject(char const * mountpoint)
 	const unsigned int flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
 
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, mountpoint);
+#endif
 	if(mountpoint == NULL)
 		return error_set_code(-EINVAL, "%s", strerror(EINVAL));
 	if((argv[2] = _browser_vfs_get_device(mountpoint)) == NULL)
 		return error_get_code();
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, argv[2]);
+#endif
 	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
 			!= TRUE)
 	{
