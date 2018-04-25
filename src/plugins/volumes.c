@@ -59,6 +59,10 @@
 # define BINDIR	PREFIX "/bin"
 #endif
 
+#ifndef PROGNAME_PROPERTIES
+# define PROGNAME_PROPERTIES "properties"
+#endif
+
 
 /* Volumes */
 /* private */
@@ -998,8 +1002,8 @@ static void _volumes_on_properties(GtkWidget * widget, gpointer data)
 	Volumes * volumes = data;
 	BrowserPluginHelper * helper = volumes->helper;
 	gchar * mountpoint;
-	char * argv[] = { BINDIR "/properties", "properties", "--", NULL,
-		NULL };
+	char * argv[] = { BINDIR "/" PROGNAME_PROPERTIES, PROGNAME_PROPERTIES,
+		"--", NULL, NULL };
 	const unsigned int flags = G_SPAWN_FILE_AND_ARGV_ZERO;
 	GError * error = NULL;
 
