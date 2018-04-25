@@ -63,6 +63,10 @@
 #include <System/string.h>
 #include "../../include/Browser/vfs.h"
 
+#ifndef PROGNAME_EJECT
+# define PROGNAME_EJECT "eject"
+#endif
+
 
 /* private */
 /* types */
@@ -144,7 +148,7 @@ int browser_vfs_closedir(DIR * dir)
 int browser_vfs_eject(char const * mountpoint)
 {
 	int ret = 0;
-	char * argv[] = { "eject", "--", NULL, NULL };
+	char * argv[] = { PROGNAME_EJECT, "--", NULL, NULL };
 	const unsigned int flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
 
