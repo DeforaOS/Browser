@@ -75,7 +75,7 @@ typedef struct _BrowserPlugin
 
 
 /* constants */
-#define CVS_CVS		"cvs"
+#define PROGNAME_CVS		"cvs"
 
 
 /* prototypes */
@@ -738,7 +738,7 @@ static void _cvs_on_add(gpointer data)
 	CVS * cvs = data;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { CVS_CVS, "add", "--", NULL, NULL, NULL };
+	char * argv[] = { PROGNAME_CVS, "add", "--", NULL, NULL, NULL };
 	char const * type;
 
 	if(cvs->filename == NULL)
@@ -794,7 +794,7 @@ static void _cvs_on_annotate(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { CVS_CVS, "annotate", "--", NULL, NULL };
+	char * argv[] = { PROGNAME_CVS, "annotate", "--", NULL, NULL };
 
 	if(cvs->filename == NULL || lstat(cvs->filename, &st) != 0)
 		return;
@@ -814,7 +814,7 @@ static void _cvs_on_checkout(gpointer data)
 {
 	CVS * cvs = data;
 	struct stat st;
-	char * argv[] = { CVS_CVS, "checkout", "--", NULL, NULL };
+	char * argv[] = { PROGNAME_CVS, "checkout", "--", NULL, NULL };
 	char * dirname;
 	char * path;
 	char * module;
@@ -843,7 +843,7 @@ static void _cvs_on_commit(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { CVS_CVS, "commit", "--", NULL, NULL };
+	char * argv[] = { PROGNAME_CVS, "commit", "--", NULL, NULL };
 
 	if(cvs->filename == NULL || lstat(cvs->filename, &st) != 0)
 		return;
@@ -876,7 +876,7 @@ static void _cvs_on_delete(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { CVS_CVS, "delete", "--", NULL, NULL };
+	char * argv[] = { PROGNAME_CVS, "delete", "--", NULL, NULL };
 
 	if(cvs->filename == NULL || lstat(cvs->filename, &st) != 0)
 		return;
@@ -906,7 +906,7 @@ static void _cvs_on_diff(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { CVS_CVS, "diff", "--", NULL, NULL };
+	char * argv[] = { PROGNAME_CVS, "diff", "--", NULL, NULL };
 
 	if(cvs->filename == NULL || lstat(cvs->filename, &st) != 0)
 		return;
@@ -928,7 +928,7 @@ static void _cvs_on_log(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { CVS_CVS, "log", "--", NULL, NULL };
+	char * argv[] = { PROGNAME_CVS, "log", "--", NULL, NULL };
 
 	if(cvs->filename == NULL || lstat(cvs->filename, &st) != 0)
 		return;
@@ -950,7 +950,7 @@ static void _cvs_on_status(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { CVS_CVS, "status", "--", NULL, NULL };
+	char * argv[] = { PROGNAME_CVS, "status", "--", NULL, NULL };
 
 	if(cvs->filename == NULL || lstat(cvs->filename, &st) != 0)
 		return;
@@ -972,7 +972,7 @@ static void _cvs_on_update(gpointer data)
 	struct stat st;
 	gchar * dirname;
 	gchar * basename;
-	char * argv[] = { CVS_CVS, "update", "--", NULL, NULL };
+	char * argv[] = { PROGNAME_CVS, "update", "--", NULL, NULL };
 
 	if(cvs->filename == NULL || lstat(cvs->filename, &st) != 0)
 		return;
