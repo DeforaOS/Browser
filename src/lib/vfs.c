@@ -271,7 +271,7 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 	char const * icon = NULL;
 	struct stat ls;
 	struct stat ps;
-	char * p;
+	gchar * p;
 	size_t i;
 	struct
 	{
@@ -297,27 +297,30 @@ static GdkPixbuf * _mime_icon_folder(Mime * mime, char const * filename,
 	if(lst == NULL && browser_vfs_lstat(filename, &ls) == 0)
 		lst = &ls;
 	/* check if the folder is special */
-	if((p = strdup(filename)) != NULL
-			&& (lst == NULL || !S_ISLNK(lst->st_mode))
+	p = g_path_get_dirname(filename);
+	if((lst == NULL || !S_ISLNK(lst->st_mode))
 			&& st != NULL
-			&& browser_vfs_lstat(dirname(p), &ps) == 0)
+			&& browser_vfs_lstat(p, &ps) == 0)
 	{
 		if(st->st_dev != ps.st_dev || st->st_ino == ps.st_ino)
 			icon = "mount-point";
 		else if(_mime_icon_folder_is_home(st))
 			icon = "folder_home";
 		else if(_mime_icon_folder_in_home(&ps))
+		{
+			g_free(p);
+			p = g_path_get_basename(filename);
 			/* check if the folder is special */
 			for(i = 0; i < sizeof(name_icon) / sizeof(*name_icon);
 					i++)
-				if(strcasecmp(basename(p), name_icon[i].name)
-						== 0)
+				if(strcasecmp(p, name_icon[i].name) == 0)
 				{
 					icon = name_icon[i].icon;
 					break;
 				}
+		}
 	}
-	free(p);
+	g_free(p);
 	if(icon != NULL)
 	{
 		icontheme = gtk_icon_theme_get_default();
