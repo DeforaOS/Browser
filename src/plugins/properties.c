@@ -409,14 +409,14 @@ static int _properties_do_refresh(Properties * properties)
 {
 	struct stat lst;
 	struct stat st;
-	char * parent;
+	gchar * parent;
 	gboolean writable;
 
-	parent = dirname(properties->filename);
 	if(lstat(properties->filename, &lst) != 0
 			|| stat(properties->filename, &st) != 0)
 		return _properties_error(properties, properties->filename, 0)
 			+ 1;
+	parent = g_path_get_dirname(properties->filename);
 	_refresh_name(properties->name, properties->filename);
 	_refresh_type(properties, &lst, &st);
 	properties->uid = lst.st_uid;
@@ -434,6 +434,7 @@ static int _properties_do_refresh(Properties * properties)
 	_refresh_time(properties->mtime, lst.st_mtime);
 	_refresh_time(properties->ctime, lst.st_ctime);
 	_refresh_apply(properties->apply, writable);
+	g_free(parent);
 	return 0;
 }
 
