@@ -136,10 +136,10 @@ static void _on_icon_drag_data_received(GtkWidget * widget,
 		GdkDragContext * context, gint x, gint y,
 		GtkSelectionData * seldata, guint info, guint time,
 		gpointer data);
-static void _on_icon_open(gpointer data);
 static void _on_icon_edit(gpointer data);
-static void _on_icon_run(gpointer data);
+static void _on_icon_open(gpointer data);
 static void _on_icon_open_with(gpointer data);
+static void _on_icon_run(gpointer data);
 static void _on_icon_rename(gpointer data);
 static void _on_icon_delete(gpointer data);
 static void _on_icon_properties(gpointer data);
@@ -923,6 +923,17 @@ static void _popup_mime(Mime * mime, char const * mimetype, char const * action,
 }
 
 
+/* on_icon_edit */
+static void _on_icon_edit(gpointer data)
+{
+	DesktopIcon * desktopicon = data;
+	Mime * mime;
+
+	mime = desktop_get_mime(desktopicon->desktop);
+	mime_action(mime, "edit", desktopicon->path);
+}
+
+
 /* on_icon_open */
 static void _on_icon_open(gpointer data)
 {
@@ -956,14 +967,37 @@ static void _on_icon_open(gpointer data)
 }
 
 
-/* on_icon_edit */
-static void _on_icon_edit(gpointer data)
+/* on_icon_open_with */
+static void _on_icon_open_with(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
-	Mime * mime;
+	GtkWidget * dialog;
+	char * filename = NULL;
+	char * argv[] = { NULL, NULL, NULL, NULL };
+	const unsigned int flags = G_SPAWN_SEARCH_PATH
+		| G_SPAWN_FILE_AND_ARGV_ZERO;
+	GError * error = NULL;
 
-	mime = desktop_get_mime(desktopicon->desktop);
-	mime_action(mime, "edit", desktopicon->path);
+	dialog = gtk_file_chooser_dialog_new(_("Open with..."), NULL,
+			GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
+			GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN,
+			GTK_RESPONSE_ACCEPT, NULL);
+	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
+					dialog));
+	gtk_widget_destroy(dialog);
+	if(filename == NULL)
+		return;
+	argv[0] = filename;
+	argv[1] = filename;
+	argv[2] = desktopicon->path;
+	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
+			!= TRUE)
+	{
+		desktop_error(desktopicon->desktop, NULL, error->message, 1);
+		g_error_free(error);
+	}
+	g_free(filename);
 }
 
 
@@ -1122,40 +1156,6 @@ static void _run_link(DesktopIcon * desktopicon)
 		g_error_free(error);
 	}
 	free(argv[2]);
-}
-
-
-/* on_icon_open_with */
-static void _on_icon_open_with(gpointer data)
-{
-	DesktopIcon * desktopicon = data;
-	GtkWidget * dialog;
-	char * filename = NULL;
-	char * argv[] = { NULL, NULL, NULL, NULL };
-	const unsigned int flags = G_SPAWN_SEARCH_PATH
-		| G_SPAWN_FILE_AND_ARGV_ZERO;
-	GError * error = NULL;
-
-	dialog = gtk_file_chooser_dialog_new(_("Open with..."), NULL,
-			GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL,
-			GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN,
-			GTK_RESPONSE_ACCEPT, NULL);
-	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
-		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
-					dialog));
-	gtk_widget_destroy(dialog);
-	if(filename == NULL)
-		return;
-	argv[0] = filename;
-	argv[1] = filename;
-	argv[2] = desktopicon->path;
-	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
-			!= TRUE)
-	{
-		desktop_error(desktopicon->desktop, NULL, error->message, 1);
-		g_error_free(error);
-	}
-	g_free(filename);
 }
 
 
