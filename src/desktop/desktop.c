@@ -3042,7 +3042,10 @@ static int _refresh_loop_files(Desktop * desktop)
 	/* XXX not relative to the current folder */
 	else if((q = g_filename_to_utf8(de->d_name, -1, NULL, NULL, &error))
 			!= NULL)
+	{
 		desktopicon = desktopicon_new(desktop, q, p);
+		g_free(q);
+	}
 	else
 	{
 		desktop_error(NULL, NULL, error->message, 1);
@@ -3051,7 +3054,6 @@ static int _refresh_loop_files(Desktop * desktop)
 	}
 	if(desktopicon != NULL)
 		desktop_icon_add(desktop, desktopicon);
-	g_free(q);
 	string_delete(p);
 	return 0;
 }
