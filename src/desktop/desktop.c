@@ -1574,7 +1574,8 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 	if(how == DESKTOP_HOW_NONE)
 		return;
 #if GTK_CHECK_VERSION(3, 0, 0)
-	desktop->cairo = gdk_cairo_create(desktop->root);
+	desktop->cairo = gdk_cairo_create(desktop->back != NULL
+			? desktop->back : desktop->root);
 	cairo_set_source_rgba(desktop->cairo, color->red, color->green,
 			color->blue, 1.0);
 	gdk_cairo_rectangle(desktop->cairo, &desktop->window);
