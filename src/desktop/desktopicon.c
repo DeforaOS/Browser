@@ -210,7 +210,6 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 	desktopicon->isdir = isdir;
 	desktopicon_set_executable(desktopicon, isexec);
 	desktopicon->mimetype = mimetype;
-	desktopicon->config = NULL;
 	if(path != NULL && (desktopicon->path = strdup(path)) == NULL)
 	{
 		desktopicon_delete(desktopicon);
