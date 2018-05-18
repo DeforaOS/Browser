@@ -614,6 +614,8 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 #endif
 	/* event */
 	desktopicon->event = gtk_event_box_new();
+	gtk_event_box_set_visible_window(GTK_EVENT_BOX(desktopicon->event),
+			FALSE);
 	g_signal_connect(G_OBJECT(desktopicon->event), "button-press-event",
 			G_CALLBACK(_on_icon_button_press), desktopicon);
 	g_signal_connect(G_OBJECT(desktopicon->event), "key-press-event",
