@@ -560,7 +560,7 @@ int desktopicon_set_name(DesktopIcon * desktopicon, char const * name)
 void desktopicon_set_selected(DesktopIcon * desktopicon, gboolean selected)
 {
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %p is %s\n", (void*)desktopicon,
+	fprintf(stderr, "DEBUG: %p is %s\n", (void *)desktopicon,
 			selected ? "selected" : "deselected");
 #endif
 	desktopicon->selected = selected;
