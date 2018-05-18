@@ -3006,8 +3006,10 @@ static gint _categories_apps_compare(gconstpointer a, gconstpointer b)
 
 static int _refresh_loop_files(Desktop * desktop)
 {
+	const char ext[] = ".desktop";
 	struct dirent * de;
 	String * p;
+	size_t len;
 	gchar * q;
 	DesktopIcon * desktopicon;
 	GError * error = NULL;
@@ -3032,8 +3034,14 @@ static int _refresh_loop_files(Desktop * desktop)
 	if((p = string_new_append(desktop->path, "/", de->d_name, NULL))
 			== NULL)
 		return -_desktop_serror(desktop, de->d_name, 1);
+	/* detect desktop entries */
+	if((len = strlen(de->d_name)) > sizeof(ext)
+			&& strcmp(&de->d_name[len - sizeof(ext) + 1], ext) == 0)
+		desktopicon = desktopicon_new_application(desktop, p,
+				desktop->refresh_dir);
 	/* XXX not relative to the current folder */
-	if((q = g_filename_to_utf8(de->d_name, -1, NULL, NULL, &error)) != NULL)
+	else if((q = g_filename_to_utf8(de->d_name, -1, NULL, NULL, &error))
+			!= NULL)
 		desktopicon = desktopicon_new(desktop, q, p);
 	else
 	{
