@@ -657,7 +657,7 @@ static void _desktopicon_set_icon(DesktopIcon * desktopicon, GdkPixbuf * icon)
 {
 	GdkPixbuf * i = NULL;
 #ifdef EMBEDDED
-	const GdkInterpType interp = GDK_INTERP_NEAREST;
+	const GdkInterpType interp = GDK_INTERP_BILINEAR;
 #else
 	const GdkInterpType interp = GDK_INTERP_HYPER;
 #endif
