@@ -3039,7 +3039,7 @@ static int _refresh_loop_files(Desktop * desktop)
 	if((len = strlen(de->d_name)) > sizeof(ext)
 			&& strcmp(&de->d_name[len - sizeof(ext) + 1], ext) == 0)
 		desktopicon = desktopicon_new_application(desktop, p,
-				desktop->refresh_dir);
+				desktop->path);
 	/* XXX not relative to the current folder */
 	else if((q = g_filename_to_utf8(de->d_name, -1, NULL, NULL, &error))
 			!= NULL)
