@@ -895,6 +895,7 @@ static void _volumes_on_unmount_selection(gpointer data)
 
 /* volumes_on_view_button_press */
 static void _volumes_on_eject(GtkWidget * widget, gpointer data);
+static void _volumes_on_open(GtkWidget * widget, gpointer data);
 static void _volumes_on_properties(GtkWidget * widget, gpointer data);
 static void _volumes_on_mount(GtkWidget * widget, gpointer data);
 static void _volumes_on_unmount(GtkWidget * widget, gpointer data);
@@ -921,6 +922,14 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 	if(mountpoint == NULL)
 		return FALSE;
 	menu = gtk_menu_new();
+	/* open */
+	widget = gtk_image_menu_item_new_from_stock(GTK_STOCK_OPEN, NULL);
+	g_object_set_data(G_OBJECT(widget), "mountpoint", mountpoint);
+	g_signal_connect(widget, "activate", G_CALLBACK(_volumes_on_open),
+			volumes);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
+	widget = gtk_separator_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
 	/* unmount */
 	if(_volumes_can_unmount(flags))
 	{
@@ -995,6 +1004,17 @@ static void _volumes_on_mount(GtkWidget * widget, gpointer data)
 	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
 	if(_volumes_mount(volumes, mountpoint) != 0)
 		helper->error(helper->browser, error_get(NULL), 1);
+	g_free(mountpoint);
+}
+
+static void _volumes_on_open(GtkWidget * widget, gpointer data)
+{
+	Volumes * volumes = data;
+	BrowserPluginHelper * helper = volumes->helper;
+	gchar * mountpoint;
+
+	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
+	helper->set_location(helper->browser, mountpoint);
 	g_free(mountpoint);
 }
 
