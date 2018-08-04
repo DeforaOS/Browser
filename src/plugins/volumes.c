@@ -977,24 +977,24 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 static void _volumes_on_eject(GtkWidget * widget, gpointer data)
 {
 	Volumes * volumes = data;
+	BrowserPluginHelper * helper = volumes->helper;
 	gchar * mountpoint;
 
 	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
 	if(_volumes_eject(volumes, mountpoint) != 0)
-		volumes->helper->error(volumes->helper->browser,
-				error_get(NULL), 1);
+		helper->error(helper->browser, error_get(NULL), 1);
 	g_free(mountpoint);
 }
 
 static void _volumes_on_mount(GtkWidget * widget, gpointer data)
 {
 	Volumes * volumes = data;
+	BrowserPluginHelper * helper = volumes->helper;
 	gchar * mountpoint;
 
 	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
 	if(_volumes_mount(volumes, mountpoint) != 0)
-		volumes->helper->error(volumes->helper->browser,
-				error_get(NULL), 1);
+		helper->error(helper->browser, error_get(NULL), 1);
 	g_free(mountpoint);
 }
 
@@ -1022,12 +1022,12 @@ static void _volumes_on_properties(GtkWidget * widget, gpointer data)
 static void _volumes_on_unmount(GtkWidget * widget, gpointer data)
 {
 	Volumes * volumes = data;
+	BrowserPluginHelper * helper = volumes->helper;
 	gchar * mountpoint;
 
 	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
 	if(_volumes_unmount(volumes, mountpoint) != 0)
-		volumes->helper->error(volumes->helper->browser,
-				error_get(NULL), 1);
+		helper->error(helper->browser, error_get(NULL), 1);
 	g_free(mountpoint);
 }
 
@@ -1051,6 +1051,7 @@ static void _volumes_on_view_row_activated(GtkWidget * widget,
 		GtkTreePath * path, GtkTreeViewColumn * column, gpointer data)
 {
 	Volumes * volumes = data;
+	BrowserPluginHelper * helper = volumes->helper;
 	GtkTreeModel * model;
 	GtkTreeIter iter;
 	gchar * location;
@@ -1060,7 +1061,7 @@ static void _volumes_on_view_row_activated(GtkWidget * widget,
 	if(gtk_tree_model_get_iter(model, &iter, path) != TRUE)
 		return;
 	gtk_tree_model_get(model, &iter, DC_MOUNTPOINT, &location, -1);
-	volumes->helper->set_location(volumes->helper->browser, location);
+	helper->set_location(helper->browser, location);
 	g_free(location);
 }
 
