@@ -59,6 +59,9 @@
 # define BINDIR	PREFIX "/bin"
 #endif
 
+#ifndef PROGNAME_BROWSER
+# define PROGNAME_BROWSER "browser"
+#endif
 #ifndef PROGNAME_PROPERTIES
 # define PROGNAME_PROPERTIES "properties"
 #endif
@@ -896,6 +899,7 @@ static void _volumes_on_unmount_selection(gpointer data)
 /* volumes_on_view_button_press */
 static void _volumes_on_eject(GtkWidget * widget, gpointer data);
 static void _volumes_on_open(GtkWidget * widget, gpointer data);
+static void _volumes_on_open_new_window(GtkWidget * widget, gpointer data);
 static void _volumes_on_properties(GtkWidget * widget, gpointer data);
 static void _volumes_on_mount(GtkWidget * widget, gpointer data);
 static void _volumes_on_unmount(GtkWidget * widget, gpointer data);
@@ -927,6 +931,15 @@ static gboolean _volumes_on_view_button_press(GtkWidget * widget,
 	g_object_set_data(G_OBJECT(widget), "mountpoint", mountpoint);
 	g_signal_connect(widget, "activate", G_CALLBACK(_volumes_on_open),
 			volumes);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
+	widget = gtk_image_menu_item_new_with_mnemonic(
+			_("Open in new _window"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(widget),
+			gtk_image_new_from_icon_name("window-new",
+				GTK_ICON_SIZE_MENU));
+	g_object_set_data(G_OBJECT(widget), "mountpoint", mountpoint);
+	g_signal_connect(widget, "activate", G_CALLBACK(
+				_volumes_on_open_new_window), volumes);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
 	widget = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), widget);
@@ -1015,6 +1028,27 @@ static void _volumes_on_open(GtkWidget * widget, gpointer data)
 
 	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
 	helper->set_location(helper->browser, mountpoint);
+	g_free(mountpoint);
+}
+
+static void _volumes_on_open_new_window(GtkWidget * widget, gpointer data)
+{
+	Volumes * volumes = data;
+	BrowserPluginHelper * helper = volumes->helper;
+	gchar * mountpoint;
+	char * argv[] = { BINDIR "/" PROGNAME_BROWSER, PROGNAME_BROWSER,
+		"--", NULL, NULL };
+	const unsigned int flags = G_SPAWN_FILE_AND_ARGV_ZERO;
+	GError * error = NULL;
+
+	mountpoint = g_object_get_data(G_OBJECT(widget), "mountpoint");
+	argv[2] = mountpoint;
+	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
+			!= TRUE)
+	{
+		helper->error(helper->browser, error->message, 1);
+		g_error_free(error);
+	}
 	g_free(mountpoint);
 }
 
