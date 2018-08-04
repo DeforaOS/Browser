@@ -64,8 +64,20 @@ static char const _license[] =
 #include "../common.c"
 
 /* constants */
-#ifndef PROGNAME
-# define PROGNAME	"browser"
+#ifndef PROGNAME_BROWSER
+# define PROGNAME_BROWSER "browser"
+#endif
+#ifndef PROGNAME_DELETE
+# define PROGNAME_DELETE "delete"
+#endif
+#ifndef PROGNAME_COPY
+# define PROGNAME_COPY "copy"
+#endif
+#ifndef PROGNAME_MOVE
+# define PROGNAME_MOVE "move"
+#endif
+#ifndef PROGNAME_PROPERTIES
+# define PROGNAME_PROPERTIES "properties"
 #endif
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
@@ -764,7 +776,7 @@ int browser_error(Browser * browser, char const * message, int ret)
 
 static int _browser_error(char const * message, int ret)
 {
-	fprintf(stderr, "%s: %s\n", PROGNAME, message);
+	fprintf(stderr, "%s: %s\n", PROGNAME_BROWSER, message);
 	return ret;
 }
 
@@ -1201,7 +1213,7 @@ void browser_properties(Browser * browser)
 		}
 		selection = g_list_append(NULL, p);
 	}
-	if(_common_exec("properties", NULL, selection) != 0)
+	if(_common_exec(PROGNAME_PROPERTIES, NULL, selection) != 0)
 		browser_error(browser, strerror(errno), 1);
 	g_list_foreach(selection, (GFunc)free, NULL);
 	g_list_free(selection);
@@ -1832,7 +1844,7 @@ void browser_selection_delete(Browser * browser)
 		gtk_widget_destroy(dialog);
 	}
 	if(res == GTK_RESPONSE_YES
-			&& _common_exec("delete", "-ir", selection) != 0)
+			&& _common_exec(PROGNAME_DELETE, "-ir", selection) != 0)
 		browser_error(browser, strerror(errno), 1);
 	g_list_foreach(selection, (GFunc)free, NULL);
 	g_list_free(selection);
@@ -1857,7 +1869,7 @@ void browser_selection_paste(Browser * browser)
 	if(browser->selection_cut != 1)
 	{
 		/* copy the selection */
-		if(_common_exec("copy", "-iR", browser->selection) != 0)
+		if(_common_exec(PROGNAME_COPY, "-iR", browser->selection) != 0)
 			browser_error(browser, strerror(errno), 1);
 		browser->selection = g_list_remove(browser->selection, p);
 		free(p);
@@ -1865,7 +1877,7 @@ void browser_selection_paste(Browser * browser)
 	else
 	{
 		/* move the selection */
-		if(_common_exec("move", "-i", browser->selection) != 0)
+		if(_common_exec(PROGNAME_MOVE, "-i", browser->selection) != 0)
 			browser_error(browser, strerror(errno), 1);
 		else
 		{
