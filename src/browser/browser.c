@@ -728,6 +728,35 @@ static void _delete_plugins(Browser * browser)
 
 
 /* useful */
+/* browser_confirm */
+static int _browser_confirm(Browser * browser, char const * message, ...)
+{
+	GtkWidget * dialog;
+	va_list ap;
+	gchar * p;
+	int res;
+
+	va_start(ap, message);
+	p = g_strdup_vprintf(message, ap);
+	dialog = gtk_message_dialog_new((browser->window != NULL)
+			? GTK_WINDOW(browser->window) : NULL,
+			GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+			GTK_MESSAGE_WARNING, GTK_BUTTONS_YES_NO,
+#if GTK_CHECK_VERSION(2, 6, 0)
+			"%s", _("Warning"));
+	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(
+				dialog),
+#endif
+			"%s", p);
+	g_free(p);
+	gtk_window_set_title(GTK_WINDOW(dialog), _("Warning"));
+	res = gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_widget_destroy(dialog);
+	va_end(ap);
+	return (res == GTK_RESPONSE_YES) ? 0 : -1;
+}
+
+
 /* browser_error */
 static int _browser_error(char const * message, int ret);
 /* callbacks */
@@ -1811,9 +1840,7 @@ GList * browser_selection_copy(Browser * browser)
 /* browser_selection_delete */
 void browser_selection_delete(Browser * browser)
 {
-	GtkWidget * dialog;
 	unsigned long cnt = 0;
-	int res = GTK_RESPONSE_YES;
 	GList * selection;
 	GList * p;
 
@@ -1822,28 +1849,10 @@ void browser_selection_delete(Browser * browser)
 	for(p = selection; p != NULL; p = p->next)
 		if(p->data != NULL)
 			cnt++;
-	if(cnt == 0)
-		return;
-	if(browser->prefs.confirm_before_delete == TRUE)
-	{
-		dialog = gtk_message_dialog_new(
-				(browser->window != NULL)
-				? GTK_WINDOW(browser->window) : NULL,
-				GTK_DIALOG_MODAL
-				| GTK_DIALOG_DESTROY_WITH_PARENT,
-				GTK_MESSAGE_WARNING, GTK_BUTTONS_YES_NO,
-#if GTK_CHECK_VERSION(2, 6, 0)
-				"%s", _("Warning"));
-		gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(
-					dialog),
-#endif
-				_("Are you sure you want to delete %lu"
-					" file(s)?"), cnt);
-		gtk_window_set_title(GTK_WINDOW(dialog), _("Warning"));
-		res = gtk_dialog_run(GTK_DIALOG(dialog));
-		gtk_widget_destroy(dialog);
-	}
-	if(res == GTK_RESPONSE_YES
+	if(cnt != 0 && (browser->prefs.confirm_before_delete != TRUE
+				|| _browser_confirm(browser,
+					_("Are you sure you want to delete %lu"
+						" file(s)?"), cnt) == 0)
 			&& _common_exec(PROGNAME_DELETE, "-ir", selection) != 0)
 		browser_error(browser, strerror(errno), 1);
 	g_list_foreach(selection, (GFunc)free, NULL);
@@ -3487,24 +3496,11 @@ static void _view_on_button_press_icon_run(gpointer data)
 	/* FIXME does not work with scripts */
 {
 	IconCallback * ic = data;
-	GtkWidget * dialog;
-	int res;
 	GError * error = NULL;
 	char * argv[2] = { NULL, NULL };
 
-	dialog = gtk_message_dialog_new((ic->browser->window != NULL)
-			? GTK_WINDOW(ic->browser->window) : NULL,
-			GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING,
-			GTK_BUTTONS_YES_NO,
-#if GTK_CHECK_VERSION(2, 6, 0)
-			"%s", _("Warning"));
-	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
-#endif
-			"%s", _("Are you sure you want to execute this file?"));
-	gtk_window_set_title(GTK_WINDOW(dialog), _("Warning"));
-	res = gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_destroy(dialog);
-	if(res != GTK_RESPONSE_YES)
+	if(_browser_confirm(ic->browser, "%s", _("Are you sure you want to"
+					" execute this file?")) != 0)
 		return;
 	argv[0] = ic->path;
 	if(g_spawn_async(NULL, argv, NULL, 0, NULL, NULL, NULL, &error) != TRUE)
