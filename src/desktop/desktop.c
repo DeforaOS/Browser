@@ -1818,7 +1818,8 @@ static int _desktop_icon_remove(Desktop * desktop, DesktopIcon * icon)
 		for(desktop->icons_cnt--; i < desktop->icons_cnt; i++)
 			desktop->icons[i] = desktop->icons[i + 1];
 		if((p = realloc(desktop->icons, sizeof(*p)
-						* (desktop->icons_cnt))) != NULL)
+						* (desktop->icons_cnt)))
+				!= NULL)
 			desktop->icons = p; /* we can ignore errors... */
 		else if(desktop->icons_cnt == 0)
 			desktop->icons = NULL; /* ...except when it's not one */
