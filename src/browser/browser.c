@@ -1973,7 +1973,7 @@ void browser_show_preferences(Browser * browser, gboolean show)
 		if(show)
 			gtk_window_present(GTK_WINDOW(browser->pr_window));
 		else
-			gtk_widget_hide(show);
+			gtk_widget_hide(browser->pr_window);
 		return;
 	}
 	browser->pr_window = gtk_dialog_new_with_buttons(_("Preferences"),
