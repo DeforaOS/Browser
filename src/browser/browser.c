@@ -3703,6 +3703,7 @@ static void _view_on_filename_edited(GtkCellRendererText * renderer,
 	char * q;
 	char * f = filename;
 	GError * error = NULL;
+	struct stat st;
 	(void) renderer;
 
 #ifdef DEBUG
@@ -3746,11 +3747,19 @@ static void _view_on_filename_edited(GtkCellRendererText * renderer,
 	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, to);
 #endif
 	/* rename */
-	if(rename(path, to) != 0)
-		browser_error(browser, strerror(errno), 1);
-	else if(strchr(filename, '/') == NULL)
-		gtk_list_store_set(browser->store, &iter, BC_PATH, to,
-				BC_DISPLAY_NAME, filename, -1);
+	if(lstat(to, &st) != 0
+			|| browser->prefs.confirm_before_delete != TRUE
+			|| _browser_confirm(browser, "%s",
+				_("This will replace an existing file with the"
+					" same name.\n"
+					"Are you sure?")) == 0)
+	{
+		if(rename(path, to) != 0)
+			browser_error(browser, strerror(errno), 1);
+		else if(strchr(filename, '/') == NULL)
+			gtk_list_store_set(browser->store, &iter, BC_PATH, to,
+					BC_DISPLAY_NAME, filename, -1);
+	}
 	free(to);
 	free(q);
 	free(path);
