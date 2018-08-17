@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=File viewer
+Comment=Viewer for text and image files
+TryExec=viewer
+Exec=viewer
+Icon=system-file-manager
+Type=Application
+Categories=System;Core;FileManager;GTK;
+StartupNotify=true
+Hidden=true
