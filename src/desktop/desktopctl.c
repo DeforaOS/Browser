@@ -41,14 +41,17 @@
 #define _(string) gettext(string)
 
 /* constants */
+#ifndef PROGNAME_DESKTOPCTL
+# define PROGNAME_DESKTOPCTL	"desktopctl"
+#endif
 #ifndef PREFIX
-# define PREFIX		"/usr/local"
+# define PREFIX			"/usr/local"
 #endif
 #ifndef DATADIR
-# define DATADIR	PREFIX "/share"
+# define DATADIR		PREFIX "/share"
 #endif
 #ifndef LOCALEDIR
-# define LOCALEDIR	DATADIR "/locale"
+# define LOCALEDIR		DATADIR "/locale"
 #endif
 
 
@@ -73,7 +76,7 @@ static int _desktopctl(int action, int what)
 /* desktopctl_error */
 static int _desktopctl_error(char const * message, int ret)
 {
-	fputs("desktopctl: ", stderr);
+	fprintf(stderr, "%s: ", PROGNAME_DESKTOPCTL);
 	perror(message);
 	return ret;
 }
@@ -82,7 +85,7 @@ static int _desktopctl_error(char const * message, int ret)
 /* usage */
 static int _usage(void)
 {
-	fputs(_("Usage: desktopctl [-H|-L|-P|-R|-S|-T|-V|-a|-c|-f|-h|-n]\n"
+	fprintf(stderr, _("Usage: %s [-H|-L|-P|-R|-S|-T|-V|-a|-c|-f|-h|-n]\n"
 "  -H	Place icons horizontally\n"
 "  -L	Rotate screen to landscape mode\n"
 "  -P	Rotate screen to portrait mode\n"
@@ -94,7 +97,7 @@ static int _usage(void)
 "  -c	Sort the applications registered by category\n"
 "  -f	Display contents of the desktop folder\n"
 "  -h	Display the homescreen\n"
-"  -n	Do not display icons on the desktop\n"), stderr);
+"  -n	Do not display icons on the desktop\n"), PROGNAME_DESKTOPCTL);
 	return 1;
 }
 
