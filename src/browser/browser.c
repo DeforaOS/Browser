@@ -3710,6 +3710,8 @@ static void _view_on_filename_edited(GtkCellRendererText * renderer,
 	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\") \"%s\"\n", __func__, path,
 			filename);
 #endif
+	if(strlen(filename) == 0)
+		return;
 	if(gtk_tree_model_get_iter_from_string(model, &iter, path) != TRUE)
 		return; /* XXX report error */
 	path = NULL;
