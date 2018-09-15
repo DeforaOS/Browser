@@ -3716,9 +3716,20 @@ static void _view_on_filename_edited(GtkCellRendererText * renderer,
 		return; /* XXX report error */
 	path = NULL;
 	gtk_tree_model_get(model, &iter, BC_IS_DIRECTORY, &isdir, BC_PATH,
-			&path, -1);
-	if(path == NULL)
+			&path, BC_DISPLAY_NAME, &q, -1);
+	if(path == NULL || q == NULL)
+	{
+		g_free(path);
+		g_free(q);
 		return; /* XXX report error */
+	}
+	if(strcmp(filename, q) == 0)
+	{
+		g_free(path);
+		g_free(q);
+		return;
+	}
+	g_free(q);
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, path);
 #endif
