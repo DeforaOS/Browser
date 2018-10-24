@@ -54,15 +54,12 @@ struct _DesktopIconWindow
 /* functions */
 /* desktopiconwindow_new */
 static gboolean _on_desktopiconwindow_closex(void);
+static void _on_desktopiconwindow_realize(GtkWidget * widget, gpointer data);
 
 DesktopIconWindow * desktopiconwindow_new(DesktopIcon * icon)
 {
 	DesktopIconWindow * window;
 	GtkWindow * w;
-	GdkGeometry geometry;
-	/* XXX check */
-	const unsigned int hints = GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE
-		| GDK_HINT_BASE_SIZE;
 	GtkWidget * widget;
 
 #ifdef DEBUG
@@ -87,14 +84,8 @@ DesktopIconWindow * desktopiconwindow_new(DesktopIcon * icon)
 #endif
 	g_signal_connect(window->widget, "delete-event", G_CALLBACK(
 				_on_desktopiconwindow_closex), NULL);
-	memset(&geometry, 0, sizeof(geometry));
-	geometry.min_width = DESKTOPICON_MIN_WIDTH;
-	geometry.min_height = DESKTOPICON_MIN_HEIGHT;
-	geometry.max_width = DESKTOPICON_MAX_WIDTH;
-	geometry.max_height = DESKTOPICON_MAX_HEIGHT;
-	geometry.base_width = DESKTOPICON_MIN_WIDTH;
-	geometry.base_height = DESKTOPICON_MIN_HEIGHT;
-	gtk_window_set_geometry_hints(w, NULL, &geometry, hints);
+	g_signal_connect(window->widget, "realize", G_CALLBACK(
+				_on_desktopiconwindow_realize), window);
 	/* icon */
 	widget = desktopicon_get_widget(icon);
 	gtk_container_add(GTK_CONTAINER(window->widget), widget);
@@ -106,6 +97,30 @@ DesktopIconWindow * desktopiconwindow_new(DesktopIcon * icon)
 static gboolean _on_desktopiconwindow_closex(void)
 {
 	return TRUE;
+}
+
+static void _on_desktopiconwindow_realize(GtkWidget * widget, gpointer data)
+{
+	DesktopIconWindow * window = data;
+	GdkWindow * w;
+	GdkGeometry geometry;
+	/* XXX check */
+	const unsigned int hints = GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	memset(&geometry, 0, sizeof(geometry));
+	geometry.min_width = DESKTOPICON_MIN_WIDTH;
+	geometry.min_height = DESKTOPICON_MIN_HEIGHT;
+	geometry.max_width = DESKTOPICON_MAX_WIDTH;
+	geometry.max_height = DESKTOPICON_MAX_HEIGHT;
+#if GTK_CHECK_VERSION(2, 14, 0)
+	w = gtk_widget_get_window(window->widget);
+#else
+	w = window->window;
+#endif
+	gdk_window_set_geometry_hints(w, &geometry, hints);
 }
 
 
