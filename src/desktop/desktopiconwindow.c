@@ -29,6 +29,9 @@
 
 
 
+#ifdef DEBUG
+# include <stdio.h>
+#endif
 #include <string.h>
 #include <gtk/gtk.h>
 #include <System.h>
@@ -62,6 +65,9 @@ DesktopIconWindow * desktopiconwindow_new(DesktopIcon * icon)
 		| GDK_HINT_BASE_SIZE;
 	GtkWidget * widget;
 
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%p)\n", __func__, icon);
+#endif
 	if((window = object_new(sizeof(*window))) == NULL)
 		return NULL;
 	/* window */
