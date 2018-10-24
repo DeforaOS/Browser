@@ -75,13 +75,17 @@ DesktopIconWindow * desktopiconwindow_new(DesktopIcon * icon)
 	gtk_window_set_focus_on_map(w, FALSE);
 #endif
 	gtk_window_set_keep_below(w, TRUE);
+#if !GTK_CHECK_VERSION(3, 0, 0)
 	gtk_window_set_resizable(w, FALSE);
+#endif
 	gtk_window_set_skip_pager_hint(w, TRUE);
 #ifdef EMBEDDED
 	gtk_window_set_type_hint(w, GDK_WINDOW_TYPE_HINT_UTILITY);
 #else
 	gtk_window_set_type_hint(w, GDK_WINDOW_TYPE_HINT_DOCK);
 #endif
+	gtk_window_set_default_size(w,
+			DESKTOPICON_MAX_WIDTH, DESKTOPICON_MAX_HEIGHT);
 	g_signal_connect(window->widget, "delete-event", G_CALLBACK(
 				_on_desktopiconwindow_closex), NULL);
 	g_signal_connect(window->widget, "realize", G_CALLBACK(
