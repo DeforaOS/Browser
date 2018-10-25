@@ -65,6 +65,9 @@
 #ifndef PROGNAME_HTMLAPP
 # define PROGNAME_HTMLAPP	"htmlapp"
 #endif
+#ifndef PROGNAME_PROPERTIES
+# define PROGNAME_PROPERTIES	"properties"
+#endif
 #ifndef PREFIX
 # define PREFIX			"/usr/local"
 #endif
@@ -1285,8 +1288,8 @@ static void _on_icon_delete(gpointer data)
 static void _on_icon_properties(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
-	char * argv[] = { BINDIR "/properties", "properties", "--", NULL,
-		NULL };
+	char * argv[] = { BINDIR "/" PROGNAME_PROPERTIES, PROGNAME_PROPERTIES,
+		"--", NULL, NULL };
 	const unsigned int flags = G_SPAWN_FILE_AND_ARGV_ZERO;
 	GError * error = NULL;
 
