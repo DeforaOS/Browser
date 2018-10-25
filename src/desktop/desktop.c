@@ -2852,6 +2852,7 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 	DIR * dir;
 	int fd;
 	struct stat st;
+	size_t alen;
 	struct dirent * de;
 	size_t len;
 	const char ext[] = ".desktop";
@@ -2875,6 +2876,7 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 	}
 	if(st.st_mtime > desktop->refresh_mti)
 		desktop->refresh_mti = st.st_mtime;
+	alen = strlen(apppath);
 	while((de = readdir(dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
@@ -2887,14 +2889,13 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 		if(strncmp(&de->d_name[len - sizeof(ext) + 1], ext,
 					sizeof(ext)) != 0)
 			continue;
-		if((p = realloc(name, strlen(apppath) + len + 2)) == NULL)
+		if((p = realloc(name, alen + len + 2)) == NULL)
 		{
 			_desktop_perror(NULL, apppath, 1);
 			continue;
 		}
 		name = p;
-		snprintf(name, strlen(apppath) + len + 2, "%s/%s", apppath,
-				de->d_name);
+		snprintf(name, alen + len + 2, "%s/%s", apppath, de->d_name);
 #ifdef DEBUG
 		fprintf(stderr, "DEBUG: %s() name=\"%s\" path=\"%s\"\n",
 				__func__, name, path);
