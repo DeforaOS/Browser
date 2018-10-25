@@ -701,10 +701,7 @@ static void _desktopicon_update_transparency(DesktopIcon * desktopicon)
 	GdkPixbuf * pixbuf;
 	int width;
 	int height;
-#if GTK_CHECK_VERSION(3, 0, 0)
-	GdkRGBA black = { 0.0, 0.0, 0.0, 1.0 };
-	GdkRGBA white = { 1.0, 1.0, 1.0, 1.0 };
-#else
+#if !GTK_CHECK_VERSION(3, 0, 0)
 	int iwidth;
 	int iheight;
 	GdkBitmap * mask;
