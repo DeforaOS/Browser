@@ -1141,8 +1141,9 @@ static void _run_link(DesktopIcon * desktopicon)
 	const char section[] = "Desktop Entry";
 	char const * url;
 	/* XXX open with the default web browser instead */
-	char * argv[] = { PROGNAME_HTMLAPP, "--", NULL, NULL };
-	const unsigned int flags = G_SPAWN_SEARCH_PATH;
+	char * argv[] = { BINDIR "/" PROGNAME_HTMLAPP, PROGNAME_HTMLAPP, "--",
+		NULL, NULL };
+	const unsigned int flags = G_SPAWN_FILE_AND_ARGV_ZERO;
 	GError * error = NULL;
 
 	if((url = config_get(desktopicon->config, section, "URL")) == NULL)
