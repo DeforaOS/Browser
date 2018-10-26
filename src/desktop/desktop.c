@@ -2859,6 +2859,7 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 	char * name = NULL;
 	char * p;
 	MimeHandler * handler;
+	(void) path;
 
 #if defined(__sun)
 	if((fd = open(apppath, O_RDONLY)) < 0
