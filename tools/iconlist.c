@@ -30,8 +30,8 @@
 #include <string.h>
 #include <Desktop.h>
 
-#ifndef PROGNAME
-# define PROGNAME	"iconlist"
+#ifndef PROGNAME_ICONLIST
+# define PROGNAME_ICONLIST	"iconlist"
 #endif
 
 
@@ -205,8 +205,8 @@ static void _do_iconview(GtkWidget * iconview, GtkIconTheme * icontheme)
 /* usage */
 static int _usage(void)
 {
-	fputs("Usage: " PROGNAME " [-t theme]\n"
-"       " PROGNAME " -l [-t theme]\n", stderr);
+	fputs("Usage: " PROGNAME_ICONLIST " [-t theme]\n"
+"       " PROGNAME_ICONLIST " -l [-t theme]\n", stderr);
 	return 1;
 }
 
