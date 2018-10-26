@@ -277,11 +277,7 @@ BrowserWindow * browserwindow_new(String const * directory)
 	}
 
 	/* widgets */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-#else
-	vbox = gtk_vbox_new(FALSE, 0);
-#endif
 	/* menubar */
 #ifndef EMBEDDED
 	tb_menubar = desktop_menubar_create(_browserwindow_menubar, browser,

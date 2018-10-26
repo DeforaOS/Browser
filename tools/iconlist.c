@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#include <gtk/gtk.h>
+#include <Desktop.h>
 
 #ifndef PROGNAME
 # define PROGNAME	"iconlist"
@@ -118,11 +118,7 @@ static int _iconlist_do(GtkIconTheme * icontheme)
 	gtk_window_set_default_size(GTK_WINDOW(window), 640, 480);
 	g_signal_connect(window, "delete-event", G_CALLBACK(_on_closex), NULL);
 	/* vbox */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-#else
-	vbox = gtk_vbox_new(FALSE, 0);
-#endif
 	/* toolbar */
 	toolbar = gtk_toolbar_new();
 	toolitem = gtk_tool_item_new();

@@ -293,11 +293,7 @@ static int _common_symlink(GtkWidget * window, char const * cur)
 			GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
 	if(window == NULL)
 		gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER);
-#if GTK_CHECK_VERSION(3, 0, 0)
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-#else
-	hbox = gtk_hbox_new(FALSE, 0);
-#endif
 	widget = gtk_label_new(_("Destination:"));
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 4);
 	widget = gtk_entry_new();

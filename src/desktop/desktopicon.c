@@ -618,11 +618,7 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 	desktopicon->updated = TRUE;
 	/* widget */
 	desktopicon->window = NULL;
-#if GTK_CHECK_VERSION(3, 0, 0)
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
-#else
-	vbox = gtk_vbox_new(FALSE, 4);
-#endif
 	/* event */
 	desktopicon->event = gtk_event_box_new();
 	gtk_event_box_set_visible_window(GTK_EVENT_BOX(desktopicon->event),
@@ -1192,11 +1188,7 @@ static void _on_icon_rename(gpointer data)
 	vbox = GTK_DIALOG(dialog)->vbox;
 #endif
 	group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-#if GTK_CHECK_VERSION(3, 0, 0)
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-#else
-	hbox = gtk_hbox_new(FALSE, 4);
-#endif
 	widget = gtk_label_new(_("Rename: "));
 #if GTK_CHECK_VERSION(3, 0, 0)
 	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
@@ -1211,11 +1203,7 @@ static void _on_icon_rename(gpointer data)
 	gtk_box_pack_start(GTK_BOX(hbox), widget, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	/* entry */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-#else
-	hbox = gtk_hbox_new(FALSE, 4);
-#endif
 	widget = gtk_label_new(_("To: "));
 #if GTK_CHECK_VERSION(3, 0, 0)
 	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);

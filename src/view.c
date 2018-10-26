@@ -261,11 +261,7 @@ static View * _view_new(Mime * mime, char const * filename)
 	gtk_window_set_title(GTK_WINDOW(view->window), buf);
 	g_signal_connect_swapped(view->window, "delete-event", G_CALLBACK(
 				_view_on_closex), view);
-#if GTK_CHECK_VERSION(3, 0, 0)
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-#else
-	vbox = gtk_vbox_new(FALSE, 0);
-#endif
 #ifndef EMBEDDED
 	widget = desktop_menubar_create(
 			(mime_get_handler(mime, type, "edit") != NULL)
