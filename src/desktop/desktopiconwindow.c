@@ -76,8 +76,7 @@ DesktopIconWindow * desktopiconwindow_new(DesktopIcon * icon)
 #else
 	gtk_window_set_type_hint(w, GDK_WINDOW_TYPE_HINT_DOCK);
 #endif
-	gtk_window_set_default_size(w,
-			DESKTOPICON_MAX_WIDTH, DESKTOPICON_MAX_HEIGHT);
+	gtk_window_set_default_size(w, DESKTOPICON_WIDTH, DESKTOPICON_HEIGHT);
 	g_signal_connect(window->widget, "delete-event", G_CALLBACK(
 				_on_desktopiconwindow_closex), NULL);
 	/* icon */

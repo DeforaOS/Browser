@@ -762,13 +762,13 @@ static void _alignment_horizontal(Desktop * desktop)
 
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
-		if(x + DESKTOPICON_MAX_WIDTH > width)
+		if(x + DESKTOPICON_WIDTH > width)
 		{
-			y += DESKTOPICON_MAX_HEIGHT;
+			y += DESKTOPICON_HEIGHT;
 			x = desktop->workarea.x;
 		}
 		desktopiconwindow_move(desktop->icons[i], x, y);
-		x += DESKTOPICON_MAX_WIDTH;
+		x += DESKTOPICON_WIDTH;
 	}
 }
 
@@ -781,13 +781,13 @@ static void _alignment_vertical(Desktop * desktop)
 
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
-		if(y + DESKTOPICON_MAX_HEIGHT > height)
+		if(y + DESKTOPICON_HEIGHT > height)
 		{
-			x += DESKTOPICON_MAX_WIDTH;
+			x += DESKTOPICON_WIDTH;
 			y = desktop->workarea.y;
 		}
 		desktopiconwindow_move(desktop->icons[i], x, y);
-		y += DESKTOPICON_MAX_HEIGHT;
+		y += DESKTOPICON_HEIGHT;
 	}
 }
 
