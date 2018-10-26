@@ -39,7 +39,7 @@ static char const _license[] =
 #include <gdk/gdkkeysyms.h>
 #include <System.h>
 #include <Desktop.h>
-#include "../include/Browser/vfs.h"
+#include "Browser/vfs.h"
 #define Browser View /* XXX */
 #include "browser/browser.h"
 #include "../config.h"

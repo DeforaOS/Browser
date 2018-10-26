@@ -36,7 +36,7 @@
 #include <libintl.h>
 #include <gtk/gtk.h>
 #include <System.h>
-#include "../include/Browser/vfs.h"
+#include "Browser/vfs.h"
 #define Browser Properties /* XXX */
 #include "browser/browser.h"
 #include "../config.h"

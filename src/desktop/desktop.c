@@ -44,8 +44,8 @@
 #include <X11/Xatom.h>
 #include <X11/extensions/Xrandr.h>
 #include <System.h>
-#include "../../include/Browser/desktop.h"
-#include "../../include/Browser/vfs.h"
+#include "Browser/desktop.h"
+#include "Browser/vfs.h"
 #include "desktopicon.h"
 #include "desktopiconwindow.h"
 #include "desktop.h"
