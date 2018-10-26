@@ -36,8 +36,8 @@
 #define N_(string) (string)
 
 /* constants */
-#ifndef PROGNAME
-# define PROGNAME	"browser"
+#ifndef PROGNAME_BROWSER
+# define PROGNAME_BROWSER	"browser"
 #endif
 
 
@@ -619,6 +619,6 @@ static void _browserwindow_on_help_contents(gpointer data)
 {
 	(void) data;
 
-	desktop_help_contents(PACKAGE, PROGNAME);
+	desktop_help_contents(PACKAGE, PROGNAME_BROWSER);
 }
 #endif
