@@ -39,8 +39,6 @@ typedef void (*DesktopIconCallback)(Desktop * desktop, gpointer data);
 
 /* constants */
 #define DESKTOPICON_ICON_SIZE	48
-#define DESKTOPICON_HEIGHT	(DESKTOPICON_ICON_SIZE << 1)
-#define DESKTOPICON_WIDTH	(DESKTOPICON_ICON_SIZE << 1)
 
 
 /* functions */
@@ -54,6 +52,7 @@ void desktopicon_delete(DesktopIcon * desktopicon);
 
 /* accessors */
 gboolean desktopicon_get_first(DesktopIcon * desktopicon);
+unsigned int desktopicon_get_height(DesktopIcon * desktopicon);
 GtkWidget * desktopicon_get_image(DesktopIcon * desktopicon);
 gboolean desktopicon_get_immutable(DesktopIcon * desktopicon);
 gboolean desktopicon_get_isdir(DesktopIcon * desktopicon);
@@ -63,6 +62,7 @@ char const * desktopicon_get_path(DesktopIcon * desktopicon);
 gboolean desktopicon_get_selected(DesktopIcon * desktopicon);
 gboolean desktopicon_get_updated(DesktopIcon * desktopicon);
 GtkWidget * desktopicon_get_widget(DesktopIcon * desktopicon);
+unsigned int desktopicon_get_width(DesktopIcon * desktopicon);
 
 # if GTK_CHECK_VERSION(3, 0, 0)
 void desktopicon_set_background(DesktopIcon * desktopicon, GdkRGBA * color);

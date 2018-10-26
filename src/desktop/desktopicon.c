@@ -407,6 +407,13 @@ gboolean desktopicon_get_first(DesktopIcon * desktopicon)
 }
 
 
+/* desktopicon_get_height */
+unsigned int desktopicon_get_height(DesktopIcon * desktopicon)
+{
+	return desktop_get_icons_size(desktopicon->desktop) * 2;
+}
+
+
 /* desktopicon_get_immutable */
 gboolean desktopicon_get_immutable(DesktopIcon * desktopicon)
 {
@@ -453,6 +460,13 @@ gboolean desktopicon_get_updated(DesktopIcon * desktopicon)
 GtkWidget * desktopicon_get_widget(DesktopIcon * desktopicon)
 {
 	return desktopicon->event;
+}
+
+
+/* desktopicon_get_width */
+unsigned int desktopicon_get_width(DesktopIcon * desktopicon)
+{
+	return desktopicon_get_height(desktopicon);
 }
 
 

@@ -759,16 +759,18 @@ static void _alignment_horizontal(Desktop * desktop)
 	int x = desktop->workarea.x;
 	int y = desktop->workarea.y;
 	int width = x + desktop->workarea.width;
+	unsigned int wsize = desktop->icons_size * 2;
+	unsigned int hsize = wsize;
 
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
-		if(x + DESKTOPICON_WIDTH > width)
+		if(x + wsize > width)
 		{
-			y += DESKTOPICON_HEIGHT;
+			y += hsize;
 			x = desktop->workarea.x;
 		}
 		desktopiconwindow_move(desktop->icons[i], x, y);
-		x += DESKTOPICON_WIDTH;
+		x += wsize;
 	}
 }
 
@@ -778,16 +780,18 @@ static void _alignment_vertical(Desktop * desktop)
 	int x = desktop->workarea.x;
 	int y = desktop->workarea.y;
 	int height = desktop->workarea.y + desktop->workarea.height;
+	unsigned int wsize = desktop->icons_size * 2;
+	unsigned int hsize = wsize;
 
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
-		if(y + DESKTOPICON_HEIGHT > height)
+		if(y + hsize > height)
 		{
-			x += DESKTOPICON_WIDTH;
+			x += wsize;
 			y = desktop->workarea.y;
 		}
 		desktopiconwindow_move(desktop->icons[i], x, y);
-		y += DESKTOPICON_HEIGHT;
+		y += hsize;
 	}
 }
 
