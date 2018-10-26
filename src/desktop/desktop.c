@@ -277,11 +277,12 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 	desktop->screen = gdk_screen_get_default();
 	desktop->display = gdk_screen_get_display(desktop->screen);
 	desktop->root = gdk_screen_get_root_window(desktop->screen);
-	desktop->theme = gtk_icon_theme_get_default();
-	desktop->menu = NULL;
+	/* common */
 	if((desktop->home = getenv("HOME")) == NULL
 			&& (desktop->home = g_get_home_dir()) == NULL)
 		desktop->home = "/";
+	/* internal */
+	desktop->theme = gtk_icon_theme_get_default();
 	desktop_message_register(NULL, DESKTOP_CLIENT_MESSAGE, _on_message,
 			desktop);
 	/* query the root window */
