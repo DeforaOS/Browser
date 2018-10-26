@@ -973,9 +973,8 @@ static void _on_icon_open_with(gpointer data)
 	DesktopIcon * desktopicon = data;
 	GtkWidget * dialog;
 	char * filename = NULL;
-	char * argv[] = { NULL, NULL, NULL, NULL };
-	const unsigned int flags = G_SPAWN_SEARCH_PATH
-		| G_SPAWN_FILE_AND_ARGV_ZERO;
+	char * argv[] = { NULL, NULL, NULL };
+	const unsigned int flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
 
 	dialog = gtk_file_chooser_dialog_new(_("Open with..."), NULL,
@@ -989,8 +988,7 @@ static void _on_icon_open_with(gpointer data)
 	if(filename == NULL)
 		return;
 	argv[0] = filename;
-	argv[1] = filename;
-	argv[2] = desktopicon->path;
+	argv[1] = desktopicon->path;
 	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
 			!= TRUE)
 	{
