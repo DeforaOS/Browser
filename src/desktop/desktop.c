@@ -725,10 +725,8 @@ void desktop_get_icon_size(Desktop * desktop, unsigned int * width,
 		*width = desktop->icons_size * 2;
 	if(height != NULL)
 	{
-		h = pango_font_description_get_size(desktop->font);
-		if(h > 0 && pango_font_description_get_size_is_absolute(
-					desktop->font))
-			*height = desktop->icons_size + (h * 3);
+		if((h = pango_font_description_get_size(desktop->font)) > 0)
+			*height = desktop->icons_size + ((h >> 10) * 3 + 8);
 		else
 			*height = desktop->icons_size * 2;
 	}
@@ -774,18 +772,19 @@ static void _alignment_horizontal(Desktop * desktop)
 	int x = desktop->workarea.x;
 	int y = desktop->workarea.y;
 	int width = x + desktop->workarea.width;
-	unsigned int wsize = desktop->icons_size * 2;
-	unsigned int hsize = wsize;
+	unsigned int iwidth;
+	unsigned int iheight;
 
+	desktop_get_icon_size(desktop, &iwidth, &iheight, NULL);
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
-		if(x + wsize > width)
+		if(x + iwidth > width)
 		{
-			y += hsize;
+			y += iheight;
 			x = desktop->workarea.x;
 		}
 		desktopiconwindow_move(desktop->icons[i], x, y);
-		x += wsize;
+		x += iwidth;
 	}
 }
 
@@ -795,18 +794,19 @@ static void _alignment_vertical(Desktop * desktop)
 	int x = desktop->workarea.x;
 	int y = desktop->workarea.y;
 	int height = desktop->workarea.y + desktop->workarea.height;
-	unsigned int wsize = desktop->icons_size * 2;
-	unsigned int hsize = wsize;
+	unsigned int iwidth;
+	unsigned int iheight;
 
+	desktop_get_icon_size(desktop, &iwidth, &iheight, NULL);
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
-		if(y + hsize > height)
+		if(y + iheight > height)
 		{
-			x += wsize;
+			x += iwidth;
 			y = desktop->workarea.y;
 		}
 		desktopiconwindow_move(desktop->icons[i], x, y);
-		y += hsize;
+		y += iheight;
 	}
 }
 
