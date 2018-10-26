@@ -55,7 +55,8 @@ void desktop_delete(Desktop * desktop);
 int desktop_get_drag_data(Desktop * desktop, GtkSelectionData * seldata);
 GdkPixbuf * desktop_get_file(Desktop * desktop);
 GdkPixbuf * desktop_get_folder(Desktop * desktop);
-unsigned int desktop_get_icons_size(Desktop * desktop);
+void desktop_get_icon_size(Desktop * desktop, unsigned int * width,
+		unsigned int * height, unsigned int * size);
 Mime * desktop_get_mime(Desktop * desktop);
 GtkIconTheme * desktop_get_theme(Desktop * desktop);
 

@@ -715,10 +715,16 @@ GdkPixbuf * desktop_get_folder(Desktop * desktop)
 }
 
 
-/* desktop_get_icons_size */
-unsigned int desktop_get_icons_size(Desktop * desktop)
+/* desktop_get_icon_size */
+void desktop_get_icon_size(Desktop * desktop, unsigned int * width,
+		unsigned int * height, unsigned int * size)
 {
-	return desktop->icons_size;
+	if(width != NULL)
+		*width = desktop->icons_size * 2;
+	if(height != NULL)
+		*height = desktop->icons_size * 2;
+	if(size != NULL)
+		*size = desktop->icons_size;
 }
 
 

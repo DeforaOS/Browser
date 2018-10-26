@@ -163,6 +163,7 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 	char * p;
 	GtkTargetEntry targets[] = { { "deforaos_browser_dnd", 0, 0 } };
 	size_t targets_cnt = sizeof(targets) / sizeof(*targets);
+	unsigned int size;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%p, \"%s\", \"%s\")\n", __func__,
@@ -177,8 +178,9 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 		isexec = (isdir == FALSE) && (s->st_mode & S_IXUSR)
 			? TRUE : FALSE;
 		mimetype = browser_vfs_mime_type(mime, path, s->st_mode);
+		desktop_get_icon_size(desktop, NULL, NULL, &size);
 		image = browser_vfs_mime_icon(mime, path, mimetype, &lst, NULL,
-				desktop_get_icons_size(desktop));
+				size);
 	}
 	if(name == NULL)
 	{
@@ -337,7 +339,7 @@ static GdkPixbuf * _new_application_icon(Desktop * desktop, char const * icon,
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\")\n", __func__, icon, datadir);
 #endif
-	size = desktop_get_icons_size(desktop);
+	desktop_get_icon_size(desktop, NULL, NULL, &size);
 	if(icon[0] == '/')
 		pixbuf = gdk_pixbuf_new_from_file_at_size(icon, size, size,
 				&error);
@@ -372,14 +374,16 @@ DesktopIcon * desktopicon_new_category(Desktop * desktop, char const * name,
 		char const * icon)
 {
 	DesktopIcon * desktopicon;
+	unsigned int size;
 	GdkPixbuf * image;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%p, \"%s\", \"%s\")\n", __func__,
 			(void *)desktop, name, icon);
 #endif
-	image = gtk_icon_theme_load_icon(desktop_get_theme(desktop), icon,
-			desktop_get_icons_size(desktop), 0, NULL);
+	desktop_get_icon_size(desktop, NULL, NULL, &size);
+	image = gtk_icon_theme_load_icon(desktop_get_theme(desktop), icon, size,
+			0, NULL);
 	if((desktopicon = _desktopicon_new_do(desktop, image, name)) == NULL)
 		return NULL;
 	desktopicon_set_immutable(desktopicon, TRUE);
@@ -400,17 +404,17 @@ void desktopicon_delete(DesktopIcon * desktopicon)
 
 
 /* accessors */
+/* desktopicon_get_desktop */
+Desktop * desktopicon_get_desktop(DesktopIcon * desktopicon)
+{
+	return desktopicon->desktop;
+}
+
+
 /* desktopicon_get_first */
 gboolean desktopicon_get_first(DesktopIcon * desktopicon)
 {
 	return desktopicon->isfirst;
-}
-
-
-/* desktopicon_get_height */
-unsigned int desktopicon_get_height(DesktopIcon * desktopicon)
-{
-	return desktop_get_icons_size(desktopicon->desktop) * 2;
 }
 
 
@@ -460,13 +464,6 @@ gboolean desktopicon_get_updated(DesktopIcon * desktopicon)
 GtkWidget * desktopicon_get_widget(DesktopIcon * desktopicon)
 {
 	return desktopicon->event;
-}
-
-
-/* desktopicon_get_width */
-unsigned int desktopicon_get_width(DesktopIcon * desktopicon)
-{
-	return desktopicon_get_height(desktopicon);
 }
 
 
@@ -615,7 +612,7 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 	if((desktopicon = object_new(sizeof(*desktopicon))) == NULL)
 		return NULL;
 	memset(desktopicon, 0, sizeof(*desktopicon));
-	size = desktop_get_icons_size(desktop);
+	desktop_get_icon_size(desktop, NULL, NULL, &size);
 	desktopicon->desktop = desktop;
 	desktopicon->confirm = TRUE;
 	desktopicon->updated = TRUE;
@@ -680,7 +677,7 @@ static void _desktopicon_set_icon(DesktopIcon * desktopicon, GdkPixbuf * icon)
 
 	if(icon == NULL)
 		return;
-	size = desktop_get_icons_size(desktopicon->desktop);
+	desktop_get_icon_size(desktopicon->desktop, NULL, NULL, &size);
 	if(gdk_pixbuf_get_width(icon) != size
 			&& gdk_pixbuf_get_height(icon) != size
 			&& (i = gdk_pixbuf_scale_simple(icon, size, size,
@@ -740,7 +737,7 @@ static void _desktopicon_update_transparency(DesktopIcon * desktopicon)
 	/* FIXME re-implement */
 	gtk_widget_get_preferred_size(desktopicon->label, NULL, &req);
 #else
-	size = desktop_get_icons_size(desktopicon->desktop);
+	desktop_get_icon_size(desktopicon->desktop, NULL, NULL, &size);
 	iwidth = gdk_pixbuf_get_width(pixbuf);
 	iheight = gdk_pixbuf_get_height(pixbuf);
 	mask = gdk_pixmap_new(NULL, width, height, 1);

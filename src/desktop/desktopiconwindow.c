@@ -54,8 +54,11 @@ static gboolean _on_desktopiconwindow_closex(void);
 DesktopIconWindow * desktopiconwindow_new(DesktopIcon * icon)
 {
 	DesktopIconWindow * window;
+	Desktop * desktop;
 	GtkWindow * w;
 	GtkWidget * widget;
+	unsigned int width;
+	unsigned int height;
 	unsigned int size;
 
 #ifdef DEBUG
@@ -77,8 +80,9 @@ DesktopIconWindow * desktopiconwindow_new(DesktopIcon * icon)
 #else
 	gtk_window_set_type_hint(w, GDK_WINDOW_TYPE_HINT_DOCK);
 #endif
-	gtk_window_set_default_size(w, desktopicon_get_width(icon),
-			desktopicon_get_height(icon));
+	desktop = desktopicon_get_desktop(icon);
+	desktop_get_icon_size(desktop, &width, &height, &size);
+	gtk_window_set_default_size(w, width, height);
 	g_signal_connect(window->widget, "delete-event", G_CALLBACK(
 				_on_desktopiconwindow_closex), NULL);
 	/* icon */
