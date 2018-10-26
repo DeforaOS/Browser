@@ -64,7 +64,16 @@
 #include "../../include/Browser/vfs.h"
 
 #ifndef PROGNAME_EJECT
-# define PROGNAME_EJECT "eject"
+# define PROGNAME_EJECT		"eject"
+#endif
+#ifndef PROGNAME_MOUNT
+# define PROGNAME_MOUNT		"/sbin/mount"
+#endif
+#ifndef PROGNAME_SUDO
+# define PROGNAME_SUDO		"sudo"
+#endif
+#ifndef PROGNAME_UMOUNT
+# define PROGNAME_UMOUNT	"/sbin/umount"
 #endif
 
 
@@ -423,7 +432,8 @@ char const * browser_vfs_mime_type(Mime * mime, char const * filename,
 int browser_vfs_mount(char const * mountpoint)
 {
 	int ret = 0;
-	char * argv[] = { "sudo", "-A", "/sbin/mount", "--", NULL, NULL };
+	char * argv[] = { PROGNAME_SUDO, "-A", PROGNAME_MOUNT, "--", NULL,
+		NULL };
 	GError * error = NULL;
 	gboolean root;
 
@@ -499,7 +509,8 @@ int browser_vfs_unmount(char const * mountpoint)
 {
 	int ret = 0;
 	int res;
-	char * argv[] = { "sudo", "-A", "/sbin/umount", "--", NULL, NULL };
+	char * argv[] = { PROGNAME_SUDO, "-A", PROGNAME_UMOUNT, "--", NULL,
+		NULL };
 	GError * error = NULL;
 	gboolean root;
 
