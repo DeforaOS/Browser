@@ -2908,7 +2908,7 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 	if(st.st_mtime > desktop->refresh_mti)
 		desktop->refresh_mti = st.st_mtime;
 	alen = strlen(apppath);
-	while((de = readdir(dir)) != NULL)
+	while((de = browser_vfs_readdir(dir)) != NULL)
 	{
 		if(de->d_name[0] == '.')
 			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
