@@ -29,11 +29,9 @@
 
 
 
-#include <sys/stat.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <dirent.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -2891,7 +2889,6 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 		char const * apppath)
 {
 	DIR * dir;
-	int fd;
 	struct stat st;
 	size_t alen;
 	struct dirent * de;
@@ -2902,15 +2899,7 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 	MimeHandler * handler;
 	(void) path;
 
-#if defined(__sun)
-	if((fd = open(apppath, O_RDONLY)) < 0
-			|| fstat(fd, &st) != 0
-			|| (dir = fdopendir(fd)) == NULL)
-#else
-	if((dir = opendir(apppath)) == NULL
-			|| (fd = dirfd(dir)) < 0
-			|| fstat(fd, &st) != 0)
-#endif
+	if((dir = browser_vfs_opendir(apppath, &st)) == NULL)
 	{
 		if(errno != ENOENT)
 			_desktop_perror(NULL, apppath, 1);
@@ -2955,7 +2944,7 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 				_categories_apps_compare);
 	}
 	free(name);
-	closedir(dir);
+	browser_vfs_closedir(dir);
 }
 
 static void _refresh_loop_categories_xdg(Desktop * desktop,
