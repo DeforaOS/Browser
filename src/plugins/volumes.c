@@ -56,10 +56,10 @@
 #endif
 
 #ifndef PROGNAME_BROWSER
-# define PROGNAME_BROWSER "browser"
+# define PROGNAME_BROWSER	"browser"
 #endif
 #ifndef PROGNAME_PROPERTIES
-# define PROGNAME_PROPERTIES "properties"
+# define PROGNAME_PROPERTIES	"properties"
 #endif
 
 
