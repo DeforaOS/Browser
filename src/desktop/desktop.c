@@ -719,10 +719,19 @@ GdkPixbuf * desktop_get_folder(Desktop * desktop)
 void desktop_get_icon_size(Desktop * desktop, unsigned int * width,
 		unsigned int * height, unsigned int * size)
 {
+	unsigned int h;
+
 	if(width != NULL)
 		*width = desktop->icons_size * 2;
 	if(height != NULL)
-		*height = desktop->icons_size * 2;
+	{
+		h = pango_font_description_get_size(desktop->font);
+		if(h > 0 && pango_font_description_get_size_is_absolute(
+					desktop->font))
+			*height = desktop->icons_size + (h * 3);
+		else
+			*height = desktop->icons_size * 2;
+	}
 	if(size != NULL)
 		*size = desktop->icons_size;
 }
