@@ -93,6 +93,7 @@ struct _Desktop
 	GdkRectangle workarea;
 
 	/* icons */
+	unsigned int icons_size;
 	DesktopIconWindow ** icons;
 	size_t icons_cnt;
 
@@ -277,6 +278,8 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 	desktop->screen = gdk_screen_get_default();
 	desktop->display = gdk_screen_get_display(desktop->screen);
 	desktop->root = gdk_screen_get_root_window(desktop->screen);
+	/* icons */
+	desktop->icons_size = DESKTOPICON_ICON_SIZE;
 	/* common */
 	if((desktop->home = getenv("HOME")) == NULL
 			&& (desktop->home = g_get_home_dir()) == NULL)
@@ -327,11 +330,11 @@ static void _new_icons(Desktop * desktop)
 	char const ** p;
 
 	for(p = file; *p != NULL && desktop->file == NULL; p++)
-		desktop->file = gtk_icon_theme_load_icon(desktop->theme,
-				*p, DESKTOPICON_ICON_SIZE, 0, NULL);
+		desktop->file = gtk_icon_theme_load_icon(desktop->theme, *p,
+				desktop->icons_size, 0, NULL);
 	for(p = folder; *p != NULL && desktop->folder == NULL; p++)
 		desktop->folder = gtk_icon_theme_load_icon(desktop->theme, *p,
-				DESKTOPICON_ICON_SIZE, 0, NULL);
+				desktop->icons_size, 0, NULL);
 }
 
 static void _new_window(Desktop * desktop, GdkEventMask * mask)
@@ -712,6 +715,13 @@ GdkPixbuf * desktop_get_folder(Desktop * desktop)
 }
 
 
+/* desktop_get_icons_size */
+unsigned int desktop_get_icons_size(Desktop * desktop)
+{
+	return desktop->icons_size;
+}
+
+
 /* desktop_get_mime */
 Mime * desktop_get_mime(Desktop * desktop)
 {
@@ -832,7 +842,7 @@ static int _icons_applications(Desktop * desktop)
 	desktopicon_set_first(desktopicon, TRUE);
 	desktopicon_set_immutable(desktopicon, TRUE);
 	icon = gtk_icon_theme_load_icon(desktop->theme, "back",
-			DESKTOPICON_ICON_SIZE, 0, NULL);
+			desktop->icons_size, 0, NULL);
 	if(icon != NULL)
 		desktopicon_set_icon(desktopicon, icon);
 	if(_desktop_icon_add(desktop, desktopicon) != 0)
@@ -855,7 +865,7 @@ static int _icons_categories(Desktop * desktop)
 	desktopicon_set_first(desktopicon, TRUE);
 	desktopicon_set_immutable(desktopicon, TRUE);
 	icon = gtk_icon_theme_load_icon(desktop->theme, "back",
-			DESKTOPICON_ICON_SIZE, 0, NULL);
+			desktop->icons_size, 0, NULL);
 	if(icon != NULL)
 		desktopicon_set_icon(desktopicon, icon);
 	if(_desktop_icon_add(desktop, desktopicon) != 0)
@@ -901,10 +911,10 @@ static int _icons_files_add_home(Desktop * desktop)
 	desktopicon_set_first(desktopicon, TRUE);
 	desktopicon_set_immutable(desktopicon, TRUE);
 	icon = gtk_icon_theme_load_icon(desktop->theme, "gnome-home",
-			DESKTOPICON_ICON_SIZE, 0, NULL);
+			desktop->icons_size, 0, NULL);
 	if(icon == NULL)
 		icon = gtk_icon_theme_load_icon(desktop->theme, "gnome-fs-home",
-				DESKTOPICON_ICON_SIZE, 0, NULL);
+				desktop->icons_size, 0, NULL);
 	if(icon != NULL)
 		desktopicon_set_icon(desktopicon, icon);
 	if(_desktop_icon_add(desktop, desktopicon) != 0)
@@ -937,7 +947,7 @@ static int _icons_homescreen(Desktop * desktop)
 	desktopicon_set_callback(desktopicon, _icons_set_categories, NULL);
 	desktopicon_set_immutable(desktopicon, TRUE);
 	icon = gtk_icon_theme_load_icon(desktop->theme, "gnome-applications",
-			DESKTOPICON_ICON_SIZE, 0, NULL);
+			desktop->icons_size, 0, NULL);
 	if(icon != NULL)
 		desktopicon_set_icon(desktopicon, icon);
 	_desktop_icon_add(desktop, desktopicon);
@@ -1106,6 +1116,7 @@ static void _reset_background(Desktop * desktop, Config * config);
 static void _reset_icons(Desktop * desktop, Config * config);
 static void _reset_icons_colors(Desktop * desktop, Config * config);
 static void _reset_icons_font(Desktop * desktop, Config * config);
+static void _reset_icons_size(Desktop * desktop, Config * config);
 static void _reset_icons_monitor(Desktop * desktop, Config * config);
 /* callbacks */
 static gboolean _reset_on_idle(gpointer data);
@@ -1156,6 +1167,7 @@ static void _reset_icons(Desktop * desktop, Config * config)
 
 	_reset_icons_colors(desktop, config);
 	_reset_icons_font(desktop, config);
+	_reset_icons_size(desktop, config);
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
 		icon = desktopiconwindow_get_icon(desktop->icons[i]);
@@ -1252,6 +1264,19 @@ static void _reset_icons_monitor(Desktop * desktop, Config * config)
 		if(p[0] == '\0' || *q != '\0')
 			desktop->prefs.monitor = -1;
 	}
+}
+
+static void _reset_icons_size(Desktop * desktop, Config * config)
+{
+	String const * p;
+	char * q;
+	int size;
+
+	/* icons size */
+	if((p = config_get(config, "icons", "size")) == NULL
+			|| (size = strtol(p, &q, 10)) <= 0)
+		size = DESKTOPICON_ICON_SIZE;
+	desktop->icons_size = size;
 }
 
 /* callbacks */
