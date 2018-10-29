@@ -448,6 +448,7 @@ static int _view_error(View * view, char const * message, int ret)
 static void _error_response(GtkWidget * widget, gint arg, gpointer data)
 {
 	View * view = data;
+	(void) arg;
 
 	if(view != NULL)
 		_view_delete(view);
@@ -600,6 +601,8 @@ static void _view_on_file_close(gpointer data)
 /* view_on_help_contents */
 static void _view_on_help_contents(gpointer data)
 {
+	(void) data;
+
 	desktop_help_contents(PACKAGE, PROGNAME_VIEW);
 }
 
