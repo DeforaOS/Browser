@@ -407,7 +407,10 @@ Browser * browser_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolitem, -1);
 #endif
 #ifdef EMBEDDED
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_PREFERENCES);
+	toolitem = gtk_tool_button_new(
+			gtk_image_new_from_icon_name("gtk-preferences",
+				GTK_ICON_SIZE_LARGE_TOOLBAR),
+			_("Preferences"));
 	g_signal_connect_swapped(toolitem, "clicked",
 			G_CALLBACK(on_preferences), browser);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolitem, -1);
@@ -438,7 +441,10 @@ Browser * browser_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_tool_item_set_expand(toolitem, TRUE);
 	gtk_container_add(GTK_CONTAINER(toolitem), browser->tb_path);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolitem, -1);
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_JUMP_TO);
+	toolitem = gtk_tool_button_new(
+			gtk_image_new_from_icon_name("go-jump",
+				GTK_ICON_SIZE_SMALL_TOOLBAR),
+			NULL);
 	g_signal_connect_swapped(toolitem, "clicked",
 			G_CALLBACK(on_path_activate), browser);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolitem, -1);
@@ -2718,8 +2724,8 @@ static void _view_on_button_press_directory(GtkWidget * menu,
 static void _view_on_button_press_file(Browser * browser, GtkWidget * menu,
 		char * mimetype, IconCallback * ic);
 static void _view_on_button_press_mime(Mime * mime, char const * mimetype,
-		char const * action, char const * label, GCallback callback,
-		IconCallback * ic, GtkWidget * menu);
+		char const * action, char const * icon, char const * label,
+		GCallback callback, IconCallback * ic, GtkWidget * menu);
 static gboolean _view_on_button_press_show(Browser * browser,
 		GdkEventButton * event, GtkWidget * menu);
 static void _view_on_button_press_icon_delete(gpointer data);
@@ -3227,8 +3233,10 @@ static gboolean _view_on_button_press(GtkWidget * widget,
 	g_free(mimetype);
 	menuitem = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(widget), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(
-			GTK_STOCK_PROPERTIES, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("Propert_ies"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("document-properties",
+				GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
 				on_properties), browser);
 	gtk_menu_shell_append(GTK_MENU_SHELL(widget), menuitem);
@@ -3281,7 +3289,10 @@ static void _view_on_button_press_directory(GtkWidget * menu, IconCallback * ic)
 {
 	GtkWidget * menuitem;
 
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_OPEN, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Open"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("document-open",
+				GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
 				_view_on_button_press_icon_open), ic);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
@@ -3296,15 +3307,24 @@ static void _view_on_button_press_directory(GtkWidget * menu, IconCallback * ic)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	menuitem = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_CUT, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Cut"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("edit-cut",
+				GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(on_cut),
 			ic->browser);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_COPY, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("Cop_y"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("edit-copy",
+				GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(on_copy),
 			ic->browser);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Paste"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("edit-paste",
+				GTK_ICON_SIZE_MENU));
 	if(ic->browser->selection == NULL)
 		gtk_widget_set_sensitive(menuitem, FALSE);
 	else /* FIXME only if just this one is selected */
@@ -3322,7 +3342,10 @@ static void _view_on_button_press_directory(GtkWidget * menu, IconCallback * ic)
 		menuitem = gtk_separator_menu_item_new();
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	}
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_DELETE, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Delete"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("edit-delete",
+				GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
 				_view_on_button_press_icon_delete), ic);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
@@ -3334,19 +3357,17 @@ static void _view_on_button_press_file(Browser * browser, GtkWidget * menu,
 	GtkWidget * menuitem;
 
 	_view_on_button_press_mime(browser->mime, mimetype, "open",
-			GTK_STOCK_OPEN, G_CALLBACK(
+			"document-open", _("_Open"), G_CALLBACK(
 				_view_on_button_press_icon_open), ic, menu);
 	_view_on_button_press_mime(browser->mime, mimetype, "edit",
-#if GTK_CHECK_VERSION(2, 6, 0)
-			GTK_STOCK_EDIT,
-#else
-			"_Edit",
-#endif
-			G_CALLBACK(_view_on_button_press_icon_edit), ic, menu);
+			"text-editor", _("_Edit"), G_CALLBACK(
+				_view_on_button_press_icon_edit), ic, menu);
 	if(ic->isexec)
 	{
-		menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_EXECUTE,
-				NULL);
+		menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Execute"));
+		gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+				gtk_image_new_from_icon_name("system-run",
+					GTK_ICON_SIZE_MENU));
 		g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
 					_view_on_button_press_icon_run), ic);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
@@ -3357,37 +3378,50 @@ static void _view_on_button_press_file(Browser * browser, GtkWidget * menu,
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	menuitem = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_CUT, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Cut"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("edit-cut",
+				GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(on_cut),
 			browser);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_COPY, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("Cop_y"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("edit-copy",
+				GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(on_copy),
 			browser);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Paste"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("edit-paste",
+				GTK_ICON_SIZE_MENU));
 	gtk_widget_set_sensitive(menuitem, FALSE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	menuitem = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_DELETE, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Delete"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("edit-delete",
+				GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
 				_view_on_button_press_icon_delete), ic);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 }
 
 static void _view_on_button_press_mime(Mime * mime, char const * mimetype,
-		char const * action, char const * label, GCallback callback,
-		IconCallback * ic, GtkWidget * menu)
+		char const * action, char const * icon, char const * label,
+		GCallback callback, IconCallback * ic, GtkWidget * menu)
 {
 	GtkWidget * menuitem;
 
 	if(mime == NULL || mime_get_handler(mime, mimetype, action) == NULL)
 		return;
-	if(strncmp(label, "gtk-", 4) == 0)
-		menuitem = gtk_image_menu_item_new_from_stock(label, NULL);
-	else
-		menuitem = gtk_menu_item_new_with_mnemonic(label);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(label);
+	if(icon != NULL)
+		gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+				gtk_image_new_from_icon_name(icon,
+					GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(menuitem, "activate", callback, ic);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 }
@@ -3536,13 +3570,22 @@ static gboolean _view_on_button_press_popup(Browser * browser,
 	/* cut/copy/paste */
 	menuitem = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_CUT, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Cut"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("edit-cut",
+				GTK_ICON_SIZE_MENU));
 	gtk_widget_set_sensitive(menuitem, FALSE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_COPY, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("Cop_y"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("edit-copy",
+				GTK_ICON_SIZE_MENU));
 	gtk_widget_set_sensitive(menuitem, FALSE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Paste"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("edit-paste",
+				GTK_ICON_SIZE_MENU));
 	if(browser->selection != NULL)
 		g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
 					_view_on_button_press_icon_paste), ic);
@@ -3551,8 +3594,10 @@ static gboolean _view_on_button_press_popup(Browser * browser,
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	menuitem = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PROPERTIES,
-			NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("Propert_ies"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("document-properties",
+				GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
 				on_properties), browser);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);

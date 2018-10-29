@@ -155,7 +155,7 @@ static DesktopMenu _view_menu_file[] =
 
 static DesktopMenu _view_menu_file_edit[] =
 {
-	{ N_("_Edit"), G_CALLBACK(_view_on_file_edit), GTK_STOCK_EDIT,
+	{ N_("_Edit"), G_CALLBACK(_view_on_file_edit), "text-editor",
 		GDK_CONTROL_MASK, GDK_KEY_E },
 	{ N_("Open _with..."), G_CALLBACK(_view_on_file_open_with), NULL, 0,
 		0 },
@@ -172,12 +172,7 @@ static DesktopMenu _view_menu_help[] =
 {
 	{ N_("Contents"), G_CALLBACK(_view_on_help_contents), "help-contents",
 		0, GDK_KEY_F1 },
-# if GTK_CHECK_VERSION(2, 6, 0)
-	{ N_("_About"), G_CALLBACK(_view_on_help_about), GTK_STOCK_ABOUT, 0,
-		0 },
-# else
-	{ N_("_About"), G_CALLBACK(_view_on_help_about), NULL, 0, 0 },
-# endif
+	{ N_("_About"), G_CALLBACK(_view_on_help_about), "help-about", 0, 0 },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 

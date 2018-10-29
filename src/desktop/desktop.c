@@ -435,12 +435,15 @@ static void _on_popup_event(gpointer data, XButtonEvent * xbev)
 	GtkWidget * image;
 
 	desktop->menu = gtk_menu_new();
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_NEW, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_New"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("document-new",
+				GTK_ICON_SIZE_MENU));
 	submenu = gtk_menu_new();
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), submenu);
 	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);
 	/* submenu for new documents */
-	menuitem = gtk_image_menu_item_new_with_label(_("Folder"));
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Folder"));
 	image = gtk_image_new_from_icon_name("folder-new", GTK_ICON_SIZE_MENU);
 	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem), image);
 	g_signal_connect_swapped(G_OBJECT(menuitem), "activate", G_CALLBACK(
@@ -448,11 +451,11 @@ static void _on_popup_event(gpointer data, XButtonEvent * xbev)
 	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
 	menuitem = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
-	menuitem = gtk_image_menu_item_new_with_label(_("Symbolic link..."));
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Symbolic link..."));
 	g_signal_connect_swapped(G_OBJECT(menuitem), "activate", G_CALLBACK(
 				_on_popup_symlink), desktop);
 	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
-	menuitem = gtk_image_menu_item_new_with_label(_("Text file"));
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Text file"));
 	image = gtk_image_new_from_icon_name("stock_new-text",
 			GTK_ICON_SIZE_MENU);
 	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem), image);
@@ -462,15 +465,20 @@ static void _on_popup_event(gpointer data, XButtonEvent * xbev)
 	/* edition */
 	menuitem = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Paste"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("edit-paste",
+				GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(G_OBJECT(menuitem), "activate", G_CALLBACK(
 				_on_popup_paste), desktop);
 	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);
 	/* preferences */
 	menuitem = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);
-	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PREFERENCES,
-			NULL);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Preferences"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("gtk-preferences",
+				GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(G_OBJECT(menuitem), "activate", G_CALLBACK(
 				_on_popup_preferences), desktop);
 	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);

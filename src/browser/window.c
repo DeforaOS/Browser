@@ -151,7 +151,7 @@ static const DesktopMenu _browserwindow_menu_file[] =
 	{ N_("_Open file..."), G_CALLBACK(_browserwindow_on_file_open_file),
 		NULL, GDK_CONTROL_MASK, GDK_KEY_O },
 	{ "", NULL, NULL, 0, 0 },
-	{ N_("_Properties"), G_CALLBACK(_browserwindow_on_file_properties),
+	{ N_("Propert_ies"), G_CALLBACK(_browserwindow_on_file_properties),
 		"document-properties", GDK_MOD1_MASK, GDK_KEY_Return },
 	{ "", NULL, NULL, 0, 0 },
 	{ N_("_Close"), G_CALLBACK(_browserwindow_on_file_close),
@@ -206,12 +206,8 @@ static const DesktopMenu _browserwindow_menu_help[] =
 {
 	{ N_("_Contents"), G_CALLBACK(_browserwindow_on_help_contents),
 		"help-contents", 0, GDK_KEY_F1 },
-#if GTK_CHECK_VERSION(2, 6, 0)
-	{ N_("_About"), G_CALLBACK(_browserwindow_on_help_about),
-		GTK_STOCK_ABOUT, 0, 0 },
-#else
-	{ N_("_About"), G_CALLBACK(_browserwindow_on_help_about), NULL, 0, 0 },
-#endif
+	{ N_("_About"), G_CALLBACK(_browserwindow_on_help_about), "help-about",
+		0, 0 },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
