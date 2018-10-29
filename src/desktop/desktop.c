@@ -587,6 +587,7 @@ static GdkFilterReturn _on_root_event(GdkXEvent * xevent, GdkEvent * event,
 {
 	Desktop * desktop = data;
 	XEvent * xev = xevent;
+	(void) event;
 
 	if(xev->type == ButtonPress)
 		return _event_button_press(xevent, desktop);
@@ -1024,6 +1025,8 @@ static void _icons_reset(Desktop * desktop)
 
 static void _icons_set_categories(Desktop * desktop, gpointer data)
 {
+	(void) data;
+
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
@@ -1032,6 +1035,8 @@ static void _icons_set_categories(Desktop * desktop, gpointer data)
 
 static void _icons_set_homescreen(Desktop * desktop, gpointer data)
 {
+	(void) data;
+
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
