@@ -767,9 +767,9 @@ void desktop_set_alignment(Desktop * desktop, DesktopAlignment alignment)
 static void _alignment_horizontal(Desktop * desktop)
 {
 	size_t i;
-	int x = desktop->workarea.x;
-	int y = desktop->workarea.y;
-	int width = x + desktop->workarea.width;
+	unsigned int x = desktop->workarea.x;
+	unsigned int y = desktop->workarea.y;
+	unsigned int width = x + desktop->workarea.width;
 	unsigned int iwidth;
 	unsigned int iheight;
 
@@ -789,9 +789,9 @@ static void _alignment_horizontal(Desktop * desktop)
 static void _alignment_vertical(Desktop * desktop)
 {
 	size_t i;
-	int x = desktop->workarea.x;
-	int y = desktop->workarea.y;
-	int height = desktop->workarea.y + desktop->workarea.height;
+	unsigned int x = desktop->workarea.x;
+	unsigned int y = desktop->workarea.y;
+	unsigned int height = desktop->workarea.y + desktop->workarea.height;
 	unsigned int iwidth;
 	unsigned int iheight;
 
