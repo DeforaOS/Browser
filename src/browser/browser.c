@@ -227,21 +227,21 @@ static char const * _authors[] =
 /* toolbar */
 static DesktopToolbar _browser_toolbar[] =
 {
-	{ N_("Back"), G_CALLBACK(on_back), GTK_STOCK_GO_BACK, GDK_MOD1_MASK,
+	{ N_("Back"), G_CALLBACK(on_back), "go-previous", GDK_MOD1_MASK,
 		GDK_KEY_Left, NULL },
-	{ N_("Up"), G_CALLBACK(on_updir), GTK_STOCK_GO_UP, 0, 0, NULL },
-	{ N_("Forward"), G_CALLBACK(on_forward), GTK_STOCK_GO_FORWARD,
-		GDK_MOD1_MASK, GDK_KEY_Right, NULL },
-	{ N_("Refresh"), G_CALLBACK(on_refresh), GTK_STOCK_REFRESH, 0, 0,
+	{ N_("Up"), G_CALLBACK(on_updir), "go-up", 0, 0, NULL },
+	{ N_("Forward"), G_CALLBACK(on_forward), "go-next", GDK_MOD1_MASK,
+		GDK_KEY_Right, NULL },
+	{ N_("Refresh"), G_CALLBACK(on_refresh), "gtk-refresh", 0, 0,
 		NULL },
 	{ "", NULL, NULL, 0, 0, NULL },
-	{ N_("Home"), G_CALLBACK(on_home), GTK_STOCK_HOME, 0, 0, NULL },
+	{ N_("Home"), G_CALLBACK(on_home), "go-home", 0, 0, NULL },
 	{ "", NULL, NULL, 0, 0, NULL },
-	{ N_("Cut"), G_CALLBACK(on_cut), GTK_STOCK_CUT, 0, 0, NULL },
-	{ N_("Copy"), G_CALLBACK(on_copy), GTK_STOCK_COPY, 0, 0, NULL },
-	{ N_("Paste"), G_CALLBACK(on_paste), GTK_STOCK_PASTE, 0, 0, NULL },
+	{ N_("Cut"), G_CALLBACK(on_cut), "edit-cut", 0, 0, NULL },
+	{ N_("Copy"), G_CALLBACK(on_copy), "edit-copy", 0, 0, NULL },
+	{ N_("Paste"), G_CALLBACK(on_paste), "edit-paste", 0, 0, NULL },
 	{ "", NULL, NULL, 0, 0, NULL },
-	{ N_("Properties"), G_CALLBACK(on_properties), GTK_STOCK_PROPERTIES, 0,
+	{ N_("Properties"), G_CALLBACK(on_properties), "document-properties", 0,
 		0, NULL },
 	{ NULL, NULL, NULL, 0, 0, NULL }
 };

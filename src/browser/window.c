@@ -152,46 +152,41 @@ static const DesktopMenu _browserwindow_menu_file[] =
 		NULL, GDK_CONTROL_MASK, GDK_KEY_O },
 	{ "", NULL, NULL, 0, 0 },
 	{ N_("_Properties"), G_CALLBACK(_browserwindow_on_file_properties),
-		GTK_STOCK_PROPERTIES, GDK_MOD1_MASK, GDK_KEY_Return },
+		"document-properties", GDK_MOD1_MASK, GDK_KEY_Return },
 	{ "", NULL, NULL, 0, 0 },
 	{ N_("_Close"), G_CALLBACK(_browserwindow_on_file_close),
-		GTK_STOCK_CLOSE, GDK_CONTROL_MASK, GDK_KEY_W },
+		"window-close", GDK_CONTROL_MASK, GDK_KEY_W },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
 static const DesktopMenu _browserwindow_menu_edit[] =
 {
-	{ N_("_Cut"), G_CALLBACK(_browserwindow_on_edit_cut), GTK_STOCK_CUT,
+	{ N_("_Cut"), G_CALLBACK(_browserwindow_on_edit_cut), "edit-cut",
 		GDK_CONTROL_MASK, GDK_KEY_X },
-	{ N_("Cop_y"), G_CALLBACK(_browserwindow_on_edit_copy), GTK_STOCK_COPY,
+	{ N_("Cop_y"), G_CALLBACK(_browserwindow_on_edit_copy), "edit-copy",
 		GDK_CONTROL_MASK, GDK_KEY_C },
-	{ N_("_Paste"), G_CALLBACK(_browserwindow_on_edit_paste),
-		GTK_STOCK_PASTE, GDK_CONTROL_MASK, GDK_KEY_V },
+	{ N_("_Paste"), G_CALLBACK(_browserwindow_on_edit_paste), "edit-paste",
+		GDK_CONTROL_MASK, GDK_KEY_V },
 	{ "", NULL, NULL, 0, 0 },
 	{ N_("_Delete"), G_CALLBACK(_browserwindow_on_edit_delete),
-		GTK_STOCK_DELETE, 0, 0 },
+		"edit-delete", 0, 0 },
 	{ "", NULL, NULL, 0, 0 },
 	{ N_("Select _All"), G_CALLBACK(_browserwindow_on_edit_select_all),
-#if GTK_CHECK_VERSION(2, 10, 0)
-		GTK_STOCK_SELECT_ALL,
-#else
-		"edit-select-all",
-#endif
-		GDK_CONTROL_MASK, GDK_KEY_A },
+		"edit-select-all", GDK_CONTROL_MASK, GDK_KEY_A },
 	{ N_("_Unselect all"), G_CALLBACK(_browserwindow_on_edit_unselect_all),
 		NULL, 0, 0 },
 	{ "", NULL, NULL, 0, 0 },
 	{ N_("_Preferences"), G_CALLBACK(_browserwindow_on_edit_preferences),
-		GTK_STOCK_PREFERENCES, GDK_CONTROL_MASK, GDK_KEY_P },
+		"gtk-preferences", GDK_CONTROL_MASK, GDK_KEY_P },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
 static const DesktopMenu _browserwindow_menu_view[] =
 {
 	{ N_("_Refresh"), G_CALLBACK(_browserwindow_on_view_refresh),
-		GTK_STOCK_REFRESH, GDK_CONTROL_MASK, GDK_KEY_R },
+		"view-refresh", GDK_CONTROL_MASK, GDK_KEY_R },
 	{ "", NULL, NULL, 0, 0 },
-	{ N_("_Home"), G_CALLBACK(_browserwindow_on_view_home), GTK_STOCK_HOME,
+	{ N_("_Home"), G_CALLBACK(_browserwindow_on_view_home), "go-home",
 		GDK_MOD1_MASK, GDK_KEY_Home },
 #if GTK_CHECK_VERSION(2, 6, 0)
 	{ "", NULL, NULL, 0, 0 },
