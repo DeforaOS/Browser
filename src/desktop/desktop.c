@@ -216,6 +216,12 @@ static int _desktop_serror(Desktop * desktop, char const * message, int ret);
 
 /* accessors */
 static Config * _desktop_get_config(Desktop * desktop);
+static int _desktop_get_monitor_properties(Desktop * desktop, int monitor,
+		GdkRectangle * geometry, GdkRectangle * workarea,
+		int * scale, int * width_mm, int * height_mm);
+static int _desktop_get_properties(Desktop * desktop, GdkRectangle * geometry,
+		GdkRectangle * workarea, int * scale,
+		int * width_mm, int * height_mm);
 static int _desktop_get_workarea(Desktop * desktop);
 
 /* useful */
@@ -1528,8 +1534,117 @@ static Config * _desktop_get_config(Desktop * desktop)
 }
 
 
-/* desktop_get_workarea */
-static int _desktop_get_workarea(Desktop * desktop)
+/* desktop_get_monitor_properties */
+#if !GTK_CHECK_VERSION(3, 22, 0)
+static void _monitor_properties_workarea(Desktop * desktop, int monitor,
+		GdkRectangle * workarea);
+#endif
+
+static int _desktop_get_monitor_properties(Desktop * desktop, int monitor,
+		GdkRectangle * geometry, GdkRectangle * workarea,
+		int * scale, int * width_mm, int * height_mm)
+{
+#if GTK_CHECK_VERSION(3, 22, 0)
+	GdkMonitor * m;
+#endif
+	int s;
+
+	if(monitor < 0)
+	{
+		_desktop_get_properties(desktop, geometry, workarea, scale,
+				width_mm, height_mm);
+		return 0;
+	}
+#if GTK_CHECK_VERSION(3, 22, 0)
+	if((m = gdk_display_get_monitor(desktop->display, monitor)) == NULL)
+		return -1;
+	if(geometry != NULL)
+		gdk_monitor_get_geometry(m, geometry);
+	if(workarea != NULL)
+		gdk_monitor_get_workarea(m, workarea);
+	if(scale != NULL || geometry != NULL)
+	{
+		if((s = gdk_monitor_get_scale_factor(m)) != 1
+				&& geometry != NULL)
+		{
+			geometry->x *= s;
+			geometry->y *= s;
+			geometry->width *= s;
+			geometry->height *= s;
+		}
+		if(scale != NULL)
+			*scale = s;
+	}
+	if(width_mm != NULL)
+		*width_mm = gdk_monitor_get_width_mm(m);
+	if(height_mm != NULL)
+		*height_mm = gdk_monitor_get_height_mm(m);
+#else
+	if(geometry != NULL)
+		gdk_screen_get_monitor_geometry(desktop->screen, monitor,
+				geometry);
+	if(workarea != NULL)
+		_monitor_properties_workarea(desktop, monitor, workarea);
+	if(scale != NULL)
+		*scale = 1;
+	if(width_mm != NULL)
+		*width_mm = gdk_screen_get_monitor_width_mm(desktop->screen,
+				monitor);
+	if(height_mm != NULL)
+		*height_mm = gdk_screen_get_monitor_height_mm(desktop->screen,
+				monitor);
+#endif
+	return 0;
+}
+
+#if !GTK_CHECK_VERSION(3, 22, 0)
+static void _monitor_properties_workarea(Desktop * desktop, int monitor,
+		GdkRectangle * workarea)
+{
+	GdkRectangle d;
+
+	_desktop_get_properties(desktop, NULL, &d, NULL, NULL, NULL);
+	gdk_screen_get_monitor_geometry(desktop->screen, monitor, workarea);
+	if(d.x >= workarea->x
+			&& d.x + d.width <= workarea->x + workarea->width
+			&& d.y >= workarea->y
+			&& d.y + d.height <= workarea->y + workarea->height)
+		*workarea = d;
+# ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() (%d, %d) %dx%d\n", __func__,
+			workarea->x, workarea->y,
+			workarea->width, workarea->height);
+# endif
+}
+#endif
+
+
+/* desktop_get_properties */
+static void _properties_workarea(Desktop * desktop, GdkRectangle * workarea);
+
+static int _desktop_get_properties(Desktop * desktop, GdkRectangle * geometry,
+		GdkRectangle * workarea, int * scale,
+		int * width_mm, int * height_mm)
+{
+	if(geometry != NULL)
+	{
+		geometry->x = 0;
+		geometry->y = 0;
+		geometry->width = gdk_screen_get_width(desktop->screen);
+		geometry->height = gdk_screen_get_height(desktop->screen);
+	}
+	if(workarea != NULL)
+		_properties_workarea(desktop, workarea);
+	if(scale != NULL)
+		*scale = 1;
+	if(width_mm != NULL)
+		*width_mm = gdk_screen_get_width_mm(desktop->screen);
+	if(height_mm != NULL)
+		*height_mm = gdk_screen_get_height_mm(desktop->screen);
+	return 0;
+}
+
+static void _properties_workarea(Desktop * desktop, GdkRectangle * workarea)
 {
 	Atom atom;
 	Atom type;
@@ -1539,45 +1654,7 @@ static int _desktop_get_workarea(Desktop * desktop)
 	unsigned char * p = NULL;
 	unsigned long * u;
 	int res;
-#if GTK_CHECK_VERSION(3, 22, 0)
-	GdkMonitor * monitor;
-	int scale;
-#endif
 
-	if(desktop->prefs.monitor >= 0
-#if GTK_CHECK_VERSION(3, 22, 0)
-			&& desktop->prefs.monitor
-			< gdk_screen_get_n_monitors(desktop->screen)
-			&& (monitor = gdk_display_get_monitor(desktop->display,
-					desktop->prefs.monitor)) != NULL
-#else
-			&& desktop->prefs.monitor
-			< gdk_display_get_n_monitors(desktop->display)
-#endif
-			)
-	{
-#if GTK_CHECK_VERSION(3, 22, 0)
-		gdk_monitor_get_workarea(monitor, &desktop->workarea);
-		if((scale = gdk_monitor_get_scale_factor(monitor)) != 1)
-		{
-			desktop->workarea.x *= scale;
-			desktop->workarea.y *= scale;
-			desktop->workarea.width *= scale;
-			desktop->workarea.height *= scale;
-		}
-#else
-		gdk_screen_get_monitor_geometry(desktop->screen,
-				desktop->prefs.monitor, &desktop->workarea);
-#endif
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() (%d, %d) %dx%d\n", __func__,
-				desktop->workarea.x, desktop->workarea.y,
-				desktop->workarea.width,
-				desktop->workarea.height);
-#endif
-		desktop_icons_align(desktop);
-		return 0;
-	}
 	atom = gdk_x11_get_xatom_by_name("_NET_WORKAREA");
 	gdk_error_trap_push();
 	res = XGetWindowProperty(GDK_DISPLAY_XDISPLAY(desktop->display),
@@ -1585,25 +1662,32 @@ static int _desktop_get_workarea(Desktop * desktop)
 				G_MAXLONG, False, XA_CARDINAL, &type, &format,
 				&cnt, &bytes, &p);
 	if(gdk_error_trap_pop() || res != Success || cnt < 4)
-		gdk_screen_get_monitor_geometry(desktop->screen, 0,
-				&desktop->workarea);
+		gdk_screen_get_monitor_geometry(desktop->screen, 0, workarea);
 	else
 	{
 		u = (unsigned long *)p;
-		desktop->workarea.x = u[0];
-		desktop->workarea.y = u[1];
-		if((desktop->workarea.width = u[2]) == 0
-				|| (desktop->workarea.height = u[3]) == 0)
+		workarea->x = u[0];
+		workarea->y = u[1];
+		if((workarea->width = u[2]) == 0
+				|| (workarea->height = u[3]) == 0)
 			gdk_screen_get_monitor_geometry(desktop->screen, 0,
-					&desktop->workarea);
+					workarea);
 	}
 	if(p != NULL)
 		XFree(p);
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() (%d, %d) %dx%d\n", __func__,
-			desktop->workarea.x, desktop->workarea.y,
-			desktop->workarea.width, desktop->workarea.height);
+			workarea->x, workarea->y,
+			workarea->width, workarea->height);
 #endif
+}
+
+
+/* desktop_get_workarea */
+static int _desktop_get_workarea(Desktop * desktop)
+{
+	_desktop_get_monitor_properties(desktop, desktop->prefs.monitor, NULL,
+			&desktop->workarea, NULL, NULL, NULL);
 	desktop_icons_align(desktop);
 	return 0;
 }
@@ -1808,28 +1892,10 @@ static void _background_monitor(Desktop * desktop, char const * filename,
 		int monitor)
 {
 	GError * error = NULL;
-#if GTK_CHECK_VERSION(3, 22, 0)
-	GdkMonitor * m;
-#endif
 
 	if(extend != TRUE)
-	{
-#if GTK_CHECK_VERSION(3, 22, 0)
-		if((m = gdk_display_get_monitor(desktop->display, monitor))
-				!= NULL)
-			gdk_monitor_get_geometry(m, window);
-		else
-		{
-			window->x = 0;
-			window->y = 0;
-			window->width = gdk_screen_get_width(desktop->screen);
-			window->height = gdk_screen_get_height(desktop->screen);
-		}
-#else
-		gdk_screen_get_monitor_geometry(desktop->screen, monitor,
-				window);
-#endif
-	}
+		_desktop_get_monitor_properties(desktop, monitor, window, NULL,
+				NULL, NULL, NULL);
 	switch(how)
 	{
 		case DESKTOP_HOW_NONE:
@@ -2286,52 +2352,13 @@ static void _on_preferences_monitors_changed(gpointer data)
 	gint width;
 	gint height;
 	char buf[64];
-#if GTK_CHECK_VERSION(3, 22, 0)
-	GdkMonitor * monitor;
-#endif
 
 	active = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_monitors));
-#if GTK_CHECK_VERSION(3, 22, 0)
-	if((monitor = gdk_display_get_monitor(desktop->display, active))
-			!= NULL)
-	{
-		gdk_monitor_get_geometry(monitor, &geometry);
-		width = gdk_monitor_get_width_mm(monitor);
-		height = gdk_monitor_get_height_mm(monitor);
-	}
-	else
-#endif
-	{
-		geometry.x = 0;
-		geometry.y = 0;
-		geometry.width = gdk_screen_get_width(desktop->screen);
-		geometry.height = gdk_screen_get_height(desktop->screen);
-		width = gdk_screen_get_width_mm(desktop->screen);
-		height = gdk_screen_get_height_mm(desktop->screen);
-	}
-#if GTK_CHECK_VERSION(2, 14, 0)
-	if(active-- > 0)
-	{
-# if GTK_CHECK_VERSION(3, 22, 0)
-		if((monitor = gdk_display_get_monitor(desktop->display, active))
-				!= NULL)
-		{
-			gdk_monitor_get_geometry(monitor, &geometry);
-			width = gdk_monitor_get_width_mm(monitor);
-			height = gdk_monitor_get_height_mm(monitor);
-		}
-		else
-# endif
-		{
-			gdk_screen_get_monitor_geometry(desktop->screen, active,
-					&geometry);
-			width = gdk_screen_get_monitor_width_mm(desktop->screen,
-					active);
-			height = gdk_screen_get_monitor_height_mm(
-					desktop->screen, active);
-		}
-	}
-#endif
+	if(active-- <= 0
+			|| _desktop_get_monitor_properties(desktop, active,
+				&geometry, NULL, NULL, &width, &height) != 0)
+		_desktop_get_properties(desktop, &geometry, NULL, NULL,
+				&width, &height);
 	if(width < 0 || height < 0)
 		snprintf(buf, sizeof(buf), "%s", _("Unknown size"));
 	else
