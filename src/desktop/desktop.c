@@ -1539,12 +1539,36 @@ static int _desktop_get_workarea(Desktop * desktop)
 	unsigned char * p = NULL;
 	unsigned long * u;
 	int res;
+#if GTK_CHECK_VERSION(3, 22, 0)
+	GdkMonitor * monitor;
+	int scale;
+#endif
 
-	if(desktop->prefs.monitor >= 0 && desktop->prefs.monitor
-			< gdk_screen_get_n_monitors(desktop->screen))
+	if(desktop->prefs.monitor >= 0
+#if GTK_CHECK_VERSION(3, 22, 0)
+			&& desktop->prefs.monitor
+			< gdk_screen_get_n_monitors(desktop->screen)
+			&& (monitor = gdk_display_get_monitor(desktop->display,
+					desktop->prefs.monitor)) != NULL
+#else
+			&& desktop->prefs.monitor
+			< gdk_display_get_n_monitors(desktop->display)
+#endif
+			)
 	{
+#if GTK_CHECK_VERSION(3, 22, 0)
+		gdk_monitor_get_workarea(monitor, &desktop->workarea);
+		if((scale = gdk_monitor_get_scale_factor(monitor)) != 1)
+		{
+			desktop->workarea.x *= scale;
+			desktop->workarea.y *= scale;
+			desktop->workarea.width *= scale;
+			desktop->workarea.height *= scale;
+		}
+#else
 		gdk_screen_get_monitor_geometry(desktop->screen,
 				desktop->prefs.monitor, &desktop->workarea);
+#endif
 #ifdef DEBUG
 		fprintf(stderr, "DEBUG: %s() (%d, %d) %dx%d\n", __func__,
 				desktop->workarea.x, desktop->workarea.y,
@@ -1784,10 +1808,28 @@ static void _background_monitor(Desktop * desktop, char const * filename,
 		int monitor)
 {
 	GError * error = NULL;
+#if GTK_CHECK_VERSION(3, 22, 0)
+	GdkMonitor * m;
+#endif
 
 	if(extend != TRUE)
+	{
+#if GTK_CHECK_VERSION(3, 22, 0)
+		if((m = gdk_display_get_monitor(desktop->display, monitor))
+				!= NULL)
+			gdk_monitor_get_geometry(m, window);
+		else
+		{
+			window->x = 0;
+			window->y = 0;
+			window->width = gdk_screen_get_width(desktop->screen);
+			window->height = gdk_screen_get_height(desktop->screen);
+		}
+#else
 		gdk_screen_get_monitor_geometry(desktop->screen, monitor,
 				window);
+#endif
+	}
 	switch(how)
 	{
 		case DESKTOP_HOW_NONE:
@@ -1822,7 +1864,13 @@ static void _background_monitors(Desktop * desktop, char const * filename,
 	gint n;
 	gint i;
 
-	n = (extend != TRUE) ? gdk_screen_get_n_monitors(desktop->screen) : 1;
+	n = (extend != TRUE) ?
+#if GTK_CHECK_VERSION(3, 22, 0)
+		gdk_display_get_n_monitors(desktop->display)
+#else
+		gdk_screen_get_n_monitors(desktop->screen)
+#endif
+		: 1;
 	for(i = 0; i < n; i++)
 		_background_monitor(desktop, filename, how, extend, window, i);
 }
@@ -2238,23 +2286,50 @@ static void _on_preferences_monitors_changed(gpointer data)
 	gint width;
 	gint height;
 	char buf[64];
+#if GTK_CHECK_VERSION(3, 22, 0)
+	GdkMonitor * monitor;
+#endif
 
 	active = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_monitors));
-	geometry.x = 0;
-	geometry.y = 0;
-	geometry.width = gdk_screen_get_width(desktop->screen);
-	geometry.height = gdk_screen_get_height(desktop->screen);
-	width = gdk_screen_get_width_mm(desktop->screen);
-	height = gdk_screen_get_height_mm(desktop->screen);
+#if GTK_CHECK_VERSION(3, 22, 0)
+	if((monitor = gdk_display_get_monitor(desktop->display, active))
+			!= NULL)
+	{
+		gdk_monitor_get_geometry(monitor, &geometry);
+		width = gdk_monitor_get_width_mm(monitor);
+		height = gdk_monitor_get_height_mm(monitor);
+	}
+	else
+#endif
+	{
+		geometry.x = 0;
+		geometry.y = 0;
+		geometry.width = gdk_screen_get_width(desktop->screen);
+		geometry.height = gdk_screen_get_height(desktop->screen);
+		width = gdk_screen_get_width_mm(desktop->screen);
+		height = gdk_screen_get_height_mm(desktop->screen);
+	}
 #if GTK_CHECK_VERSION(2, 14, 0)
 	if(active-- > 0)
 	{
-		gdk_screen_get_monitor_geometry(desktop->screen, active,
-				&geometry);
-		width = gdk_screen_get_monitor_width_mm(desktop->screen,
-				active);
-		height = gdk_screen_get_monitor_height_mm(desktop->screen,
-				active);
+# if GTK_CHECK_VERSION(3, 22, 0)
+		if((monitor = gdk_display_get_monitor(desktop->display, active))
+				!= NULL)
+		{
+			gdk_monitor_get_geometry(monitor, &geometry);
+			width = gdk_monitor_get_width_mm(monitor);
+			height = gdk_monitor_get_height_mm(monitor);
+		}
+		else
+# endif
+		{
+			gdk_screen_get_monitor_geometry(desktop->screen, active,
+					&geometry);
+			width = gdk_screen_get_monitor_width_mm(desktop->screen,
+					active);
+			height = gdk_screen_get_monitor_height_mm(
+					desktop->screen, active);
+		}
 	}
 #endif
 	if(width < 0 || height < 0)
@@ -2282,8 +2357,14 @@ static void _on_preferences_monitors_refresh(gpointer data)
 #if GTK_CHECK_VERSION(2, 14, 0)
 	gint n;
 	gint i;
-	char * name;
+	gchar * name;
 	char buf[32];
+# if GTK_CHECK_VERSION(3, 22, 0)
+	GdkMonitor * monitor;
+	char const * manufacturer;
+	char const * model;
+	char buf2[64];
+# endif
 #endif
 
 	active = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_imonitor));
@@ -2303,11 +2384,35 @@ static void _on_preferences_monitors_refresh(gpointer data)
 			_("Whole screen"));
 #endif
 #if GTK_CHECK_VERSION(2, 14, 0)
+# if GTK_CHECK_VERSION(3, 22, 0)
+	n = gdk_display_get_n_monitors(desktop->display);
+# else
 	n = gdk_screen_get_n_monitors(desktop->screen);
+# endif
 	for(i = 0; i < n; i++)
 	{
 		snprintf(buf, sizeof(buf), _("Monitor %d"), i);
+# if GTK_CHECK_VERSION(3, 22, 0)
+		if((monitor = gdk_display_get_monitor(desktop->display, i))
+				== NULL)
+			continue;
+		manufacturer = gdk_monitor_get_manufacturer(monitor);
+		model = gdk_monitor_get_model(monitor);
+		if(manufacturer != NULL || model != NULL)
+		{
+			snprintf(buf2, sizeof(buf2), "%s%s%s",
+					(manufacturer != NULL)
+					? manufacturer : "",
+					(manufacturer != NULL && model != NULL)
+					? " " : "",
+					(model != NULL) ? model : "");
+			name = g_strdup(buf2);
+		}
+		else
+			name = NULL;
+# else
 		name = gdk_screen_get_monitor_plug_name(desktop->screen, i);
+# endif
 # if GTK_CHECK_VERSION(2, 24, 0)
 		gtk_combo_box_text_append_text(
 				GTK_COMBO_BOX_TEXT(desktop->pr_imonitor),
