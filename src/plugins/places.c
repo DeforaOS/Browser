@@ -121,6 +121,8 @@ static void _places_on_open_location(GtkWidget * widget, GObject * location,
 {
 	Places * places = data;
 	gchar * path;
+	(void) widget;
+	(void) flags;
 
 	if((path = g_file_get_path(G_FILE(location))) == NULL)
 		return;
