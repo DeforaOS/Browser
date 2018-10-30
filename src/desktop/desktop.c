@@ -252,6 +252,12 @@ static void _new_icons(Desktop * desktop);
 static void _new_window(Desktop * desktop, GdkEventMask * mask);
 static int _on_message(void * data, uint32_t value1, uint32_t value2,
 		uint32_t value3);
+#if GTK_CHECK_VERSION(3, 22, 0)
+static void _on_monitor_added(GdkDisplay * display, GdkMonitor * monitor,
+		gpointer data);
+static void _on_monitor_removed(GdkDisplay * display, GdkMonitor * monitor,
+		gpointer data);
+#endif
 static void _on_popup(gpointer data);
 static void _on_popup_event(gpointer data, XButtonEvent * xbev);
 static void _on_realize(gpointer data);
@@ -281,6 +287,12 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 	/* workarea */
 	desktop->screen = gdk_screen_get_default();
 	desktop->display = gdk_screen_get_display(desktop->screen);
+#if GTK_CHECK_VERSION(3, 22, 0)
+	g_signal_connect(desktop->display, "monitor-added", G_CALLBACK(
+				_on_monitor_added), desktop);
+	g_signal_connect(desktop->display, "monitor-removed", G_CALLBACK(
+				_on_monitor_removed), desktop);
+#endif
 	desktop->root = gdk_screen_get_root_window(desktop->screen);
 	/* icons */
 	desktop->icons_size = DESKTOPICON_ICON_SIZE;
@@ -419,6 +431,27 @@ static int _on_message(void * data, uint32_t value1, uint32_t value2,
 	}
 	return GDK_FILTER_CONTINUE;
 }
+
+#if GTK_CHECK_VERSION(3, 22, 0)
+static void _on_monitor_added(GdkDisplay * display, GdkMonitor * monitor,
+		gpointer data)
+{
+	Desktop * desktop = data;
+	(void) monitor;
+
+	if(desktop->display != display)
+		return;
+	desktop_reset(desktop);
+}
+
+static void _on_monitor_removed(GdkDisplay * display, GdkMonitor * monitor,
+		gpointer data)
+{
+	Desktop * desktop = data;
+
+	_on_monitor_added(display, monitor, desktop);
+}
+#endif
 
 static void _on_popup_new_folder(gpointer data);
 static void _on_popup_new_text_file(gpointer data);
