@@ -239,6 +239,16 @@ static int _desktop_icon_remove(Desktop * desktop, DesktopIcon * icon);
 static void _desktop_show_preferences(Desktop * desktop);
 
 /* callbacks */
+static gboolean _desktop_on_preferences_closex(gpointer data);
+static void _desktop_on_preferences_monitors_changed(gpointer data);
+static void _desktop_on_preferences_monitors_refresh(gpointer data);
+static void _desktop_on_preferences_response(GtkWidget * widget, gint response,
+		gpointer data);
+static void _desktop_on_preferences_response_apply(gpointer data);
+static void _desktop_on_preferences_response_cancel(gpointer data);
+static void _desktop_on_preferences_response_ok(gpointer data);
+static void _desktop_on_preferences_update_preview(gpointer data);
+
 static gboolean _desktop_on_refresh(gpointer data);
 
 
@@ -442,6 +452,8 @@ static void _on_monitor_added(GdkDisplay * display, GdkMonitor * monitor,
 	if(desktop->display != display)
 		return;
 	desktop_reset(desktop);
+	if(desktop->pr_window != NULL)
+		_desktop_on_preferences_monitors_refresh(desktop);
 }
 
 static void _on_monitor_removed(GdkDisplay * display, GdkMonitor * monitor,
@@ -2036,15 +2048,6 @@ static void _preferences_set(Desktop * desktop);
 static void _preferences_set_color(Config * config, char const * section,
 		char const * variable, char const * fallback,
 		GtkWidget * widget);
-static gboolean _on_preferences_closex(gpointer data);
-static void _on_preferences_monitors_changed(gpointer data);
-static void _on_preferences_monitors_refresh(gpointer data);
-static void _on_preferences_response(GtkWidget * widget, gint response,
-		gpointer data);
-static void _on_preferences_response_apply(gpointer data);
-static void _on_preferences_response_cancel(gpointer data);
-static void _on_preferences_response_ok(gpointer data);
-static void _on_preferences_update_preview(gpointer data);
 
 static void _desktop_show_preferences(Desktop * desktop)
 {
@@ -2070,9 +2073,9 @@ static void _desktop_show_preferences(Desktop * desktop)
 			GTK_WIN_POS_CENTER);
 	gtk_window_set_resizable(GTK_WINDOW(desktop->pr_window), FALSE);
 	g_signal_connect_swapped(G_OBJECT(desktop->pr_window), "delete-event",
-			G_CALLBACK(_on_preferences_closex), desktop);
+			G_CALLBACK(_desktop_on_preferences_closex), desktop);
 	g_signal_connect(G_OBJECT(desktop->pr_window), "response", G_CALLBACK(
-				_on_preferences_response), desktop);
+				_desktop_on_preferences_response), desktop);
 #if GTK_CHECK_VERSION(2, 14, 0)
 	vbox = gtk_dialog_get_content_area(GTK_DIALOG(desktop->pr_window));
 #else
@@ -2084,7 +2087,7 @@ static void _desktop_show_preferences(Desktop * desktop)
 	_preferences_background(desktop, notebook);
 	_preferences_icons(desktop, notebook);
 	_preferences_monitors(desktop, notebook);
-	_on_preferences_monitors_refresh(desktop);
+	_desktop_on_preferences_monitors_refresh(desktop);
 	gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 	/* container */
 	_preferences_set(desktop);
@@ -2144,7 +2147,8 @@ static void _preferences_background(Desktop * desktop, GtkWidget * notebook)
 	gtk_file_chooser_set_preview_widget(GTK_FILE_CHOOSER(
 				desktop->pr_background), gtk_image_new());
 	g_signal_connect_swapped(desktop->pr_background, "update-preview",
-			G_CALLBACK(_on_preferences_update_preview), desktop);
+			G_CALLBACK(_desktop_on_preferences_update_preview),
+			desktop);
 	gtk_box_pack_start(GTK_BOX(hbox), desktop->pr_background, TRUE, TRUE,
 			0);
 	gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, TRUE, 0);
@@ -2367,305 +2371,16 @@ static void _preferences_monitors(Desktop * desktop, GtkWidget * notebook)
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
 	widget = gtk_button_new_from_stock(GTK_STOCK_REFRESH);
 	g_signal_connect_swapped(widget, "clicked", G_CALLBACK(
-				_on_preferences_monitors_refresh), desktop);
+				_desktop_on_preferences_monitors_refresh),
+			desktop);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, TRUE, 0);
 	/* updates */
 	g_signal_connect_swapped(desktop->pr_monitors, "changed", G_CALLBACK(
-				_on_preferences_monitors_changed), desktop);
+				_desktop_on_preferences_monitors_changed),
+			desktop);
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox2, gtk_label_new(
 				_("Monitors")));
-}
-
-static gboolean _on_preferences_closex(gpointer data)
-{
-	_on_preferences_response_cancel(data);
-	return TRUE;
-}
-
-static void _on_preferences_monitors_changed(gpointer data)
-{
-	Desktop * desktop = data;
-	gint active;
-	GdkRectangle geometry;
-	gint width;
-	gint height;
-	char buf[64];
-
-	active = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_monitors));
-	if(active < 0
-			|| _desktop_get_monitor_properties(desktop, active,
-				&geometry, NULL, NULL, &width, &height) != 0)
-		_desktop_get_properties(desktop, &geometry, NULL, NULL,
-				&width, &height);
-	if(width < 0 || height < 0)
-		snprintf(buf, sizeof(buf), "%s", _("Unknown size"));
-	else
-		snprintf(buf, sizeof(buf), _("%dx%d (at %d,%d)"),
-				geometry.width, geometry.height,
-				geometry.x, geometry.y);
-	gtk_label_set_text(GTK_LABEL(desktop->pr_monitors_res), buf);
-	if(width < 0 || height < 0)
-		snprintf(buf, sizeof(buf), "%s", _("Unknown resolution"));
-	else
-		snprintf(buf, sizeof(buf), _("%dx%d mm (%.0fx%.0f DPI)"),
-				width, height, geometry.width * 25.4 / width,
-				geometry.height * 25.4 / height);
-	gtk_label_set_text(GTK_LABEL(desktop->pr_monitors_size), buf);
-}
-
-static void _on_preferences_monitors_refresh(gpointer data)
-{
-	Desktop * desktop = data;
-	GtkTreeModel * model1;
-	GtkTreeModel * model2;
-	gint active;
-#if GTK_CHECK_VERSION(2, 14, 0)
-	gint n;
-	gint i;
-	gchar * name;
-	char buf[32];
-# if GTK_CHECK_VERSION(3, 22, 0)
-	GdkMonitor * monitor;
-	char const * manufacturer;
-	char const * model;
-	char buf2[64];
-# endif
-#endif
-
-	active = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_imonitor));
-	model1 = gtk_combo_box_get_model(GTK_COMBO_BOX(desktop->pr_imonitor));
-	model2 = gtk_combo_box_get_model(GTK_COMBO_BOX(desktop->pr_monitors));
-	gtk_list_store_clear(GTK_LIST_STORE(model1));
-	gtk_list_store_clear(GTK_LIST_STORE(model2));
-#if GTK_CHECK_VERSION(2, 24, 0)
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(desktop->pr_imonitor),
-			_("Default monitor"));
-#else
-	gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_imonitor),
-			_("Default monitor"));
-#endif
-#if GTK_CHECK_VERSION(2, 14, 0)
-# if GTK_CHECK_VERSION(3, 22, 0)
-	n = gdk_display_get_n_monitors(desktop->display);
-# else
-	n = gdk_screen_get_n_monitors(desktop->screen);
-# endif
-	for(i = 0; i < n; i++)
-	{
-		snprintf(buf, sizeof(buf), _("Monitor %d"), i);
-# if GTK_CHECK_VERSION(3, 22, 0)
-		if((monitor = gdk_display_get_monitor(desktop->display, i))
-				== NULL)
-			continue;
-		manufacturer = gdk_monitor_get_manufacturer(monitor);
-		model = gdk_monitor_get_model(monitor);
-		if(manufacturer != NULL || model != NULL)
-		{
-			snprintf(buf2, sizeof(buf2), "%s%s%s",
-					(manufacturer != NULL)
-					? manufacturer : "",
-					(manufacturer != NULL && model != NULL)
-					? " " : "",
-					(model != NULL) ? model : "");
-			name = g_strdup(buf2);
-		}
-		else
-			name = NULL;
-# else
-		name = gdk_screen_get_monitor_plug_name(desktop->screen, i);
-# endif
-# if GTK_CHECK_VERSION(2, 24, 0)
-		gtk_combo_box_text_append_text(
-				GTK_COMBO_BOX_TEXT(desktop->pr_imonitor),
-				(name != NULL) ? name : buf);
-		gtk_combo_box_text_append_text(
-				GTK_COMBO_BOX_TEXT(desktop->pr_monitors),
-				(name != NULL) ? name : buf);
-# else
-		gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_imonitor),
-				(name != NULL) ? name : buf);
-		gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_monitors),
-				(name != NULL) ? name : buf);
-# endif
-		g_free(name);
-	}
-#endif
-	gtk_combo_box_set_active(GTK_COMBO_BOX(desktop->pr_imonitor), active);
-	gtk_combo_box_set_active(GTK_COMBO_BOX(desktop->pr_monitors), 0);
-}
-
-static void _on_preferences_response(GtkWidget * widget, gint response,
-		gpointer data)
-{
-	Desktop * desktop = data;
-	(void) widget;
-
-	if(response == GTK_RESPONSE_OK)
-		_on_preferences_response_ok(desktop);
-	else if(response == GTK_RESPONSE_APPLY)
-		_on_preferences_response_apply(desktop);
-	else if(response == GTK_RESPONSE_CANCEL)
-		_on_preferences_response_cancel(desktop);
-}
-
-static void _on_preferences_response_apply(gpointer data)
-{
-	Desktop * desktop = data;
-	int i;
-
-	/* XXX not very efficient */
-	desktop_reset(desktop);
-	/* icons */
-	desktop->prefs.icons = gtk_combo_box_get_active(
-			GTK_COMBO_BOX(desktop->pr_ilayout));
-	/* monitor */
-	i = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_imonitor));
-	desktop->prefs.monitor = (i >= 0) ? i - 1 : i;
-}
-
-static void _on_preferences_response_cancel(gpointer data)
-{
-	Desktop * desktop = data;
-
-	gtk_widget_hide(desktop->pr_window);
-	_preferences_set(desktop);
-}
-
-static void _on_preferences_response_ok(gpointer data)
-{
-	Desktop * desktop = data;
-	Config * config;
-#if GTK_CHECK_VERSION(3, 0, 0)
-	GdkRGBA color;
-#else
-	GdkColor color;
-#endif
-	char * p;
-	char const * q;
-	int i;
-	char buf[12];
-
-	gtk_widget_hide(desktop->pr_window);
-	_on_preferences_response_apply(desktop);
-	if((config = _desktop_get_config(desktop)) == NULL)
-		return;
-	/* background */
-	p = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
-				desktop->pr_background));
-	config_set(config, "background", "wallpaper", p);
-	g_free(p);
-#if GTK_CHECK_VERSION(3, 4, 0)
-	gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(desktop->pr_color),
-			&color);
-	p = gdk_rgba_to_string(&color);
-#elif GTK_CHECK_VERSION(3, 0, 0)
-	gtk_color_button_get_rgba(GTK_COLOR_BUTTON(desktop->pr_color), &color);
-	p = gdk_rgba_to_string(&color);
-#else
-	gtk_color_button_get_color(GTK_COLOR_BUTTON(desktop->pr_color), &color);
-	p = gdk_color_to_string(&color);
-#endif
-	config_set(config, "background", "color", p);
-	g_free(p);
-	i = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_background_how));
-	if(i >= 0 && i < DESKTOP_HOW_COUNT)
-		config_set(config, "background", "how", _desktop_hows[i]);
-	p = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
-				desktop->pr_background_extend)) ? "1" : "0";
-	config_set(config, "background", "extend", p);
-	/* icons */
-	i = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_ilayout));
-	if(desktop->prefs.icons >= 0
-			&& desktop->prefs.icons < DESKTOP_ICONS_COUNT)
-		config_set(config, "icons", "layout",
-				_desktop_icons_config[desktop->prefs.icons]);
-#if GTK_CHECK_VERSION(3, 4, 0)
-	gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(desktop->pr_ibcolor),
-			&color);
-	p = gdk_rgba_to_string(&color);
-#elif GTK_CHECK_VERSION(3, 0, 0)
-	gtk_color_button_get_rgba(GTK_COLOR_BUTTON(desktop->pr_ibcolor),
-			&color);
-	p = gdk_rgba_to_string(&color);
-#else
-	gtk_color_button_get_color(GTK_COLOR_BUTTON(desktop->pr_ibcolor),
-			&color);
-	p = gdk_color_to_string(&color);
-#endif
-	config_set(config, "icons", "background", p);
-	g_free(p);
-#if GTK_CHECK_VERSION(3, 4, 0)
-	gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(desktop->pr_ifcolor),
-			&color);
-	p = gdk_rgba_to_string(&color);
-#elif GTK_CHECK_VERSION(3, 0, 0)
-	gtk_color_button_get_rgba(GTK_COLOR_BUTTON(desktop->pr_ifcolor),
-			&color);
-	p = gdk_rgba_to_string(&color);
-#else
-	gtk_color_button_get_color(GTK_COLOR_BUTTON(desktop->pr_ifcolor),
-			&color);
-	p = gdk_color_to_string(&color);
-#endif
-	config_set(config, "icons", "foreground", p);
-	g_free(p);
-	q = gtk_font_button_get_font_name(GTK_FONT_BUTTON(desktop->pr_ifont));
-	config_set(config, "icons", "font", q);
-	/* monitor */
-	snprintf(buf, sizeof(buf), "%d", desktop->prefs.monitor);
-	config_set(config, "icons", "monitor", buf);
-	config_set(config, "icons", "show_hidden", desktop->show_hidden
-			? "1" : "0");
-	/* XXX code duplication */
-	if((p = string_new_append(desktop->home, "/" DESKTOPRC, NULL)) != NULL)
-	{
-		if(config_save(config, p) != 0)
-			error_print(PROGNAME_DESKTOP);
-		string_delete(p);
-	}
-	config_delete(config);
-}
-
-static void _on_preferences_update_preview(gpointer data)
-{
-	Desktop * desktop = data;
-#if !GTK_CHECK_VERSION(2, 6, 0)
-	gint ratio = desktop->window.width / desktop->window.height;
-#endif
-	GtkFileChooser * chooser = GTK_FILE_CHOOSER(desktop->pr_background);
-	GtkWidget * widget;
-	char * filename;
-	GdkPixbuf * pixbuf;
-	gboolean active = FALSE;
-	GError * error = NULL;
-
-	widget = gtk_file_chooser_get_preview_widget(chooser);
-	if((filename = gtk_file_chooser_get_preview_filename(chooser)) != NULL)
-	{
-#if GTK_CHECK_VERSION(2, 6, 0)
-		pixbuf = gdk_pixbuf_new_from_file_at_scale(filename, 96, -1,
-				TRUE, &error);
-#else
-		pixbuf = gdk_pixbuf_new_from_file_at_size(filename, 96,
-				96 / ratio, &error);
-#endif
-		if(error != NULL)
-		{
-#ifdef DEBUG
-			_desktop_error(NULL, NULL, error->message, 1);
-#endif
-			g_error_free(error);
-		}
-		if(pixbuf != NULL)
-		{
-			gtk_image_set_from_pixbuf(GTK_IMAGE(widget), pixbuf);
-			g_object_unref(pixbuf);
-			active = TRUE;
-		}
-	}
-	g_free(filename);
-	gtk_file_chooser_set_preview_widget_active(chooser, active);
 }
 
 static void _preferences_set(Desktop * desktop)
@@ -2783,6 +2498,311 @@ static void _preferences_set_color(Config * config, char const * section,
 
 
 /* callbacks */
+/* desktop_on_preferences_closex */
+static gboolean _desktop_on_preferences_closex(gpointer data)
+{
+	_desktop_on_preferences_response_cancel(data);
+	return TRUE;
+}
+
+
+/* desktop_on_preferences_monitors_changed */
+static void _desktop_on_preferences_monitors_changed(gpointer data)
+{
+	Desktop * desktop = data;
+	gint active;
+	GdkRectangle geometry;
+	gint width;
+	gint height;
+	char buf[64];
+
+	active = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_monitors));
+	if(active < 0
+			|| _desktop_get_monitor_properties(desktop, active,
+				&geometry, NULL, NULL, &width, &height) != 0)
+		_desktop_get_properties(desktop, &geometry, NULL, NULL,
+				&width, &height);
+	if(width < 0 || height < 0)
+		snprintf(buf, sizeof(buf), "%s", _("Unknown size"));
+	else
+		snprintf(buf, sizeof(buf), _("%dx%d (at %d,%d)"),
+				geometry.width, geometry.height,
+				geometry.x, geometry.y);
+	gtk_label_set_text(GTK_LABEL(desktop->pr_monitors_res), buf);
+	if(width < 0 || height < 0)
+		snprintf(buf, sizeof(buf), "%s", _("Unknown resolution"));
+	else
+		snprintf(buf, sizeof(buf), _("%dx%d mm (%.0fx%.0f DPI)"),
+				width, height, geometry.width * 25.4 / width,
+				geometry.height * 25.4 / height);
+	gtk_label_set_text(GTK_LABEL(desktop->pr_monitors_size), buf);
+}
+
+
+/* desktop_on_preferences_monitors_refresh */
+static void _desktop_on_preferences_monitors_refresh(gpointer data)
+{
+	Desktop * desktop = data;
+	GtkTreeModel * model1;
+	GtkTreeModel * model2;
+	gint active;
+#if GTK_CHECK_VERSION(2, 14, 0)
+	gint n;
+	gint i;
+	gchar * name;
+	char buf[32];
+# if GTK_CHECK_VERSION(3, 22, 0)
+	GdkMonitor * monitor;
+	char const * manufacturer;
+	char const * model;
+	char buf2[64];
+# endif
+#endif
+
+	active = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_imonitor));
+	model1 = gtk_combo_box_get_model(GTK_COMBO_BOX(desktop->pr_imonitor));
+	model2 = gtk_combo_box_get_model(GTK_COMBO_BOX(desktop->pr_monitors));
+	gtk_list_store_clear(GTK_LIST_STORE(model1));
+	gtk_list_store_clear(GTK_LIST_STORE(model2));
+#if GTK_CHECK_VERSION(2, 24, 0)
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(desktop->pr_imonitor),
+			_("Default monitor"));
+#else
+	gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_imonitor),
+			_("Default monitor"));
+#endif
+#if GTK_CHECK_VERSION(2, 14, 0)
+# if GTK_CHECK_VERSION(3, 22, 0)
+	n = gdk_display_get_n_monitors(desktop->display);
+# else
+	n = gdk_screen_get_n_monitors(desktop->screen);
+# endif
+	for(i = 0; i < n; i++)
+	{
+		snprintf(buf, sizeof(buf), _("Monitor %d"), i);
+# if GTK_CHECK_VERSION(3, 22, 0)
+		if((monitor = gdk_display_get_monitor(desktop->display, i))
+				== NULL)
+			continue;
+		manufacturer = gdk_monitor_get_manufacturer(monitor);
+		model = gdk_monitor_get_model(monitor);
+		if(manufacturer != NULL || model != NULL)
+		{
+			snprintf(buf2, sizeof(buf2), "%s%s%s",
+					(manufacturer != NULL)
+					? manufacturer : "",
+					(manufacturer != NULL && model != NULL)
+					? " " : "",
+					(model != NULL) ? model : "");
+			name = g_strdup(buf2);
+		}
+		else
+			name = NULL;
+# else
+		name = gdk_screen_get_monitor_plug_name(desktop->screen, i);
+# endif
+# if GTK_CHECK_VERSION(2, 24, 0)
+		gtk_combo_box_text_append_text(
+				GTK_COMBO_BOX_TEXT(desktop->pr_imonitor),
+				(name != NULL) ? name : buf);
+		gtk_combo_box_text_append_text(
+				GTK_COMBO_BOX_TEXT(desktop->pr_monitors),
+				(name != NULL) ? name : buf);
+# else
+		gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_imonitor),
+				(name != NULL) ? name : buf);
+		gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_monitors),
+				(name != NULL) ? name : buf);
+# endif
+		g_free(name);
+	}
+#endif
+	gtk_combo_box_set_active(GTK_COMBO_BOX(desktop->pr_imonitor), active);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(desktop->pr_monitors), 0);
+}
+
+
+/* desktop_on_preferences_response */
+static void _desktop_on_preferences_response(GtkWidget * widget, gint response,
+		gpointer data)
+{
+	Desktop * desktop = data;
+	(void) widget;
+
+	if(response == GTK_RESPONSE_OK)
+		_desktop_on_preferences_response_ok(desktop);
+	else if(response == GTK_RESPONSE_APPLY)
+		_desktop_on_preferences_response_apply(desktop);
+	else if(response == GTK_RESPONSE_CANCEL)
+		_desktop_on_preferences_response_cancel(desktop);
+}
+
+
+/* desktop_on_preferences_response_apply */
+static void _desktop_on_preferences_response_apply(gpointer data)
+{
+	Desktop * desktop = data;
+	int i;
+
+	/* XXX not very efficient */
+	desktop_reset(desktop);
+	/* icons */
+	desktop->prefs.icons = gtk_combo_box_get_active(
+			GTK_COMBO_BOX(desktop->pr_ilayout));
+	/* monitor */
+	i = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_imonitor));
+	desktop->prefs.monitor = (i >= 0) ? i - 1 : i;
+}
+
+
+/* desktop_on_preferences_response_cancel */
+static void _desktop_on_preferences_response_cancel(gpointer data)
+{
+	Desktop * desktop = data;
+
+	gtk_widget_hide(desktop->pr_window);
+	_preferences_set(desktop);
+}
+
+
+/* desktop_on_preferences_response_ok */
+static void _desktop_on_preferences_response_ok(gpointer data)
+{
+	Desktop * desktop = data;
+	Config * config;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	GdkRGBA color;
+#else
+	GdkColor color;
+#endif
+	char * p;
+	char const * q;
+	int i;
+	char buf[12];
+
+	gtk_widget_hide(desktop->pr_window);
+	_desktop_on_preferences_response_apply(desktop);
+	if((config = _desktop_get_config(desktop)) == NULL)
+		return;
+	/* background */
+	p = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
+				desktop->pr_background));
+	config_set(config, "background", "wallpaper", p);
+	g_free(p);
+#if GTK_CHECK_VERSION(3, 4, 0)
+	gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(desktop->pr_color),
+			&color);
+	p = gdk_rgba_to_string(&color);
+#elif GTK_CHECK_VERSION(3, 0, 0)
+	gtk_color_button_get_rgba(GTK_COLOR_BUTTON(desktop->pr_color), &color);
+	p = gdk_rgba_to_string(&color);
+#else
+	gtk_color_button_get_color(GTK_COLOR_BUTTON(desktop->pr_color), &color);
+	p = gdk_color_to_string(&color);
+#endif
+	config_set(config, "background", "color", p);
+	g_free(p);
+	i = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_background_how));
+	if(i >= 0 && i < DESKTOP_HOW_COUNT)
+		config_set(config, "background", "how", _desktop_hows[i]);
+	p = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
+				desktop->pr_background_extend)) ? "1" : "0";
+	config_set(config, "background", "extend", p);
+	/* icons */
+	i = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_ilayout));
+	if(desktop->prefs.icons >= 0
+			&& desktop->prefs.icons < DESKTOP_ICONS_COUNT)
+		config_set(config, "icons", "layout",
+				_desktop_icons_config[desktop->prefs.icons]);
+#if GTK_CHECK_VERSION(3, 4, 0)
+	gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(desktop->pr_ibcolor),
+			&color);
+	p = gdk_rgba_to_string(&color);
+#elif GTK_CHECK_VERSION(3, 0, 0)
+	gtk_color_button_get_rgba(GTK_COLOR_BUTTON(desktop->pr_ibcolor),
+			&color);
+	p = gdk_rgba_to_string(&color);
+#else
+	gtk_color_button_get_color(GTK_COLOR_BUTTON(desktop->pr_ibcolor),
+			&color);
+	p = gdk_color_to_string(&color);
+#endif
+	config_set(config, "icons", "background", p);
+	g_free(p);
+#if GTK_CHECK_VERSION(3, 4, 0)
+	gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(desktop->pr_ifcolor),
+			&color);
+	p = gdk_rgba_to_string(&color);
+#elif GTK_CHECK_VERSION(3, 0, 0)
+	gtk_color_button_get_rgba(GTK_COLOR_BUTTON(desktop->pr_ifcolor),
+			&color);
+	p = gdk_rgba_to_string(&color);
+#else
+	gtk_color_button_get_color(GTK_COLOR_BUTTON(desktop->pr_ifcolor),
+			&color);
+	p = gdk_color_to_string(&color);
+#endif
+	config_set(config, "icons", "foreground", p);
+	g_free(p);
+	q = gtk_font_button_get_font_name(GTK_FONT_BUTTON(desktop->pr_ifont));
+	config_set(config, "icons", "font", q);
+	/* monitor */
+	snprintf(buf, sizeof(buf), "%d", desktop->prefs.monitor);
+	config_set(config, "icons", "monitor", buf);
+	config_set(config, "icons", "show_hidden", desktop->show_hidden
+			? "1" : "0");
+	/* XXX code duplication */
+	if((p = string_new_append(desktop->home, "/" DESKTOPRC, NULL)) != NULL)
+	{
+		if(config_save(config, p) != 0)
+			error_print(PROGNAME_DESKTOP);
+		string_delete(p);
+	}
+	config_delete(config);
+}
+
+
+/* desktop_on_preferences_update_preview */
+static void _desktop_on_preferences_update_preview(gpointer data)
+{
+	Desktop * desktop = data;
+#if !GTK_CHECK_VERSION(2, 6, 0)
+	gint ratio = desktop->window.width / desktop->window.height;
+#endif
+	GtkFileChooser * chooser = GTK_FILE_CHOOSER(desktop->pr_background);
+	GtkWidget * widget;
+	char * filename;
+	GdkPixbuf * pixbuf;
+	gboolean active = FALSE;
+	GError * error = NULL;
+
+	widget = gtk_file_chooser_get_preview_widget(chooser);
+	if((filename = gtk_file_chooser_get_preview_filename(chooser)) != NULL)
+	{
+#if GTK_CHECK_VERSION(2, 6, 0)
+		pixbuf = gdk_pixbuf_new_from_file_at_scale(filename, 96, -1,
+				TRUE, &error);
+#else
+		pixbuf = gdk_pixbuf_new_from_file_at_size(filename, 96,
+				96 / ratio, &error);
+#endif
+		if(error != NULL)
+		{
+#ifdef DEBUG
+			_desktop_error(NULL, NULL, error->message, 1);
+#endif
+			g_error_free(error);
+		}
+		if(pixbuf != NULL)
+		{
+			gtk_image_set_from_pixbuf(GTK_IMAGE(widget), pixbuf);
+			g_object_unref(pixbuf);
+			active = TRUE;
+		}
+	}
+	g_free(filename);
+	gtk_file_chooser_set_preview_widget_active(chooser, active);
+}
 /* desktop_on_refresh */
 static void _refresh_cleanup(Desktop * desktop);
 static void _refresh_done_applications(Desktop * desktop);
