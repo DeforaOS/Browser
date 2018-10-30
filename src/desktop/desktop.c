@@ -2359,7 +2359,7 @@ static void _on_preferences_monitors_changed(gpointer data)
 	char buf[64];
 
 	active = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_monitors));
-	if(active-- <= 0
+	if(active < 0
 			|| _desktop_get_monitor_properties(desktop, active,
 				&geometry, NULL, NULL, &width, &height) != 0)
 		_desktop_get_properties(desktop, &geometry, NULL, NULL,
@@ -2407,13 +2407,9 @@ static void _on_preferences_monitors_refresh(gpointer data)
 #if GTK_CHECK_VERSION(2, 24, 0)
 	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(desktop->pr_imonitor),
 			_("Default monitor"));
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(desktop->pr_monitors),
-			_("Whole screen"));
 #else
 	gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_imonitor),
 			_("Default monitor"));
-	gtk_combo_box_append_text(GTK_COMBO_BOX(desktop->pr_monitors),
-			_("Whole screen"));
 #endif
 #if GTK_CHECK_VERSION(2, 14, 0)
 # if GTK_CHECK_VERSION(3, 22, 0)
