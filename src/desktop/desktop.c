@@ -2047,6 +2047,7 @@ static void _desktop_show_preferences(Desktop * desktop)
 #endif
 	/* notebook */
 	notebook = gtk_notebook_new();
+	gtk_container_set_border_width(GTK_CONTAINER(notebook), 4);
 	_preferences_background(desktop, notebook);
 	_preferences_icons(desktop, notebook);
 	_preferences_monitors(desktop, notebook);
