@@ -291,6 +291,7 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 	desktop->prefs.alignment = DESKTOP_ALIGNMENT_VERTICAL;
 	desktop->prefs.icons = DESKTOP_ICONS_FILES;
 	desktop->prefs.monitor = -1;
+	desktop->prefs.popup = -1;
 	desktop->prefs.window = -1;
 	if(prefs != NULL)
 		desktop->prefs = *prefs;
