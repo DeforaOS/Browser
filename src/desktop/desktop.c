@@ -618,7 +618,9 @@ static void _on_popup_symlink(gpointer data)
 {
 	Desktop * desktop = data;
 
-	if(_common_symlink(NULL, desktop->path) != 0)
+	if(_common_symlink((desktop->desktop != NULL)
+				? GTK_WINDOW(desktop->desktop) : NULL,
+				desktop->path) != 0)
 		_desktop_perror(desktop, desktop->path, 0);
 }
 
@@ -1539,8 +1541,6 @@ void desktop_select_all(Desktop * desktop)
 	size_t i;
 	DesktopIcon * icon;
 
-	if(desktop_get_icons(desktop) != DESKTOP_ICONS_FILES)
-		return;
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
 		icon = desktopiconwindow_get_icon(desktop->icons[i]);
@@ -1556,8 +1556,6 @@ void desktop_select_above(Desktop * desktop, DesktopIcon * icon)
 	size_t i;
 	DesktopIcon * j;
 
-	if(desktop_get_icons(desktop) != DESKTOP_ICONS_FILES)
-		return;
 	for(i = 1; i < desktop->icons_cnt; i++)
 	{
 		j = desktopiconwindow_get_icon(desktop->icons[i]);
@@ -1577,8 +1575,6 @@ void desktop_select_under(Desktop * desktop, DesktopIcon * icon)
 	size_t i;
 	DesktopIcon * j;
 
-	if(desktop_get_icons(desktop) != DESKTOP_ICONS_FILES)
-		return;
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
 		j = desktopiconwindow_get_icon(desktop->icons[i]);
@@ -1597,8 +1593,6 @@ void desktop_unselect_all(Desktop * desktop)
 	size_t i;
 	DesktopIcon * icon;
 
-	if(desktop_get_icons(desktop) != DESKTOP_ICONS_FILES)
-		return;
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
 		icon = desktopiconwindow_get_icon(desktop->icons[i]);
