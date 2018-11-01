@@ -120,6 +120,7 @@ struct _Desktop
 	GtkWidget * pr_background_extend;
 	GtkWidget * pr_ilayout;
 	GtkWidget * pr_imonitor;
+	GtkWidget * pr_isize;
 	GtkWidget * pr_ibcolor;
 	GtkWidget * pr_ifcolor;
 	GtkWidget * pr_ifont;
@@ -1361,10 +1362,13 @@ static void _reset_icons_size(Desktop * desktop, Config * config)
 	int size;
 
 	/* icons size */
-	if((p = config_get(config, "icons", "size")) == NULL
-			|| (size = strtol(p, &q, 10)) <= 0)
-		size = DESKTOPICON_ICON_SIZE;
-	desktop->icons_size = size;
+	if(desktop->icons_size == 0)
+	{
+		if((p = config_get(config, "icons", "size")) == NULL
+				|| (size = strtol(p, &q, 10)) <= 0)
+			size = DESKTOPICON_ICON_SIZE;
+		desktop->icons_size = size;
+	}
 }
 
 /* callbacks */
@@ -2263,6 +2267,19 @@ static void _preferences_icons(Desktop * desktop, GtkWidget * notebook)
 #endif
 	gtk_box_pack_start(GTK_BOX(hbox), desktop->pr_imonitor, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, TRUE, 0);
+	/* size */
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	label = gtk_label_new(_("Size: "));
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(label, "halign", GTK_ALIGN_START, NULL);
+#else
+	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
+	gtk_size_group_add_widget(group, label);
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 0);
+	desktop->pr_isize = gtk_spin_button_new_with_range(16, 256, 1);
+	gtk_box_pack_start(GTK_BOX(hbox), desktop->pr_isize, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, TRUE, 0);
 	/* background color */
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	label = gtk_label_new(_("Background color: "));
@@ -2438,6 +2455,8 @@ static void _preferences_set(Desktop * desktop)
 				}
 		gtk_combo_box_set_active(GTK_COMBO_BOX(desktop->pr_ilayout),
 				how);
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(desktop->pr_isize),
+				desktop->icons_size);
 		_preferences_set_color(config, "icons", "background", black,
 				desktop->pr_ibcolor);
 		_preferences_set_color(config, "icons", "foreground", white,
@@ -2659,6 +2678,8 @@ static void _desktop_on_preferences_response_apply(gpointer data)
 	/* icons */
 	desktop->prefs.icons = gtk_combo_box_get_active(
 			GTK_COMBO_BOX(desktop->pr_ilayout));
+	desktop->icons_size = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(
+				desktop->pr_isize));
 	/* monitor */
 	i = gtk_combo_box_get_active(GTK_COMBO_BOX(desktop->pr_imonitor));
 	desktop->prefs.monitor = (i >= 0) ? i - 1 : i;
@@ -2724,6 +2745,8 @@ static void _desktop_on_preferences_response_ok(gpointer data)
 			&& desktop->prefs.icons < DESKTOP_ICONS_COUNT)
 		config_set(config, "icons", "layout",
 				_desktop_icons_config[desktop->prefs.icons]);
+	snprintf(buf, sizeof(buf), "%u", desktop->icons_size);
+	config_set(config, "icons", "size", buf);
 #if GTK_CHECK_VERSION(3, 4, 0)
 	gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(desktop->pr_ibcolor),
 			&color);
