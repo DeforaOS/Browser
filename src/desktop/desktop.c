@@ -258,6 +258,7 @@ static gboolean _desktop_on_refresh(gpointer data);
 /* callbacks */
 static void _new_events(Desktop * desktop, GdkWindow * window,
 		GdkEventMask mask);
+static void _new_filter(Desktop * desktop, GdkWindow * window);
 static void _new_icons(Desktop * desktop);
 static void _new_window(Desktop * desktop, GdkEventMask * mask);
 static int _on_message(void * data, uint32_t value1, uint32_t value2,
@@ -328,6 +329,7 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 	_new_window(desktop, &mask);
 	/* manage events on the root window */
 	_new_events(desktop, desktop->root, mask);
+	_new_filter(desktop, desktop->root);
 	/* load the default icons */
 	_new_icons(desktop);
 	return desktop;
@@ -338,6 +340,10 @@ static void _new_events(Desktop * desktop, GdkWindow * window,
 {
 	mask = gdk_window_get_events(window) | mask;
 	gdk_window_set_events(window, mask);
+}
+
+static void _new_filter(Desktop * desktop, GdkWindow * window)
+{
 	gdk_window_add_filter(window, _on_root_event, desktop);
 }
 
