@@ -57,6 +57,7 @@ GdkPixbuf * desktop_get_file(Desktop * desktop);
 GdkPixbuf * desktop_get_folder(Desktop * desktop);
 void desktop_get_icon_size(Desktop * desktop, unsigned int * width,
 		unsigned int * height, unsigned int * size);
+DesktopIcon ** desktop_get_icons_selected(Desktop * desktop);
 Mime * desktop_get_mime(Desktop * desktop);
 GtkIconTheme * desktop_get_theme(Desktop * desktop);
 

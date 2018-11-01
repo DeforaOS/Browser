@@ -272,6 +272,10 @@ static void _on_monitor_removed(GdkDisplay * display, GdkMonitor * monitor,
 #endif
 static void _on_popup(gpointer data);
 static void _on_popup_event(gpointer data, XButtonEvent * xbev);
+static gboolean _on_desktop_button_press(GtkWidget * widget,
+		GdkEventButton * event, gpointer data);
+static gboolean _on_desktop_key_press(GtkWidget * widget, GdkEventKey * event,
+		gpointer data);
 static void _on_realize(gpointer data);
 static GdkFilterReturn _on_root_event(GdkXEvent * xevent, GdkEvent * event,
 		gpointer data);
@@ -397,8 +401,14 @@ static void _new_window(Desktop * desktop, GdkEventMask * mask)
 				GDK_WINDOW_TYPE_HINT_DESKTOP);
 		/* support pop-up menus on the desktop window if enabled */
 		if(desktop->prefs.popup)
-			g_signal_connect_swapped(desktop->desktop, "popup-menu",
-					G_CALLBACK(_on_popup), desktop);
+		{
+			g_signal_connect(desktop->desktop, "button-press-event",
+					G_CALLBACK(_on_desktop_button_press),
+					desktop);
+			g_signal_connect(desktop->desktop, "key-press-event",
+					G_CALLBACK(_on_desktop_key_press),
+					desktop);
+		}
 		/* draw the icons and background when realized */
 		g_signal_connect_swapped(desktop->desktop, "realize",
 				G_CALLBACK(_on_realize), desktop);
@@ -612,6 +622,53 @@ static void _on_popup_symlink(gpointer data)
 		_desktop_perror(desktop, desktop->path, 0);
 }
 
+static gboolean _on_desktop_button_press(GtkWidget * widget,
+		GdkEventButton * event, gpointer data)
+{
+	Desktop * desktop = data;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	if(event->type != GDK_BUTTON_PRESS || event->button != 3)
+		return FALSE;
+	_on_popup(desktop);
+	return TRUE;
+}
+
+static gboolean _on_desktop_key_press(GtkWidget * widget, GdkEventKey * event,
+		gpointer data)
+{
+	Desktop * desktop = data;
+	DesktopIcon ** selected;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+
+	if(event->type != GDK_KEY_PRESS)
+		return FALSE;
+	if(event->keyval == GDK_KEY_uparrow)
+	{
+		if((selected = desktop_get_icons_selected(desktop)) == NULL)
+			return TRUE;
+		desktop_unselect_all(desktop);
+		desktop_select_above(desktop, selected[0]);
+		free(selected);
+	}
+	else if(event->keyval == GDK_KEY_downarrow)
+	{
+		if((selected = desktop_get_icons_selected(desktop)) == NULL)
+			return TRUE;
+		desktop_unselect_all(desktop);
+		desktop_select_under(desktop, selected[0]);
+		free(selected);
+	}
+	else /* not handling it */
+		return FALSE;
+	return TRUE;
+}
+
 static void _on_realize(gpointer data)
 {
 	Desktop * desktop = data;
@@ -798,6 +855,35 @@ void desktop_get_icon_size(Desktop * desktop, unsigned int * width,
 	}
 	if(size != NULL)
 		*size = desktop->icons_size;
+}
+
+
+/* desktop_get_icons_selected */
+DesktopIcon ** desktop_get_icons_selected(Desktop * desktop)
+{
+	DesktopIcon ** icons = NULL;
+	size_t cnt = 0;
+	DesktopIcon * desktopicon;
+	DesktopIcon ** p;
+	size_t i;
+
+	for(i = 0; i < desktop->icons_cnt; i++)
+	{
+		desktopicon = desktopiconwindow_get_icon(desktop->icons[i]);
+		if(desktopicon_get_selected(desktopicon) == FALSE)
+			continue;
+		if((p = realloc(icons, sizeof(*p) * (cnt + 1))) == NULL)
+		{
+			_desktop_perror(NULL, "realloc", -errno);
+			free(icons);
+			return NULL;
+		}
+		icons = p;
+		icons[cnt++] = desktopicon;
+	}
+	if(icons != NULL)
+		icons[cnt] = NULL;
+	return icons;
 }
 
 
@@ -1453,6 +1539,8 @@ void desktop_select_all(Desktop * desktop)
 	size_t i;
 	DesktopIcon * icon;
 
+	if(desktop_get_icons(desktop) != DESKTOP_ICONS_FILES)
+		return;
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
 		icon = desktopiconwindow_get_icon(desktop->icons[i]);
@@ -1468,6 +1556,8 @@ void desktop_select_above(Desktop * desktop, DesktopIcon * icon)
 	size_t i;
 	DesktopIcon * j;
 
+	if(desktop_get_icons(desktop) != DESKTOP_ICONS_FILES)
+		return;
 	for(i = 1; i < desktop->icons_cnt; i++)
 	{
 		j = desktopiconwindow_get_icon(desktop->icons[i]);
@@ -1487,6 +1577,8 @@ void desktop_select_under(Desktop * desktop, DesktopIcon * icon)
 	size_t i;
 	DesktopIcon * j;
 
+	if(desktop_get_icons(desktop) != DESKTOP_ICONS_FILES)
+		return;
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
 		j = desktopiconwindow_get_icon(desktop->icons[i]);
@@ -1505,6 +1597,8 @@ void desktop_unselect_all(Desktop * desktop)
 	size_t i;
 	DesktopIcon * icon;
 
+	if(desktop_get_icons(desktop) != DESKTOP_ICONS_FILES)
+		return;
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
 		icon = desktopiconwindow_get_icon(desktop->icons[i]);
