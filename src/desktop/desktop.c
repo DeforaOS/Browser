@@ -503,20 +503,20 @@ static void _on_popup_event(gpointer data, XButtonEvent * xbev)
 	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Folder"));
 	image = gtk_image_new_from_icon_name("folder-new", GTK_ICON_SIZE_MENU);
 	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem), image);
-	g_signal_connect_swapped(G_OBJECT(menuitem), "activate", G_CALLBACK(
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
 				_on_popup_new_folder), desktop);
 	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
 	menuitem = gtk_separator_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
 	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Symbolic link..."));
-	g_signal_connect_swapped(G_OBJECT(menuitem), "activate", G_CALLBACK(
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
 				_on_popup_symlink), desktop);
 	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
 	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Text file"));
 	image = gtk_image_new_from_icon_name("stock_new-text",
 			GTK_ICON_SIZE_MENU);
 	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem), image);
-	g_signal_connect_swapped(G_OBJECT(menuitem), "activate", G_CALLBACK(
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
 				_on_popup_new_text_file), desktop);
 	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
 	/* edition */
@@ -526,7 +526,7 @@ static void _on_popup_event(gpointer data, XButtonEvent * xbev)
 	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
 			gtk_image_new_from_icon_name("edit-paste",
 				GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(menuitem), "activate", G_CALLBACK(
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
 				_on_popup_paste), desktop);
 	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);
 	/* preferences */
@@ -536,7 +536,7 @@ static void _on_popup_event(gpointer data, XButtonEvent * xbev)
 	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
 			gtk_image_new_from_icon_name("gtk-preferences",
 				GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(menuitem), "activate", G_CALLBACK(
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
 				_on_popup_preferences), desktop);
 	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);
 	gtk_widget_show_all(desktop->menu);
@@ -1534,12 +1534,12 @@ static int _desktop_error(Desktop * desktop, char const * message,
 	gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
 	if(ret < 0)
 	{
-		g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(
-					gtk_main_quit), NULL);
+		g_signal_connect(dialog, "response", G_CALLBACK(gtk_main_quit),
+				NULL);
 		ret = -ret;
 	}
 	else
-		g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(
+		g_signal_connect(dialog, "response", G_CALLBACK(
 					gtk_widget_destroy), NULL);
 	gtk_widget_show(dialog);
 	return ret;
@@ -2081,9 +2081,9 @@ static void _desktop_show_preferences(Desktop * desktop)
 	if(desktop->desktop != NULL)
 		gtk_window_set_transient_for(GTK_WINDOW(desktop->pr_window),
 				GTK_WINDOW(desktop->desktop));
-	g_signal_connect_swapped(G_OBJECT(desktop->pr_window), "delete-event",
+	g_signal_connect_swapped(desktop->pr_window, "delete-event",
 			G_CALLBACK(_desktop_on_preferences_closex), desktop);
-	g_signal_connect(G_OBJECT(desktop->pr_window), "response", G_CALLBACK(
+	g_signal_connect(desktop->pr_window, "response", G_CALLBACK(
 				_desktop_on_preferences_response), desktop);
 #if GTK_CHECK_VERSION(2, 14, 0)
 	vbox = gtk_dialog_get_content_area(GTK_DIALOG(desktop->pr_window));

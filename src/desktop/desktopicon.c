@@ -204,9 +204,9 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 			targets_cnt, GDK_ACTION_COPY | GDK_ACTION_MOVE);
 	gtk_drag_dest_set(desktopicon->event, GTK_DEST_DEFAULT_ALL, targets,
 			targets_cnt, GDK_ACTION_COPY | GDK_ACTION_MOVE);
-	g_signal_connect(G_OBJECT(desktopicon->event), "drag-data-get",
+	g_signal_connect(desktopicon->event, "drag-data-get",
 			G_CALLBACK(_on_icon_drag_data_get), desktopicon);
-	g_signal_connect(G_OBJECT(desktopicon->event), "drag-data-received",
+	g_signal_connect(desktopicon->event, "drag-data-received",
 			G_CALLBACK(_on_icon_drag_data_received), desktopicon);
 	desktopicon->isdir = isdir;
 	desktopicon_set_executable(desktopicon, isexec);
@@ -623,9 +623,9 @@ static DesktopIcon * _desktopicon_new_do(Desktop * desktop, GdkPixbuf * image,
 	desktopicon->event = gtk_event_box_new();
 	gtk_event_box_set_visible_window(GTK_EVENT_BOX(desktopicon->event),
 			FALSE);
-	g_signal_connect(G_OBJECT(desktopicon->event), "button-press-event",
+	g_signal_connect(desktopicon->event, "button-press-event",
 			G_CALLBACK(_on_icon_button_press), desktopicon);
-	g_signal_connect(G_OBJECT(desktopicon->event), "key-press-event",
+	g_signal_connect(desktopicon->event, "key-press-event",
 			G_CALLBACK(_on_icon_key_press), desktopicon);
 	/* image */
 	desktopicon->image = gtk_image_new();
@@ -821,7 +821,7 @@ static gboolean _on_icon_button_press(GtkWidget * widget,
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 		menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_DELETE,
 				NULL);
-		g_signal_connect_swapped(G_OBJECT(menuitem), "activate",
+		g_signal_connect_swapped(menuitem, "activate",
 				G_CALLBACK(_on_icon_delete), desktopicon);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	}
@@ -831,7 +831,7 @@ static gboolean _on_icon_button_press(GtkWidget * widget,
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 		menuitem = gtk_image_menu_item_new_from_stock(
 				GTK_STOCK_PROPERTIES, NULL);
-		g_signal_connect_swapped(G_OBJECT(menuitem), "activate",
+		g_signal_connect_swapped(menuitem, "activate",
 				G_CALLBACK(_on_icon_properties), desktopicon);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	}
@@ -845,7 +845,7 @@ static void _popup_directory(GtkWidget * menu, DesktopIcon * desktopicon)
 	GtkWidget * menuitem;
 
 	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_OPEN, NULL);
-	g_signal_connect_swapped(G_OBJECT(menuitem), "activate", G_CALLBACK(
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
 				_on_icon_open), desktopicon);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	if(desktopicon->immutable == FALSE)
@@ -853,8 +853,8 @@ static void _popup_directory(GtkWidget * menu, DesktopIcon * desktopicon)
 		menuitem = gtk_separator_menu_item_new();
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 		menuitem = gtk_menu_item_new_with_mnemonic(_("_Rename..."));
-		g_signal_connect_swapped(G_OBJECT(menuitem), "activate",
-				G_CALLBACK(_on_icon_rename), desktopicon);
+		g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
+					_on_icon_rename), desktopicon);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	}
 }
@@ -864,8 +864,8 @@ static void _popup_callback(GtkWidget * menu, DesktopIcon * desktopicon)
 	GtkWidget * menuitem;
 
 	menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_OPEN, NULL);
-	g_signal_connect_swapped(G_OBJECT(menuitem), "activate",
-			G_CALLBACK(_on_icon_open), desktopicon);
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
+				_on_icon_open), desktopicon);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 }
 
@@ -888,15 +888,15 @@ static void _popup_file(GtkWidget * menu, DesktopIcon * desktopicon)
 	{
 		menuitem = gtk_image_menu_item_new_from_stock(GTK_STOCK_EXECUTE,
 				NULL);
-		g_signal_connect_swapped(G_OBJECT(menuitem), "activate",
-				G_CALLBACK(_on_icon_run), desktopicon);
+		g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
+					_on_icon_run), desktopicon);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 	}
 	if(desktopicon->path != NULL && desktopicon->path[0] == '/')
 	{
 		menuitem = gtk_menu_item_new_with_mnemonic(_("Open _with..."));
-		g_signal_connect_swapped(G_OBJECT(menuitem), "activate",
-				G_CALLBACK(_on_icon_open_with), desktopicon);
+		g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
+					_on_icon_open_with), desktopicon);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 		if(desktopicon->immutable == FALSE)
 		{
@@ -904,7 +904,7 @@ static void _popup_file(GtkWidget * menu, DesktopIcon * desktopicon)
 			gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 			menuitem = gtk_menu_item_new_with_mnemonic(
 					_("_Rename..."));
-			g_signal_connect_swapped(G_OBJECT(menuitem), "activate",
+			g_signal_connect_swapped(menuitem, "activate",
 					G_CALLBACK(_on_icon_rename),
 					desktopicon);
 			gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
@@ -924,8 +924,7 @@ static void _popup_mime(Mime * mime, char const * mimetype, char const * action,
 		menuitem = gtk_image_menu_item_new_from_stock(label, NULL);
 	else
 		menuitem = gtk_menu_item_new_with_mnemonic(label);
-	g_signal_connect_swapped(G_OBJECT(menuitem), "activate", callback,
-			desktopicon);
+	g_signal_connect_swapped(menuitem, "activate", callback, desktopicon);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 }
 
