@@ -303,7 +303,7 @@ Browser * browser_new(GtkWidget * window, GtkAccelGroup * group,
 #endif
 	char * p;
 
-	if((browser = malloc(sizeof(*browser))) == NULL)
+	if((browser = object_new(sizeof(*browser))) == NULL)
 	{
 		browser_error(NULL, (directory != NULL) ? directory : ".", 1);
 		return NULL;
@@ -692,7 +692,7 @@ void browser_delete(Browser * browser)
 		g_object_unref(browser->loading);
 #endif
 	g_object_unref(browser->store);
-	free(browser);
+	object_delete(browser);
 }
 
 static void _delete_plugins(Browser * browser)
@@ -815,9 +815,9 @@ static void _error_response(gpointer data)
 /* browser_config_load */
 int browser_config_load(Browser * browser)
 {
-	char * filename;
+	String * filename;
 #if GTK_CHECK_VERSION(2, 6, 0)
-	char * p = NULL;
+	String * p = NULL;
 #endif
 
 	if(browser->config == NULL)
@@ -826,7 +826,7 @@ int browser_config_load(Browser * browser)
 		return -1;
 	if(config_load(browser->config, filename) != 0)
 		browser_error(NULL, error_get(NULL), 1);
-	free(filename);
+	string_delete(filename);
 #if GTK_CHECK_VERSION(2, 6, 0)
 	/* XXX deserves a rework (enum) */
 	if(_config_load_string(browser->config, "default_view", &p) == 0
@@ -840,7 +840,7 @@ int browser_config_load(Browser * browser)
 			browser->prefs.default_view = BV_LIST;
 		else if(strcmp(p, "thumbnails") == 0)
 			browser->prefs.default_view = BV_THUMBNAILS;
-		free(p);
+		string_delete(p);
 	}
 #endif
 	_config_load_boolean(browser->config, "alternate_rows",
@@ -859,7 +859,7 @@ int browser_config_load(Browser * browser)
 int browser_config_save(Browser * browser)
 {
 	int ret = 0;
-	char * filename;
+	String * filename;
 #if GTK_CHECK_VERSION(2, 6, 0)
 	char * str[BV_COUNT] = { "details", "icons", "list", "thumbnails" };
 #endif
@@ -885,7 +885,7 @@ int browser_config_save(Browser * browser)
 			browser->prefs.show_hidden_files);
 	if(ret == 0)
 		ret |= config_save(browser->config, filename);
-	free(filename);
+	string_delete(filename);
 	return ret;
 }
 
@@ -2513,7 +2513,7 @@ static int _browser_config_set(Browser * browser, char const * section,
 {
 	int ret;
 	String * s = NULL;
-	char * filename;
+	String * filename;
 
 	if(section != NULL && (s = string_new_append("plugin::", section, NULL))
 			== NULL)
@@ -2524,7 +2524,7 @@ static int _browser_config_set(Browser * browser, char const * section,
 	{
 		if(config_save(browser->config, filename) != 0)
 			browser_error(NULL, error_get(NULL), 1);
-		free(filename);
+		string_delete(filename);
 	}
 	string_delete(s);
 	return ret;
@@ -3991,17 +3991,17 @@ static int _config_load_boolean(Config * config, char const * variable,
 
 
 /* config_load_string */
-static int _config_load_string(Config * config, char const * variable,
-		char ** value)
+static int _config_load_string(Config * config, String const * variable,
+		String ** value)
 {
-	char const * str;
-	char * p;
+	String const * str;
+	String * p;
 
 	if((str = config_get(config, NULL, variable)) == NULL)
 		return 0;
-	if((p = strdup(str)) == NULL)
+	if((p = string_new(str)) == NULL)
 		return -1;
-	free(*value);
+	string_delete(*value);
 	*value = p;
 	return 0;
 }
