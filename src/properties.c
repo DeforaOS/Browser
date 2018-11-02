@@ -389,6 +389,7 @@ static int _properties_error(Properties * properties, char const * message,
 static void _error_response(GtkWidget * widget, gint arg, gpointer data)
 {
 	unsigned int * cnt = data;
+	(void) arg;
 
 	if(cnt == NULL)
 		gtk_widget_destroy(widget);
