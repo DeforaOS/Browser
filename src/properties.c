@@ -68,6 +68,7 @@
 struct _Browser
 {
 	/* internal */
+	Config * config;
 	Mime * mime;
 	char * filename;
 
@@ -165,6 +166,7 @@ static Properties * _properties_new(Mime * mime, char const * plugin,
 		_properties_error(NULL, strerror(errno), 1);
 		return NULL;
 	}
+	properties->config = NULL;
 	properties->mime = mime;
 	properties->filename = strdup(filename);
 	properties->helper.browser = properties;
@@ -228,7 +230,6 @@ static Properties * _properties_new(Mime * mime, char const * plugin,
 
 static int _new_load(Properties * properties, char const * plugin)
 {
-	Config * config;
 	char const * plugins = NULL;
 	char * p;
 	char * q;
@@ -236,9 +237,10 @@ static int _new_load(Properties * properties, char const * plugin)
 	int cnt = 0;
 
 	p = _common_config_filename(BROWSER_CONFIG_FILE);
-	if((config = config_new()) != NULL && config_load(config, p) == 0
-			&& (plugins = config_get(config, NULL, "properties"))
-			== NULL)
+	if((properties->config = config_new()) != NULL
+			&& config_load(properties->config, p) == 0
+			&& (plugins = config_get(properties->config, NULL,
+					"properties")) == NULL)
 		plugins = "properties,preview";
 	string_delete(p);
 	if(plugin != NULL)
@@ -275,8 +277,6 @@ static int _new_load(Properties * properties, char const * plugin)
 		if(_properties_load(properties, "preview") == 0)
 			cnt++;
 	}
-	if(config != NULL)
-		config_delete(config);
 	/* consider ourselves successful if at least one plug-in was loaded */
 	return (cnt > 0) ? 0 : -1;
 }
@@ -288,6 +288,8 @@ static void _properties_delete(Properties * properties)
 	if(properties->window != NULL)
 		gtk_widget_destroy(properties->window);
 	free(properties->filename);
+	if(properties->config != NULL)
+		config_delete(properties->config);
 	free(properties);
 	_properties_cnt--;
 }
@@ -298,8 +300,9 @@ static void _properties_delete(Properties * properties)
 static char const * _properties_config_get(Properties * properties,
 		char const * section, char const * variable)
 {
-	/* FIXME implement */
-	return NULL;
+	if(properties->config == NULL)
+		return NULL;
+	return config_get(properties->config, section, variable);
 }
 
 
@@ -307,8 +310,9 @@ static char const * _properties_config_get(Properties * properties,
 static int _properties_config_set(Properties * properties, char const * section,
 		char const * variable, char const * value)
 {
-	/* FIXME implement */
-	return -1;
+	if(properties->config == NULL)
+		return -1;
+	return config_set(properties->config, section, variable, value);
 }
 
 
