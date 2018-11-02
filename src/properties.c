@@ -351,7 +351,8 @@ static int _properties_set_location(Properties * properties,
 }
 
 
-/* _properties_error */
+/* useful */
+/* properties_error */
 static void _error_response(GtkWidget * widget, gint arg, gpointer data);
 static int _error_text(char const * message, int ret);
 
