@@ -312,7 +312,7 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 #endif
 	desktop->root = gdk_screen_get_root_window(desktop->screen);
 	/* icons */
-	desktop->icons_size = DESKTOPICON_ICON_SIZE;
+	desktop->icons_size = 0;
 	/* common */
 	if((desktop->home = getenv("HOME")) == NULL
 			&& (desktop->home = g_get_home_dir()) == NULL)
