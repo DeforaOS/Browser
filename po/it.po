@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Browser 0.4.13\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-11-01 22:57-0300\n"
+"POT-Creation-Date: 2018-12-29 23:58+0100\n"
 "PO-Revision-Date: 2010-04-07 23:18+0200\n"
 "Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
 "Language-Team: Italian\n"
@@ -101,8 +101,8 @@ msgstr ""
 #: ../src/browser/browser.c:777 ../src/browser/browser.c:781
 #: ../src/desktop/desktop.c:1621 ../src/desktop/desktop.c:1627
 #: ../src/copy.c:863 ../src/copy.c:867 ../src/delete.c:571 ../src/delete.c:576
-#: ../src/move.c:496 ../src/move.c:500 ../src/properties.c:370
-#: ../src/properties.c:374 ../src/view.c:431 ../src/view.c:436
+#: ../src/move.c:496 ../src/move.c:500 ../src/properties.c:375
+#: ../src/properties.c:379 ../src/view.c:431 ../src/view.c:436
 #: ../src/plugins/common.c:376 ../src/plugins/common.c:380
 msgid "Error"
 msgstr ""
@@ -887,11 +887,11 @@ msgid ""
 "  -a\taction to call (default: \"open\")\n"
 msgstr ""
 
-#: ../src/properties.c:188
+#: ../src/properties.c:190
 msgid "Properties of "
 msgstr ""
 
-#: ../src/properties.c:490
+#: ../src/properties.c:496
 #, c-format
 msgid "Usage: %s [-p plug-in] file...\n"
 msgstr ""
