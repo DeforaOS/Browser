@@ -624,6 +624,8 @@ static gboolean _channel_out(Copy * copy, GIOChannel * source)
 	if(g_io_channel_write_chars(source, copy->buf, copy->buf_cnt, &written,
 				&error) == G_IO_STATUS_ERROR)
 		return _channel_out_error(copy, source, error);
+	if(fsync(g_io_channel_get_fd(source)) != 0)
+		_copy_error(NULL, "fsync", -errno);
 	if(copy->buf_cnt == sizeof(copy->buf))
 		g_idle_add(_regular_idle_in, copy); /* read again */
 	copy->buf_cnt -= written;
