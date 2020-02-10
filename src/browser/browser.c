@@ -1841,8 +1841,10 @@ void browser_selection_delete(Browser * browser)
 			cnt++;
 	if(cnt != 0 && (browser->prefs.confirm_before_delete != TRUE
 				|| _browser_confirm(browser,
-					_("Are you sure you want to delete %lu"
-						" file(s)?"), cnt) == 0)
+					ngettext(
+						"Are you sure you want to delete %lu file?",
+						"Are you sure you want to delete %lu files?",
+						cnt), cnt) == 0)
 			&& _common_exec(PROGNAME_DELETE, "-ir", selection) != 0)
 		browser_error(browser, strerror(errno), 1);
 	g_list_foreach(selection, (GFunc)free, NULL);
