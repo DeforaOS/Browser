@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Browser 0.4.13\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-12-29 23:58+0100\n"
+"POT-Creation-Date: 2020-02-10 05:33+0100\n"
 "PO-Revision-Date: 2010-03-29 23:28+0200\n"
 "Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
 "Language-Team: German\n"
@@ -100,7 +100,7 @@ msgstr "Achtung"
 
 #: ../src/browser/browser.c:777 ../src/browser/browser.c:781
 #: ../src/desktop/desktop.c:1621 ../src/desktop/desktop.c:1627
-#: ../src/copy.c:863 ../src/copy.c:867 ../src/delete.c:571 ../src/delete.c:576
+#: ../src/copy.c:865 ../src/copy.c:869 ../src/delete.c:571 ../src/delete.c:576
 #: ../src/move.c:496 ../src/move.c:500 ../src/properties.c:375
 #: ../src/properties.c:379 ../src/view.c:431 ../src/view.c:436
 #: ../src/plugins/common.c:376 ../src/plugins/common.c:380
@@ -699,22 +699,22 @@ msgstr ""
 msgid " to \""
 msgstr " nach \""
 
-#: ../src/common.c:248 ../src/copy.c:783 ../src/plugins/properties.c:542
+#: ../src/common.c:248 ../src/copy.c:785 ../src/plugins/properties.c:542
 #: ../src/plugins/volumes.c:540
 msgid "bytes"
 msgstr ""
 
-#: ../src/common.c:252 ../src/copy.c:790 ../src/plugins/properties.c:548
+#: ../src/common.c:252 ../src/copy.c:792 ../src/plugins/properties.c:548
 #: ../src/plugins/volumes.c:546
 msgid "kB"
 msgstr ""
 
-#: ../src/common.c:254 ../src/copy.c:797 ../src/plugins/properties.c:550
+#: ../src/common.c:254 ../src/copy.c:799 ../src/plugins/properties.c:550
 #: ../src/plugins/volumes.c:548
 msgid "MB"
 msgstr ""
 
-#: ../src/common.c:256 ../src/copy.c:804 ../src/plugins/properties.c:552
+#: ../src/common.c:256 ../src/copy.c:806 ../src/plugins/properties.c:552
 #: ../src/plugins/volumes.c:550
 msgid "GB"
 msgstr ""
@@ -770,16 +770,16 @@ msgstr ""
 msgid "Omitting directory"
 msgstr ""
 
-#: ../src/copy.c:753
+#: ../src/copy.c:755
 msgid "0 bytes"
 msgstr ""
 
-#: ../src/copy.c:770
+#: ../src/copy.c:772
 #, c-format
 msgid "%.1f of %.1f %s (%.1f %s/s)"
 msgstr "%.1f von %.1f %s (%.1f %s/s)"
 
-#: ../src/copy.c:894 ../src/copy.c:898 ../src/delete.c:456 ../src/delete.c:460
+#: ../src/copy.c:896 ../src/copy.c:900 ../src/delete.c:456 ../src/delete.c:460
 #: ../src/delete.c:488 ../src/delete.c:493 ../src/move.c:527 ../src/move.c:531
 #: ../src/plugins/common.c:411 ../src/plugins/common.c:416
 #: ../src/plugins/common.c:619 ../src/plugins/common.c:624
@@ -789,18 +789,18 @@ msgstr "%.1f von %.1f %s (%.1f %s/s)"
 msgid "Question"
 msgstr "Frage"
 
-#: ../src/copy.c:897 ../src/move.c:530
+#: ../src/copy.c:899 ../src/move.c:530
 #, c-format
 msgid ""
 "%s will be overwritten\n"
 "Proceed?"
 msgstr ""
 
-#: ../src/copy.c:929 ../src/copy.c:933
+#: ../src/copy.c:931 ../src/copy.c:935
 msgid "Information"
 msgstr "Information"
 
-#: ../src/copy.c:955
+#: ../src/copy.c:957
 #, c-format
 msgid ""
 "Usage: %s [-fip] source_file target_file\n"
