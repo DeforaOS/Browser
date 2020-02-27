@@ -97,7 +97,6 @@ struct _Desktop
 
 	/* common */
 	char * path;
-	size_t path_cnt;
 	DIR * refresh_dir;
 	time_t refresh_mtime;
 	guint refresh_source;
@@ -1052,16 +1051,16 @@ static int _icons_categories(Desktop * desktop)
 static int _icons_files(Desktop * desktop)
 {
 	const char path[] = "/" DESKTOP;
+	size_t len;
 	struct stat st;
 
 	if(desktop->mime == NULL)
 		desktop->mime = mime_new(NULL);
 	_icons_files_add_home(desktop);
-	desktop->path_cnt = strlen(desktop->home) + 1 + sizeof(path);
-	if((desktop->path = malloc(desktop->path_cnt)) == NULL)
+	len = strlen(desktop->home) + 1 + sizeof(path);
+	if((desktop->path = malloc(len)) == NULL)
 		return -_desktop_perror(NULL, NULL, 1);
-	snprintf(desktop->path, desktop->path_cnt, "%s/%s", desktop->home,
-			path);
+	snprintf(desktop->path, len, "%s/%s", desktop->home, path);
 	if(browser_vfs_stat(desktop->path, &st) == 0)
 	{
 		if(!S_ISDIR(st.st_mode))
@@ -1153,7 +1152,6 @@ static void _icons_reset(Desktop * desktop)
 	if(desktop->path != NULL)
 		free(desktop->path);
 	desktop->path = NULL;
-	desktop->path_cnt = 0;
 	for(i = 0; i < desktop->icons_cnt; i++)
 	{
 		icon = desktopiconwindow_get_icon(desktop->icons[i]);
