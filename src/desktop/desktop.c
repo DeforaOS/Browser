@@ -1062,7 +1062,7 @@ static int _icons_files(Desktop * desktop)
 		return -_desktop_perror(NULL, NULL, 1);
 	snprintf(desktop->path, desktop->path_cnt, "%s/%s", desktop->home,
 			path);
-	if(stat(desktop->path, &st) == 0)
+	if(browser_vfs_stat(desktop->path, &st) == 0)
 	{
 		if(!S_ISDIR(st.st_mode))
 			return _desktop_error(NULL, desktop->path,
@@ -3111,7 +3111,7 @@ static gboolean _refresh_done_timeout(gpointer data)
 	desktop->refresh_source = 0;
 	if(desktop->path == NULL)
 		return FALSE;
-	if(stat(desktop->path, &st) != 0)
+	if(browser_vfs_stat(desktop->path, &st) != 0)
 		return _desktop_perror(NULL, desktop->path, FALSE);
 	if(st.st_mtime == desktop->refresh_mtime)
 		return TRUE;
