@@ -99,7 +99,7 @@ struct _Desktop
 	char * path;
 	size_t path_cnt;
 	DIR * refresh_dir;
-	time_t refresh_mti;
+	time_t refresh_mtime;
 	guint refresh_source;
 	/* files */
 	Mime * mime;
@@ -1277,7 +1277,7 @@ static void _refresh_files(Desktop * desktop)
 		desktop->refresh_source = 0;
 		return;
 	}
-	desktop->refresh_mti = st.st_mtime;
+	desktop->refresh_mtime = st.st_mtime;
 	desktop->refresh_source = g_idle_add(_desktop_on_refresh, desktop);
 }
 
@@ -3113,7 +3113,7 @@ static gboolean _refresh_done_timeout(gpointer data)
 		return FALSE;
 	if(stat(desktop->path, &st) != 0)
 		return _desktop_perror(NULL, desktop->path, FALSE);
-	if(st.st_mtime == desktop->refresh_mti)
+	if(st.st_mtime == desktop->refresh_mtime)
 		return TRUE;
 	desktop_refresh(desktop);
 	return FALSE;
@@ -3161,8 +3161,8 @@ static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
 			_desktop_perror(NULL, apppath, 1);
 		return;
 	}
-	if(st.st_mtime > desktop->refresh_mti)
-		desktop->refresh_mti = st.st_mtime;
+	if(st.st_mtime > desktop->refresh_mtime)
+		desktop->refresh_mtime = st.st_mtime;
 	alen = strlen(apppath);
 	while((de = browser_vfs_readdir(dir)) != NULL)
 	{
