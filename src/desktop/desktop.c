@@ -1068,7 +1068,7 @@ static int _icons_files(Desktop * desktop)
 			return _desktop_error(NULL, desktop->path,
 					strerror(ENOTDIR), 1);
 	}
-	else if(errno != ENOENT || mkdir(desktop->path, 0777) != 0)
+	else if(errno != ENOENT)
 		return _desktop_perror(NULL, desktop->path, 1);
 	return 0;
 }
