@@ -3213,7 +3213,10 @@ static void _refresh_loop_categories_xdg(Desktop * desktop,
 	size_t j;
 
 	if((path = getenv("XDG_DATA_DIRS")) == NULL || strlen(path) == 0)
-		path = "/usr/local/share:" DATADIR ":/usr/share";
+		/* XXX check this at build-time instead */
+		path = (strcmp(DATADIR, "/usr/local/share") == 0)
+			? DATADIR ":/usr/share"
+			: "/usr/local/share:" DATADIR ":/usr/share";
 	if((p = strdup(path)) == NULL)
 	{
 		_desktop_perror(NULL, NULL, 1);
