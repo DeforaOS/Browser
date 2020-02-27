@@ -1050,17 +1050,19 @@ static int _icons_categories(Desktop * desktop)
 
 static int _icons_files(Desktop * desktop)
 {
-	const char path[] = "/" DESKTOP;
-	size_t len;
+	char const * path;
 	struct stat st;
 
 	if(desktop->mime == NULL)
 		desktop->mime = mime_new(NULL);
 	_icons_files_add_home(desktop);
-	len = strlen(desktop->home) + 1 + sizeof(path);
-	if((desktop->path = malloc(len)) == NULL)
-		return -_desktop_perror(NULL, NULL, 1);
-	snprintf(desktop->path, len, "%s/%s", desktop->home, path);
+	if((path = getenv("XDG_DESKTOP_DIR")) != NULL)
+		desktop->path = string_new(path);
+	else
+		desktop->path = string_new_append(desktop->home, "/",
+				DESKTOP, NULL);
+	if(desktop->path == NULL)
+		return _desktop_error(desktop, NULL, error_get(NULL), 1);
 	if(browser_vfs_stat(desktop->path, &st) == 0)
 	{
 		if(!S_ISDIR(st.st_mode))
