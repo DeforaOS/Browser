@@ -32,7 +32,6 @@ static char const _license[] =
 
 
 
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -3759,7 +3758,7 @@ static void _view_on_filename_edited(GtkCellRendererText * renderer,
 	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, to);
 #endif
 	/* rename */
-	if(lstat(to, &st) != 0
+	if(browser_vfs_lstat(to, &st) != 0
 			|| browser->prefs.confirm_before_delete != TRUE
 			|| _browser_confirm(browser, "%s",
 				_("This will replace an existing file with the"
