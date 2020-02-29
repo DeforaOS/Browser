@@ -41,6 +41,7 @@
 #include <string.h>
 #include <errno.h>
 #include <libintl.h>
+#include <System.h>
 #include "Browser/vfs.h"
 #include "callbacks.h"
 #include "browser.h"
@@ -142,23 +143,21 @@ void on_home(gpointer data)
 void on_new_folder(gpointer data)
 {
 	Browser * browser = data;
-	char const * newfolder = _("New folder");
+	char const newfolder[] = N_("New folder");
 	char const * location;
-	size_t len;
-	char * path;
+	String * path;
 
 	if((location = browser_get_location(browser)) == NULL)
 		return;
-	len = strlen(location) + strlen(newfolder) + 2;
-	if((path = malloc(len)) == NULL)
+	if((path = string_new_append(location, "/", _(newfolder), NULL))
+			== NULL)
 	{
-		browser_error(browser, strerror(errno), 1);
+		browser_error(browser, error_get(NULL), 1);
 		return;
 	}
-	snprintf(path, len, "%s/%s", location, newfolder);
 	if(browser_vfs_mkdir(path, 0777) != 0)
 		browser_error(browser, error_get(NULL), 1);
-	free(path);
+	string_delete(path);
 }
 
 
