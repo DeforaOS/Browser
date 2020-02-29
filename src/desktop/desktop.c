@@ -68,6 +68,8 @@
 # define DATADIR		PREFIX "/share"
 #endif
 
+#define IDLE_LOOP_ICON_CNT	16	/* number of icons added in a loop */
+
 
 /* Desktop */
 /* private */
@@ -2953,8 +2955,8 @@ static gboolean _desktop_on_refresh(gpointer data)
 	Desktop * desktop = data;
 	unsigned int i;
 
-	for(i = 0; i < 16 && _refresh_loop(desktop) == 0; i++);
-	if(i == 16)
+	for(i = 0; i < IDLE_LOOP_ICON_CNT && _refresh_loop(desktop) == 0; i++);
+	if(i == IDLE_LOOP_ICON_CNT)
 		return TRUE;
 	return _refresh_done(desktop);
 }
