@@ -31,6 +31,7 @@
 #include <string.h>
 #include <gtk/gtk.h>
 #include <System.h>
+#include "desktop.h"
 #include "desktopicon.h"
 #include "desktopiconwindow.h"
 
