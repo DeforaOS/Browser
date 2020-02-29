@@ -35,18 +35,18 @@
 #  define unmount unmount
 # endif
 #endif
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <libintl.h>
+#include "Browser/vfs.h"
 #include "callbacks.h"
 #include "browser.h"
 #include "../../config.h"
 #define _(string) gettext(string)
+#define N_(string) (string)
 
 #define COMMON_SYMLINK
 #include "../common.c"
@@ -156,8 +156,8 @@ void on_new_folder(gpointer data)
 		return;
 	}
 	snprintf(path, len, "%s/%s", location, newfolder);
-	if(mkdir(path, 0777) != 0)
-		browser_error(browser, strerror(errno), 1);
+	if(browser_vfs_mkdir(path, 0777) != 0)
+		browser_error(browser, error_get(NULL), 1);
 	free(path);
 }
 

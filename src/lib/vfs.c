@@ -424,6 +424,15 @@ char const * browser_vfs_mime_type(Mime * mime, char const * filename,
 }
 
 
+/* browser_vfs_mkdir */
+int browser_vfs_mkdir(char const * path, mode_t mode)
+{
+	if(mkdir(path, mode) != 0)
+		return error_set_code(-errno, "%s: %s", path, strerror(errno));
+	return 0;
+}
+
+
 /* browser_vfs_mount */
 int browser_vfs_mount(char const * mountpoint)
 {

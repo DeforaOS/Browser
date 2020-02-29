@@ -572,7 +572,7 @@ static void _on_popup_new_folder(gpointer data)
 		_desktop_serror(desktop, newfolder, 0);
 		return;
 	}
-	if(mkdir(path, 0777) != 0)
+	if(browser_vfs_mkdir(path, 0777) != 0)
 		_desktop_perror(desktop, path, 0);
 	string_delete(path);
 }

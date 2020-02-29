@@ -442,7 +442,7 @@ static int _single_recurse(Copy * copy, char const * src, char const * dst,
 
 	memcpy(&copy2, copy, sizeof(copy2));
 	copy2.prefs = &prefs2;
-	if(mkdir(dst, mode) != 0 && errno != EEXIST)
+	if(browser_vfs_mkdir(dst, mode) != 0 && errno != EEXIST)
 		return _copy_filename_error(copy, dst, 1);
 	srclen = strlen(src);
 	dstlen = strlen(dst);

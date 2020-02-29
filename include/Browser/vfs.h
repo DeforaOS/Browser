@@ -44,6 +44,8 @@ int browser_vfs_can_unmount(char const * mountpoint);
 int browser_vfs_is_mountpoint(struct stat * lst, dev_t parent);
 
 /* useful */
+int browser_vfs_mkdir(char const * path, mode_t mode);
+
 /* DIR */
 DIR * browser_vfs_opendir(char const * filename, struct stat * st);
 int browser_vfs_closedir(DIR * dir);

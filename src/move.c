@@ -311,7 +311,7 @@ static int _single_recurse(Move * move, char const * src, char const * dst,
 	char * sdst = NULL;
 	char * p;
 
-	if(mkdir(dst, mode) != 0)
+	if(browser_vfs_mkdir(dst, mode) != 0)
 		return _move_filename_error(move, dst, 1);
 	srclen = strlen(src);
 	dstlen = strlen(dst);
