@@ -80,6 +80,7 @@ DesktopWidgetDefinition widget =
 static BrowserWidget * _browser_init(char const * name)
 {
 	BrowserWidget * browser;
+	(void) name;
 
 	if((browser = object_new(sizeof(*browser))) == NULL)
 		return NULL;
