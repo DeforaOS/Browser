@@ -580,12 +580,15 @@ static void _trash_on_delete(gpointer data)
 {
 	Trash * trash = data;
 	GtkTreeSelection * treesel;
+	gint cnt;
 
 	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(trash->view));
-	if(gtk_tree_selection_count_selected_rows(treesel) > 0
+	if((cnt = gtk_tree_selection_count_selected_rows(treesel)) > 0
 			&& _trash_confirm(trash,
-				_("This will delete the file(s) selected.\n"
-					"Do you really want to proceed?")))
+				ngettext("This will delete the file selected.\n"
+					"Do you really want to proceed?",
+					"This will delete the files selected.\n"
+					"Do you really want to proceed?", cnt)))
 		_trash_delete_selection(trash);
 }
 
