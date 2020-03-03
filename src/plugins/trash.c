@@ -319,6 +319,7 @@ static gboolean _trash_confirm(Trash * trash, char const * message)
 {
 	GtkWidget * dialog;
 	int res;
+	(void) trash;
 
 	/* XXX move to BrowserPluginHelper */
 	dialog = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_QUESTION,
@@ -372,6 +373,7 @@ static int _delete_path(Trash * trash, GtkTreeModel * model, GtkTreePath * path)
 	gchar * p;
 	char * files;
 	size_t len;
+	(void) trash;
 
 	if(gtk_tree_model_get_iter(model, &iter, path) != TRUE)
 		/* XXX report error */
