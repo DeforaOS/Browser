@@ -570,7 +570,7 @@ static gboolean _common_task_on_io_can_read(GIOChannel * channel,
 			_common_task_message(task, GTK_MESSAGE_ERROR,
 					error->message, 1);
 			g_error_free(error);
-			/* fallback */
+			/* fallthrough */
 		case G_IO_STATUS_EOF:
 		default: /* should not happen... */
 			_common_task_close_channel(task, channel);
