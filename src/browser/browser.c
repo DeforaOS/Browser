@@ -2249,10 +2249,14 @@ static void _preferences_on_mime_edit(gpointer data)
 	gtk_size_group_add_widget(group, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	open = gtk_entry_new();
-	handler = mime_get_handler(browser->mime, type, "open");
-	gtk_entry_set_text(GTK_ENTRY(open), (handler != NULL)
-			? mimehandler_get_name(handler, 0) : "");
-	mimehandler_delete(handler);
+	if((handler = mime_get_handler(browser->mime, type, "open")) != NULL)
+	{
+		gtk_entry_set_text(GTK_ENTRY(open),
+				mimehandler_get_name(handler, 0));
+		mimehandler_delete(handler);
+	}
+	else
+		gtk_entry_set_text(GTK_ENTRY(open), "");
 	gtk_box_pack_start(GTK_BOX(hbox), open, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	/* view */
@@ -2266,10 +2270,14 @@ static void _preferences_on_mime_edit(gpointer data)
 	gtk_size_group_add_widget(group, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	view = gtk_entry_new();
-	handler = mime_get_handler(browser->mime, type, "view");
-	gtk_entry_set_text(GTK_ENTRY(view), (handler != NULL)
-			? mimehandler_get_name(handler, 0) : "");
-	mimehandler_delete(handler);
+	if((handler = mime_get_handler(browser->mime, type, "view")) != NULL)
+	{
+		gtk_entry_set_text(GTK_ENTRY(view),
+				mimehandler_get_name(handler, 0));
+		mimehandler_delete(handler);
+	}
+	else
+		gtk_entry_set_text(GTK_ENTRY(view), "");
 	gtk_box_pack_start(GTK_BOX(hbox), view, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	/* edit */
@@ -2283,10 +2291,14 @@ static void _preferences_on_mime_edit(gpointer data)
 	gtk_size_group_add_widget(group, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	edit = gtk_entry_new();
-	handler = mime_get_handler(browser->mime, type, "edit");
-	gtk_entry_set_text(GTK_ENTRY(edit), (handler != NULL)
-			? mimehandler_get_name(handler, 0) : "");
-	mimehandler_delete(handler);
+	if((handler = mime_get_handler(browser->mime, type, "edit")) != NULL)
+	{
+		gtk_entry_set_text(GTK_ENTRY(edit),
+				mimehandler_get_name(handler, 0));
+		mimehandler_delete(handler);
+	}
+	else
+		gtk_entry_set_text(GTK_ENTRY(edit), "");
 	gtk_box_pack_start(GTK_BOX(hbox), edit, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	gtk_widget_show_all(vbox);
