@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Browser 0.4.13\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-03-03 01:09+0100\n"
+"POT-Creation-Date: 2020-09-13 06:20+0200\n"
 "PO-Revision-Date: 2010-03-29 23:28+0200\n"
 "Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
 "Language-Team: French\n"
@@ -215,115 +215,115 @@ msgstr "Type :"
 msgid "Open with:"
 msgstr "Ouvrir avec :"
 
-#: ../src/browser/browser.c:2260
+#: ../src/browser/browser.c:2264
 msgid "View with:"
 msgstr "Visualiser avec :"
 
-#: ../src/browser/browser.c:2277
+#: ../src/browser/browser.c:2285
 msgid "Edit with:"
 msgstr "Modifier avec :"
 
-#: ../src/browser/browser.c:2847 ../src/plugins/trash.c:240
+#: ../src/browser/browser.c:2859 ../src/plugins/trash.c:240
 msgid "Filename"
 msgstr "Nom de fichier"
 
-#: ../src/browser/browser.c:2851 ../src/plugins/volumes.c:287
+#: ../src/browser/browser.c:2863 ../src/plugins/volumes.c:287
 msgid "Size"
 msgstr "Taille"
 
-#: ../src/browser/browser.c:2853
+#: ../src/browser/browser.c:2865
 msgid "Owner"
 msgstr "Propriétaire"
 
-#: ../src/browser/browser.c:2854
+#: ../src/browser/browser.c:2866
 msgid "Group"
 msgstr "Groupe"
 
-#: ../src/browser/browser.c:2855
+#: ../src/browser/browser.c:2867
 msgid "Date"
 msgstr "Date"
 
-#: ../src/browser/browser.c:2857
+#: ../src/browser/browser.c:2869
 msgid "MIME type"
 msgstr "Type MIME"
 
-#: ../src/browser/browser.c:3237 ../src/browser/browser.c:3598
+#: ../src/browser/browser.c:3249 ../src/browser/browser.c:3610
 #: ../src/browser/window.c:154
 msgid "Propert_ies"
 msgstr "Propr_iétés"
 
-#: ../src/browser/browser.c:3293 ../src/browser/browser.c:3361
+#: ../src/browser/browser.c:3305 ../src/browser/browser.c:3373
 msgid "_Open"
 msgstr "_Ouvrir"
 
-#: ../src/browser/browser.c:3301 ../src/plugins/volumes.c:932
+#: ../src/browser/browser.c:3313 ../src/plugins/volumes.c:932
 msgid "Open in new _window"
 msgstr "Ouvrir dans une _nouvelle fenêtre"
 
-#: ../src/browser/browser.c:3311 ../src/browser/browser.c:3382
-#: ../src/browser/browser.c:3574 ../src/browser/window.c:164
+#: ../src/browser/browser.c:3323 ../src/browser/browser.c:3394
+#: ../src/browser/browser.c:3586 ../src/browser/window.c:164
 msgid "_Cut"
 msgstr "Co_uper"
 
-#: ../src/browser/browser.c:3318 ../src/browser/browser.c:3389
-#: ../src/browser/browser.c:3580 ../src/browser/window.c:166
+#: ../src/browser/browser.c:3330 ../src/browser/browser.c:3401
+#: ../src/browser/browser.c:3592 ../src/browser/window.c:166
 msgid "Cop_y"
 msgstr "_Copier"
 
-#: ../src/browser/browser.c:3325 ../src/browser/browser.c:3396
-#: ../src/browser/browser.c:3586 ../src/browser/window.c:168
+#: ../src/browser/browser.c:3337 ../src/browser/browser.c:3408
+#: ../src/browser/browser.c:3598 ../src/browser/window.c:168
 #: ../src/desktop/desktop.c:538
 msgid "_Paste"
 msgstr "C_oller"
 
-#: ../src/browser/browser.c:3339
+#: ../src/browser/browser.c:3351
 msgid "_Unmount"
 msgstr "_Démonter"
 
-#: ../src/browser/browser.c:3346 ../src/browser/browser.c:3404
+#: ../src/browser/browser.c:3358 ../src/browser/browser.c:3416
 #: ../src/browser/window.c:171
 msgid "_Delete"
 msgstr "_Supprimer"
 
-#: ../src/browser/browser.c:3364 ../src/browser/window.c:217
+#: ../src/browser/browser.c:3376 ../src/browser/window.c:217
 #: ../src/desktop/desktopicon.c:884 ../src/view.c:158
 msgid "_Edit"
 msgstr "É_dition"
 
-#: ../src/browser/browser.c:3368
+#: ../src/browser/browser.c:3380
 msgid "_Execute"
 msgstr "_Exécuter"
 
-#: ../src/browser/browser.c:3376 ../src/desktop/desktopicon.c:897
+#: ../src/browser/browser.c:3388 ../src/desktop/desktopicon.c:897
 #: ../src/view.c:148 ../src/view.c:160
 msgid "Open _with..."
 msgstr "Ouvrir _avec..."
 
-#: ../src/browser/browser.c:3489 ../src/desktop/desktopicon.c:1111
+#: ../src/browser/browser.c:3501 ../src/desktop/desktopicon.c:1111
 msgid "Are you sure you want to execute this file?"
 msgstr "Voulez-vous vraiment exécuter ce fichier ?"
 
-#: ../src/browser/browser.c:3544
+#: ../src/browser/browser.c:3556
 msgid "New"
 msgstr "Nouveau"
 
-#: ../src/browser/browser.c:3549 ../src/browser/browser.c:3553
+#: ../src/browser/browser.c:3561 ../src/browser/browser.c:3565
 msgid "Folder"
 msgstr "Dossier"
 
-#: ../src/browser/browser.c:3560
+#: ../src/browser/browser.c:3572
 msgid "Symbolic link..."
 msgstr "Lien symbolique..."
 
-#: ../src/browser/browser.c:3564
+#: ../src/browser/browser.c:3576
 msgid "Text file"
 msgstr "Fichier texte"
 
-#: ../src/browser/browser.c:3610 ../src/desktop/desktop.c:582
+#: ../src/browser/browser.c:3622 ../src/desktop/desktop.c:582
 msgid "New text file.txt"
 msgstr "Nouveau fichier texte.txt"
 
-#: ../src/browser/browser.c:3764
+#: ../src/browser/browser.c:3776
 msgid ""
 "This will replace an existing file with the same name.\n"
 "Are you sure?"
@@ -331,11 +331,11 @@ msgstr ""
 "Un fichier avec ce nom existe déjà.\n"
 "Voulez-vous le remplacer ?"
 
-#: ../src/browser/browser.c:3887
+#: ../src/browser/browser.c:3899
 msgid "Refreshing folder..."
 msgstr "Actualisation du dossier..."
 
-#: ../src/browser/browser.c:3917 ../src/browser/window.c:257
+#: ../src/browser/browser.c:3929 ../src/browser/window.c:257
 msgid "File manager"
 msgstr "Gestionnaire de fichiers"
 
