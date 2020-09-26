@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012-2018 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2020 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -25,66 +25,24 @@
 
 
 
-#ifndef DESKTOP_BROWSER_DESKTOP_H
-# define DESKTOP_BROWSER_DESKTOP_H
+#ifndef BROWSER_DESKTOPHANDLER_H
+# define BROWSER_DESKTOPHANDLER_H
 
-# include <gtk/gtk.h>
-# include <Desktop.h>
+# include <X11/Xlib.h>
+# include "Browser/desktop.h"
 
 
-/* Desktop */
-/* public */
+/* DesktopHandler */
 /* types */
-typedef struct _Desktop Desktop;
+/* functions */
+DesktopHandler * desktophandler_new(Desktop * desktop, DesktopIcons icons);
+void desktophandler_delete(DesktopHandler * handler);
 
-typedef enum _DesktopAlignment
-{
-	DESKTOP_ALIGNMENT_VERTICAL = 0,
-	DESKTOP_ALIGNMENT_HORIZONTAL
-} DesktopAlignment;
+/* accessors */
+void desktophandler_set_icons(DesktopHandler * handler, DesktopIcons icons);
 
-typedef struct _DesktopHandler DesktopHandler;
+/* useful */
+void desktophandler_popup(DesktopHandler * handler, XButtonEvent * xbev);
+void desktophandler_refresh(DesktopHandler * handler);
 
-typedef struct _DesktopHandlerHelper
-{
-	Desktop * desktop;
-} DesktopHandlerHelper;
-
-typedef enum _DesktopIcons
-{
-	DESKTOP_ICONS_NONE = 0,
-	DESKTOP_ICONS_APPLICATIONS,
-	DESKTOP_ICONS_CATEGORIES,
-	DESKTOP_ICONS_FILES,
-	DESKTOP_ICONS_HOMESCREEN
-} DesktopIcons;
-# define DESKTOP_ICONS_LAST DESKTOP_ICONS_HOMESCREEN
-# define DESKTOP_ICONS_COUNT (DESKTOP_ICONS_LAST + 1)
-
-typedef enum _DesktopLayout
-{
-	DESKTOP_LAYOUT_NORMAL = 0,
-	DESKTOP_LAYOUT_LANDSCAPE,
-	DESKTOP_LAYOUT_PORTRAIT,
-	DESKTOP_LAYOUT_ROTATE,
-	DESKTOP_LAYOUT_TOGGLE
-} DesktopLayout;
-
-typedef enum _DesktopMessage
-{
-	DESKTOP_MESSAGE_SET_ALIGNMENT = 0,
-	DESKTOP_MESSAGE_SET_ICONS,
-	DESKTOP_MESSAGE_SET_LAYOUT,
-	DESKTOP_MESSAGE_SHOW
-} DesktopMessage;
-
-typedef enum _DesktopShow
-{
-	DESKTOP_SHOW_SETTINGS = 0
-} DesktopMessageShow;
-
-
-/* constants */
-# define DESKTOP_CLIENT_MESSAGE	"DEFORAOS_DESKTOP_DESKTOP_CLIENT"
-
-#endif /* !DESKTOP_BROWSER_DESKTOP_H */
+#endif /* !BROWSER_DESKTOPHANDLER_H */
