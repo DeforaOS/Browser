@@ -48,15 +48,17 @@ static void _desktophandler_applications_init(DesktopHandler * handler)
 	handler->u.applications.refresh_dir = NULL;
 	handler->u.applications.refresh_mtime = 0;
 	handler->u.applications.refresh_source = 0;
-	handler->u.applications.category = NULL;
 	handler->u.applications.apps = NULL;
+	handler->u.applications.category = NULL;
+	desktop_set_alignment(handler->desktop, DESKTOP_ALIGNMENT_HORIZONTAL);
 	if((desktopicon = desktopicon_new(handler->desktop, _("Back"), NULL))
 			== NULL)
 	{
 		desktop_serror(handler->desktop, _("Back"), 1);
 		return;
 	}
-	desktopicon_set_callback(desktopicon, _applications_init_on_back, NULL);
+	desktopicon_set_callback(desktopicon, _applications_init_on_back,
+			handler);
 	desktopicon_set_first(desktopicon, TRUE);
 	desktopicon_set_immutable(desktopicon, TRUE);
 	desktop_get_icon_size(handler->desktop, NULL, NULL, &size);
@@ -69,12 +71,13 @@ static void _desktophandler_applications_init(DesktopHandler * handler)
 
 static void _applications_init_on_back(Desktop * desktop, gpointer data)
 {
-	(void) data;
+	DesktopHandler * handler = data;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
-	desktop_set_icons(desktop, DESKTOP_ICONS_HOMESCREEN);
+	desktop_set_icons(desktop, (handler->u.applications.category != NULL)
+			? DESKTOP_ICONS_CATEGORIES : DESKTOP_ICONS_HOMESCREEN);
 }
 
 
@@ -88,6 +91,7 @@ static void _desktophandler_applications_destroy(DesktopHandler * handler)
 	g_slist_foreach(handler->u.applications.apps, (GFunc)mimehandler_delete,
 			NULL);
 	g_slist_free(handler->u.applications.apps);
+	handler->u.applications.apps = NULL;
 }
 
 
@@ -149,8 +153,7 @@ static gboolean _applications_on_refresh_done(DesktopHandler * handler)
 {
 	handler->u.applications.refresh_source = 0;
 	_applications_on_refresh_done_applications(handler);
-	desktop_cleanup(handler->desktop);
-	desktop_icons_align(handler->desktop);
+	desktop_icons_cleanup(handler->desktop, TRUE);
 	return FALSE;
 }
 

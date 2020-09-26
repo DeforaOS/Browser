@@ -55,6 +55,7 @@ void desktop_delete(Desktop * desktop);
 int desktop_get_drag_data(Desktop * desktop, GtkSelectionData * seldata);
 GdkPixbuf * desktop_get_file(Desktop * desktop);
 GdkPixbuf * desktop_get_folder(Desktop * desktop);
+DesktopHandler * desktop_get_handler(Desktop * desktop);
 String const * desktop_get_home(Desktop * desktop);
 void desktop_get_icon_size(Desktop * desktop, unsigned int * width,
 		unsigned int * height, unsigned int * size);
@@ -77,11 +78,12 @@ void desktop_refresh(Desktop * desktop);
 void desktop_reset(Desktop * desktop);
 
 void desktop_icon_add(Desktop * desktop, DesktopIcon * icon, gboolean align);
-void desktop_icon_remove(Desktop * desktop, DesktopIcon * icon);
+int desktop_icon_remove(Desktop * desktop, DesktopIcon * icon, gboolean align);
 
-void desktop_cleanup(Desktop * desktop);
 void desktop_icons_align(Desktop * desktop);
+void desktop_icons_cleanup(Desktop * desktop, gboolean align);
 DesktopIcon * desktop_icons_lookup(Desktop * desktop, String const * name);
+void desktop_icons_remove_all(Desktop * desktop);
 void desktop_icons_sort(Desktop * desktop);
 
 void desktop_select_all(Desktop * desktop);

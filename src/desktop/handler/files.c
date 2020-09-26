@@ -54,6 +54,7 @@ static void _desktophandler_files_init(DesktopHandler * handler)
 	handler->u.files.refresh_mtime = 0;
 	handler->u.files.refresh_source = 0;
 	handler->u.files.menu = NULL;
+	desktop_set_alignment(handler->desktop, DESKTOP_ALIGNMENT_VERTICAL);
 	/* FIXME let it be configured again */
 	handler->u.files.show_hidden = FALSE;
 	/* check for errors */
@@ -266,6 +267,8 @@ static int _files_on_refresh_loop_opendir(DesktopHandler * handler);
 
 static void _desktophandler_files_refresh(DesktopHandler * handler)
 {
+	if(handler->u.files.refresh_source != 0)
+		g_source_remove(handler->u.files.refresh_source);
 	if(handler->u.files.refresh_dir != NULL)
 		browser_vfs_closedir(handler->u.files.refresh_dir);
 	handler->u.files.refresh_dir = NULL;
@@ -293,11 +296,10 @@ static gboolean _desktophandler_files_on_refresh(gpointer data)
 
 static gboolean _files_on_refresh_done(DesktopHandler * handler)
 {
-	desktop_cleanup(handler->desktop);
 	if(handler->u.files.refresh_dir != NULL)
 		browser_vfs_closedir(handler->u.files.refresh_dir);
 	handler->u.files.refresh_dir = NULL;
-	desktop_icons_align(handler->desktop);
+	desktop_icons_cleanup(handler->desktop, TRUE);
 	handler->u.files.refresh_source = g_timeout_add(1000,
 			_files_on_refresh_done_timeout, handler);
 	return FALSE;
@@ -308,13 +310,19 @@ static gboolean _files_on_refresh_done_timeout(gpointer data)
 	DesktopHandler * handler = data;
 	struct stat st;
 
-	handler->u.files.refresh_source = 0;
 	if(handler->u.files.path == NULL)
+	{
+		handler->u.files.refresh_source = 0;
 		return FALSE;
+	}
 	if(browser_vfs_stat(handler->u.files.path, &st) != 0)
+	{
+		handler->u.files.refresh_source = 0;
 		return desktop_perror(NULL, handler->u.files.path, FALSE);
+	}
 	if(st.st_mtime == handler->u.files.refresh_mtime)
 		return TRUE;
+	handler->u.files.refresh_source = 0;
 	desktop_refresh(handler->desktop);
 	return FALSE;
 }

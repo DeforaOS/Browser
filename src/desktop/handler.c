@@ -58,36 +58,42 @@ typedef struct _DesktopCategory
 	char const * icon;
 } DesktopCategory;
 
+typedef struct _DesktopHandlerApplications
+{
+	DIR * refresh_dir;
+	time_t refresh_mtime;
+	guint refresh_source;
+	GSList * apps;
+	DesktopCategory * category;
+} DesktopHandlerApplications;
+
+typedef struct _DesktopHandlerCategories
+{
+	DIR * refresh_dir;
+	time_t refresh_mtime;
+	guint refresh_source;
+	GSList * apps;
+} DesktopHandlerCategories;
+
+typedef struct _DesktopHandlerFiles
+{
+	char * path;
+	DIR * refresh_dir;
+	time_t refresh_mtime;
+	guint refresh_source;
+	gboolean show_hidden;
+	GtkWidget * menu;
+} DesktopHandlerFiles;
+
 struct _DesktopHandler
 {
 	Desktop * desktop;
 	DesktopIcons icons;
 	union
 	{
-		struct
-		{
-			char * path;
-			DIR * refresh_dir;
-			time_t refresh_mtime;
-			guint refresh_source;
-			gboolean show_hidden;
-			GtkWidget * menu;
-		} files;
-		struct
-		{
-			DIR * refresh_dir;
-			time_t refresh_mtime;
-			guint refresh_source;
-			DesktopCategory * category;
-			GSList * apps;
-		} applications;
-		struct
-		{
-			DIR * refresh_dir;
-			time_t refresh_mtime;
-			guint refresh_source;
-			GSList * apps;
-		} categories;
+		DesktopHandlerApplications applications;
+		DesktopHandlerCategories categories;
+		DesktopHandlerFiles files;
 	} u;
 };
 
@@ -103,24 +109,6 @@ struct _DesktopHandler
 #define DESKTOP			".desktop"
 
 #define IDLE_LOOP_ICON_CNT	16	/* number of icons added in a loop */
-
-static DesktopCategory _desktop_categories[] =
-{
-	{ FALSE, "Audio",	N_("Audio"),	"gnome-mime-audio",	},
-	{ FALSE, "Development",	N_("Development"),"applications-development"},
-	{ FALSE, "Education",	N_("Education"),"applications-science"	},
-	{ FALSE, "Game",	N_("Games"),	"applications-games"	},
-	{ FALSE, "Graphics",	N_("Graphics"),	"applications-graphics"	},
-	{ FALSE, "AudioVideo",	N_("Multimedia"),"applications-multimedia"},
-	{ FALSE, "Network",	N_("Network"),	"applications-internet" },
-	{ FALSE, "Office",	N_("Office"),	"applications-office"	},
-	{ FALSE, "Settings",	N_("Settings"),	"gnome-settings"	},
-	{ FALSE, "System",	N_("System"),	"applications-system"	},
-	{ FALSE, "Utility",	N_("Utilities"),"applications-utilities"},
-	{ FALSE, "Video",	N_("Video"),	"video"			}
-};
-static const size_t _desktop_categories_cnt = sizeof(_desktop_categories)
-	/ sizeof(*_desktop_categories);
 
 
 #include "handler/applications.c"
@@ -161,7 +149,7 @@ void desktophandler_set_icons(DesktopHandler * handler, DesktopIcons icons)
 {
 	if(handler->icons != icons)
 	{
-		desktop_cleanup(handler->desktop);
+		desktop_icons_remove_all(handler->desktop);
 		_set_icons_destroy(handler);
 		handler->icons = icons;
 		_set_icons_init(handler);
