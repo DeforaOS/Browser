@@ -30,7 +30,6 @@
 
 
 /* types */
-typedef struct _Desktop Desktop;
 typedef struct _DesktopIcon DesktopIcon;
 typedef struct _DesktopIconWindow DesktopIconWindow;
 

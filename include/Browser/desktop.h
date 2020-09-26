@@ -35,11 +35,20 @@
 /* Desktop */
 /* public */
 /* types */
+typedef struct _Desktop Desktop;
+
 typedef enum _DesktopAlignment
 {
 	DESKTOP_ALIGNMENT_VERTICAL = 0,
 	DESKTOP_ALIGNMENT_HORIZONTAL
 } DesktopAlignment;
+
+typedef struct _DesktopHandler DesktopHandler;
+
+typedef struct _DesktopHandlerHelper
+{
+	Desktop * desktop;
+} DesktopHandlerHelper;
 
 typedef enum _DesktopIcons
 {

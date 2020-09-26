@@ -98,20 +98,14 @@ struct _Desktop
 	size_t icons_cnt;
 
 	/* common */
-	char * path;
-	DIR * refresh_dir;
-	time_t refresh_mtime;
 	guint refresh_source;
-	/* files */
-	Mime * mime;
 	char const * home;
+	Mime * mime;
 	GdkPixbuf * file;
 	GdkPixbuf * folder;
-	gboolean show_hidden;
-	/* applications */
-	DesktopCategory * category;
-	/* categories */
-	GSList * apps;
+
+	/* handler */
+	DesktopHandler * handler;
 
 	/* preferences */
 	GtkWidget * pr_window;
@@ -136,7 +130,6 @@ struct _Desktop
 	GtkWidget * desktop;
 	GdkWindow * back;
 	GtkIconTheme * theme;
-	GtkWidget * menu;
 #if GTK_CHECK_VERSION(3, 0, 0)
 	cairo_t * cairo;
 #else
@@ -150,6 +143,39 @@ struct _DesktopCategory
 	char const * category;
 	char const * name;
 	char const * icon;
+};
+
+struct _DesktopHandler
+{
+	Desktop * desktop;
+	DesktopIcons icons;
+	union
+	{
+		struct
+		{
+			char * path;
+			DIR * refresh_dir;
+			time_t refresh_mtime;
+			guint refresh_source;
+			gboolean show_hidden;
+			GtkWidget * menu;
+		} files;
+		struct
+		{
+			DIR * refresh_dir;
+			time_t refresh_mtime;
+			guint refresh_source;
+			DesktopCategory * category;
+			GSList * apps;
+		} applications;
+		struct
+		{
+			DIR * refresh_dir;
+			time_t refresh_mtime;
+			guint refresh_source;
+			GSList * apps;
+		} categories;
+	} u;
 };
 
 typedef enum _DesktopHows
@@ -227,6 +253,7 @@ static int _desktop_get_properties(Desktop * desktop, GdkRectangle * geometry,
 static int _desktop_get_workarea(Desktop * desktop);
 
 /* useful */
+static void _desktop_cleanup(Desktop * desktop);
 #if GTK_CHECK_VERSION(3, 0, 0)
 static void _desktop_draw_background(Desktop * desktop, GdkRGBA * color,
 		char const * filename, DesktopHows how, gboolean extend);
@@ -239,6 +266,31 @@ static int _desktop_icon_add(Desktop * desktop, DesktopIcon * icon);
 static int _desktop_icon_remove(Desktop * desktop, DesktopIcon * icon);
 
 static void _desktop_show_preferences(Desktop * desktop);
+
+/* handlers */
+static void _desktophandler_applications_init(DesktopHandler * handler);
+static void _desktophandler_applications_destroy(DesktopHandler * handler);
+static void _desktophandler_applications_popup(DesktopHandler * handler,
+		XButtonEvent * xbev);
+static void _desktophandler_applications_refresh(DesktopHandler * handler);
+
+static void _desktophandler_categories_init(DesktopHandler * handler);
+static void _desktophandler_categories_destroy(DesktopHandler * handler);
+static void _desktophandler_categories_popup(DesktopHandler * handler,
+		XButtonEvent * xbev);
+static void _desktophandler_categories_refresh(DesktopHandler * handler);
+
+static void _desktophandler_files_init(DesktopHandler * handler);
+static void _desktophandler_files_destroy(DesktopHandler * handler);
+static void _desktophandler_files_popup(DesktopHandler * handler,
+		XButtonEvent * xbev);
+static void _desktophandler_files_refresh(DesktopHandler * handler);
+
+static void _desktophandler_homescreen_init(DesktopHandler * handler);
+static void _desktophandler_homescreen_destroy(DesktopHandler * handler);
+static void _desktophandler_homescreen_popup(DesktopHandler * handler,
+		XButtonEvent * xbev);
+static void _desktophandler_homescreen_refresh(DesktopHandler * handler);
 
 /* callbacks */
 static gboolean _desktop_on_preferences_closex(gpointer data);
@@ -261,7 +313,6 @@ static gboolean _desktop_on_refresh(gpointer data);
 static void _new_events(Desktop * desktop, GdkWindow * window,
 		GdkEventMask mask);
 static void _new_filter(Desktop * desktop, GdkWindow * window);
-static void _new_icons(Desktop * desktop);
 static void _new_window(Desktop * desktop, GdkEventMask * mask);
 static int _on_message(void * data, uint32_t value1, uint32_t value2,
 		uint32_t value3);
@@ -284,6 +335,7 @@ static GdkFilterReturn _on_root_event(GdkXEvent * xevent, GdkEvent * event,
 Desktop * desktop_new(DesktopPrefs * prefs)
 {
 	Desktop * desktop;
+	char const * home;
 #if !GTK_CHECK_VERSION(2, 24, 0)
 	gint depth;
 #endif
@@ -314,10 +366,21 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 	desktop->root = gdk_screen_get_root_window(desktop->screen);
 	/* icons */
 	desktop->icons_size = 0;
-	/* common */
-	if((desktop->home = getenv("HOME")) == NULL
-			&& (desktop->home = g_get_home_dir()) == NULL)
-		desktop->home = "/";
+	if((home = getenv("HOME")) == NULL
+			&& (home = g_get_home_dir()) == NULL)
+		home = "/";
+	desktop->home = home;
+	desktop->mime = mime_new(NULL);
+	/* handler */
+	desktop->handler = object_new(sizeof(*desktop->handler));
+	/* check for errors */
+	if(desktop->mime == NULL || desktop->handler == NULL)
+	{
+		desktop_delete(desktop);
+		return NULL;
+	}
+	desktop->handler->desktop = desktop;
+	desktop->handler->icons = DESKTOP_ICONS_NONE;
 	/* internal */
 	desktop->theme = gtk_icon_theme_get_default();
 	desktop_message_register(NULL, DESKTOP_CLIENT_MESSAGE, _on_message,
@@ -337,14 +400,14 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 	/* manage events on the root window */
 	_new_events(desktop, desktop->root, mask);
 	_new_filter(desktop, desktop->root);
-	/* load the default icons */
-	_new_icons(desktop);
 	return desktop;
 }
 
 static void _new_events(Desktop * desktop, GdkWindow * window,
 		GdkEventMask mask)
 {
+	(void) desktop;
+
 	mask = gdk_window_get_events(window) | mask;
 	gdk_window_set_events(window, mask);
 }
@@ -367,13 +430,16 @@ static void _new_icons(Desktop * desktop)
 #endif
 		GTK_STOCK_MISSING_IMAGE, NULL };
 	char const ** p;
+	GdkPixbuf * icon;
 
-	for(p = file; *p != NULL && desktop->file == NULL; p++)
-		desktop->file = gtk_icon_theme_load_icon(desktop->theme, *p,
+	for(p = file, icon = NULL; *p != NULL && icon == NULL; p++)
+		icon = gtk_icon_theme_load_icon(desktop->theme, *p,
 				desktop->icons_size, 0, NULL);
-	for(p = folder; *p != NULL && desktop->folder == NULL; p++)
-		desktop->folder = gtk_icon_theme_load_icon(desktop->theme, *p,
+	desktop->file = icon;
+	for(p = folder, icon = NULL; *p != NULL && icon == NULL; p++)
+		icon = gtk_icon_theme_load_icon(desktop->theme, *p,
 				desktop->icons_size, 0, NULL);
+	desktop->folder = icon;
 }
 
 static void _new_window(Desktop * desktop, GdkEventMask * mask)
@@ -500,135 +566,34 @@ static void _on_popup(gpointer data)
 static void _on_popup_event(gpointer data, XButtonEvent * xbev)
 {
 	Desktop * desktop = data;
-	GtkWidget * menuitem;
-	GtkWidget * submenu;
-	GtkWidget * image;
 
-	desktop->menu = gtk_menu_new();
-	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_New"));
-	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
-			gtk_image_new_from_icon_name("document-new",
-				GTK_ICON_SIZE_MENU));
-	submenu = gtk_menu_new();
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), submenu);
-	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);
-	/* submenu for new documents */
-	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Folder"));
-	image = gtk_image_new_from_icon_name("folder-new", GTK_ICON_SIZE_MENU);
-	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem), image);
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
-				_on_popup_new_folder), desktop);
-	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
-	menuitem = gtk_separator_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
-	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Symbolic link..."));
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
-				_on_popup_symlink), desktop);
-	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
-	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Text file"));
-	image = gtk_image_new_from_icon_name("stock_new-text",
-			GTK_ICON_SIZE_MENU);
-	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem), image);
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
-				_on_popup_new_text_file), desktop);
-	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
-	/* edition */
-	menuitem = gtk_separator_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);
-	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Paste"));
-	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
-			gtk_image_new_from_icon_name("edit-paste",
-				GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
-				_on_popup_paste), desktop);
-	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);
-	/* preferences */
-	menuitem = gtk_separator_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);
-	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Preferences"));
-	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
-			gtk_image_new_from_icon_name("gtk-preferences",
-				GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
-				_on_popup_preferences), desktop);
-	gtk_menu_shell_append(GTK_MENU_SHELL(desktop->menu), menuitem);
-	gtk_widget_show_all(desktop->menu);
-	gtk_menu_popup(GTK_MENU(desktop->menu), NULL, NULL, NULL, NULL, 3,
-			(xbev != NULL)
-			? xbev->time : gtk_get_current_event_time());
-}
-
-static void _on_popup_new_folder(gpointer data)
-{
-	static char const newfolder[] = N_("New folder");
-	Desktop * desktop = data;
-	String * path;
-
-	gtk_widget_destroy(desktop->menu);
-	desktop->menu = NULL;
-	if((path = string_new_append(desktop->path, "/", newfolder, NULL))
-			== NULL)
+	switch(desktop->handler->icons)
 	{
-		_desktop_serror(desktop, newfolder, 0);
-		return;
+		case DESKTOP_ICONS_APPLICATIONS:
+			_desktophandler_applications_popup(desktop->handler,
+					xbev);
+			break;
+		case DESKTOP_ICONS_CATEGORIES:
+			_desktophandler_categories_popup(desktop->handler,
+					xbev);
+			break;
+		case DESKTOP_ICONS_FILES:
+			_desktophandler_files_popup(desktop->handler, xbev);
+			break;
+		case DESKTOP_ICONS_HOMESCREEN:
+			_desktophandler_homescreen_popup(desktop->handler,
+					xbev);
+			break;
+		case DESKTOP_ICONS_NONE:
+			break;
 	}
-	if(browser_vfs_mkdir(path, 0777) != 0)
-		_desktop_perror(desktop, path, 0);
-	string_delete(path);
-}
-
-static void _on_popup_new_text_file(gpointer data)
-{
-	static char const newtext[] = N_("New text file.txt");
-	Desktop * desktop = data;
-	String * path;
-	int fd;
-
-	gtk_widget_destroy(desktop->menu);
-	desktop->menu = NULL;
-	if((path = string_new_append(desktop->path, "/", _(newtext), NULL))
-			== NULL)
-	{
-		_desktop_serror(desktop, _(newtext), 0);
-		return;
-	}
-	if((fd = creat(path, 0666)) < 0)
-		_desktop_perror(desktop, path, 0);
-	else
-		close(fd);
-	string_delete(path);
-}
-
-static void _on_popup_paste(gpointer data)
-{
-	Desktop * desktop = data;
-
-	/* FIXME implement */
-	gtk_widget_destroy(desktop->menu);
-	desktop->menu = NULL;
-}
-
-static void _on_popup_preferences(gpointer data)
-{
-	Desktop * desktop = data;
-
-	_desktop_show_preferences(desktop);
-}
-
-static void _on_popup_symlink(gpointer data)
-{
-	Desktop * desktop = data;
-
-	if(_common_symlink((desktop->desktop != NULL)
-				? GTK_WINDOW(desktop->desktop) : NULL,
-				desktop->path) != 0)
-		_desktop_perror(desktop, desktop->path, 0);
 }
 
 static gboolean _on_desktop_button_press(GtkWidget * widget,
 		GdkEventButton * event, gpointer data)
 {
 	Desktop * desktop = data;
+	(void) widget;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
@@ -644,6 +609,7 @@ static gboolean _on_desktop_key_press(GtkWidget * widget, GdkEventKey * event,
 {
 	Desktop * desktop = data;
 	DesktopIcon ** selected;
+	(void) widget;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
@@ -717,18 +683,6 @@ static GdkFilterReturn _on_root_event(GdkXEvent * xevent, GdkEvent * event,
 static GdkFilterReturn _event_button_press(XButtonEvent * xbev,
 		Desktop * desktop)
 {
-	if(xbev->button != 3 || desktop->menu != NULL)
-	{
-		if(desktop->menu != NULL)
-		{
-			gtk_widget_destroy(desktop->menu);
-			desktop->menu = NULL;
-		}
-		return GDK_FILTER_CONTINUE;
-	}
-	/* ignore if not managing files */
-	if(desktop->prefs.icons != DESKTOP_ICONS_FILES)
-		return GDK_FILTER_CONTINUE;
 	_on_popup_event(desktop, xbev);
 	return GDK_FILTER_CONTINUE;
 }
@@ -768,6 +722,14 @@ void desktop_delete(Desktop * desktop)
 {
 	size_t i;
 
+	if(desktop->folder != NULL)
+		g_object_unref(desktop->folder);
+	if(desktop->file != NULL)
+		g_object_unref(desktop->file);
+	if(desktop->mime != NULL)
+		mime_delete(desktop->mime);
+	if(desktop->handler != NULL)
+		desktop_set_icons(desktop, DESKTOP_ICONS_NONE);
 	if(desktop->desktop != NULL)
 		gtk_widget_destroy(desktop->desktop);
 	if(desktop->refresh_source != 0)
@@ -775,11 +737,6 @@ void desktop_delete(Desktop * desktop)
 	for(i = 0; i < desktop->icons_cnt; i++)
 		desktopiconwindow_delete(desktop->icons[i]);
 	free(desktop->icons);
-	if(desktop->mime != NULL)
-		mime_delete(desktop->mime);
-	g_slist_foreach(desktop->apps, (GFunc)mimehandler_delete, NULL);
-	g_slist_free(desktop->apps);
-	free(desktop->path);
 	if(desktop->font != NULL)
 		pango_font_description_free(desktop->font);
 	object_delete(desktop);
@@ -790,7 +747,10 @@ void desktop_delete(Desktop * desktop)
 /* desktop_get_drag_data */
 int desktop_get_drag_data(Desktop * desktop, GtkSelectionData * seldata)
 {
-#if !GTK_CHECK_VERSION(3, 0, 0)
+#if GTK_CHECK_VERSION(3, 0, 0)
+	/* FIXME implement */
+	return -1;
+#else
 	int ret = 0;
 	size_t i;
 	DesktopIcon * icon;
@@ -819,8 +779,6 @@ int desktop_get_drag_data(Desktop * desktop, GtkSelectionData * seldata)
 		seldata->length += len;
 	}
 	return ret;
-#else
-	return -1;
 #endif
 }
 
@@ -893,6 +851,8 @@ DesktopIcon ** desktop_get_icons_selected(Desktop * desktop)
 /* desktop_get_mime */
 Mime * desktop_get_mime(Desktop * desktop)
 {
+	if(desktop->handler == NULL)
+		return NULL;
 	return desktop->mime;
 }
 
@@ -967,223 +927,63 @@ static void _alignment_vertical(Desktop * desktop)
 
 
 /* desktop_set_icons */
-static int _icons_applications(Desktop * desktop);
-static int _icons_categories(Desktop * desktop);
-static int _icons_files(Desktop * desktop);
-static int _icons_files_add_home(Desktop * desktop);
-static int _icons_homescreen(Desktop * desktop);
-static int _icons_homescreen_subdir(Desktop * desktop, char const * subdir,
-		char const * name);
-static void _icons_reset(Desktop * desktop);
-static void _icons_set_categories(Desktop * desktop, gpointer data);
-static void _icons_set_homescreen(Desktop * desktop, gpointer data);
+static void _set_icons_destroy(Desktop * desktop);
+static void _set_icons_init(Desktop * desktop);
 
 void desktop_set_icons(Desktop * desktop, DesktopIcons icons)
 {
-	_icons_reset(desktop);
-	desktop->prefs.icons = icons;
-	switch(icons)
+	if(desktop->handler->icons != icons)
 	{
-		case DESKTOP_ICONS_APPLICATIONS:
-			_icons_applications(desktop);
-			break;
-		case DESKTOP_ICONS_CATEGORIES:
-			_icons_categories(desktop);
-			break;
-		case DESKTOP_ICONS_FILES:
-			_icons_files(desktop);
-			break;
-		case DESKTOP_ICONS_HOMESCREEN:
-			_icons_homescreen(desktop);
-			break;
-		case DESKTOP_ICONS_NONE:
-			/* nothing to do */
-			break;
+		_set_icons_destroy(desktop);
+		desktop->handler->icons = icons;
+		_set_icons_init(desktop);
 	}
+	desktop->prefs.icons = icons;
 	desktop_refresh(desktop);
 }
 
-static int _icons_applications(Desktop * desktop)
+static void _set_icons_destroy(Desktop * desktop)
 {
-	DesktopIcon * desktopicon;
-	GdkPixbuf * icon;
-
-	if(desktop->category == NULL)
-		return 0;
-	if((desktopicon = desktopicon_new(desktop, _("Back"), NULL)) == NULL)
-		return -_desktop_serror(desktop, _("Back"), 1);
-	desktopicon_set_callback(desktopicon, _icons_set_categories, NULL);
-	desktopicon_set_first(desktopicon, TRUE);
-	desktopicon_set_immutable(desktopicon, TRUE);
-	icon = gtk_icon_theme_load_icon(desktop->theme, "back",
-			desktop->icons_size, 0, NULL);
-	if(icon != NULL)
-		desktopicon_set_icon(desktopicon, icon);
-	if(_desktop_icon_add(desktop, desktopicon) != 0)
+	switch(desktop->handler->icons)
 	{
-		desktopicon_delete(desktopicon);
-		return -1;
+		case DESKTOP_ICONS_APPLICATIONS:
+			_desktophandler_applications_destroy(desktop->handler);
+			break;
+		case DESKTOP_ICONS_CATEGORIES:
+			_desktophandler_categories_destroy(
+					desktop->handler);
+			break;
+		case DESKTOP_ICONS_FILES:
+			_desktophandler_files_destroy(desktop->handler);
+			break;
+		case DESKTOP_ICONS_HOMESCREEN:
+			_desktophandler_homescreen_destroy(
+					desktop->handler);
+			break;
+		case DESKTOP_ICONS_NONE:
+			break;
 	}
-	return 0;
 }
 
-static int _icons_categories(Desktop * desktop)
+static void _set_icons_init(Desktop * desktop)
 {
-	DesktopIcon * desktopicon;
-	GdkPixbuf * icon;
-
-	desktop->category = NULL;
-	if((desktopicon = desktopicon_new(desktop, _("Back"), NULL)) == NULL)
-		return -_desktop_serror(desktop, _("Back"), 1);
-	desktopicon_set_callback(desktopicon, _icons_set_homescreen, NULL);
-	desktopicon_set_first(desktopicon, TRUE);
-	desktopicon_set_immutable(desktopicon, TRUE);
-	icon = gtk_icon_theme_load_icon(desktop->theme, "back",
-			desktop->icons_size, 0, NULL);
-	if(icon != NULL)
-		desktopicon_set_icon(desktopicon, icon);
-	if(_desktop_icon_add(desktop, desktopicon) != 0)
+	switch(desktop->handler->icons)
 	{
-		desktopicon_delete(desktopicon);
-		return -1;
+		case DESKTOP_ICONS_APPLICATIONS:
+			_desktophandler_applications_init(desktop->handler);
+			break;
+		case DESKTOP_ICONS_CATEGORIES:
+			_desktophandler_categories_init(desktop->handler);
+			break;
+		case DESKTOP_ICONS_FILES:
+			_desktophandler_files_init(desktop->handler);
+			break;
+		case DESKTOP_ICONS_HOMESCREEN:
+			_desktophandler_homescreen_init(desktop->handler);
+			break;
+		case DESKTOP_ICONS_NONE:
+			break;
 	}
-	return 0;
-}
-
-static int _icons_files(Desktop * desktop)
-{
-	char const * path;
-	struct stat st;
-
-	if(desktop->mime == NULL)
-		desktop->mime = mime_new(NULL);
-	_icons_files_add_home(desktop);
-	if((path = getenv("XDG_DESKTOP_DIR")) != NULL)
-		desktop->path = string_new(path);
-	else
-		desktop->path = string_new_append(desktop->home, "/",
-				DESKTOP, NULL);
-	if(desktop->path == NULL)
-		return _desktop_error(desktop, NULL, error_get(NULL), 1);
-	if(browser_vfs_stat(desktop->path, &st) == 0)
-	{
-		if(!S_ISDIR(st.st_mode))
-			return _desktop_error(NULL, desktop->path,
-					strerror(ENOTDIR), 1);
-	}
-	else if(errno != ENOENT)
-		return _desktop_perror(NULL, desktop->path, 1);
-	return 0;
-}
-
-static int _icons_files_add_home(Desktop * desktop)
-{
-	DesktopIcon * desktopicon;
-	GdkPixbuf * icon;
-
-	if((desktopicon = desktopicon_new(desktop, _("Home"), desktop->home))
-			== NULL)
-		return -_desktop_serror(desktop, _("Home"), 1);
-	desktopicon_set_first(desktopicon, TRUE);
-	desktopicon_set_immutable(desktopicon, TRUE);
-	icon = gtk_icon_theme_load_icon(desktop->theme, "gnome-home",
-			desktop->icons_size, 0, NULL);
-	if(icon == NULL)
-		icon = gtk_icon_theme_load_icon(desktop->theme, "gnome-fs-home",
-				desktop->icons_size, 0, NULL);
-	if(icon != NULL)
-		desktopicon_set_icon(desktopicon, icon);
-	if(_desktop_icon_add(desktop, desktopicon) != 0)
-	{
-		desktopicon_delete(desktopicon);
-		return -1;
-	}
-	return 0;
-}
-
-static int _icons_homescreen(Desktop * desktop)
-{
-	DesktopIcon * desktopicon;
-	GdkPixbuf * icon;
-	char const * paths[] =
-	{
-#ifdef EMBEDDED
-		/* FIXME let this be configurable */
-		"deforaos-phone-contacts.desktop",
-		"deforaos-phone-dialer.desktop",
-		"deforaos-phone-messages.desktop",
-#endif
-		NULL
-	};
-	char const ** p;
-
-	if((desktopicon = desktopicon_new(desktop, _("Applications"), NULL))
-			== NULL)
-		return _desktop_serror(desktop, _("Applications"), 1);
-	desktopicon_set_callback(desktopicon, _icons_set_categories, NULL);
-	desktopicon_set_immutable(desktopicon, TRUE);
-	icon = gtk_icon_theme_load_icon(desktop->theme, "gnome-applications",
-			desktop->icons_size, 0, NULL);
-	if(icon != NULL)
-		desktopicon_set_icon(desktopicon, icon);
-	_desktop_icon_add(desktop, desktopicon);
-	for(p = paths; *p != NULL; p++)
-		_icons_homescreen_subdir(desktop, DATADIR "/applications", *p);
-	return 0;
-}
-
-static int _icons_homescreen_subdir(Desktop * desktop, char const * subdir,
-		char const * name)
-{
-	DesktopIcon * desktopicon;
-	String * q;
-
-	if((q = string_new_append(subdir, "/", name, NULL)) == NULL)
-		return -_desktop_error(NULL, name, error_get(NULL), 1);
-	if(access(q, R_OK) == 0
-			&& (desktopicon = desktopicon_new_application(desktop,
-					q, DATADIR)) != NULL)
-		_desktop_icon_add(desktop, desktopicon);
-	string_delete(q);
-	return 0;
-}
-
-static void _icons_reset(Desktop * desktop)
-{
-	size_t i;
-	DesktopIcon * icon;
-
-	if(desktop->path != NULL)
-		free(desktop->path);
-	desktop->path = NULL;
-	for(i = 0; i < desktop->icons_cnt; i++)
-	{
-		icon = desktopiconwindow_get_icon(desktop->icons[i]);
-		desktopicon_set_immutable(icon, FALSE);
-		desktopicon_set_updated(icon, FALSE);
-	}
-	for(i = 0; i < _desktop_categories_cnt; i++)
-		_desktop_categories[i].show = FALSE;
-}
-
-static void _icons_set_categories(Desktop * desktop, gpointer data)
-{
-	(void) data;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s()\n", __func__);
-#endif
-	desktop_set_icons(desktop, DESKTOP_ICONS_CATEGORIES);
-}
-
-static void _icons_set_homescreen(Desktop * desktop, gpointer data)
-{
-	(void) data;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s()\n", __func__);
-#endif
-	desktop_set_icons(desktop, DESKTOP_ICONS_HOMESCREEN);
 }
 
 
@@ -1231,9 +1031,7 @@ int desktop_error(Desktop * desktop, char const * message, char const * error,
 
 
 /* desktop_refresh */
-static void _refresh_categories(Desktop * desktop);
-static void _refresh_files(Desktop * desktop);
-static void _refresh_homescreen(Desktop * desktop);
+static void _refresh_reset(Desktop * desktop);
 
 void desktop_refresh(Desktop * desktop)
 {
@@ -1241,52 +1039,43 @@ void desktop_refresh(Desktop * desktop)
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
 	if(desktop->refresh_source != 0)
+	{
 		g_source_remove(desktop->refresh_source);
-	switch(desktop->prefs.icons)
+		desktop->refresh_source = 0;
+	}
+	_refresh_reset(desktop);
+	switch(desktop->handler->icons)
 	{
 		case DESKTOP_ICONS_APPLICATIONS:
+			_desktophandler_applications_refresh(desktop->handler);
+			break;
 		case DESKTOP_ICONS_CATEGORIES:
-			_refresh_categories(desktop);
+			_desktophandler_categories_refresh(desktop->handler);
 			break;
 		case DESKTOP_ICONS_FILES:
-			_refresh_files(desktop);
+			_desktophandler_files_refresh(desktop->handler);
 			break;
 		case DESKTOP_ICONS_HOMESCREEN:
+			_desktophandler_homescreen_refresh(desktop->handler);
+			break;
 		case DESKTOP_ICONS_NONE:
-			_refresh_homescreen(desktop);
 			break;
 	}
 }
 
-static void _refresh_categories(Desktop * desktop)
+static void _refresh_reset(Desktop * desktop)
 {
-	g_slist_foreach(desktop->apps, (GFunc)mimehandler_delete, NULL);
-	g_slist_free(desktop->apps);
-	desktop->apps = NULL;
-	desktop->refresh_source = g_idle_add(_desktop_on_refresh, desktop);
-}
+	size_t i;
+	DesktopIcon * icon;
 
-static void _refresh_files(Desktop * desktop)
-{
-	struct stat st;
-
-	if(desktop->path == NULL)
-		return;
-	if((desktop->refresh_dir = browser_vfs_opendir(desktop->path, &st))
-			== NULL)
+	for(i = 0; i < desktop->icons_cnt; i++)
 	{
-		_desktop_perror(NULL, desktop->path, 1);
-		desktop->refresh_source = 0;
-		return;
+		icon = desktopiconwindow_get_icon(desktop->icons[i]);
+		desktopicon_set_immutable(icon, FALSE);
+		desktopicon_set_updated(icon, FALSE);
 	}
-	desktop->refresh_mtime = st.st_mtime;
-	desktop->refresh_source = g_idle_add(_desktop_on_refresh, desktop);
-}
-
-static void _refresh_homescreen(Desktop * desktop)
-{
-	/* for cleanup */
-	desktop->refresh_source = g_idle_add(_desktop_on_refresh, desktop);
+	for(i = 0; i < _desktop_categories_cnt; i++)
+		_desktop_categories[i].show = FALSE;
 }
 
 
@@ -1339,10 +1128,8 @@ static void _reset_background(Desktop * desktop, Config * config)
 static void _reset_icons(Desktop * desktop, Config * config)
 {
 	String const * p;
-	String * q;
 	size_t i;
 	DesktopIcon * icon;
-	int j;
 
 	_reset_icons_colors(desktop, config);
 	_reset_icons_font(desktop, config);
@@ -1375,14 +1162,6 @@ static void _reset_icons(Desktop * desktop, Config * config)
 				== DESKTOP_ICONS_FILES)
 			? DESKTOP_ALIGNMENT_VERTICAL
 			: DESKTOP_ALIGNMENT_HORIZONTAL;
-	/* show hidden */
-	if((p = config_get(config, "icons", "show_hidden")) != NULL)
-	{
-		j = strtol(p, &q, 10);
-		if(p[0] == '\0' || *q != '\0' || j < 0)
-			j = 0;
-		desktop->show_hidden = j ? 1 : 0;
-	}
 }
 
 static void _reset_icons_colors(Desktop * desktop, Config * config)
@@ -1478,6 +1257,7 @@ static gboolean _reset_on_idle(gpointer data)
 	config_delete(config);
 	_desktop_get_workarea(desktop);
 	desktop_set_icons(desktop, desktop->prefs.icons);
+	g_idle_add(_desktop_on_refresh, desktop);
 	return FALSE;
 }
 
@@ -1845,7 +1625,29 @@ static int _desktop_get_workarea(Desktop * desktop)
 
 
 /* useful */
-/* desktop_background */
+/* desktop_cleanup */
+static void _desktop_cleanup(Desktop * desktop)
+{
+	size_t i;
+	DesktopIcon * icon;
+
+	for(i = 0; i < desktop->icons_cnt;)
+	{
+		icon = desktopiconwindow_get_icon(desktop->icons[i]);
+		if(desktopicon_get_immutable(icon) == TRUE)
+			i++;
+		else if(desktopicon_get_updated(icon) != TRUE)
+			_desktop_icon_remove(desktop, icon);
+		else
+		{
+			desktopicon_set_updated(icon, FALSE);
+			i++;
+		}
+	}
+}
+
+
+/* desktop_draw_background */
 static gboolean _background_how_centered(Desktop * desktop,
 		GdkRectangle * window, char const * filename, GError ** error);
 static gboolean _background_how_scaled(Desktop * desktop, GdkRectangle * window,
@@ -2155,9 +1957,7 @@ static void _desktop_show_preferences(Desktop * desktop)
 	GtkWidget * vbox;
 	GtkWidget * notebook;
 
-	if(desktop->menu != NULL)
-		gtk_widget_destroy(desktop->menu);
-	desktop->menu = NULL;
+	_on_popup_event(desktop, NULL);
 	if(desktop->pr_window != NULL)
 	{
 		gtk_window_present(GTK_WINDOW(desktop->pr_window));
@@ -2616,6 +2416,1145 @@ static void _preferences_set_color(Config * config, char const * section,
 }
 
 
+/* handlers */
+/* desktophandler_applications_init */
+static void _applications_init_on_back(Desktop * desktop, gpointer data);
+
+static void _desktophandler_applications_init(DesktopHandler * handler)
+{
+	DesktopIcon * desktopicon;
+	GdkPixbuf * icon;
+
+	handler->u.applications.refresh_dir = NULL;
+	handler->u.applications.refresh_mtime = 0;
+	handler->u.applications.refresh_source = 0;
+	handler->u.applications.category = NULL;
+	handler->u.applications.apps = NULL;
+	if((desktopicon = desktopicon_new(handler->desktop, _("Back"), NULL))
+			== NULL)
+	{
+		_desktop_serror(handler->desktop, _("Back"), 1);
+		return;
+	}
+	desktopicon_set_callback(desktopicon, _applications_init_on_back, NULL);
+	desktopicon_set_first(desktopicon, TRUE);
+	desktopicon_set_immutable(desktopicon, TRUE);
+	icon = gtk_icon_theme_load_icon(handler->desktop->theme, "back",
+			handler->desktop->icons_size, 0, NULL);
+	if(icon != NULL)
+		desktopicon_set_icon(desktopicon, icon);
+	/* XXX report errors */
+	if(_desktop_icon_add(handler->desktop, desktopicon) != 0)
+		desktopicon_delete(desktopicon);
+}
+
+static void _applications_init_on_back(Desktop * desktop, gpointer data)
+{
+	(void) data;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	desktop_set_icons(desktop, DESKTOP_ICONS_HOMESCREEN);
+}
+
+
+/* desktophandler_applications_destroy */
+static void _desktophandler_applications_destroy(DesktopHandler * handler)
+{
+	if(handler->u.applications.refresh_source != 0)
+		g_source_remove(handler->u.applications.refresh_source);
+	if(handler->u.applications.refresh_dir != NULL)
+		browser_vfs_closedir(handler->u.applications.refresh_dir);
+	g_slist_foreach(handler->u.applications.apps, (GFunc)mimehandler_delete,
+			NULL);
+	g_slist_free(handler->u.applications.apps);
+}
+
+
+/* desktophandler_applications_popup */
+static void _desktophandler_applications_popup(DesktopHandler * handler,
+		XButtonEvent * xbev)
+{
+	(void) handler;
+	(void) xbev;
+}
+
+
+/* desktophandler_applications_refresh */
+static gboolean _desktophandler_applications_on_refresh(gpointer data);
+static gboolean _applications_on_refresh_done(DesktopHandler * handler);
+static void _applications_on_refresh_done_applications(
+		DesktopHandler * handler);
+static int _applications_on_refresh_loop(DesktopHandler * handler);
+static void _applications_on_refresh_loop_path(DesktopHandler * handler,
+		char const * path, char const * apppath);
+static void _applications_on_refresh_loop_xdg(DesktopHandler * handler,
+		void (*callback)(DesktopHandler * handler, char const * path,
+			char const * apppath));
+static void _applications_on_refresh_loop_xdg_home(DesktopHandler * handler,
+		void (*callback)(DesktopHandler * handler, char const * path,
+			char const * apppath));
+static void _applications_on_refresh_loop_xdg_path(DesktopHandler * handler,
+		void (*callback)(DesktopHandler * handler, char const * path,
+			char const * apppath), char const * path);
+static gint _applications_apps_compare(gconstpointer a, gconstpointer b);
+
+static void _desktophandler_applications_refresh(DesktopHandler * handler)
+{
+	g_slist_foreach(handler->u.applications.apps, (GFunc)mimehandler_delete,
+			NULL);
+	g_slist_free(handler->u.applications.apps);
+	handler->u.applications.apps = NULL;
+	handler->u.applications.refresh_source = g_idle_add(
+			_desktophandler_applications_on_refresh, handler);
+}
+
+static gboolean _desktophandler_applications_on_refresh(gpointer data)
+{
+	DesktopHandler * handler = data;
+	unsigned int i;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	/* FIXME upon deletion one icon too many is removed */
+	for(i = 0; i < IDLE_LOOP_ICON_CNT
+			&& _applications_on_refresh_loop(handler) == 0; i++);
+	if(i == IDLE_LOOP_ICON_CNT)
+		return TRUE;
+	return _applications_on_refresh_done(handler);
+}
+
+static gboolean _applications_on_refresh_done(DesktopHandler * handler)
+{
+	_applications_on_refresh_done_applications(handler);
+	_desktop_cleanup(handler->desktop);
+	desktop_icons_align(handler->desktop);
+	return FALSE;
+}
+
+static void _applications_on_refresh_done_applications(DesktopHandler * handler)
+{
+	GSList * p;
+	MimeHandler * mime;
+	DesktopCategory * dc = handler->u.applications.category;
+	String const ** categories;
+	size_t i;
+	String const * filename;
+	DesktopIcon * icon;
+
+	for(p = handler->u.applications.apps; p != NULL; p = p->next)
+	{
+		mime = p->data;
+		if(dc != NULL)
+		{
+			if((categories = mimehandler_get_categories(mime))
+					== NULL || categories[0] == NULL)
+				continue;
+			for(i = 0; categories[i] != NULL; i++)
+				if(string_compare(categories[i], dc->category)
+						== 0)
+					break;
+			if(categories[i] == NULL)
+				continue;
+		}
+		filename = mimehandler_get_filename(mime);
+		/* FIXME keep track of the datadir */
+		if((icon = desktopicon_new_application(handler->desktop,
+						filename, NULL)) == NULL)
+			continue;
+		_desktop_icon_add(handler->desktop, icon);
+	}
+}
+
+static int _applications_on_refresh_loop(DesktopHandler * handler)
+{
+	_applications_on_refresh_loop_xdg(handler,
+			_applications_on_refresh_loop_path);
+	return 1;
+}
+
+static void _applications_on_refresh_loop_path(DesktopHandler * handler,
+		char const * path, char const * apppath)
+{
+	DIR * dir;
+	struct stat st;
+	size_t alen;
+	struct dirent * de;
+	size_t len;
+	const char ext[] = ".desktop";
+	char * name = NULL;
+	char * p;
+	MimeHandler * mime;
+	(void) path;
+
+	if((dir = browser_vfs_opendir(apppath, &st)) == NULL)
+	{
+		if(errno != ENOENT)
+			_desktop_perror(NULL, apppath, 1);
+		return;
+	}
+	if(st.st_mtime > handler->u.applications.refresh_mtime)
+		handler->u.applications.refresh_mtime = st.st_mtime;
+	alen = strlen(apppath);
+	while((de = browser_vfs_readdir(dir)) != NULL)
+	{
+		if(de->d_name[0] == '.')
+			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
+						&& de->d_name[2] == '\0'))
+				continue;
+		len = strlen(de->d_name);
+		if(len < sizeof(ext))
+			continue;
+		if(strncmp(&de->d_name[len - sizeof(ext) + 1], ext,
+					sizeof(ext)) != 0)
+			continue;
+		if((p = realloc(name, alen + len + 2)) == NULL)
+		{
+			_desktop_perror(NULL, apppath, 1);
+			continue;
+		}
+		name = p;
+		snprintf(name, alen + len + 2, "%s/%s", apppath, de->d_name);
+#ifdef DEBUG
+		fprintf(stderr, "DEBUG: %s() name=\"%s\" path=\"%s\"\n",
+				__func__, name, path);
+#endif
+		if((mime = mimehandler_new_load(name)) == NULL
+				|| mimehandler_can_display(mime) == 0)
+		{
+			if(mime != NULL)
+				mimehandler_delete(mime);
+			else
+				_desktop_serror(NULL, NULL, 1);
+			continue;
+		}
+		handler->u.applications.apps = g_slist_insert_sorted(
+				handler->u.applications.apps, mime,
+				_applications_apps_compare);
+	}
+	free(name);
+	browser_vfs_closedir(dir);
+}
+
+static void _applications_on_refresh_loop_xdg(DesktopHandler * handler,
+		void (*callback)(DesktopHandler * handler, char const * path,
+			char const * apppath))
+{
+	char const * path;
+	char * p;
+	size_t i;
+	size_t j;
+
+	if((path = getenv("XDG_DATA_DIRS")) == NULL || strlen(path) == 0)
+		/* XXX check this at build-time instead */
+		path = (strcmp(DATADIR, "/usr/local/share") == 0)
+			? DATADIR ":/usr/share"
+			: "/usr/local/share:" DATADIR ":/usr/share";
+	if((p = strdup(path)) == NULL)
+	{
+		_desktop_perror(NULL, NULL, 1);
+		return;
+	}
+	for(i = 0, j = 0;; i++)
+		if(p[i] == '\0')
+		{
+			_applications_on_refresh_loop_xdg_path(handler, callback,
+					&p[j]);
+			break;
+		}
+		else if(p[i] == ':')
+		{
+			p[i] = '\0';
+			_applications_on_refresh_loop_xdg_path(handler, callback,
+					&p[j]);
+			j = i + 1;
+		}
+	free(p);
+	_applications_on_refresh_loop_xdg_home(handler, callback);
+}
+
+static void _applications_on_refresh_loop_xdg_home(DesktopHandler * handler,
+		void (*callback)(DesktopHandler * handler, char const * path,
+			char const * apppath))
+{
+	char const fallback[] = ".local/share";
+	char const * path;
+	char const * homedir;
+	size_t len;
+	char * p;
+
+	/* use $XDG_DATA_HOME if set and not empty */
+	if((path = getenv("XDG_DATA_HOME")) != NULL && strlen(path) > 0)
+	{
+		_applications_on_refresh_loop_xdg_path(handler, callback, path);
+		return;
+	}
+	/* fallback to "$HOME/.local/share" */
+	if((homedir = getenv("HOME")) == NULL)
+		homedir = g_get_home_dir();
+	len = strlen(homedir) + 1 + sizeof(fallback);
+	if((p = malloc(len)) == NULL)
+	{
+		_desktop_perror(NULL, homedir, 1);
+		return;
+	}
+	snprintf(p, len, "%s/%s", homedir, fallback);
+	_applications_on_refresh_loop_xdg_path(handler, callback, p);
+	free(p);
+}
+
+static void _applications_on_refresh_loop_xdg_path(DesktopHandler * handler,
+		void (*callback)(DesktopHandler * handler, char const * path,
+			char const * apppath), char const * path)
+{
+	const char applications[] = "/applications";
+	char * apppath;
+
+	if((apppath = string_new_append(path, applications, NULL)) == NULL)
+		_desktop_serror(NULL, path, 1);
+	callback(handler, path, apppath);
+	string_delete(apppath);
+}
+
+static gint _applications_apps_compare(gconstpointer a, gconstpointer b)
+{
+	MimeHandler * mha = (MimeHandler *)a;
+	MimeHandler * mhb = (MimeHandler *)b;
+	String const * mhas;
+	String const * mhbs;
+
+	if((mhas = mimehandler_get_generic_name(mha, 1)) == NULL)
+		mhas = mimehandler_get_name(mha, 1);
+	if((mhbs = mimehandler_get_generic_name(mhb, 1)) == NULL)
+		mhbs = mimehandler_get_name(mhb, 1);
+	return string_compare(mhas, mhbs);
+}
+
+
+/* desktophandler_categories_init */
+static void _categories_init_set_homescreen(Desktop * desktop, gpointer data);
+
+static void _desktophandler_categories_init(DesktopHandler * handler)
+{
+	DesktopIcon * desktopicon;
+	GdkPixbuf * icon;
+
+	handler->u.categories.refresh_dir = NULL;
+	handler->u.categories.refresh_mtime = 0;
+	handler->u.categories.refresh_source = 0;
+	handler->u.categories.apps = NULL;
+	if((desktopicon = desktopicon_new(handler->desktop, _("Back"), NULL))
+			== NULL)
+	{
+		_desktop_serror(handler->desktop, _("Back"), 1);
+		return;
+	}
+	desktopicon_set_callback(desktopicon, _categories_init_set_homescreen,
+			NULL);
+	desktopicon_set_first(desktopicon, TRUE);
+	desktopicon_set_immutable(desktopicon, TRUE);
+	icon = gtk_icon_theme_load_icon(handler->desktop->theme, "back",
+			handler->desktop->icons_size, 0, NULL);
+	if(icon != NULL)
+		desktopicon_set_icon(desktopicon, icon);
+	/* XXX report errors */
+	if(_desktop_icon_add(handler->desktop, desktopicon) != 0)
+		desktopicon_delete(desktopicon);
+}
+
+static void _categories_init_set_homescreen(Desktop * desktop, gpointer data)
+{
+	(void) data;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	desktop_set_icons(desktop, DESKTOP_ICONS_HOMESCREEN);
+}
+
+
+/* desktophandler_categories_destroy */
+static void _desktophandler_categories_destroy(DesktopHandler * handler)
+{
+	if(handler->u.categories.refresh_source != 0)
+		g_source_remove(handler->u.categories.refresh_source);
+	if(handler->u.categories.refresh_dir != NULL)
+		browser_vfs_closedir(handler->u.categories.refresh_dir);
+	g_slist_foreach(handler->u.categories.apps, (GFunc)mimehandler_delete,
+			NULL);
+	g_slist_free(handler->u.categories.apps);
+}
+
+
+/* desktophandler_categories_popup */
+static void _desktophandler_categories_popup(DesktopHandler * handler,
+		XButtonEvent * xbev)
+{
+	(void) handler;
+	(void) xbev;
+}
+
+
+/* desktophandler_categories_refresh */
+static gboolean _desktophandler_categories_on_refresh(gpointer data);
+static gboolean _categories_on_refresh_done(DesktopHandler * handler);
+static void _categories_on_refresh_done_categories(DesktopHandler * handler);
+static void _categories_on_refresh_done_categories_open(Desktop * desktop,
+		gpointer data);
+static int _categories_on_refresh_loop(DesktopHandler * handler);
+static void _categories_on_refresh_loop_path(DesktopHandler * handler,
+		char const * path, char const * apppath);
+static void _categories_on_refresh_loop_xdg(DesktopHandler * handler,
+		void (*callback)(DesktopHandler * handler, char const * path,
+			char const * apppath));
+static void _categories_on_refresh_loop_xdg_home(DesktopHandler * handler,
+		void (*callback)(DesktopHandler * handler, char const * path,
+			char const * apppath));
+static void _categories_on_refresh_loop_xdg_path(DesktopHandler * handler,
+		void (*callback)(DesktopHandler * handler, char const * path,
+			char const * apppath), char const * path);
+static gint _categories_apps_compare(gconstpointer a, gconstpointer b);
+
+static void _desktophandler_categories_refresh(DesktopHandler * handler)
+{
+	g_slist_foreach(handler->u.categories.apps, (GFunc)mimehandler_delete,
+			NULL);
+	g_slist_free(handler->u.categories.apps);
+	handler->u.categories.apps = NULL;
+	handler->u.categories.refresh_source = g_idle_add(
+			_desktophandler_categories_on_refresh, handler);
+}
+
+static gboolean _desktophandler_categories_on_refresh(gpointer data)
+{
+	DesktopHandler * handler = data;
+	unsigned int i;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	/* FIXME upon deletion one icon too many is removed */
+	for(i = 0; i < IDLE_LOOP_ICON_CNT
+			&& _categories_on_refresh_loop(handler) == 0; i++);
+	if(i == IDLE_LOOP_ICON_CNT)
+		return TRUE;
+	return _categories_on_refresh_done(handler);
+}
+
+static gboolean _categories_on_refresh_done(DesktopHandler * handler)
+{
+	_categories_on_refresh_done_categories(handler);
+	_desktop_cleanup(handler->desktop);
+	desktop_icons_align(handler->desktop);
+	return FALSE;
+}
+
+static void _categories_on_refresh_done_categories(DesktopHandler * handler)
+{
+	GSList * p;
+	MimeHandler * mime;
+	DesktopCategory * dc;
+	String const ** categories;
+	size_t i;
+	size_t j;
+	String const * filename;
+	DesktopIcon * icon;
+
+	for(p = handler->u.categories.apps; p != NULL; p = p->next)
+	{
+		mime = p->data;
+		filename = mimehandler_get_filename(mime);
+		if((categories = mimehandler_get_categories(mime)) == NULL
+				|| categories[0] == NULL)
+		{
+			/* FIXME keep track of the datadir */
+			if((icon = desktopicon_new_application(handler->desktop,
+							filename, NULL))
+					!= NULL)
+				_desktop_icon_add(handler->desktop, icon);
+			continue;
+		}
+		for(i = 0; i < _desktop_categories_cnt; i++)
+		{
+			dc = &_desktop_categories[i];
+			for(j = 0; categories[j] != NULL; j++)
+				if(string_compare(categories[j], dc->category)
+						== 0)
+					break;
+			if(categories[j] != NULL)
+				break;
+		}
+		if(i == _desktop_categories_cnt)
+		{
+			/* FIXME keep track of the datadir */
+			if((icon = desktopicon_new_application(handler->desktop,
+							filename, NULL))
+					!= NULL)
+				_desktop_icon_add(handler->desktop, icon);
+			continue;
+		}
+		if(dc->show == TRUE)
+			continue;
+		dc->show = TRUE;
+		if((icon = desktopicon_new_category(handler->desktop,
+						_(dc->name), dc->icon)) == NULL)
+			continue;
+		desktopicon_set_callback(icon,
+				_categories_on_refresh_done_categories_open,
+				dc);
+		_desktop_icon_add(handler->desktop, icon);
+	}
+}
+
+static void _categories_on_refresh_done_categories_open(Desktop * desktop,
+		gpointer data)
+{
+	DesktopCategory * dc = data;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, _(dc->name));
+#endif
+	/* FIXME need an extra argument for applications (category) */
+	desktop_set_icons(desktop, DESKTOP_ICONS_APPLICATIONS);
+}
+
+static int _categories_on_refresh_loop(DesktopHandler * handler)
+{
+	_categories_on_refresh_loop_xdg(handler,
+			_categories_on_refresh_loop_path);
+	return 1;
+}
+
+static void _categories_on_refresh_loop_path(DesktopHandler * handler,
+		char const * path, char const * apppath)
+{
+	DIR * dir;
+	struct stat st;
+	size_t alen;
+	struct dirent * de;
+	size_t len;
+	const char ext[] = ".desktop";
+	char * name = NULL;
+	char * p;
+	MimeHandler * mime;
+	(void) path;
+
+	if((dir = browser_vfs_opendir(apppath, &st)) == NULL)
+	{
+		if(errno != ENOENT)
+			_desktop_perror(NULL, apppath, 1);
+		return;
+	}
+	if(st.st_mtime > handler->u.categories.refresh_mtime)
+		handler->u.categories.refresh_mtime = st.st_mtime;
+	alen = strlen(apppath);
+	while((de = browser_vfs_readdir(dir)) != NULL)
+	{
+		if(de->d_name[0] == '.')
+			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
+						&& de->d_name[2] == '\0'))
+				continue;
+		len = strlen(de->d_name);
+		if(len < sizeof(ext))
+			continue;
+		if(strncmp(&de->d_name[len - sizeof(ext) + 1], ext,
+					sizeof(ext)) != 0)
+			continue;
+		if((p = realloc(name, alen + len + 2)) == NULL)
+		{
+			_desktop_perror(NULL, apppath, 1);
+			continue;
+		}
+		name = p;
+		snprintf(name, alen + len + 2, "%s/%s", apppath, de->d_name);
+#ifdef DEBUG
+		fprintf(stderr, "DEBUG: %s() name=\"%s\" path=\"%s\"\n",
+				__func__, name, path);
+#endif
+		if((mime = mimehandler_new_load(name)) == NULL
+				|| mimehandler_can_display(mime) == 0)
+		{
+			if(mime != NULL)
+				mimehandler_delete(mime);
+			else
+				_desktop_serror(NULL, NULL, 1);
+			continue;
+		}
+		handler->u.categories.apps = g_slist_insert_sorted(
+				handler->u.categories.apps, mime,
+				_categories_apps_compare);
+	}
+	free(name);
+	browser_vfs_closedir(dir);
+}
+
+static void _categories_on_refresh_loop_xdg(DesktopHandler * handler,
+		void (*callback)(DesktopHandler * handler, char const * path,
+			char const * apppath))
+{
+	char const * path;
+	char * p;
+	size_t i;
+	size_t j;
+
+	if((path = getenv("XDG_DATA_DIRS")) == NULL || strlen(path) == 0)
+		/* XXX check this at build-time instead */
+		path = (strcmp(DATADIR, "/usr/local/share") == 0)
+			? DATADIR ":/usr/share"
+			: "/usr/local/share:" DATADIR ":/usr/share";
+	if((p = strdup(path)) == NULL)
+	{
+		_desktop_perror(NULL, NULL, 1);
+		return;
+	}
+	for(i = 0, j = 0;; i++)
+		if(p[i] == '\0')
+		{
+			_categories_on_refresh_loop_xdg_path(handler, callback,
+					&p[j]);
+			break;
+		}
+		else if(p[i] == ':')
+		{
+			p[i] = '\0';
+			_categories_on_refresh_loop_xdg_path(handler, callback,
+					&p[j]);
+			j = i + 1;
+		}
+	free(p);
+	_categories_on_refresh_loop_xdg_home(handler, callback);
+}
+
+static void _categories_on_refresh_loop_xdg_home(DesktopHandler * handler,
+		void (*callback)(DesktopHandler * handler, char const * path,
+			char const * apppath))
+{
+	char const fallback[] = ".local/share";
+	char const * path;
+	char const * homedir;
+	size_t len;
+	char * p;
+
+	/* use $XDG_DATA_HOME if set and not empty */
+	if((path = getenv("XDG_DATA_HOME")) != NULL && strlen(path) > 0)
+	{
+		_categories_on_refresh_loop_xdg_path(handler, callback, path);
+		return;
+	}
+	/* fallback to "$HOME/.local/share" */
+	if((homedir = getenv("HOME")) == NULL)
+		homedir = g_get_home_dir();
+	len = strlen(homedir) + 1 + sizeof(fallback);
+	if((p = malloc(len)) == NULL)
+	{
+		_desktop_perror(NULL, homedir, 1);
+		return;
+	}
+	snprintf(p, len, "%s/%s", homedir, fallback);
+	_categories_on_refresh_loop_xdg_path(handler, callback, p);
+	free(p);
+}
+
+static void _categories_on_refresh_loop_xdg_path(DesktopHandler * handler,
+		void (*callback)(DesktopHandler * handler, char const * path,
+			char const * apppath), char const * path)
+{
+	const char applications[] = "/applications";
+	char * apppath;
+
+	if((apppath = string_new_append(path, applications, NULL)) == NULL)
+		_desktop_serror(NULL, path, 1);
+	callback(handler, path, apppath);
+	string_delete(apppath);
+}
+
+static gint _categories_apps_compare(gconstpointer a, gconstpointer b)
+{
+	MimeHandler * mha = (MimeHandler *)a;
+	MimeHandler * mhb = (MimeHandler *)b;
+	String const * mhas;
+	String const * mhbs;
+
+	if((mhas = mimehandler_get_generic_name(mha, 1)) == NULL)
+		mhas = mimehandler_get_name(mha, 1);
+	if((mhbs = mimehandler_get_generic_name(mhb, 1)) == NULL)
+		mhbs = mimehandler_get_name(mhb, 1);
+	return string_compare(mhas, mhbs);
+}
+
+
+/* desktophandler_files_init */
+static int _files_init_add_home(DesktopHandler * handler);
+
+static void _desktophandler_files_init(DesktopHandler * handler)
+{
+	char const * path;
+	struct stat st;
+
+	if((path = getenv("XDG_DESKTOP_DIR")) != NULL)
+		handler->u.files.path = string_new(path);
+	else
+		handler->u.files.path = string_new_append(
+				handler->desktop->home, "/", DESKTOP, NULL);
+	if(handler->u.files.path == NULL)
+	{
+		_desktop_error(handler->desktop, NULL, error_get(NULL), 1);
+		return;
+	}
+	handler->u.files.refresh_dir = NULL;
+	handler->u.files.refresh_mtime = 0;
+	handler->u.files.refresh_source = 0;
+	handler->u.files.menu = NULL;
+	_files_init_add_home(handler);
+	if(browser_vfs_stat(handler->u.files.path, &st) == 0)
+	{
+		if(!S_ISDIR(st.st_mode))
+		{
+			_desktop_error(NULL, handler->u.files.path,
+					strerror(ENOTDIR), 1);
+			return;
+		}
+	}
+	else if(errno != ENOENT)
+		_desktop_perror(NULL, handler->u.files.path, 1);
+	/* FIXME let it be configured again */
+	handler->u.files.show_hidden = FALSE;
+}
+
+static int _files_init_add_home(DesktopHandler * handler)
+{
+	DesktopIcon * desktopicon;
+	GdkPixbuf * icon;
+
+	if((desktopicon = desktopicon_new(handler->desktop, _("Home"),
+					handler->desktop->home)) == NULL)
+		return -_desktop_serror(handler->desktop, _("Home"), 1);
+	desktopicon_set_first(desktopicon, TRUE);
+	desktopicon_set_immutable(desktopicon, TRUE);
+	icon = gtk_icon_theme_load_icon(handler->desktop->theme, "gnome-home",
+			handler->desktop->icons_size, 0, NULL);
+	if(icon == NULL)
+		icon = gtk_icon_theme_load_icon(handler->desktop->theme,
+				"gnome-fs-home", handler->desktop->icons_size,
+				0, NULL);
+	if(icon != NULL)
+		desktopicon_set_icon(desktopicon, icon);
+	/* XXX report errors */
+	if(_desktop_icon_add(handler->desktop, desktopicon) != 0)
+		desktopicon_delete(desktopicon);
+	return 0;
+}
+
+
+/* desktophandler_files_destroy */
+static void _desktophandler_files_destroy(DesktopHandler * handler)
+{
+	if(handler->u.files.refresh_source != 0)
+		g_source_remove(handler->u.files.refresh_source);
+	if(handler->u.files.refresh_dir != NULL)
+		browser_vfs_closedir(handler->u.files.refresh_dir);
+	if(handler->u.files.menu != NULL)
+		gtk_widget_destroy(handler->u.files.menu);
+}
+
+
+/* desktophandler_files_popup */
+static void _desktophandler_files_popup(DesktopHandler * handler,
+		XButtonEvent * xbev)
+{
+	GtkWidget * menuitem;
+	GtkWidget * submenu;
+	GtkWidget * image;
+
+	if((xbev == NULL || xbev->button != 3) && handler->u.files.menu != NULL)
+	{
+		gtk_widget_destroy(handler->u.files.menu);
+		handler->u.files.menu = NULL;
+	}
+	handler->u.files.menu = gtk_menu_new();
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_New"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("document-new",
+				GTK_ICON_SIZE_MENU));
+	submenu = gtk_menu_new();
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), submenu);
+	gtk_menu_shell_append(GTK_MENU_SHELL(handler->u.files.menu), menuitem);
+	/* submenu for new documents */
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Folder"));
+	image = gtk_image_new_from_icon_name("folder-new", GTK_ICON_SIZE_MENU);
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem), image);
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
+				_on_popup_new_folder), handler);
+	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
+	menuitem = gtk_separator_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Symbolic link..."));
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
+				_on_popup_symlink), handler);
+	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Text file"));
+	image = gtk_image_new_from_icon_name("stock_new-text",
+			GTK_ICON_SIZE_MENU);
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem), image);
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
+				_on_popup_new_text_file), handler);
+	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
+	/* edition */
+	menuitem = gtk_separator_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(handler->u.files.menu), menuitem);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Paste"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("edit-paste",
+				GTK_ICON_SIZE_MENU));
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
+				_on_popup_paste), handler);
+	gtk_menu_shell_append(GTK_MENU_SHELL(handler->u.files.menu), menuitem);
+	/* preferences */
+	menuitem = gtk_separator_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(handler->u.files.menu), menuitem);
+	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Preferences"));
+	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
+			gtk_image_new_from_icon_name("gtk-preferences",
+				GTK_ICON_SIZE_MENU));
+	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
+				_on_popup_preferences), handler);
+	gtk_menu_shell_append(GTK_MENU_SHELL(handler->u.files.menu), menuitem);
+	gtk_widget_show_all(handler->u.files.menu);
+	gtk_menu_popup(GTK_MENU(handler->u.files.menu), NULL, NULL, NULL, NULL,
+			3, (xbev != NULL)
+			? xbev->time : gtk_get_current_event_time());
+}
+
+static void _on_popup_new_folder(gpointer data)
+{
+	static char const newfolder[] = N_("New folder");
+	DesktopHandler * handler = data;
+	String * path;
+
+	gtk_widget_destroy(handler->u.files.menu);
+	handler->u.files.menu = NULL;
+	if((path = string_new_append(handler->u.files.path, "/", newfolder,
+					NULL)) == NULL)
+	{
+		_desktop_serror(handler->desktop, newfolder, 0);
+		return;
+	}
+	if(browser_vfs_mkdir(path, 0777) != 0)
+		_desktop_perror(handler->desktop, path, 0);
+	string_delete(path);
+}
+
+static void _on_popup_new_text_file(gpointer data)
+{
+	static char const newtext[] = N_("New text file.txt");
+	DesktopHandler * handler = data;
+	String * path;
+	int fd;
+
+	gtk_widget_destroy(handler->u.files.menu);
+	handler->u.files.menu = NULL;
+	if((path = string_new_append(handler->u.files.path, "/", _(newtext),
+					NULL)) == NULL)
+	{
+		_desktop_serror(handler->desktop, _(newtext), 0);
+		return;
+	}
+	if((fd = creat(path, 0666)) < 0)
+		_desktop_perror(handler->desktop, path, 0);
+	else
+		close(fd);
+	string_delete(path);
+}
+
+static void _on_popup_paste(gpointer data)
+{
+	DesktopHandler * handler = data;
+
+	/* FIXME implement */
+	gtk_widget_destroy(handler->u.files.menu);
+	handler->u.files.menu = NULL;
+}
+
+static void _on_popup_preferences(gpointer data)
+{
+	DesktopHandler * handler = data;
+
+	_desktop_show_preferences(handler->desktop);
+}
+
+static void _on_popup_symlink(gpointer data)
+{
+	DesktopHandler * handler = data;
+
+	if(_common_symlink((handler->desktop->desktop != NULL)
+				? handler->desktop->desktop : NULL,
+				handler->u.files.path) != 0)
+		_desktop_perror(handler->desktop, handler->u.files.path, 0);
+}
+
+
+/* desktophandler_files_refresh */
+static gboolean _desktophandler_files_on_refresh(gpointer data);
+static gboolean _files_on_refresh_done(DesktopHandler * handler);
+static gboolean _files_on_refresh_done_timeout(gpointer data);
+static gboolean _files_on_refresh_loop(DesktopHandler * handler);
+static int _files_on_refresh_loop_lookup(DesktopHandler * handler,
+		char const * name);
+static int _files_on_refresh_loop_opendir(DesktopHandler * handler);
+
+static void _desktophandler_files_refresh(DesktopHandler * handler)
+{
+	if(handler->u.files.refresh_dir != NULL)
+		browser_vfs_closedir(handler->u.files.refresh_dir);
+	handler->u.files.refresh_dir = NULL;
+	if(handler->u.files.path == NULL)
+		return;
+	handler->u.files.refresh_source = g_idle_add(
+			_desktophandler_files_on_refresh, handler);
+}
+
+static gboolean _desktophandler_files_on_refresh(gpointer data)
+{
+	DesktopHandler * handler = data;
+	unsigned int i;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	/* FIXME upon deletion one icon too many is removed */
+	for(i = 0; i < IDLE_LOOP_ICON_CNT
+			&& _files_on_refresh_loop(handler) == 0; i++);
+	if(i == IDLE_LOOP_ICON_CNT)
+		return TRUE;
+	return _files_on_refresh_done(handler);
+}
+
+static gboolean _files_on_refresh_done(DesktopHandler * handler)
+{
+	_desktop_cleanup(handler->desktop);
+	if(handler->u.files.refresh_dir != NULL)
+		browser_vfs_closedir(handler->u.files.refresh_dir);
+	handler->u.files.refresh_dir = NULL;
+	desktop_icons_align(handler->desktop);
+	handler->u.files.refresh_source = g_timeout_add(1000,
+			_files_on_refresh_done_timeout, handler);
+	return FALSE;
+}
+
+static gboolean _files_on_refresh_done_timeout(gpointer data)
+{
+	DesktopHandler * handler = data;
+	struct stat st;
+
+	handler->u.files.refresh_source = 0;
+	if(handler->u.files.path == NULL)
+		return FALSE;
+	if(browser_vfs_stat(handler->u.files.path, &st) != 0)
+		return _desktop_perror(NULL, handler->u.files.path, FALSE);
+	if(st.st_mtime == handler->u.files.refresh_mtime)
+		return TRUE;
+	desktop_refresh(handler->desktop);
+	return FALSE;
+}
+
+static int _files_on_refresh_loop(DesktopHandler * handler)
+{
+	const char ext[] = ".desktop";
+	struct dirent * de;
+	String * p;
+	size_t len;
+	gchar * q;
+	DesktopIcon * desktopicon;
+	GError * error = NULL;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	if(handler->u.files.refresh_dir == NULL
+			&& _files_on_refresh_loop_opendir(handler) != 0)
+		return -1;
+	while((de = browser_vfs_readdir(handler->u.files.refresh_dir)) != NULL)
+	{
+		if(de->d_name[0] == '.')
+		{
+			if(de->d_name[1] == '\0')
+				continue;
+			if(de->d_name[1] == '.' && de->d_name[2] == '\0')
+				continue;
+			if(handler->u.files.show_hidden == 0)
+				continue;
+		}
+		if(_files_on_refresh_loop_lookup(handler, de->d_name) == 1)
+			continue;
+		break;
+	}
+	if(de == NULL)
+		return -1;
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, de->d_name);
+#endif
+	if((p = string_new_append(handler->u.files.path, "/", de->d_name, NULL))
+			== NULL)
+		return -_desktop_serror(handler->desktop, de->d_name, 1);
+	/* detect desktop entries */
+	if((len = strlen(de->d_name)) > sizeof(ext)
+			&& strcmp(&de->d_name[len - sizeof(ext) + 1], ext) == 0)
+		desktopicon = desktopicon_new_application(handler->desktop, p,
+				handler->u.files.path);
+	/* XXX not relative to the current folder */
+	else if((q = g_filename_to_utf8(de->d_name, -1, NULL, NULL, &error))
+			!= NULL)
+	{
+		desktopicon = desktopicon_new(handler->desktop, q, p);
+		g_free(q);
+	}
+	else
+	{
+		desktop_error(NULL, NULL, error->message, 1);
+		g_error_free(error);
+		desktopicon = desktopicon_new(handler->desktop, de->d_name, p);
+	}
+	if(desktopicon != NULL)
+		desktop_icon_add(handler->desktop, desktopicon);
+	string_delete(p);
+	return 0;
+}
+
+static int _files_on_refresh_loop_lookup(DesktopHandler * handler,
+		char const * name)
+{
+	size_t i;
+	DesktopIcon * icon;
+	char const * p;
+
+	for(i = 0; i < handler->desktop->icons_cnt; i++)
+	{
+		icon = desktopiconwindow_get_icon(handler->desktop->icons[i]);
+		if(desktopicon_get_updated(icon) == TRUE)
+			continue;
+		if((p = desktopicon_get_path(icon)) == NULL
+				|| (p = strrchr(p, '/')) == NULL)
+			continue;
+		if(strcmp(name, ++p) != 0)
+			continue;
+		desktopicon_set_updated(icon, TRUE);
+		return 1;
+	}
+	return 0;
+}
+
+static int _files_on_refresh_loop_opendir(DesktopHandler * handler)
+{
+	struct stat st;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__,
+			handler->u.files.path);
+#endif
+	if((handler->u.files.refresh_dir = browser_vfs_opendir(
+					handler->u.files.path, &st)) == NULL)
+	{
+		_desktop_perror(NULL, handler->u.files.path, 1);
+		handler->u.files.refresh_source = 0;
+		return -1;
+	}
+	handler->u.files.refresh_mtime = st.st_mtime;
+	return 0;
+}
+
+
+/* desktophandler_homescreen_init */
+static int _homescreen_init_subdir(DesktopHandler * handler,
+		char const * subdir, char const * name);
+static void _homescreen_init_on_applications(Desktop * desktop, gpointer data);
+
+static void _desktophandler_homescreen_init(DesktopHandler * handler)
+{
+	DesktopIcon * desktopicon;
+	GdkPixbuf * icon;
+	char const * paths[] =
+	{
+#ifdef EMBEDDED
+		/* FIXME let this be configurable */
+		"deforaos-phone-contacts",
+		"deforaos-phone-dialer",
+		"deforaos-phone-messages",
+#endif
+		NULL
+	};
+	char const ** p;
+
+	if((desktopicon = desktopicon_new(handler->desktop, _("Applications"),
+					NULL)) == NULL)
+	{
+		_desktop_serror(handler->desktop, _("Applications"), 1);
+		return;
+	}
+	desktopicon_set_callback(desktopicon, _homescreen_init_on_applications,
+			NULL);
+	desktopicon_set_immutable(desktopicon, TRUE);
+	icon = gtk_icon_theme_load_icon(handler->desktop->theme,
+			"gnome-applications", handler->desktop->icons_size, 0,
+			NULL);
+	if(icon != NULL)
+		desktopicon_set_icon(desktopicon, icon);
+	_desktop_icon_add(handler->desktop, desktopicon);
+	for(p = paths; *p != NULL; p++)
+		_homescreen_init_subdir(handler, DATADIR "/applications", *p);
+}
+
+static int _homescreen_init_subdir(DesktopHandler * handler,
+		char const * subdir, char const * name)
+{
+	DesktopIcon * desktopicon;
+	String * q;
+
+	if((q = string_new_append(subdir, "/", name, ".desktop", NULL)) == NULL)
+		return -_desktop_error(NULL, name, error_get(NULL), 1);
+	if(access(q, R_OK) == 0
+			&& (desktopicon = desktopicon_new_application(
+					handler->desktop, q, DATADIR)) != NULL)
+		_desktop_icon_add(handler->desktop, desktopicon);
+	string_delete(q);
+	return 0;
+}
+
+static void _homescreen_init_on_applications(Desktop * desktop, gpointer data)
+{
+	(void) data;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	desktop_set_icons(desktop, DESKTOP_ICONS_CATEGORIES);
+}
+
+
+/* desktophandler_homescreen_destroy */
+static void _desktophandler_homescreen_destroy(DesktopHandler * handler)
+{
+	(void) handler;
+}
+
+
+/* desktophandler_homescreen_popup */
+static void _desktophandler_homescreen_popup(DesktopHandler * handler,
+		XButtonEvent * xbev)
+{
+	(void) handler;
+	(void) xbev;
+}
+
+
+/* desktophandler_homescreen_refresh */
+static void _desktophandler_homescreen_refresh(DesktopHandler * handler)
+{
+	(void) handler;
+}
+
+
 /* callbacks */
 /* desktop_on_preferences_closex */
 static gboolean _desktop_on_preferences_closex(gpointer data)
@@ -2872,8 +3811,6 @@ static void _desktop_on_preferences_response_ok(gpointer data)
 	/* monitor */
 	snprintf(buf, sizeof(buf), "%d", desktop->prefs.monitor);
 	config_set(config, "icons", "monitor", buf);
-	config_set(config, "icons", "show_hidden", desktop->show_hidden
-			? "1" : "0");
 	/* XXX code duplication */
 	if((p = string_new_append(desktop->home, "/" DESKTOPRC, NULL)) != NULL)
 	{
@@ -2926,451 +3863,14 @@ static void _desktop_on_preferences_update_preview(gpointer data)
 	g_free(filename);
 	gtk_file_chooser_set_preview_widget_active(chooser, active);
 }
-/* desktop_on_refresh */
-static void _refresh_cleanup(Desktop * desktop);
-static void _refresh_done_applications(Desktop * desktop);
-static void _refresh_done_categories(Desktop * desktop);
-static void _refresh_done_categories_open(Desktop * desktop, gpointer data);
-static gboolean _refresh_done_timeout(gpointer data);
-static int _refresh_loop(Desktop * desktop);
-static gint _categories_apps_compare(gconstpointer a, gconstpointer b);
-static int _refresh_loop_categories(Desktop * desktop);
-static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
-		char const * apppath);
-static void _refresh_loop_categories_xdg(Desktop * desktop,
-		void (*callback)(Desktop * desktop, char const * path,
-			char const * apppath));
-static void _refresh_loop_categories_xdg_home(Desktop * desktop,
-		void (*callback)(Desktop * desktop, char const * path,
-			char const * apppath));
-static void _refresh_loop_categories_xdg_path(Desktop * desktop,
-		void (*callback)(Desktop * desktop, char const * path,
-			char const * apppath), char const * path);
-static int _refresh_loop_files(Desktop * desktop);
-static int _refresh_loop_lookup(Desktop * desktop, char const * name);
-static gboolean _refresh_done(Desktop * desktop);
 
+
+/* desktop_on_refresh */
 static gboolean _desktop_on_refresh(gpointer data)
 {
 	Desktop * desktop = data;
-	unsigned int i;
-
-	for(i = 0; i < IDLE_LOOP_ICON_CNT && _refresh_loop(desktop) == 0; i++);
-	if(i == IDLE_LOOP_ICON_CNT)
-		return TRUE;
-	return _refresh_done(desktop);
-}
-
-static void _refresh_cleanup(Desktop * desktop)
-{
-	size_t i;
-	DesktopIcon * icon;
-
-	for(i = 0; i < desktop->icons_cnt;)
-	{
-		icon = desktopiconwindow_get_icon(desktop->icons[i]);
-		if(desktopicon_get_immutable(icon) == TRUE)
-			i++;
-		else if(desktopicon_get_updated(icon) != TRUE)
-			_desktop_icon_remove(desktop, icon);
-		else
-		{
-			desktopicon_set_updated(icon, FALSE);
-			i++;
-		}
-	}
-}
-
-static gboolean _refresh_done(Desktop * desktop)
-{
-	switch(desktop->prefs.icons)
-	{
-		case DESKTOP_ICONS_APPLICATIONS:
-			_refresh_done_applications(desktop);
-			break;
-		case DESKTOP_ICONS_CATEGORIES:
-			_refresh_done_categories(desktop);
-			break;
-		default:
-			break;
-	}
-	_refresh_cleanup(desktop);
-	if(desktop->refresh_dir != NULL)
-		browser_vfs_closedir(desktop->refresh_dir);
-	desktop->refresh_dir = NULL;
-	desktop_icons_align(desktop);
-	desktop->refresh_source = g_timeout_add(1000, _refresh_done_timeout,
-			desktop);
-	return FALSE;
-}
-
-static void _refresh_done_applications(Desktop * desktop)
-{
-	GSList * p;
-	MimeHandler * handler;
-	DesktopCategory * dc = desktop->category;
-	String const ** categories;
-	size_t i;
-	String const * filename;
-	DesktopIcon * icon;
-
-	for(p = desktop->apps; p != NULL; p = p->next)
-	{
-		handler = p->data;
-		if(dc != NULL)
-		{
-			if((categories = mimehandler_get_categories(handler))
-					== NULL || categories[0] == NULL)
-				continue;
-			for(i = 0; categories[i] != NULL; i++)
-				if(string_compare(categories[i], dc->category)
-						== 0)
-					break;
-			if(categories[i] == NULL)
-				continue;
-		}
-		filename = mimehandler_get_filename(handler);
-		/* FIXME keep track of the datadir */
-		if((icon = desktopicon_new_application(desktop, filename, NULL))
-				== NULL)
-			continue;
-		_desktop_icon_add(desktop, icon);
-	}
-}
-
-static void _refresh_done_categories(Desktop * desktop)
-{
-	GSList * p;
-	MimeHandler * handler;
-	DesktopCategory * dc;
-	String const ** categories;
-	size_t i;
-	size_t j;
-	String const * filename;
-	DesktopIcon * icon;
-
-	for(p = desktop->apps; p != NULL; p = p->next)
-	{
-		handler = p->data;
-		filename = mimehandler_get_filename(handler);
-		if((categories = mimehandler_get_categories(handler)) == NULL
-				|| categories[0] == NULL)
-		{
-			/* FIXME keep track of the datadir */
-			if((icon = desktopicon_new_application(desktop,
-							filename, NULL))
-					!= NULL)
-				_desktop_icon_add(desktop, icon);
-			continue;
-		}
-		for(i = 0; i < _desktop_categories_cnt; i++)
-		{
-			dc = &_desktop_categories[i];
-			for(j = 0; categories[j] != NULL; j++)
-				if(string_compare(categories[j], dc->category)
-						== 0)
-					break;
-			if(categories[j] != NULL)
-				break;
-		}
-		if(i == _desktop_categories_cnt)
-		{
-			/* FIXME keep track of the datadir */
-			if((icon = desktopicon_new_application(desktop,
-							filename, NULL))
-					!= NULL)
-				_desktop_icon_add(desktop, icon);
-			continue;
-		}
-		if(dc->show == TRUE)
-			continue;
-		dc->show = TRUE;
-		if((icon = desktopicon_new_category(desktop, _(dc->name),
-						dc->icon)) == NULL)
-			continue;
-		desktopicon_set_callback(icon, _refresh_done_categories_open,
-				dc);
-		_desktop_icon_add(desktop, icon);
-	}
-}
-
-static void _refresh_done_categories_open(Desktop * desktop, gpointer data)
-{
-	DesktopCategory * dc = data;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, _(dc->name));
-#endif
-	desktop->category = dc;
-	desktop_set_icons(desktop, DESKTOP_ICONS_APPLICATIONS);
-}
-
-static gboolean _refresh_done_timeout(gpointer data)
-{
-	Desktop * desktop = data;
-	struct stat st;
 
 	desktop->refresh_source = 0;
-	if(desktop->path == NULL)
-		return FALSE;
-	if(browser_vfs_stat(desktop->path, &st) != 0)
-		return _desktop_perror(NULL, desktop->path, FALSE);
-	if(st.st_mtime == desktop->refresh_mtime)
-		return TRUE;
 	desktop_refresh(desktop);
 	return FALSE;
-}
-
-static int _refresh_loop(Desktop * desktop)
-{
-	switch(desktop->prefs.icons)
-	{
-		case DESKTOP_ICONS_APPLICATIONS:
-		case DESKTOP_ICONS_CATEGORIES:
-			return _refresh_loop_categories(desktop);
-		case DESKTOP_ICONS_FILES:
-			return _refresh_loop_files(desktop);
-		case DESKTOP_ICONS_HOMESCREEN:
-		case DESKTOP_ICONS_NONE:
-			return 1; /* nothing to do */
-	}
-	return -1;
-}
-
-static int _refresh_loop_categories(Desktop * desktop)
-{
-	_refresh_loop_categories_xdg(desktop, _refresh_loop_categories_path);
-	return 1;
-}
-
-static void _refresh_loop_categories_path(Desktop * desktop, char const * path,
-		char const * apppath)
-{
-	DIR * dir;
-	struct stat st;
-	size_t alen;
-	struct dirent * de;
-	size_t len;
-	const char ext[] = ".desktop";
-	char * name = NULL;
-	char * p;
-	MimeHandler * handler;
-	(void) path;
-
-	if((dir = browser_vfs_opendir(apppath, &st)) == NULL)
-	{
-		if(errno != ENOENT)
-			_desktop_perror(NULL, apppath, 1);
-		return;
-	}
-	if(st.st_mtime > desktop->refresh_mtime)
-		desktop->refresh_mtime = st.st_mtime;
-	alen = strlen(apppath);
-	while((de = browser_vfs_readdir(dir)) != NULL)
-	{
-		if(de->d_name[0] == '.')
-			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
-						&& de->d_name[2] == '\0'))
-				continue;
-		len = strlen(de->d_name);
-		if(len < sizeof(ext))
-			continue;
-		if(strncmp(&de->d_name[len - sizeof(ext) + 1], ext,
-					sizeof(ext)) != 0)
-			continue;
-		if((p = realloc(name, alen + len + 2)) == NULL)
-		{
-			_desktop_perror(NULL, apppath, 1);
-			continue;
-		}
-		name = p;
-		snprintf(name, alen + len + 2, "%s/%s", apppath, de->d_name);
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() name=\"%s\" path=\"%s\"\n",
-				__func__, name, path);
-#endif
-		if((handler = mimehandler_new_load(name)) == NULL
-				|| mimehandler_can_display(handler) == 0)
-		{
-			if(handler != NULL)
-				mimehandler_delete(handler);
-			else
-				_desktop_serror(NULL, NULL, 1);
-			continue;
-		}
-		desktop->apps = g_slist_insert_sorted(desktop->apps, handler,
-				_categories_apps_compare);
-	}
-	free(name);
-	browser_vfs_closedir(dir);
-}
-
-static void _refresh_loop_categories_xdg(Desktop * desktop,
-		void (*callback)(Desktop * desktop, char const * path,
-			char const * apppath))
-{
-	char const * path;
-	char * p;
-	size_t i;
-	size_t j;
-
-	if((path = getenv("XDG_DATA_DIRS")) == NULL || strlen(path) == 0)
-		/* XXX check this at build-time instead */
-		path = (strcmp(DATADIR, "/usr/local/share") == 0)
-			? DATADIR ":/usr/share"
-			: "/usr/local/share:" DATADIR ":/usr/share";
-	if((p = strdup(path)) == NULL)
-	{
-		_desktop_perror(NULL, NULL, 1);
-		return;
-	}
-	for(i = 0, j = 0;; i++)
-		if(p[i] == '\0')
-		{
-			_refresh_loop_categories_xdg_path(desktop, callback,
-					&p[j]);
-			break;
-		}
-		else if(p[i] == ':')
-		{
-			p[i] = '\0';
-			_refresh_loop_categories_xdg_path(desktop, callback,
-					&p[j]);
-			j = i + 1;
-		}
-	free(p);
-	_refresh_loop_categories_xdg_home(desktop, callback);
-}
-
-static void _refresh_loop_categories_xdg_home(Desktop * desktop,
-		void (*callback)(Desktop * desktop, char const * path,
-			char const * apppath))
-{
-	char const fallback[] = ".local/share";
-	char const * path;
-	char const * homedir;
-	size_t len;
-	char * p;
-
-	/* use $XDG_DATA_HOME if set and not empty */
-	if((path = getenv("XDG_DATA_HOME")) != NULL && strlen(path) > 0)
-	{
-		_refresh_loop_categories_xdg_path(desktop, callback, path);
-		return;
-	}
-	/* fallback to "$HOME/.local/share" */
-	if((homedir = getenv("HOME")) == NULL)
-		homedir = g_get_home_dir();
-	len = strlen(homedir) + 1 + sizeof(fallback);
-	if((p = malloc(len)) == NULL)
-	{
-		_desktop_perror(NULL, homedir, 1);
-		return;
-	}
-	snprintf(p, len, "%s/%s", homedir, fallback);
-	_refresh_loop_categories_xdg_path(desktop, callback, p);
-	free(p);
-}
-
-static void _refresh_loop_categories_xdg_path(Desktop * desktop,
-		void (*callback)(Desktop * desktop, char const * path,
-			char const * apppath), char const * path)
-{
-	const char applications[] = "/applications";
-	char * apppath;
-
-	if((apppath = string_new_append(path, applications, NULL)) == NULL)
-		_desktop_serror(NULL, path, 1);
-	callback(desktop, path, apppath);
-	string_delete(apppath);
-}
-
-static gint _categories_apps_compare(gconstpointer a, gconstpointer b)
-{
-	MimeHandler * mha = (MimeHandler *)a;
-	MimeHandler * mhb = (MimeHandler *)b;
-	String const * mhas;
-	String const * mhbs;
-
-	if((mhas = mimehandler_get_generic_name(mha, 1)) == NULL)
-		mhas = mimehandler_get_name(mha, 1);
-	if((mhbs = mimehandler_get_generic_name(mhb, 1)) == NULL)
-		mhbs = mimehandler_get_name(mhb, 1);
-	return string_compare(mhas, mhbs);
-}
-
-static int _refresh_loop_files(Desktop * desktop)
-{
-	const char ext[] = ".desktop";
-	struct dirent * de;
-	String * p;
-	size_t len;
-	gchar * q;
-	DesktopIcon * desktopicon;
-	GError * error = NULL;
-
-	while((de = browser_vfs_readdir(desktop->refresh_dir)) != NULL)
-	{
-		if(de->d_name[0] == '.')
-		{
-			if(de->d_name[1] == '\0')
-				continue;
-			if(de->d_name[1] == '.' && de->d_name[2] == '\0')
-				continue;
-			if(desktop->show_hidden == 0)
-				continue;
-		}
-		if(_refresh_loop_lookup(desktop, de->d_name) == 1)
-			continue;
-		break;
-	}
-	if(de == NULL)
-		return -1;
-	if((p = string_new_append(desktop->path, "/", de->d_name, NULL))
-			== NULL)
-		return -_desktop_serror(desktop, de->d_name, 1);
-	/* detect desktop entries */
-	if((len = strlen(de->d_name)) > sizeof(ext)
-			&& strcmp(&de->d_name[len - sizeof(ext) + 1], ext) == 0)
-		desktopicon = desktopicon_new_application(desktop, p,
-				desktop->path);
-	/* XXX not relative to the current folder */
-	else if((q = g_filename_to_utf8(de->d_name, -1, NULL, NULL, &error))
-			!= NULL)
-	{
-		desktopicon = desktopicon_new(desktop, q, p);
-		g_free(q);
-	}
-	else
-	{
-		desktop_error(NULL, NULL, error->message, 1);
-		g_error_free(error);
-		desktopicon = desktopicon_new(desktop, de->d_name, p);
-	}
-	if(desktopicon != NULL)
-		desktop_icon_add(desktop, desktopicon);
-	string_delete(p);
-	return 0;
-}
-
-static int _refresh_loop_lookup(Desktop * desktop, char const * name)
-{
-	size_t i;
-	DesktopIcon * icon;
-	char const * p;
-
-	for(i = 0; i < desktop->icons_cnt; i++)
-	{
-		icon = desktopiconwindow_get_icon(desktop->icons[i]);
-		if(desktopicon_get_updated(icon) == TRUE)
-			continue;
-		if((p = desktopicon_get_path(icon)) == NULL
-				|| (p = strrchr(p, '/')) == NULL)
-			continue;
-		if(strcmp(name, ++p) != 0)
-			continue;
-		desktopicon_set_updated(icon, TRUE);
-		return 1;
-	}
-	return 0;
 }
