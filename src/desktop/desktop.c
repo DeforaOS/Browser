@@ -78,6 +78,7 @@ struct _Desktop
 	GdkRectangle workarea;
 
 	/* icons */
+	GtkIconTheme * theme;
 	unsigned int icons_size;
 	DesktopIconWindow ** icons;
 	size_t icons_cnt;
@@ -114,7 +115,6 @@ struct _Desktop
 	GdkWindow * root;
 	GtkWidget * desktop;
 	GdkWindow * back;
-	GtkIconTheme * theme;
 #if GTK_CHECK_VERSION(3, 0, 0)
 	cairo_t * cairo;
 #else
@@ -277,7 +277,6 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 		return NULL;
 	}
 	/* internal */
-	desktop->theme = gtk_icon_theme_get_default();
 	desktop_message_register(NULL, DESKTOP_CLIENT_MESSAGE, _on_message,
 			desktop);
 	/* query the root window */
@@ -327,6 +326,7 @@ static void _new_icons(Desktop * desktop)
 	char const ** p;
 	GdkPixbuf * icon;
 
+	desktop->theme = gtk_icon_theme_get_default();
 	for(p = file, icon = NULL; *p != NULL && icon == NULL; p++)
 		icon = gtk_icon_theme_load_icon(desktop->theme, *p,
 				desktop->icons_size, 0, NULL);
@@ -592,14 +592,14 @@ void desktop_delete(Desktop * desktop)
 {
 	size_t i;
 
+	if(desktop->handler != NULL)
+		desktophandler_delete(desktop->handler);
 	if(desktop->folder != NULL)
 		g_object_unref(desktop->folder);
 	if(desktop->file != NULL)
 		g_object_unref(desktop->file);
 	if(desktop->mime != NULL)
 		mime_delete(desktop->mime);
-	if(desktop->handler != NULL)
-		desktop_set_icons(desktop, DESKTOP_ICONS_NONE);
 	if(desktop->desktop != NULL)
 		gtk_widget_destroy(desktop->desktop);
 	if(desktop->refresh_source != 0)
@@ -900,6 +900,8 @@ int desktop_serror(Desktop * desktop, char const * message, int ret)
 
 /* desktop_refresh */
 static void _refresh_reset(Desktop * desktop);
+/* callbacks */
+static gboolean _refresh_on_idle(gpointer data);
 
 void desktop_refresh(Desktop * desktop)
 {
@@ -907,12 +909,8 @@ void desktop_refresh(Desktop * desktop)
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
 	if(desktop->refresh_source != 0)
-	{
 		g_source_remove(desktop->refresh_source);
-		desktop->refresh_source = 0;
-	}
-	_refresh_reset(desktop);
-	desktophandler_refresh(desktop->handler);
+	desktop->refresh_source = g_idle_add(_refresh_on_idle, desktop);
 }
 
 static void _refresh_reset(Desktop * desktop)
@@ -926,6 +924,17 @@ static void _refresh_reset(Desktop * desktop)
 		desktopicon_set_immutable(icon, FALSE);
 		desktopicon_set_updated(icon, FALSE);
 	}
+}
+
+/* callbacks */
+static gboolean _refresh_on_idle(gpointer data)
+{
+	Desktop * desktop = data;
+
+	desktop->refresh_source = 0;
+	_refresh_reset(desktop);
+	desktophandler_refresh(desktop->handler);
+	return FALSE;
 }
 
 

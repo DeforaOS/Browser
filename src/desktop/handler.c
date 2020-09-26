@@ -181,6 +181,7 @@ void desktophandler_set_icons(DesktopHandler * handler, DesktopIcons icons)
 {
 	if(handler->icons != icons)
 	{
+		desktop_cleanup(handler->desktop);
 		_set_icons_destroy(handler);
 		handler->icons = icons;
 		_set_icons_init(handler);
@@ -389,6 +390,7 @@ static gboolean _desktophandler_applications_on_refresh(gpointer data)
 
 static gboolean _applications_on_refresh_done(DesktopHandler * handler)
 {
+	handler->u.applications.refresh_source = 0;
 	_applications_on_refresh_done_applications(handler);
 	desktop_cleanup(handler->desktop);
 	desktop_icons_align(handler->desktop);
@@ -710,6 +712,7 @@ static gboolean _desktophandler_categories_on_refresh(gpointer data)
 
 static gboolean _categories_on_refresh_done(DesktopHandler * handler)
 {
+	handler->u.categories.refresh_source = 0;
 	_categories_on_refresh_done_categories(handler);
 	desktop_cleanup(handler->desktop);
 	desktop_icons_align(handler->desktop);
@@ -964,15 +967,18 @@ static void _desktophandler_files_init(DesktopHandler * handler)
 		handler->u.files.path = string_new_append(
 				desktop_get_home(handler->desktop), "/",
 				DESKTOP, NULL);
+	handler->u.files.refresh_dir = NULL;
+	handler->u.files.refresh_mtime = 0;
+	handler->u.files.refresh_source = 0;
+	handler->u.files.menu = NULL;
+	/* FIXME let it be configured again */
+	handler->u.files.show_hidden = FALSE;
+	/* check for errors */
 	if(handler->u.files.path == NULL)
 	{
 		desktop_error(handler->desktop, NULL, error_get(NULL), 1);
 		return;
 	}
-	handler->u.files.refresh_dir = NULL;
-	handler->u.files.refresh_mtime = 0;
-	handler->u.files.refresh_source = 0;
-	handler->u.files.menu = NULL;
 	_files_init_add_home(handler);
 	if(browser_vfs_stat(handler->u.files.path, &st) == 0)
 	{
@@ -985,8 +991,6 @@ static void _desktophandler_files_init(DesktopHandler * handler)
 	}
 	else if(errno != ENOENT)
 		desktop_perror(NULL, handler->u.files.path, 1);
-	/* FIXME let it be configured again */
-	handler->u.files.show_hidden = FALSE;
 }
 
 static int _files_init_add_home(DesktopHandler * handler)
