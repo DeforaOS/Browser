@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <libintl.h>
 #include <gdk/gdkkeysyms.h>
+#include <System.h>
 #include <Desktop.h>
 #include "callbacks.h"
 #include "window.h"
@@ -238,7 +239,7 @@ BrowserWindow * browserwindow_new(String const * directory)
 	GtkWidget * tb_menubar;
 #endif
 
-	if((browser = malloc(sizeof(*browser))) == NULL)
+	if((browser = object_new(sizeof(*browser))) == NULL)
 	{
 		browser_error(NULL, (directory != NULL) ? directory : ".", 1);
 		return NULL;
@@ -291,7 +292,7 @@ void browserwindow_delete(BrowserWindow * browser)
 	if(browser->browser != 0)
 		browser_delete(browser->browser);
 	gtk_widget_destroy(browser->window);
-	free(browser);
+	object_delete(browser);
 	browser_window_cnt--;
 }
 
