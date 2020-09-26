@@ -29,6 +29,7 @@
 # define BROWSER_DESKTOPICON_H
 
 # include <gtk/gtk.h>
+# include "Browser/desktop.h"
 # include "../common.h"
 
 

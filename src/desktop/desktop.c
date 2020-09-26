@@ -30,7 +30,6 @@
 
 
 #include <sys/wait.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -44,38 +43,24 @@
 #include <X11/Xatom.h>
 #include <X11/extensions/Xrandr.h>
 #include <System.h>
-#include "Browser/desktop.h"
-#include "Browser/vfs.h"
 #include "desktopicon.h"
 #include "desktopiconwindow.h"
+#include "handler.h"
 #include "desktop.h"
 #include "../../config.h"
 #define _(string) gettext(string)
 #define N_(string) string
-
-#define COMMON_SYMLINK
-#include "../common.c"
 
 
 /* constants */
 #ifndef PROGNAME_DESKTOP
 # define PROGNAME_DESKTOP	"desktop"
 #endif
-#ifndef PREFIX
-# define PREFIX			"/usr/local"
-#endif
-#ifndef DATADIR
-# define DATADIR		PREFIX "/share"
-#endif
-
-#define IDLE_LOOP_ICON_CNT	16	/* number of icons added in a loop */
 
 
 /* Desktop */
 /* private */
 /* types */
-typedef struct _DesktopCategory DesktopCategory;
-
 struct _Desktop
 {
 	DesktopPrefs prefs;
@@ -137,47 +122,6 @@ struct _Desktop
 #endif
 };
 
-struct _DesktopCategory
-{
-	gboolean show;
-	char const * category;
-	char const * name;
-	char const * icon;
-};
-
-struct _DesktopHandler
-{
-	Desktop * desktop;
-	DesktopIcons icons;
-	union
-	{
-		struct
-		{
-			char * path;
-			DIR * refresh_dir;
-			time_t refresh_mtime;
-			guint refresh_source;
-			gboolean show_hidden;
-			GtkWidget * menu;
-		} files;
-		struct
-		{
-			DIR * refresh_dir;
-			time_t refresh_mtime;
-			guint refresh_source;
-			DesktopCategory * category;
-			GSList * apps;
-		} applications;
-		struct
-		{
-			DIR * refresh_dir;
-			time_t refresh_mtime;
-			guint refresh_source;
-			GSList * apps;
-		} categories;
-	} u;
-};
-
 typedef enum _DesktopHows
 {
 	DESKTOP_HOW_NONE = 0,
@@ -191,26 +135,7 @@ typedef enum _DesktopHows
 
 
 /* constants */
-#define DESKTOP			".desktop"
 #define DESKTOPRC		".desktoprc"
-
-static DesktopCategory _desktop_categories[] =
-{
-	{ FALSE, "Audio",	N_("Audio"),	"gnome-mime-audio",	},
-	{ FALSE, "Development",	N_("Development"),"applications-development"},
-	{ FALSE, "Education",	N_("Education"),"applications-science"	},
-	{ FALSE, "Game",	N_("Games"),	"applications-games"	},
-	{ FALSE, "Graphics",	N_("Graphics"),	"applications-graphics"	},
-	{ FALSE, "AudioVideo",	N_("Multimedia"),"applications-multimedia"},
-	{ FALSE, "Network",	N_("Network"),	"applications-internet" },
-	{ FALSE, "Office",	N_("Office"),	"applications-office"	},
-	{ FALSE, "Settings",	N_("Settings"),	"gnome-settings"	},
-	{ FALSE, "System",	N_("System"),	"applications-system"	},
-	{ FALSE, "Utility",	N_("Utilities"),"applications-utilities"},
-	{ FALSE, "Video",	N_("Video"),	"video"			}
-};
-static const size_t _desktop_categories_cnt = sizeof(_desktop_categories)
-	/ sizeof(*_desktop_categories);
 
 static const char * _desktop_hows[DESKTOP_HOW_COUNT] =
 {
@@ -239,8 +164,6 @@ static const char * _desktop_icons[DESKTOP_ICONS_COUNT] =
 /* prototypes */
 static int _desktop_error(Desktop * desktop, char const * message,
 		char const * error, int ret);
-static int _desktop_perror(Desktop * desktop, char const * message, int ret);
-static int _desktop_serror(Desktop * desktop, char const * message, int ret);
 
 /* accessors */
 static Config * _desktop_get_config(Desktop * desktop);
@@ -253,7 +176,6 @@ static int _desktop_get_properties(Desktop * desktop, GdkRectangle * geometry,
 static int _desktop_get_workarea(Desktop * desktop);
 
 /* useful */
-static void _desktop_cleanup(Desktop * desktop);
 #if GTK_CHECK_VERSION(3, 0, 0)
 static void _desktop_draw_background(Desktop * desktop, GdkRGBA * color,
 		char const * filename, DesktopHows how, gboolean extend);
@@ -264,33 +186,6 @@ static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
 
 static int _desktop_icon_add(Desktop * desktop, DesktopIcon * icon);
 static int _desktop_icon_remove(Desktop * desktop, DesktopIcon * icon);
-
-static void _desktop_show_preferences(Desktop * desktop);
-
-/* handlers */
-static void _desktophandler_applications_init(DesktopHandler * handler);
-static void _desktophandler_applications_destroy(DesktopHandler * handler);
-static void _desktophandler_applications_popup(DesktopHandler * handler,
-		XButtonEvent * xbev);
-static void _desktophandler_applications_refresh(DesktopHandler * handler);
-
-static void _desktophandler_categories_init(DesktopHandler * handler);
-static void _desktophandler_categories_destroy(DesktopHandler * handler);
-static void _desktophandler_categories_popup(DesktopHandler * handler,
-		XButtonEvent * xbev);
-static void _desktophandler_categories_refresh(DesktopHandler * handler);
-
-static void _desktophandler_files_init(DesktopHandler * handler);
-static void _desktophandler_files_destroy(DesktopHandler * handler);
-static void _desktophandler_files_popup(DesktopHandler * handler,
-		XButtonEvent * xbev);
-static void _desktophandler_files_refresh(DesktopHandler * handler);
-
-static void _desktophandler_homescreen_init(DesktopHandler * handler);
-static void _desktophandler_homescreen_destroy(DesktopHandler * handler);
-static void _desktophandler_homescreen_popup(DesktopHandler * handler,
-		XButtonEvent * xbev);
-static void _desktophandler_homescreen_refresh(DesktopHandler * handler);
 
 /* callbacks */
 static gboolean _desktop_on_preferences_closex(gpointer data);
@@ -313,6 +208,7 @@ static gboolean _desktop_on_refresh(gpointer data);
 static void _new_events(Desktop * desktop, GdkWindow * window,
 		GdkEventMask mask);
 static void _new_filter(Desktop * desktop, GdkWindow * window);
+static void _new_icons(Desktop * desktop);
 static void _new_window(Desktop * desktop, GdkEventMask * mask);
 static int _on_message(void * data, uint32_t value1, uint32_t value2,
 		uint32_t value3);
@@ -366,21 +262,20 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 	desktop->root = gdk_screen_get_root_window(desktop->screen);
 	/* icons */
 	desktop->icons_size = 0;
+	_new_icons(desktop);
 	if((home = getenv("HOME")) == NULL
 			&& (home = g_get_home_dir()) == NULL)
 		home = "/";
 	desktop->home = home;
 	desktop->mime = mime_new(NULL);
 	/* handler */
-	desktop->handler = object_new(sizeof(*desktop->handler));
+	desktop->handler = desktophandler_new(desktop, DESKTOP_ICONS_NONE);
 	/* check for errors */
 	if(desktop->mime == NULL || desktop->handler == NULL)
 	{
 		desktop_delete(desktop);
 		return NULL;
 	}
-	desktop->handler->desktop = desktop;
-	desktop->handler->icons = DESKTOP_ICONS_NONE;
 	/* internal */
 	desktop->theme = gtk_icon_theme_get_default();
 	desktop_message_register(NULL, DESKTOP_CLIENT_MESSAGE, _on_message,
@@ -521,7 +416,7 @@ static int _on_message(void * data, uint32_t value1, uint32_t value2,
 			break;
 		case DESKTOP_MESSAGE_SHOW:
 			if(value2 == DESKTOP_SHOW_SETTINGS)
-				_desktop_show_preferences(desktop);
+				desktop_show_preferences(desktop);
 			break;
 	}
 	return GDK_FILTER_CONTINUE;
@@ -550,12 +445,6 @@ static void _on_monitor_removed(GdkDisplay * display, GdkMonitor * monitor,
 }
 #endif
 
-static void _on_popup_new_folder(gpointer data);
-static void _on_popup_new_text_file(gpointer data);
-static void _on_popup_paste(gpointer data);
-static void _on_popup_preferences(gpointer data);
-static void _on_popup_symlink(gpointer data);
-
 static void _on_popup(gpointer data)
 {
 	Desktop * desktop = data;
@@ -567,26 +456,7 @@ static void _on_popup_event(gpointer data, XButtonEvent * xbev)
 {
 	Desktop * desktop = data;
 
-	switch(desktop->handler->icons)
-	{
-		case DESKTOP_ICONS_APPLICATIONS:
-			_desktophandler_applications_popup(desktop->handler,
-					xbev);
-			break;
-		case DESKTOP_ICONS_CATEGORIES:
-			_desktophandler_categories_popup(desktop->handler,
-					xbev);
-			break;
-		case DESKTOP_ICONS_FILES:
-			_desktophandler_files_popup(desktop->handler, xbev);
-			break;
-		case DESKTOP_ICONS_HOMESCREEN:
-			_desktophandler_homescreen_popup(desktop->handler,
-					xbev);
-			break;
-		case DESKTOP_ICONS_NONE:
-			break;
-	}
+	desktophandler_popup(desktop->handler, xbev);
 }
 
 static gboolean _on_desktop_button_press(GtkWidget * widget,
@@ -799,6 +669,13 @@ GdkPixbuf * desktop_get_folder(Desktop * desktop)
 }
 
 
+/* desktop_get_home */
+String const * desktop_get_home(Desktop * desktop)
+{
+	return desktop->home;
+}
+
+
 /* desktop_get_icon_size */
 void desktop_get_icon_size(Desktop * desktop, unsigned int * width,
 		unsigned int * height, unsigned int * size)
@@ -835,7 +712,7 @@ DesktopIcon ** desktop_get_icons_selected(Desktop * desktop)
 			continue;
 		if((p = realloc(icons, sizeof(*p) * (cnt + 1))) == NULL)
 		{
-			_desktop_perror(NULL, "realloc", -errno);
+			desktop_perror(NULL, "realloc", -errno);
 			free(icons);
 			return NULL;
 		}
@@ -861,6 +738,13 @@ Mime * desktop_get_mime(Desktop * desktop)
 GtkIconTheme * desktop_get_theme(Desktop * desktop)
 {
 	return desktop->theme;
+}
+
+
+/* desktop_get_window */
+GtkWidget * desktop_get_window(Desktop * desktop)
+{
+	return desktop->desktop;
 }
 
 
@@ -927,63 +811,11 @@ static void _alignment_vertical(Desktop * desktop)
 
 
 /* desktop_set_icons */
-static void _set_icons_destroy(Desktop * desktop);
-static void _set_icons_init(Desktop * desktop);
-
 void desktop_set_icons(Desktop * desktop, DesktopIcons icons)
 {
-	if(desktop->handler->icons != icons)
-	{
-		_set_icons_destroy(desktop);
-		desktop->handler->icons = icons;
-		_set_icons_init(desktop);
-	}
+	desktophandler_set_icons(desktop->handler, icons);
 	desktop->prefs.icons = icons;
 	desktop_refresh(desktop);
-}
-
-static void _set_icons_destroy(Desktop * desktop)
-{
-	switch(desktop->handler->icons)
-	{
-		case DESKTOP_ICONS_APPLICATIONS:
-			_desktophandler_applications_destroy(desktop->handler);
-			break;
-		case DESKTOP_ICONS_CATEGORIES:
-			_desktophandler_categories_destroy(
-					desktop->handler);
-			break;
-		case DESKTOP_ICONS_FILES:
-			_desktophandler_files_destroy(desktop->handler);
-			break;
-		case DESKTOP_ICONS_HOMESCREEN:
-			_desktophandler_homescreen_destroy(
-					desktop->handler);
-			break;
-		case DESKTOP_ICONS_NONE:
-			break;
-	}
-}
-
-static void _set_icons_init(Desktop * desktop)
-{
-	switch(desktop->handler->icons)
-	{
-		case DESKTOP_ICONS_APPLICATIONS:
-			_desktophandler_applications_init(desktop->handler);
-			break;
-		case DESKTOP_ICONS_CATEGORIES:
-			_desktophandler_categories_init(desktop->handler);
-			break;
-		case DESKTOP_ICONS_FILES:
-			_desktophandler_files_init(desktop->handler);
-			break;
-		case DESKTOP_ICONS_HOMESCREEN:
-			_desktophandler_homescreen_init(desktop->handler);
-			break;
-		case DESKTOP_ICONS_NONE:
-			break;
-	}
 }
 
 
@@ -1022,11 +854,47 @@ int desktop_set_layout(Desktop * desktop, DesktopLayout layout)
 
 
 /* useful */
+/* desktop_cleanup */
+void desktop_cleanup(Desktop * desktop)
+{
+	size_t i;
+	DesktopIcon * icon;
+
+	for(i = 0; i < desktop->icons_cnt;)
+	{
+		icon = desktopiconwindow_get_icon(desktop->icons[i]);
+		if(desktopicon_get_immutable(icon) == TRUE)
+			i++;
+		else if(desktopicon_get_updated(icon) != TRUE)
+			_desktop_icon_remove(desktop, icon);
+		else
+		{
+			desktopicon_set_updated(icon, FALSE);
+			i++;
+		}
+	}
+}
+
+
 /* desktop_error */
 int desktop_error(Desktop * desktop, char const * message, char const * error,
 		int ret)
 {
 	return _desktop_error(desktop, message, error, ret);
+}
+
+
+/* desktop_perror */
+int desktop_perror(Desktop * desktop, char const * message, int ret)
+{
+	return _desktop_error(desktop, message, strerror(errno), ret);
+}
+
+
+/* desktop_serror */
+int desktop_serror(Desktop * desktop, char const * message, int ret)
+{
+	return _desktop_error(desktop, message, error_get(NULL), ret);
 }
 
 
@@ -1044,23 +912,7 @@ void desktop_refresh(Desktop * desktop)
 		desktop->refresh_source = 0;
 	}
 	_refresh_reset(desktop);
-	switch(desktop->handler->icons)
-	{
-		case DESKTOP_ICONS_APPLICATIONS:
-			_desktophandler_applications_refresh(desktop->handler);
-			break;
-		case DESKTOP_ICONS_CATEGORIES:
-			_desktophandler_categories_refresh(desktop->handler);
-			break;
-		case DESKTOP_ICONS_FILES:
-			_desktophandler_files_refresh(desktop->handler);
-			break;
-		case DESKTOP_ICONS_HOMESCREEN:
-			_desktophandler_homescreen_refresh(desktop->handler);
-			break;
-		case DESKTOP_ICONS_NONE:
-			break;
-	}
+	desktophandler_refresh(desktop->handler);
 }
 
 static void _refresh_reset(Desktop * desktop)
@@ -1074,8 +926,6 @@ static void _refresh_reset(Desktop * desktop)
 		desktopicon_set_immutable(icon, FALSE);
 		desktopicon_set_updated(icon, FALSE);
 	}
-	for(i = 0; i < _desktop_categories_cnt; i++)
-		_desktop_categories[i].show = FALSE;
 }
 
 
@@ -1263,9 +1113,9 @@ static gboolean _reset_on_idle(gpointer data)
 
 
 /* desktop_icon_add */
-void desktop_icon_add(Desktop * desktop, DesktopIcon * icon)
+void desktop_icon_add(Desktop * desktop, DesktopIcon * icon, gboolean align)
 {
-	if(_desktop_icon_add(desktop, icon) == 0)
+	if(_desktop_icon_add(desktop, icon) == 0 && align)
 		desktop_icons_align(desktop);
 }
 
@@ -1314,6 +1164,29 @@ static int _align_compare(const void * a, const void * b)
 	else if(!dira && dirb)
 		return 1;
 	return strcmp(desktopicon_get_name(icona), desktopicon_get_name(iconb));
+}
+
+
+/* desktop_icons_lookup */
+DesktopIcon * desktop_icons_lookup(Desktop * desktop, String const * name)
+{
+	size_t i;
+	DesktopIcon * icon;
+	char const * p;
+
+	for(i = 0; i < desktop->icons_cnt; i++)
+	{
+		icon = desktopiconwindow_get_icon(desktop->icons[i]);
+		if(desktopicon_get_updated(icon) == TRUE)
+			continue;
+		if((p = desktopicon_get_path(icon)) == NULL
+				|| (p = strrchr(p, '/')) == NULL)
+			continue;
+		if(strcmp(name, ++p) != 0)
+			continue;
+		return icon;
+	}
+	return NULL;
 }
 
 
@@ -1369,580 +1242,6 @@ void desktop_select_under(Desktop * desktop, DesktopIcon * icon)
 }
 
 
-/* desktop_unselect_all */
-void desktop_unselect_all(Desktop * desktop)
-{
-	size_t i;
-	DesktopIcon * icon;
-
-	for(i = 0; i < desktop->icons_cnt; i++)
-	{
-		icon = desktopiconwindow_get_icon(desktop->icons[i]);
-		desktopicon_set_selected(icon, FALSE);
-	}
-}
-
-
-/* private */
-/* functions */
-/* desktop_error */
-static int _error_text(char const * message, char const * error, int ret);
-
-static int _desktop_error(Desktop * desktop, char const * message,
-		char const * error, int ret)
-{
-	GtkWidget * dialog;
-
-	if(desktop == NULL)
-		return _error_text(message, error, ret);
-	dialog = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_ERROR,
-			GTK_BUTTONS_CLOSE, "%s%s%s",
-			(message != NULL) ? message : "",
-			(message != NULL && error != NULL) ? ": " : "",
-#if GTK_CHECK_VERSION(2, 6, 0)
-			_("Error"));
-	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
-			"%s%s%s", (message != NULL) ? message : "",
-			(message != NULL && error != NULL) ? ": " : "",
-#endif
-			error);
-	gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
-	if(ret < 0)
-	{
-		g_signal_connect(dialog, "response", G_CALLBACK(gtk_main_quit),
-				NULL);
-		ret = -ret;
-	}
-	else
-		g_signal_connect(dialog, "response", G_CALLBACK(
-					gtk_widget_destroy), NULL);
-	gtk_widget_show(dialog);
-	return ret;
-}
-
-static int _error_text(char const * message, char const * error, int ret)
-{
-	fprintf(stderr, "%s: %s%s%s\n", PROGNAME_DESKTOP,
-			(message != NULL) ? message : "",
-			(message != NULL) ? ": " : "", error);
-	return ret;
-}
-
-
-/* desktop_perror */
-static int _desktop_perror(Desktop * desktop, char const * message, int ret)
-{
-	return _desktop_error(desktop, message, strerror(errno), ret);
-}
-
-
-/* desktop_serror */
-static int _desktop_serror(Desktop * desktop, char const * message, int ret)
-{
-	return _desktop_error(desktop, message, error_get(NULL), ret);
-}
-
-
-/* desktop_get_config */
-static Config * _desktop_get_config(Desktop * desktop)
-{
-	Config * config;
-	String * pathname = NULL;
-
-	if((config = config_new()) == NULL
-			|| (pathname = string_new_append(desktop->home,
-					"/" DESKTOPRC, NULL)) == NULL)
-	{
-		if(config != NULL)
-			config_delete(config);
-		if(pathname != NULL)
-			object_delete(pathname);
-		_desktop_serror(NULL, _("Could not load preferences"), FALSE);
-		return NULL;
-	}
-	config_load(config, pathname); /* XXX ignore errors */
-	return config;
-}
-
-
-/* desktop_get_monitor_properties */
-#if !GTK_CHECK_VERSION(3, 22, 0)
-static void _monitor_properties_workarea(Desktop * desktop, int monitor,
-		GdkRectangle * workarea);
-#endif
-
-static int _desktop_get_monitor_properties(Desktop * desktop, int monitor,
-		GdkRectangle * geometry, GdkRectangle * workarea,
-		int * scale, int * width_mm, int * height_mm)
-{
-#if GTK_CHECK_VERSION(3, 22, 0)
-	GdkMonitor * m;
-#endif
-	int s;
-
-	if(monitor < 0)
-	{
-		_desktop_get_properties(desktop, geometry, workarea, scale,
-				width_mm, height_mm);
-		return 0;
-	}
-#if GTK_CHECK_VERSION(3, 22, 0)
-	if((m = gdk_display_get_monitor(desktop->display, monitor)) == NULL)
-		return -1;
-	if(geometry != NULL)
-		gdk_monitor_get_geometry(m, geometry);
-	if(workarea != NULL)
-		gdk_monitor_get_workarea(m, workarea);
-	if(scale != NULL || geometry != NULL)
-	{
-		if((s = gdk_monitor_get_scale_factor(m)) != 1
-				&& geometry != NULL)
-		{
-			geometry->x *= s;
-			geometry->y *= s;
-			geometry->width *= s;
-			geometry->height *= s;
-		}
-		if(scale != NULL)
-			*scale = s;
-	}
-	if(width_mm != NULL)
-		*width_mm = gdk_monitor_get_width_mm(m);
-	if(height_mm != NULL)
-		*height_mm = gdk_monitor_get_height_mm(m);
-#else
-	if(geometry != NULL)
-		gdk_screen_get_monitor_geometry(desktop->screen, monitor,
-				geometry);
-	if(workarea != NULL)
-		_monitor_properties_workarea(desktop, monitor, workarea);
-	if(scale != NULL)
-		*scale = 1;
-	if(width_mm != NULL)
-		*width_mm = gdk_screen_get_monitor_width_mm(desktop->screen,
-				monitor);
-	if(height_mm != NULL)
-		*height_mm = gdk_screen_get_monitor_height_mm(desktop->screen,
-				monitor);
-#endif
-	return 0;
-}
-
-#if !GTK_CHECK_VERSION(3, 22, 0)
-static void _monitor_properties_workarea(Desktop * desktop, int monitor,
-		GdkRectangle * workarea)
-{
-	GdkRectangle d;
-
-	_desktop_get_properties(desktop, NULL, &d, NULL, NULL, NULL);
-	gdk_screen_get_monitor_geometry(desktop->screen, monitor, workarea);
-	if(d.x >= workarea->x
-			&& d.x + d.width <= workarea->x + workarea->width
-			&& d.y >= workarea->y
-			&& d.y + d.height <= workarea->y + workarea->height)
-		*workarea = d;
-# ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() (%d, %d) %dx%d\n", __func__,
-			workarea->x, workarea->y,
-			workarea->width, workarea->height);
-# endif
-}
-#endif
-
-
-/* desktop_get_properties */
-static void _properties_workarea(Desktop * desktop, GdkRectangle * workarea);
-
-static int _desktop_get_properties(Desktop * desktop, GdkRectangle * geometry,
-		GdkRectangle * workarea, int * scale,
-		int * width_mm, int * height_mm)
-{
-	if(geometry != NULL)
-	{
-		geometry->x = 0;
-		geometry->y = 0;
-		geometry->width = gdk_screen_get_width(desktop->screen);
-		geometry->height = gdk_screen_get_height(desktop->screen);
-	}
-	if(workarea != NULL)
-		_properties_workarea(desktop, workarea);
-	if(scale != NULL)
-		*scale = 1;
-	if(width_mm != NULL)
-		*width_mm = gdk_screen_get_width_mm(desktop->screen);
-	if(height_mm != NULL)
-		*height_mm = gdk_screen_get_height_mm(desktop->screen);
-	return 0;
-}
-
-static void _properties_workarea(Desktop * desktop, GdkRectangle * workarea)
-{
-	Atom atom;
-	Atom type;
-	int format;
-	unsigned long cnt;
-	unsigned long bytes;
-	unsigned char * p = NULL;
-	unsigned long * u;
-	int res;
-
-	atom = gdk_x11_get_xatom_by_name("_NET_WORKAREA");
-	gdk_error_trap_push();
-	res = XGetWindowProperty(GDK_DISPLAY_XDISPLAY(desktop->display),
-				GDK_WINDOW_XID(desktop->root), atom, 0,
-				G_MAXLONG, False, XA_CARDINAL, &type, &format,
-				&cnt, &bytes, &p);
-	if(gdk_error_trap_pop() || res != Success || cnt < 4)
-		gdk_screen_get_monitor_geometry(desktop->screen, 0, workarea);
-	else
-	{
-		u = (unsigned long *)p;
-		workarea->x = u[0];
-		workarea->y = u[1];
-		if((workarea->width = u[2]) == 0
-				|| (workarea->height = u[3]) == 0)
-			gdk_screen_get_monitor_geometry(desktop->screen, 0,
-					workarea);
-	}
-	if(p != NULL)
-		XFree(p);
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() (%d, %d) %dx%d\n", __func__,
-			workarea->x, workarea->y,
-			workarea->width, workarea->height);
-#endif
-}
-
-
-/* desktop_get_workarea */
-static int _desktop_get_workarea(Desktop * desktop)
-{
-	_desktop_get_monitor_properties(desktop, desktop->prefs.monitor, NULL,
-			&desktop->workarea, NULL, NULL, NULL);
-	desktop_icons_align(desktop);
-	return 0;
-}
-
-
-/* useful */
-/* desktop_cleanup */
-static void _desktop_cleanup(Desktop * desktop)
-{
-	size_t i;
-	DesktopIcon * icon;
-
-	for(i = 0; i < desktop->icons_cnt;)
-	{
-		icon = desktopiconwindow_get_icon(desktop->icons[i]);
-		if(desktopicon_get_immutable(icon) == TRUE)
-			i++;
-		else if(desktopicon_get_updated(icon) != TRUE)
-			_desktop_icon_remove(desktop, icon);
-		else
-		{
-			desktopicon_set_updated(icon, FALSE);
-			i++;
-		}
-	}
-}
-
-
-/* desktop_draw_background */
-static gboolean _background_how_centered(Desktop * desktop,
-		GdkRectangle * window, char const * filename, GError ** error);
-static gboolean _background_how_scaled(Desktop * desktop, GdkRectangle * window,
-		char const * filename, GError ** error);
-static gboolean _background_how_scaled_ratio(Desktop * desktop,
-		GdkRectangle * window, char const * filename, GError ** error);
-static gboolean _background_how_tiled(Desktop * desktop, GdkRectangle * window,
-		char const * filename, GError ** error);
-static void _background_monitor(Desktop * desktop, char const * filename,
-		DesktopHows how, gboolean extend, GdkRectangle * window,
-		int monitor);
-static void _background_monitors(Desktop * desktop, char const * filename,
-		DesktopHows how, gboolean extend, GdkRectangle * window);
-
-#if GTK_CHECK_VERSION(3, 0, 0)
-static void _desktop_draw_background(Desktop * desktop, GdkRGBA * color,
-		char const * filename, DesktopHows how, gboolean extend)
-#else
-static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
-		char const * filename, DesktopHows how, gboolean extend)
-#endif
-{
-#if !GTK_CHECK_VERSION(3, 0, 0)
-	GdkGC * gc;
-	GtkStyle * style;
-#endif
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\", %u, %s)\n", __func__, filename, how,
-			extend ? "TRUE" : "FALSE");
-#endif
-	if(how == DESKTOP_HOW_NONE)
-		return;
-#if GTK_CHECK_VERSION(3, 0, 0)
-	desktop->cairo = gdk_cairo_create(desktop->back != NULL
-			? desktop->back : desktop->root);
-	cairo_set_source_rgba(desktop->cairo, color->red, color->green,
-			color->blue, 1.0);
-	gdk_cairo_rectangle(desktop->cairo, &desktop->window);
-	if(filename != NULL)
-		/* draw the background */
-		_background_monitors(desktop, filename, how, extend,
-				&desktop->window);
-	cairo_paint(desktop->cairo);
-	cairo_destroy(desktop->cairo);
-	desktop->cairo = NULL;
-#else
-	/* draw default color */
-	desktop->pixmap = gdk_pixmap_new(desktop->back, desktop->window.width,
-			desktop->window.height, -1);
-	gc = gdk_gc_new(desktop->pixmap);
-	gdk_gc_set_rgb_fg_color(gc, color);
-	gdk_draw_rectangle(desktop->pixmap, gc, TRUE, 0, 0,
-			desktop->window.width, desktop->window.height);
-	if(filename != NULL)
-		/* draw the background */
-		_background_monitors(desktop, filename, how, extend,
-				&desktop->window);
-	if(desktop->desktop != NULL)
-	{
-		style = gtk_style_new();
-		style->bg_pixmap[GTK_STATE_NORMAL] = desktop->pixmap;
-		gtk_widget_set_style(desktop->desktop, style);
-	}
-	else
-	{
-		gdk_window_set_back_pixmap(desktop->back, desktop->pixmap,
-				FALSE);
-		gdk_window_clear(desktop->back);
-		gdk_pixmap_unref(desktop->pixmap);
-	}
-	desktop->pixmap = NULL;
-#endif
-}
-
-static gboolean _background_how_centered(Desktop * desktop,
-		GdkRectangle * window, char const * filename, GError ** error)
-{
-	GdkPixbuf * background;
-	gint w;
-	gint h;
-	gint x;
-	gint y;
-
-	if((background = gdk_pixbuf_new_from_file(filename, error)) == NULL)
-		return FALSE;
-	w = gdk_pixbuf_get_width(background);
-	h = gdk_pixbuf_get_height(background);
-	x = (window->width - w) / 2 + window->x;
-	y = (window->height - h) / 2 + window->y;
-#if GTK_CHECK_VERSION(3, 0, 0)
-	gdk_cairo_set_source_pixbuf(desktop->cairo, background, x, y);
-#else
-	gdk_draw_pixbuf(desktop->pixmap, NULL, background, 0, 0, x, y, w, h,
-			GDK_RGB_DITHER_NONE, 0, 0);
-#endif
-	g_object_unref(background);
-	return TRUE;
-}
-
-static gboolean _background_how_scaled(Desktop * desktop, GdkRectangle * window,
-		char const * filename, GError ** error)
-{
-	GdkPixbuf * background;
-	gint w;
-	gint h;
-	gint x;
-	gint y;
-
-#if GTK_CHECK_VERSION(2, 6, 0)
-	background = gdk_pixbuf_new_from_file_at_scale(filename, window->width,
-			window->height, FALSE, error);
-#elif GTK_CHECK_VERSION(2, 4, 0)
-	background = gdk_pixbuf_new_from_file_at_size(filename, window->width,
-			window->height, error);
-#else
-	background = gdk_pixbuf_new_from_file(filename, error);
-#endif
-	if(background == NULL)
-		return FALSE;
-	w = gdk_pixbuf_get_width(background);
-	h = gdk_pixbuf_get_height(background);
-	x = (window->width - w) / 2 + window->x;
-	y = (window->height - h) / 2 + window->y;
-#if GTK_CHECK_VERSION(3, 0, 0)
-	gdk_cairo_set_source_pixbuf(desktop->cairo, background, x, y);
-#else
-	gdk_draw_pixbuf(desktop->pixmap, NULL, background, 0, 0, x, y, w, h,
-			GDK_RGB_DITHER_NONE, 0, 0);
-#endif
-	g_object_unref(background);
-	return TRUE;
-}
-
-static gboolean _background_how_scaled_ratio(Desktop * desktop,
-		GdkRectangle * window, char const * filename, GError ** error)
-{
-#if GTK_CHECK_VERSION(2, 4, 0)
-	GdkPixbuf * background;
-	gint w;
-	gint h;
-	gint x;
-	gint y;
-
-	background = gdk_pixbuf_new_from_file_at_size(filename, window->width,
-			window->height, error);
-	if(background == NULL)
-		return FALSE;
-	w = gdk_pixbuf_get_width(background);
-	h = gdk_pixbuf_get_height(background);
-	x =(window->width - w) / 2 + window->x;
-	y = (window->height - h) / 2 + window->y;
-#if GTK_CHECK_VERSION(3, 0, 0)
-	gdk_cairo_set_source_pixbuf(desktop->cairo, background, x, y);
-#else
-	gdk_draw_pixbuf(desktop->pixmap, NULL, background, 0, 0, x, y, w, h,
-			GDK_RGB_DITHER_NONE, 0, 0);
-#endif
-	g_object_unref(background);
-	return TRUE;
-#else
-	return _background_how_scaled(desktop, window, filename, error);
-#endif
-}
-
-static gboolean _background_how_tiled(Desktop * desktop, GdkRectangle * window,
-		char const * filename, GError ** error)
-{
-	GdkPixbuf * background;
-	gint w;
-	gint h;
-	gint i;
-	gint j;
-
-	if((background = gdk_pixbuf_new_from_file(filename, error)) == NULL)
-		return FALSE;
-	w = gdk_pixbuf_get_width(background);
-	h = gdk_pixbuf_get_height(background);
-	for(j = 0; j < window->height; j += h)
-		for(i = 0; i < window->width; i += w)
-#if GTK_CHECK_VERSION(3, 0, 0)
-			gdk_cairo_set_source_pixbuf(desktop->cairo, background,
-					i + window->x, j + window->y);
-#else
-			gdk_draw_pixbuf(desktop->pixmap, NULL, background, 0, 0,
-					i + window->x, j + window->y, w, h,
-					GDK_RGB_DITHER_NONE, 0, 0);
-#endif
-	g_object_unref(background);
-	return TRUE;
-}
-
-static void _background_monitor(Desktop * desktop, char const * filename,
-		DesktopHows how, gboolean extend, GdkRectangle * window,
-		int monitor)
-{
-	GError * error = NULL;
-
-	if(extend != TRUE)
-		_desktop_get_monitor_properties(desktop, monitor, window, NULL,
-				NULL, NULL, NULL);
-	switch(how)
-	{
-		case DESKTOP_HOW_NONE:
-			break;
-		case DESKTOP_HOW_CENTERED:
-			_background_how_centered(desktop, window, filename,
-					&error);
-			break;
-		case DESKTOP_HOW_SCALED_RATIO:
-			_background_how_scaled_ratio(desktop, window, filename,
-					&error);
-			break;
-		case DESKTOP_HOW_TILED:
-			_background_how_tiled(desktop, window, filename,
-					&error);
-			break;
-		case DESKTOP_HOW_SCALED:
-			_background_how_scaled(desktop, window, filename,
-					&error);
-			break;
-	}
-	if(error != NULL)
-	{
-		desktop_error(desktop, NULL, error->message, 1);
-		g_error_free(error);
-	}
-}
-
-static void _background_monitors(Desktop * desktop, char const * filename,
-		DesktopHows how, gboolean extend, GdkRectangle * window)
-{
-	gint n;
-	gint i;
-
-	n = (extend != TRUE) ?
-#if GTK_CHECK_VERSION(3, 22, 0)
-		gdk_display_get_n_monitors(desktop->display)
-#else
-		gdk_screen_get_n_monitors(desktop->screen)
-#endif
-		: 1;
-	for(i = 0; i < n; i++)
-		_background_monitor(desktop, filename, how, extend, window, i);
-}
-
-
-/* desktop_icon_add */
-static int _desktop_icon_add(Desktop * desktop, DesktopIcon * icon)
-{
-	DesktopIconWindow * window;
-	DesktopIconWindow ** p;
-
-	if((p = realloc(desktop->icons, sizeof(*p) * (desktop->icons_cnt + 1)))
-			== NULL)
-		return -_desktop_perror(desktop, desktopicon_get_name(icon), 1);
-	desktop->icons = p;
-	if((window = desktopiconwindow_new(icon)) == NULL)
-		return -_desktop_serror(desktop, desktopicon_get_name(icon), 1);
-	desktop->icons[desktop->icons_cnt++] = window;
-	desktopicon_set_background(icon, &desktop->background);
-	desktopicon_set_font(icon, desktop->font);
-	desktopicon_set_foreground(icon, &desktop->foreground);
-	desktopiconwindow_show(window);
-	return 0;
-}
-
-
-/* desktop_icon_remove */
-static int _desktop_icon_remove(Desktop * desktop, DesktopIcon * icon)
-{
-	size_t i;
-	DesktopIcon * j;
-	DesktopIconWindow ** p;
-
-	for(i = 0; i < desktop->icons_cnt; i++)
-	{
-		j = desktopiconwindow_get_icon(desktop->icons[i]);
-		if(j != icon)
-			continue;
-		desktopiconwindow_delete(desktop->icons[i]);
-		for(desktop->icons_cnt--; i < desktop->icons_cnt; i++)
-			desktop->icons[i] = desktop->icons[i + 1];
-		if((p = realloc(desktop->icons, sizeof(*p)
-						* (desktop->icons_cnt)))
-				!= NULL)
-			desktop->icons = p; /* we can ignore errors... */
-		else if(desktop->icons_cnt == 0)
-			desktop->icons = NULL; /* ...except when it's not one */
-		return 0;
-	}
-	return 1;
-}
-
-
 /* desktop_show_preferences */
 static void _preferences_background(Desktop * desktop, GtkWidget * notebook);
 static void _preferences_icons(Desktop * desktop, GtkWidget * notebook);
@@ -1952,7 +1251,7 @@ static void _preferences_set_color(Config * config, char const * section,
 		char const * variable, char const * fallback,
 		GtkWidget * widget);
 
-static void _desktop_show_preferences(Desktop * desktop)
+void desktop_show_preferences(Desktop * desktop)
 {
 	GtkWidget * vbox;
 	GtkWidget * notebook;
@@ -2416,1142 +1715,541 @@ static void _preferences_set_color(Config * config, char const * section,
 }
 
 
-/* handlers */
-/* desktophandler_applications_init */
-static void _applications_init_on_back(Desktop * desktop, gpointer data);
-
-static void _desktophandler_applications_init(DesktopHandler * handler)
+/* desktop_unselect_all */
+void desktop_unselect_all(Desktop * desktop)
 {
-	DesktopIcon * desktopicon;
-	GdkPixbuf * icon;
-
-	handler->u.applications.refresh_dir = NULL;
-	handler->u.applications.refresh_mtime = 0;
-	handler->u.applications.refresh_source = 0;
-	handler->u.applications.category = NULL;
-	handler->u.applications.apps = NULL;
-	if((desktopicon = desktopicon_new(handler->desktop, _("Back"), NULL))
-			== NULL)
-	{
-		_desktop_serror(handler->desktop, _("Back"), 1);
-		return;
-	}
-	desktopicon_set_callback(desktopicon, _applications_init_on_back, NULL);
-	desktopicon_set_first(desktopicon, TRUE);
-	desktopicon_set_immutable(desktopicon, TRUE);
-	icon = gtk_icon_theme_load_icon(handler->desktop->theme, "back",
-			handler->desktop->icons_size, 0, NULL);
-	if(icon != NULL)
-		desktopicon_set_icon(desktopicon, icon);
-	/* XXX report errors */
-	if(_desktop_icon_add(handler->desktop, desktopicon) != 0)
-		desktopicon_delete(desktopicon);
-}
-
-static void _applications_init_on_back(Desktop * desktop, gpointer data)
-{
-	(void) data;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s()\n", __func__);
-#endif
-	desktop_set_icons(desktop, DESKTOP_ICONS_HOMESCREEN);
-}
-
-
-/* desktophandler_applications_destroy */
-static void _desktophandler_applications_destroy(DesktopHandler * handler)
-{
-	if(handler->u.applications.refresh_source != 0)
-		g_source_remove(handler->u.applications.refresh_source);
-	if(handler->u.applications.refresh_dir != NULL)
-		browser_vfs_closedir(handler->u.applications.refresh_dir);
-	g_slist_foreach(handler->u.applications.apps, (GFunc)mimehandler_delete,
-			NULL);
-	g_slist_free(handler->u.applications.apps);
-}
-
-
-/* desktophandler_applications_popup */
-static void _desktophandler_applications_popup(DesktopHandler * handler,
-		XButtonEvent * xbev)
-{
-	(void) handler;
-	(void) xbev;
-}
-
-
-/* desktophandler_applications_refresh */
-static gboolean _desktophandler_applications_on_refresh(gpointer data);
-static gboolean _applications_on_refresh_done(DesktopHandler * handler);
-static void _applications_on_refresh_done_applications(
-		DesktopHandler * handler);
-static int _applications_on_refresh_loop(DesktopHandler * handler);
-static void _applications_on_refresh_loop_path(DesktopHandler * handler,
-		char const * path, char const * apppath);
-static void _applications_on_refresh_loop_xdg(DesktopHandler * handler,
-		void (*callback)(DesktopHandler * handler, char const * path,
-			char const * apppath));
-static void _applications_on_refresh_loop_xdg_home(DesktopHandler * handler,
-		void (*callback)(DesktopHandler * handler, char const * path,
-			char const * apppath));
-static void _applications_on_refresh_loop_xdg_path(DesktopHandler * handler,
-		void (*callback)(DesktopHandler * handler, char const * path,
-			char const * apppath), char const * path);
-static gint _applications_apps_compare(gconstpointer a, gconstpointer b);
-
-static void _desktophandler_applications_refresh(DesktopHandler * handler)
-{
-	g_slist_foreach(handler->u.applications.apps, (GFunc)mimehandler_delete,
-			NULL);
-	g_slist_free(handler->u.applications.apps);
-	handler->u.applications.apps = NULL;
-	handler->u.applications.refresh_source = g_idle_add(
-			_desktophandler_applications_on_refresh, handler);
-}
-
-static gboolean _desktophandler_applications_on_refresh(gpointer data)
-{
-	DesktopHandler * handler = data;
-	unsigned int i;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s()\n", __func__);
-#endif
-	/* FIXME upon deletion one icon too many is removed */
-	for(i = 0; i < IDLE_LOOP_ICON_CNT
-			&& _applications_on_refresh_loop(handler) == 0; i++);
-	if(i == IDLE_LOOP_ICON_CNT)
-		return TRUE;
-	return _applications_on_refresh_done(handler);
-}
-
-static gboolean _applications_on_refresh_done(DesktopHandler * handler)
-{
-	_applications_on_refresh_done_applications(handler);
-	_desktop_cleanup(handler->desktop);
-	desktop_icons_align(handler->desktop);
-	return FALSE;
-}
-
-static void _applications_on_refresh_done_applications(DesktopHandler * handler)
-{
-	GSList * p;
-	MimeHandler * mime;
-	DesktopCategory * dc = handler->u.applications.category;
-	String const ** categories;
 	size_t i;
-	String const * filename;
 	DesktopIcon * icon;
 
-	for(p = handler->u.applications.apps; p != NULL; p = p->next)
+	for(i = 0; i < desktop->icons_cnt; i++)
 	{
-		mime = p->data;
-		if(dc != NULL)
-		{
-			if((categories = mimehandler_get_categories(mime))
-					== NULL || categories[0] == NULL)
-				continue;
-			for(i = 0; categories[i] != NULL; i++)
-				if(string_compare(categories[i], dc->category)
-						== 0)
-					break;
-			if(categories[i] == NULL)
-				continue;
-		}
-		filename = mimehandler_get_filename(mime);
-		/* FIXME keep track of the datadir */
-		if((icon = desktopicon_new_application(handler->desktop,
-						filename, NULL)) == NULL)
-			continue;
-		_desktop_icon_add(handler->desktop, icon);
+		icon = desktopiconwindow_get_icon(desktop->icons[i]);
+		desktopicon_set_selected(icon, FALSE);
 	}
 }
 
-static int _applications_on_refresh_loop(DesktopHandler * handler)
-{
-	_applications_on_refresh_loop_xdg(handler,
-			_applications_on_refresh_loop_path);
-	return 1;
-}
 
-static void _applications_on_refresh_loop_path(DesktopHandler * handler,
-		char const * path, char const * apppath)
-{
-	DIR * dir;
-	struct stat st;
-	size_t alen;
-	struct dirent * de;
-	size_t len;
-	const char ext[] = ".desktop";
-	char * name = NULL;
-	char * p;
-	MimeHandler * mime;
-	(void) path;
+/* private */
+/* functions */
+/* desktop_error */
+static int _error_text(char const * message, char const * error, int ret);
 
-	if((dir = browser_vfs_opendir(apppath, &st)) == NULL)
-	{
-		if(errno != ENOENT)
-			_desktop_perror(NULL, apppath, 1);
-		return;
-	}
-	if(st.st_mtime > handler->u.applications.refresh_mtime)
-		handler->u.applications.refresh_mtime = st.st_mtime;
-	alen = strlen(apppath);
-	while((de = browser_vfs_readdir(dir)) != NULL)
-	{
-		if(de->d_name[0] == '.')
-			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
-						&& de->d_name[2] == '\0'))
-				continue;
-		len = strlen(de->d_name);
-		if(len < sizeof(ext))
-			continue;
-		if(strncmp(&de->d_name[len - sizeof(ext) + 1], ext,
-					sizeof(ext)) != 0)
-			continue;
-		if((p = realloc(name, alen + len + 2)) == NULL)
-		{
-			_desktop_perror(NULL, apppath, 1);
-			continue;
-		}
-		name = p;
-		snprintf(name, alen + len + 2, "%s/%s", apppath, de->d_name);
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() name=\"%s\" path=\"%s\"\n",
-				__func__, name, path);
+static int _desktop_error(Desktop * desktop, char const * message,
+		char const * error, int ret)
+{
+	GtkWidget * dialog;
+
+	if(desktop == NULL)
+		return _error_text(message, error, ret);
+	dialog = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_ERROR,
+			GTK_BUTTONS_CLOSE, "%s%s%s",
+			(message != NULL) ? message : "",
+			(message != NULL && error != NULL) ? ": " : "",
+#if GTK_CHECK_VERSION(2, 6, 0)
+			_("Error"));
+	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
+			"%s%s%s", (message != NULL) ? message : "",
+			(message != NULL && error != NULL) ? ": " : "",
 #endif
-		if((mime = mimehandler_new_load(name)) == NULL
-				|| mimehandler_can_display(mime) == 0)
-		{
-			if(mime != NULL)
-				mimehandler_delete(mime);
-			else
-				_desktop_serror(NULL, NULL, 1);
-			continue;
-		}
-		handler->u.applications.apps = g_slist_insert_sorted(
-				handler->u.applications.apps, mime,
-				_applications_apps_compare);
-	}
-	free(name);
-	browser_vfs_closedir(dir);
-}
-
-static void _applications_on_refresh_loop_xdg(DesktopHandler * handler,
-		void (*callback)(DesktopHandler * handler, char const * path,
-			char const * apppath))
-{
-	char const * path;
-	char * p;
-	size_t i;
-	size_t j;
-
-	if((path = getenv("XDG_DATA_DIRS")) == NULL || strlen(path) == 0)
-		/* XXX check this at build-time instead */
-		path = (strcmp(DATADIR, "/usr/local/share") == 0)
-			? DATADIR ":/usr/share"
-			: "/usr/local/share:" DATADIR ":/usr/share";
-	if((p = strdup(path)) == NULL)
+			error);
+	gtk_window_set_title(GTK_WINDOW(dialog), _("Error"));
+	if(ret < 0)
 	{
-		_desktop_perror(NULL, NULL, 1);
-		return;
+		g_signal_connect(dialog, "response", G_CALLBACK(gtk_main_quit),
+				NULL);
+		ret = -ret;
 	}
-	for(i = 0, j = 0;; i++)
-		if(p[i] == '\0')
-		{
-			_applications_on_refresh_loop_xdg_path(handler, callback,
-					&p[j]);
-			break;
-		}
-		else if(p[i] == ':')
-		{
-			p[i] = '\0';
-			_applications_on_refresh_loop_xdg_path(handler, callback,
-					&p[j]);
-			j = i + 1;
-		}
-	free(p);
-	_applications_on_refresh_loop_xdg_home(handler, callback);
-}
-
-static void _applications_on_refresh_loop_xdg_home(DesktopHandler * handler,
-		void (*callback)(DesktopHandler * handler, char const * path,
-			char const * apppath))
-{
-	char const fallback[] = ".local/share";
-	char const * path;
-	char const * homedir;
-	size_t len;
-	char * p;
-
-	/* use $XDG_DATA_HOME if set and not empty */
-	if((path = getenv("XDG_DATA_HOME")) != NULL && strlen(path) > 0)
-	{
-		_applications_on_refresh_loop_xdg_path(handler, callback, path);
-		return;
-	}
-	/* fallback to "$HOME/.local/share" */
-	if((homedir = getenv("HOME")) == NULL)
-		homedir = g_get_home_dir();
-	len = strlen(homedir) + 1 + sizeof(fallback);
-	if((p = malloc(len)) == NULL)
-	{
-		_desktop_perror(NULL, homedir, 1);
-		return;
-	}
-	snprintf(p, len, "%s/%s", homedir, fallback);
-	_applications_on_refresh_loop_xdg_path(handler, callback, p);
-	free(p);
-}
-
-static void _applications_on_refresh_loop_xdg_path(DesktopHandler * handler,
-		void (*callback)(DesktopHandler * handler, char const * path,
-			char const * apppath), char const * path)
-{
-	const char applications[] = "/applications";
-	char * apppath;
-
-	if((apppath = string_new_append(path, applications, NULL)) == NULL)
-		_desktop_serror(NULL, path, 1);
-	callback(handler, path, apppath);
-	string_delete(apppath);
-}
-
-static gint _applications_apps_compare(gconstpointer a, gconstpointer b)
-{
-	MimeHandler * mha = (MimeHandler *)a;
-	MimeHandler * mhb = (MimeHandler *)b;
-	String const * mhas;
-	String const * mhbs;
-
-	if((mhas = mimehandler_get_generic_name(mha, 1)) == NULL)
-		mhas = mimehandler_get_name(mha, 1);
-	if((mhbs = mimehandler_get_generic_name(mhb, 1)) == NULL)
-		mhbs = mimehandler_get_name(mhb, 1);
-	return string_compare(mhas, mhbs);
-}
-
-
-/* desktophandler_categories_init */
-static void _categories_init_set_homescreen(Desktop * desktop, gpointer data);
-
-static void _desktophandler_categories_init(DesktopHandler * handler)
-{
-	DesktopIcon * desktopicon;
-	GdkPixbuf * icon;
-
-	handler->u.categories.refresh_dir = NULL;
-	handler->u.categories.refresh_mtime = 0;
-	handler->u.categories.refresh_source = 0;
-	handler->u.categories.apps = NULL;
-	if((desktopicon = desktopicon_new(handler->desktop, _("Back"), NULL))
-			== NULL)
-	{
-		_desktop_serror(handler->desktop, _("Back"), 1);
-		return;
-	}
-	desktopicon_set_callback(desktopicon, _categories_init_set_homescreen,
-			NULL);
-	desktopicon_set_first(desktopicon, TRUE);
-	desktopicon_set_immutable(desktopicon, TRUE);
-	icon = gtk_icon_theme_load_icon(handler->desktop->theme, "back",
-			handler->desktop->icons_size, 0, NULL);
-	if(icon != NULL)
-		desktopicon_set_icon(desktopicon, icon);
-	/* XXX report errors */
-	if(_desktop_icon_add(handler->desktop, desktopicon) != 0)
-		desktopicon_delete(desktopicon);
-}
-
-static void _categories_init_set_homescreen(Desktop * desktop, gpointer data)
-{
-	(void) data;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s()\n", __func__);
-#endif
-	desktop_set_icons(desktop, DESKTOP_ICONS_HOMESCREEN);
-}
-
-
-/* desktophandler_categories_destroy */
-static void _desktophandler_categories_destroy(DesktopHandler * handler)
-{
-	if(handler->u.categories.refresh_source != 0)
-		g_source_remove(handler->u.categories.refresh_source);
-	if(handler->u.categories.refresh_dir != NULL)
-		browser_vfs_closedir(handler->u.categories.refresh_dir);
-	g_slist_foreach(handler->u.categories.apps, (GFunc)mimehandler_delete,
-			NULL);
-	g_slist_free(handler->u.categories.apps);
-}
-
-
-/* desktophandler_categories_popup */
-static void _desktophandler_categories_popup(DesktopHandler * handler,
-		XButtonEvent * xbev)
-{
-	(void) handler;
-	(void) xbev;
-}
-
-
-/* desktophandler_categories_refresh */
-static gboolean _desktophandler_categories_on_refresh(gpointer data);
-static gboolean _categories_on_refresh_done(DesktopHandler * handler);
-static void _categories_on_refresh_done_categories(DesktopHandler * handler);
-static void _categories_on_refresh_done_categories_open(Desktop * desktop,
-		gpointer data);
-static int _categories_on_refresh_loop(DesktopHandler * handler);
-static void _categories_on_refresh_loop_path(DesktopHandler * handler,
-		char const * path, char const * apppath);
-static void _categories_on_refresh_loop_xdg(DesktopHandler * handler,
-		void (*callback)(DesktopHandler * handler, char const * path,
-			char const * apppath));
-static void _categories_on_refresh_loop_xdg_home(DesktopHandler * handler,
-		void (*callback)(DesktopHandler * handler, char const * path,
-			char const * apppath));
-static void _categories_on_refresh_loop_xdg_path(DesktopHandler * handler,
-		void (*callback)(DesktopHandler * handler, char const * path,
-			char const * apppath), char const * path);
-static gint _categories_apps_compare(gconstpointer a, gconstpointer b);
-
-static void _desktophandler_categories_refresh(DesktopHandler * handler)
-{
-	g_slist_foreach(handler->u.categories.apps, (GFunc)mimehandler_delete,
-			NULL);
-	g_slist_free(handler->u.categories.apps);
-	handler->u.categories.apps = NULL;
-	handler->u.categories.refresh_source = g_idle_add(
-			_desktophandler_categories_on_refresh, handler);
-}
-
-static gboolean _desktophandler_categories_on_refresh(gpointer data)
-{
-	DesktopHandler * handler = data;
-	unsigned int i;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s()\n", __func__);
-#endif
-	/* FIXME upon deletion one icon too many is removed */
-	for(i = 0; i < IDLE_LOOP_ICON_CNT
-			&& _categories_on_refresh_loop(handler) == 0; i++);
-	if(i == IDLE_LOOP_ICON_CNT)
-		return TRUE;
-	return _categories_on_refresh_done(handler);
-}
-
-static gboolean _categories_on_refresh_done(DesktopHandler * handler)
-{
-	_categories_on_refresh_done_categories(handler);
-	_desktop_cleanup(handler->desktop);
-	desktop_icons_align(handler->desktop);
-	return FALSE;
-}
-
-static void _categories_on_refresh_done_categories(DesktopHandler * handler)
-{
-	GSList * p;
-	MimeHandler * mime;
-	DesktopCategory * dc;
-	String const ** categories;
-	size_t i;
-	size_t j;
-	String const * filename;
-	DesktopIcon * icon;
-
-	for(p = handler->u.categories.apps; p != NULL; p = p->next)
-	{
-		mime = p->data;
-		filename = mimehandler_get_filename(mime);
-		if((categories = mimehandler_get_categories(mime)) == NULL
-				|| categories[0] == NULL)
-		{
-			/* FIXME keep track of the datadir */
-			if((icon = desktopicon_new_application(handler->desktop,
-							filename, NULL))
-					!= NULL)
-				_desktop_icon_add(handler->desktop, icon);
-			continue;
-		}
-		for(i = 0; i < _desktop_categories_cnt; i++)
-		{
-			dc = &_desktop_categories[i];
-			for(j = 0; categories[j] != NULL; j++)
-				if(string_compare(categories[j], dc->category)
-						== 0)
-					break;
-			if(categories[j] != NULL)
-				break;
-		}
-		if(i == _desktop_categories_cnt)
-		{
-			/* FIXME keep track of the datadir */
-			if((icon = desktopicon_new_application(handler->desktop,
-							filename, NULL))
-					!= NULL)
-				_desktop_icon_add(handler->desktop, icon);
-			continue;
-		}
-		if(dc->show == TRUE)
-			continue;
-		dc->show = TRUE;
-		if((icon = desktopicon_new_category(handler->desktop,
-						_(dc->name), dc->icon)) == NULL)
-			continue;
-		desktopicon_set_callback(icon,
-				_categories_on_refresh_done_categories_open,
-				dc);
-		_desktop_icon_add(handler->desktop, icon);
-	}
-}
-
-static void _categories_on_refresh_done_categories_open(Desktop * desktop,
-		gpointer data)
-{
-	DesktopCategory * dc = data;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, _(dc->name));
-#endif
-	/* FIXME need an extra argument for applications (category) */
-	desktop_set_icons(desktop, DESKTOP_ICONS_APPLICATIONS);
-}
-
-static int _categories_on_refresh_loop(DesktopHandler * handler)
-{
-	_categories_on_refresh_loop_xdg(handler,
-			_categories_on_refresh_loop_path);
-	return 1;
-}
-
-static void _categories_on_refresh_loop_path(DesktopHandler * handler,
-		char const * path, char const * apppath)
-{
-	DIR * dir;
-	struct stat st;
-	size_t alen;
-	struct dirent * de;
-	size_t len;
-	const char ext[] = ".desktop";
-	char * name = NULL;
-	char * p;
-	MimeHandler * mime;
-	(void) path;
-
-	if((dir = browser_vfs_opendir(apppath, &st)) == NULL)
-	{
-		if(errno != ENOENT)
-			_desktop_perror(NULL, apppath, 1);
-		return;
-	}
-	if(st.st_mtime > handler->u.categories.refresh_mtime)
-		handler->u.categories.refresh_mtime = st.st_mtime;
-	alen = strlen(apppath);
-	while((de = browser_vfs_readdir(dir)) != NULL)
-	{
-		if(de->d_name[0] == '.')
-			if(de->d_name[1] == '\0' || (de->d_name[1] == '.'
-						&& de->d_name[2] == '\0'))
-				continue;
-		len = strlen(de->d_name);
-		if(len < sizeof(ext))
-			continue;
-		if(strncmp(&de->d_name[len - sizeof(ext) + 1], ext,
-					sizeof(ext)) != 0)
-			continue;
-		if((p = realloc(name, alen + len + 2)) == NULL)
-		{
-			_desktop_perror(NULL, apppath, 1);
-			continue;
-		}
-		name = p;
-		snprintf(name, alen + len + 2, "%s/%s", apppath, de->d_name);
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() name=\"%s\" path=\"%s\"\n",
-				__func__, name, path);
-#endif
-		if((mime = mimehandler_new_load(name)) == NULL
-				|| mimehandler_can_display(mime) == 0)
-		{
-			if(mime != NULL)
-				mimehandler_delete(mime);
-			else
-				_desktop_serror(NULL, NULL, 1);
-			continue;
-		}
-		handler->u.categories.apps = g_slist_insert_sorted(
-				handler->u.categories.apps, mime,
-				_categories_apps_compare);
-	}
-	free(name);
-	browser_vfs_closedir(dir);
-}
-
-static void _categories_on_refresh_loop_xdg(DesktopHandler * handler,
-		void (*callback)(DesktopHandler * handler, char const * path,
-			char const * apppath))
-{
-	char const * path;
-	char * p;
-	size_t i;
-	size_t j;
-
-	if((path = getenv("XDG_DATA_DIRS")) == NULL || strlen(path) == 0)
-		/* XXX check this at build-time instead */
-		path = (strcmp(DATADIR, "/usr/local/share") == 0)
-			? DATADIR ":/usr/share"
-			: "/usr/local/share:" DATADIR ":/usr/share";
-	if((p = strdup(path)) == NULL)
-	{
-		_desktop_perror(NULL, NULL, 1);
-		return;
-	}
-	for(i = 0, j = 0;; i++)
-		if(p[i] == '\0')
-		{
-			_categories_on_refresh_loop_xdg_path(handler, callback,
-					&p[j]);
-			break;
-		}
-		else if(p[i] == ':')
-		{
-			p[i] = '\0';
-			_categories_on_refresh_loop_xdg_path(handler, callback,
-					&p[j]);
-			j = i + 1;
-		}
-	free(p);
-	_categories_on_refresh_loop_xdg_home(handler, callback);
-}
-
-static void _categories_on_refresh_loop_xdg_home(DesktopHandler * handler,
-		void (*callback)(DesktopHandler * handler, char const * path,
-			char const * apppath))
-{
-	char const fallback[] = ".local/share";
-	char const * path;
-	char const * homedir;
-	size_t len;
-	char * p;
-
-	/* use $XDG_DATA_HOME if set and not empty */
-	if((path = getenv("XDG_DATA_HOME")) != NULL && strlen(path) > 0)
-	{
-		_categories_on_refresh_loop_xdg_path(handler, callback, path);
-		return;
-	}
-	/* fallback to "$HOME/.local/share" */
-	if((homedir = getenv("HOME")) == NULL)
-		homedir = g_get_home_dir();
-	len = strlen(homedir) + 1 + sizeof(fallback);
-	if((p = malloc(len)) == NULL)
-	{
-		_desktop_perror(NULL, homedir, 1);
-		return;
-	}
-	snprintf(p, len, "%s/%s", homedir, fallback);
-	_categories_on_refresh_loop_xdg_path(handler, callback, p);
-	free(p);
-}
-
-static void _categories_on_refresh_loop_xdg_path(DesktopHandler * handler,
-		void (*callback)(DesktopHandler * handler, char const * path,
-			char const * apppath), char const * path)
-{
-	const char applications[] = "/applications";
-	char * apppath;
-
-	if((apppath = string_new_append(path, applications, NULL)) == NULL)
-		_desktop_serror(NULL, path, 1);
-	callback(handler, path, apppath);
-	string_delete(apppath);
-}
-
-static gint _categories_apps_compare(gconstpointer a, gconstpointer b)
-{
-	MimeHandler * mha = (MimeHandler *)a;
-	MimeHandler * mhb = (MimeHandler *)b;
-	String const * mhas;
-	String const * mhbs;
-
-	if((mhas = mimehandler_get_generic_name(mha, 1)) == NULL)
-		mhas = mimehandler_get_name(mha, 1);
-	if((mhbs = mimehandler_get_generic_name(mhb, 1)) == NULL)
-		mhbs = mimehandler_get_name(mhb, 1);
-	return string_compare(mhas, mhbs);
-}
-
-
-/* desktophandler_files_init */
-static int _files_init_add_home(DesktopHandler * handler);
-
-static void _desktophandler_files_init(DesktopHandler * handler)
-{
-	char const * path;
-	struct stat st;
-
-	if((path = getenv("XDG_DESKTOP_DIR")) != NULL)
-		handler->u.files.path = string_new(path);
 	else
-		handler->u.files.path = string_new_append(
-				handler->desktop->home, "/", DESKTOP, NULL);
-	if(handler->u.files.path == NULL)
-	{
-		_desktop_error(handler->desktop, NULL, error_get(NULL), 1);
-		return;
-	}
-	handler->u.files.refresh_dir = NULL;
-	handler->u.files.refresh_mtime = 0;
-	handler->u.files.refresh_source = 0;
-	handler->u.files.menu = NULL;
-	_files_init_add_home(handler);
-	if(browser_vfs_stat(handler->u.files.path, &st) == 0)
-	{
-		if(!S_ISDIR(st.st_mode))
-		{
-			_desktop_error(NULL, handler->u.files.path,
-					strerror(ENOTDIR), 1);
-			return;
-		}
-	}
-	else if(errno != ENOENT)
-		_desktop_perror(NULL, handler->u.files.path, 1);
-	/* FIXME let it be configured again */
-	handler->u.files.show_hidden = FALSE;
+		g_signal_connect(dialog, "response", G_CALLBACK(
+					gtk_widget_destroy), NULL);
+	gtk_widget_show(dialog);
+	return ret;
 }
 
-static int _files_init_add_home(DesktopHandler * handler)
+static int _error_text(char const * message, char const * error, int ret)
 {
-	DesktopIcon * desktopicon;
-	GdkPixbuf * icon;
+	fprintf(stderr, "%s: %s%s%s\n", PROGNAME_DESKTOP,
+			(message != NULL) ? message : "",
+			(message != NULL) ? ": " : "", error);
+	return ret;
+}
 
-	if((desktopicon = desktopicon_new(handler->desktop, _("Home"),
-					handler->desktop->home)) == NULL)
-		return -_desktop_serror(handler->desktop, _("Home"), 1);
-	desktopicon_set_first(desktopicon, TRUE);
-	desktopicon_set_immutable(desktopicon, TRUE);
-	icon = gtk_icon_theme_load_icon(handler->desktop->theme, "gnome-home",
-			handler->desktop->icons_size, 0, NULL);
-	if(icon == NULL)
-		icon = gtk_icon_theme_load_icon(handler->desktop->theme,
-				"gnome-fs-home", handler->desktop->icons_size,
-				0, NULL);
-	if(icon != NULL)
-		desktopicon_set_icon(desktopicon, icon);
-	/* XXX report errors */
-	if(_desktop_icon_add(handler->desktop, desktopicon) != 0)
-		desktopicon_delete(desktopicon);
+
+/* desktop_get_config */
+static Config * _desktop_get_config(Desktop * desktop)
+{
+	Config * config;
+	String * pathname = NULL;
+
+	if((config = config_new()) == NULL
+			|| (pathname = string_new_append(desktop->home,
+					"/" DESKTOPRC, NULL)) == NULL)
+	{
+		if(config != NULL)
+			config_delete(config);
+		if(pathname != NULL)
+			object_delete(pathname);
+		desktop_serror(NULL, _("Could not load preferences"), FALSE);
+		return NULL;
+	}
+	config_load(config, pathname); /* XXX ignore errors */
+	return config;
+}
+
+
+/* desktop_get_monitor_properties */
+#if !GTK_CHECK_VERSION(3, 22, 0)
+static void _monitor_properties_workarea(Desktop * desktop, int monitor,
+		GdkRectangle * workarea);
+#endif
+
+static int _desktop_get_monitor_properties(Desktop * desktop, int monitor,
+		GdkRectangle * geometry, GdkRectangle * workarea,
+		int * scale, int * width_mm, int * height_mm)
+{
+#if GTK_CHECK_VERSION(3, 22, 0)
+	GdkMonitor * m;
+#endif
+	int s;
+
+	if(monitor < 0)
+	{
+		_desktop_get_properties(desktop, geometry, workarea, scale,
+				width_mm, height_mm);
+		return 0;
+	}
+#if GTK_CHECK_VERSION(3, 22, 0)
+	if((m = gdk_display_get_monitor(desktop->display, monitor)) == NULL)
+		return -1;
+	if(geometry != NULL)
+		gdk_monitor_get_geometry(m, geometry);
+	if(workarea != NULL)
+		gdk_monitor_get_workarea(m, workarea);
+	if(scale != NULL || geometry != NULL)
+	{
+		if((s = gdk_monitor_get_scale_factor(m)) != 1
+				&& geometry != NULL)
+		{
+			geometry->x *= s;
+			geometry->y *= s;
+			geometry->width *= s;
+			geometry->height *= s;
+		}
+		if(scale != NULL)
+			*scale = s;
+	}
+	if(width_mm != NULL)
+		*width_mm = gdk_monitor_get_width_mm(m);
+	if(height_mm != NULL)
+		*height_mm = gdk_monitor_get_height_mm(m);
+#else
+	if(geometry != NULL)
+		gdk_screen_get_monitor_geometry(desktop->screen, monitor,
+				geometry);
+	if(workarea != NULL)
+		_monitor_properties_workarea(desktop, monitor, workarea);
+	if(scale != NULL)
+		*scale = 1;
+	if(width_mm != NULL)
+		*width_mm = gdk_screen_get_monitor_width_mm(desktop->screen,
+				monitor);
+	if(height_mm != NULL)
+		*height_mm = gdk_screen_get_monitor_height_mm(desktop->screen,
+				monitor);
+#endif
+	return 0;
+}
+
+#if !GTK_CHECK_VERSION(3, 22, 0)
+static void _monitor_properties_workarea(Desktop * desktop, int monitor,
+		GdkRectangle * workarea)
+{
+	GdkRectangle d;
+
+	_desktop_get_properties(desktop, NULL, &d, NULL, NULL, NULL);
+	gdk_screen_get_monitor_geometry(desktop->screen, monitor, workarea);
+	if(d.x >= workarea->x
+			&& d.x + d.width <= workarea->x + workarea->width
+			&& d.y >= workarea->y
+			&& d.y + d.height <= workarea->y + workarea->height)
+		*workarea = d;
+# ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() (%d, %d) %dx%d\n", __func__,
+			workarea->x, workarea->y,
+			workarea->width, workarea->height);
+# endif
+}
+#endif
+
+
+/* desktop_get_properties */
+static void _properties_workarea(Desktop * desktop, GdkRectangle * workarea);
+
+static int _desktop_get_properties(Desktop * desktop, GdkRectangle * geometry,
+		GdkRectangle * workarea, int * scale,
+		int * width_mm, int * height_mm)
+{
+	if(geometry != NULL)
+	{
+		geometry->x = 0;
+		geometry->y = 0;
+		geometry->width = gdk_screen_get_width(desktop->screen);
+		geometry->height = gdk_screen_get_height(desktop->screen);
+	}
+	if(workarea != NULL)
+		_properties_workarea(desktop, workarea);
+	if(scale != NULL)
+		*scale = 1;
+	if(width_mm != NULL)
+		*width_mm = gdk_screen_get_width_mm(desktop->screen);
+	if(height_mm != NULL)
+		*height_mm = gdk_screen_get_height_mm(desktop->screen);
+	return 0;
+}
+
+static void _properties_workarea(Desktop * desktop, GdkRectangle * workarea)
+{
+	Atom atom;
+	Atom type;
+	int format;
+	unsigned long cnt;
+	unsigned long bytes;
+	unsigned char * p = NULL;
+	unsigned long * u;
+	int res;
+
+	atom = gdk_x11_get_xatom_by_name("_NET_WORKAREA");
+	gdk_error_trap_push();
+	res = XGetWindowProperty(GDK_DISPLAY_XDISPLAY(desktop->display),
+				GDK_WINDOW_XID(desktop->root), atom, 0,
+				G_MAXLONG, False, XA_CARDINAL, &type, &format,
+				&cnt, &bytes, &p);
+	if(gdk_error_trap_pop() || res != Success || cnt < 4)
+		gdk_screen_get_monitor_geometry(desktop->screen, 0, workarea);
+	else
+	{
+		u = (unsigned long *)p;
+		workarea->x = u[0];
+		workarea->y = u[1];
+		if((workarea->width = u[2]) == 0
+				|| (workarea->height = u[3]) == 0)
+			gdk_screen_get_monitor_geometry(desktop->screen, 0,
+					workarea);
+	}
+	if(p != NULL)
+		XFree(p);
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() (%d, %d) %dx%d\n", __func__,
+			workarea->x, workarea->y,
+			workarea->width, workarea->height);
+#endif
+}
+
+
+/* desktop_get_workarea */
+static int _desktop_get_workarea(Desktop * desktop)
+{
+	_desktop_get_monitor_properties(desktop, desktop->prefs.monitor, NULL,
+			&desktop->workarea, NULL, NULL, NULL);
+	desktop_icons_align(desktop);
 	return 0;
 }
 
 
-/* desktophandler_files_destroy */
-static void _desktophandler_files_destroy(DesktopHandler * handler)
+/* useful */
+/* desktop_draw_background */
+static gboolean _background_how_centered(Desktop * desktop,
+		GdkRectangle * window, char const * filename, GError ** error);
+static gboolean _background_how_scaled(Desktop * desktop, GdkRectangle * window,
+		char const * filename, GError ** error);
+static gboolean _background_how_scaled_ratio(Desktop * desktop,
+		GdkRectangle * window, char const * filename, GError ** error);
+static gboolean _background_how_tiled(Desktop * desktop, GdkRectangle * window,
+		char const * filename, GError ** error);
+static void _background_monitor(Desktop * desktop, char const * filename,
+		DesktopHows how, gboolean extend, GdkRectangle * window,
+		int monitor);
+static void _background_monitors(Desktop * desktop, char const * filename,
+		DesktopHows how, gboolean extend, GdkRectangle * window);
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+static void _desktop_draw_background(Desktop * desktop, GdkRGBA * color,
+		char const * filename, DesktopHows how, gboolean extend)
+#else
+static void _desktop_draw_background(Desktop * desktop, GdkColor * color,
+		char const * filename, DesktopHows how, gboolean extend)
+#endif
 {
-	if(handler->u.files.refresh_source != 0)
-		g_source_remove(handler->u.files.refresh_source);
-	if(handler->u.files.refresh_dir != NULL)
-		browser_vfs_closedir(handler->u.files.refresh_dir);
-	if(handler->u.files.menu != NULL)
-		gtk_widget_destroy(handler->u.files.menu);
-}
-
-
-/* desktophandler_files_popup */
-static void _desktophandler_files_popup(DesktopHandler * handler,
-		XButtonEvent * xbev)
-{
-	GtkWidget * menuitem;
-	GtkWidget * submenu;
-	GtkWidget * image;
-
-	if((xbev == NULL || xbev->button != 3) && handler->u.files.menu != NULL)
-	{
-		gtk_widget_destroy(handler->u.files.menu);
-		handler->u.files.menu = NULL;
-	}
-	handler->u.files.menu = gtk_menu_new();
-	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_New"));
-	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
-			gtk_image_new_from_icon_name("document-new",
-				GTK_ICON_SIZE_MENU));
-	submenu = gtk_menu_new();
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), submenu);
-	gtk_menu_shell_append(GTK_MENU_SHELL(handler->u.files.menu), menuitem);
-	/* submenu for new documents */
-	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Folder"));
-	image = gtk_image_new_from_icon_name("folder-new", GTK_ICON_SIZE_MENU);
-	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem), image);
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
-				_on_popup_new_folder), handler);
-	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
-	menuitem = gtk_separator_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
-	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Symbolic link..."));
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
-				_on_popup_symlink), handler);
-	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
-	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Text file"));
-	image = gtk_image_new_from_icon_name("stock_new-text",
-			GTK_ICON_SIZE_MENU);
-	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem), image);
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
-				_on_popup_new_text_file), handler);
-	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menuitem);
-	/* edition */
-	menuitem = gtk_separator_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(handler->u.files.menu), menuitem);
-	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Paste"));
-	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
-			gtk_image_new_from_icon_name("edit-paste",
-				GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
-				_on_popup_paste), handler);
-	gtk_menu_shell_append(GTK_MENU_SHELL(handler->u.files.menu), menuitem);
-	/* preferences */
-	menuitem = gtk_separator_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(handler->u.files.menu), menuitem);
-	menuitem = gtk_image_menu_item_new_with_mnemonic(_("_Preferences"));
-	gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menuitem),
-			gtk_image_new_from_icon_name("gtk-preferences",
-				GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(menuitem, "activate", G_CALLBACK(
-				_on_popup_preferences), handler);
-	gtk_menu_shell_append(GTK_MENU_SHELL(handler->u.files.menu), menuitem);
-	gtk_widget_show_all(handler->u.files.menu);
-	gtk_menu_popup(GTK_MENU(handler->u.files.menu), NULL, NULL, NULL, NULL,
-			3, (xbev != NULL)
-			? xbev->time : gtk_get_current_event_time());
-}
-
-static void _on_popup_new_folder(gpointer data)
-{
-	static char const newfolder[] = N_("New folder");
-	DesktopHandler * handler = data;
-	String * path;
-
-	gtk_widget_destroy(handler->u.files.menu);
-	handler->u.files.menu = NULL;
-	if((path = string_new_append(handler->u.files.path, "/", newfolder,
-					NULL)) == NULL)
-	{
-		_desktop_serror(handler->desktop, newfolder, 0);
-		return;
-	}
-	if(browser_vfs_mkdir(path, 0777) != 0)
-		_desktop_perror(handler->desktop, path, 0);
-	string_delete(path);
-}
-
-static void _on_popup_new_text_file(gpointer data)
-{
-	static char const newtext[] = N_("New text file.txt");
-	DesktopHandler * handler = data;
-	String * path;
-	int fd;
-
-	gtk_widget_destroy(handler->u.files.menu);
-	handler->u.files.menu = NULL;
-	if((path = string_new_append(handler->u.files.path, "/", _(newtext),
-					NULL)) == NULL)
-	{
-		_desktop_serror(handler->desktop, _(newtext), 0);
-		return;
-	}
-	if((fd = creat(path, 0666)) < 0)
-		_desktop_perror(handler->desktop, path, 0);
-	else
-		close(fd);
-	string_delete(path);
-}
-
-static void _on_popup_paste(gpointer data)
-{
-	DesktopHandler * handler = data;
-
-	/* FIXME implement */
-	gtk_widget_destroy(handler->u.files.menu);
-	handler->u.files.menu = NULL;
-}
-
-static void _on_popup_preferences(gpointer data)
-{
-	DesktopHandler * handler = data;
-
-	_desktop_show_preferences(handler->desktop);
-}
-
-static void _on_popup_symlink(gpointer data)
-{
-	DesktopHandler * handler = data;
-
-	if(_common_symlink((handler->desktop->desktop != NULL)
-				? handler->desktop->desktop : NULL,
-				handler->u.files.path) != 0)
-		_desktop_perror(handler->desktop, handler->u.files.path, 0);
-}
-
-
-/* desktophandler_files_refresh */
-static gboolean _desktophandler_files_on_refresh(gpointer data);
-static gboolean _files_on_refresh_done(DesktopHandler * handler);
-static gboolean _files_on_refresh_done_timeout(gpointer data);
-static gboolean _files_on_refresh_loop(DesktopHandler * handler);
-static int _files_on_refresh_loop_lookup(DesktopHandler * handler,
-		char const * name);
-static int _files_on_refresh_loop_opendir(DesktopHandler * handler);
-
-static void _desktophandler_files_refresh(DesktopHandler * handler)
-{
-	if(handler->u.files.refresh_dir != NULL)
-		browser_vfs_closedir(handler->u.files.refresh_dir);
-	handler->u.files.refresh_dir = NULL;
-	if(handler->u.files.path == NULL)
-		return;
-	handler->u.files.refresh_source = g_idle_add(
-			_desktophandler_files_on_refresh, handler);
-}
-
-static gboolean _desktophandler_files_on_refresh(gpointer data)
-{
-	DesktopHandler * handler = data;
-	unsigned int i;
+#if !GTK_CHECK_VERSION(3, 0, 0)
+	GdkGC * gc;
+	GtkStyle * style;
+#endif
 
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s()\n", __func__);
+	fprintf(stderr, "DEBUG: %s(\"%s\", %u, %s)\n", __func__, filename, how,
+			extend ? "TRUE" : "FALSE");
 #endif
-	/* FIXME upon deletion one icon too many is removed */
-	for(i = 0; i < IDLE_LOOP_ICON_CNT
-			&& _files_on_refresh_loop(handler) == 0; i++);
-	if(i == IDLE_LOOP_ICON_CNT)
-		return TRUE;
-	return _files_on_refresh_done(handler);
+	if(how == DESKTOP_HOW_NONE)
+		return;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	desktop->cairo = gdk_cairo_create(desktop->back != NULL
+			? desktop->back : desktop->root);
+	cairo_set_source_rgba(desktop->cairo, color->red, color->green,
+			color->blue, 1.0);
+	gdk_cairo_rectangle(desktop->cairo, &desktop->window);
+	if(filename != NULL)
+		/* draw the background */
+		_background_monitors(desktop, filename, how, extend,
+				&desktop->window);
+	cairo_paint(desktop->cairo);
+	cairo_destroy(desktop->cairo);
+	desktop->cairo = NULL;
+#else
+	/* draw default color */
+	desktop->pixmap = gdk_pixmap_new(desktop->back, desktop->window.width,
+			desktop->window.height, -1);
+	gc = gdk_gc_new(desktop->pixmap);
+	gdk_gc_set_rgb_fg_color(gc, color);
+	gdk_draw_rectangle(desktop->pixmap, gc, TRUE, 0, 0,
+			desktop->window.width, desktop->window.height);
+	if(filename != NULL)
+		/* draw the background */
+		_background_monitors(desktop, filename, how, extend,
+				&desktop->window);
+	if(desktop->desktop != NULL)
+	{
+		style = gtk_style_new();
+		style->bg_pixmap[GTK_STATE_NORMAL] = desktop->pixmap;
+		gtk_widget_set_style(desktop->desktop, style);
+	}
+	else
+	{
+		gdk_window_set_back_pixmap(desktop->back, desktop->pixmap,
+				FALSE);
+		gdk_window_clear(desktop->back);
+		gdk_pixmap_unref(desktop->pixmap);
+	}
+	desktop->pixmap = NULL;
+#endif
 }
 
-static gboolean _files_on_refresh_done(DesktopHandler * handler)
+static gboolean _background_how_centered(Desktop * desktop,
+		GdkRectangle * window, char const * filename, GError ** error)
 {
-	_desktop_cleanup(handler->desktop);
-	if(handler->u.files.refresh_dir != NULL)
-		browser_vfs_closedir(handler->u.files.refresh_dir);
-	handler->u.files.refresh_dir = NULL;
-	desktop_icons_align(handler->desktop);
-	handler->u.files.refresh_source = g_timeout_add(1000,
-			_files_on_refresh_done_timeout, handler);
-	return FALSE;
-}
+	GdkPixbuf * background;
+	gint w;
+	gint h;
+	gint x;
+	gint y;
 
-static gboolean _files_on_refresh_done_timeout(gpointer data)
-{
-	DesktopHandler * handler = data;
-	struct stat st;
-
-	handler->u.files.refresh_source = 0;
-	if(handler->u.files.path == NULL)
+	if((background = gdk_pixbuf_new_from_file(filename, error)) == NULL)
 		return FALSE;
-	if(browser_vfs_stat(handler->u.files.path, &st) != 0)
-		return _desktop_perror(NULL, handler->u.files.path, FALSE);
-	if(st.st_mtime == handler->u.files.refresh_mtime)
-		return TRUE;
-	desktop_refresh(handler->desktop);
-	return FALSE;
+	w = gdk_pixbuf_get_width(background);
+	h = gdk_pixbuf_get_height(background);
+	x = (window->width - w) / 2 + window->x;
+	y = (window->height - h) / 2 + window->y;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gdk_cairo_set_source_pixbuf(desktop->cairo, background, x, y);
+#else
+	gdk_draw_pixbuf(desktop->pixmap, NULL, background, 0, 0, x, y, w, h,
+			GDK_RGB_DITHER_NONE, 0, 0);
+#endif
+	g_object_unref(background);
+	return TRUE;
 }
 
-static int _files_on_refresh_loop(DesktopHandler * handler)
+static gboolean _background_how_scaled(Desktop * desktop, GdkRectangle * window,
+		char const * filename, GError ** error)
 {
-	const char ext[] = ".desktop";
-	struct dirent * de;
-	String * p;
-	size_t len;
-	gchar * q;
-	DesktopIcon * desktopicon;
+	GdkPixbuf * background;
+	gint w;
+	gint h;
+	gint x;
+	gint y;
+
+#if GTK_CHECK_VERSION(2, 6, 0)
+	background = gdk_pixbuf_new_from_file_at_scale(filename, window->width,
+			window->height, FALSE, error);
+#elif GTK_CHECK_VERSION(2, 4, 0)
+	background = gdk_pixbuf_new_from_file_at_size(filename, window->width,
+			window->height, error);
+#else
+	background = gdk_pixbuf_new_from_file(filename, error);
+#endif
+	if(background == NULL)
+		return FALSE;
+	w = gdk_pixbuf_get_width(background);
+	h = gdk_pixbuf_get_height(background);
+	x = (window->width - w) / 2 + window->x;
+	y = (window->height - h) / 2 + window->y;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gdk_cairo_set_source_pixbuf(desktop->cairo, background, x, y);
+#else
+	gdk_draw_pixbuf(desktop->pixmap, NULL, background, 0, 0, x, y, w, h,
+			GDK_RGB_DITHER_NONE, 0, 0);
+#endif
+	g_object_unref(background);
+	return TRUE;
+}
+
+static gboolean _background_how_scaled_ratio(Desktop * desktop,
+		GdkRectangle * window, char const * filename, GError ** error)
+{
+#if GTK_CHECK_VERSION(2, 4, 0)
+	GdkPixbuf * background;
+	gint w;
+	gint h;
+	gint x;
+	gint y;
+
+	background = gdk_pixbuf_new_from_file_at_size(filename, window->width,
+			window->height, error);
+	if(background == NULL)
+		return FALSE;
+	w = gdk_pixbuf_get_width(background);
+	h = gdk_pixbuf_get_height(background);
+	x =(window->width - w) / 2 + window->x;
+	y = (window->height - h) / 2 + window->y;
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gdk_cairo_set_source_pixbuf(desktop->cairo, background, x, y);
+#else
+	gdk_draw_pixbuf(desktop->pixmap, NULL, background, 0, 0, x, y, w, h,
+			GDK_RGB_DITHER_NONE, 0, 0);
+#endif
+	g_object_unref(background);
+	return TRUE;
+#else
+	return _background_how_scaled(desktop, window, filename, error);
+#endif
+}
+
+static gboolean _background_how_tiled(Desktop * desktop, GdkRectangle * window,
+		char const * filename, GError ** error)
+{
+	GdkPixbuf * background;
+	gint w;
+	gint h;
+	gint i;
+	gint j;
+
+	if((background = gdk_pixbuf_new_from_file(filename, error)) == NULL)
+		return FALSE;
+	w = gdk_pixbuf_get_width(background);
+	h = gdk_pixbuf_get_height(background);
+	for(j = 0; j < window->height; j += h)
+		for(i = 0; i < window->width; i += w)
+#if GTK_CHECK_VERSION(3, 0, 0)
+			gdk_cairo_set_source_pixbuf(desktop->cairo, background,
+					i + window->x, j + window->y);
+#else
+			gdk_draw_pixbuf(desktop->pixmap, NULL, background, 0, 0,
+					i + window->x, j + window->y, w, h,
+					GDK_RGB_DITHER_NONE, 0, 0);
+#endif
+	g_object_unref(background);
+	return TRUE;
+}
+
+static void _background_monitor(Desktop * desktop, char const * filename,
+		DesktopHows how, gboolean extend, GdkRectangle * window,
+		int monitor)
+{
 	GError * error = NULL;
 
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s()\n", __func__);
-#endif
-	if(handler->u.files.refresh_dir == NULL
-			&& _files_on_refresh_loop_opendir(handler) != 0)
-		return -1;
-	while((de = browser_vfs_readdir(handler->u.files.refresh_dir)) != NULL)
+	if(extend != TRUE)
+		_desktop_get_monitor_properties(desktop, monitor, window, NULL,
+				NULL, NULL, NULL);
+	switch(how)
 	{
-		if(de->d_name[0] == '.')
-		{
-			if(de->d_name[1] == '\0')
-				continue;
-			if(de->d_name[1] == '.' && de->d_name[2] == '\0')
-				continue;
-			if(handler->u.files.show_hidden == 0)
-				continue;
-		}
-		if(_files_on_refresh_loop_lookup(handler, de->d_name) == 1)
-			continue;
-		break;
+		case DESKTOP_HOW_NONE:
+			break;
+		case DESKTOP_HOW_CENTERED:
+			_background_how_centered(desktop, window, filename,
+					&error);
+			break;
+		case DESKTOP_HOW_SCALED_RATIO:
+			_background_how_scaled_ratio(desktop, window, filename,
+					&error);
+			break;
+		case DESKTOP_HOW_TILED:
+			_background_how_tiled(desktop, window, filename,
+					&error);
+			break;
+		case DESKTOP_HOW_SCALED:
+			_background_how_scaled(desktop, window, filename,
+					&error);
+			break;
 	}
-	if(de == NULL)
-		return -1;
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, de->d_name);
-#endif
-	if((p = string_new_append(handler->u.files.path, "/", de->d_name, NULL))
-			== NULL)
-		return -_desktop_serror(handler->desktop, de->d_name, 1);
-	/* detect desktop entries */
-	if((len = strlen(de->d_name)) > sizeof(ext)
-			&& strcmp(&de->d_name[len - sizeof(ext) + 1], ext) == 0)
-		desktopicon = desktopicon_new_application(handler->desktop, p,
-				handler->u.files.path);
-	/* XXX not relative to the current folder */
-	else if((q = g_filename_to_utf8(de->d_name, -1, NULL, NULL, &error))
-			!= NULL)
+	if(error != NULL)
 	{
-		desktopicon = desktopicon_new(handler->desktop, q, p);
-		g_free(q);
-	}
-	else
-	{
-		desktop_error(NULL, NULL, error->message, 1);
+		desktop_error(desktop, NULL, error->message, 1);
 		g_error_free(error);
-		desktopicon = desktopicon_new(handler->desktop, de->d_name, p);
 	}
-	if(desktopicon != NULL)
-		desktop_icon_add(handler->desktop, desktopicon);
-	string_delete(p);
+}
+
+static void _background_monitors(Desktop * desktop, char const * filename,
+		DesktopHows how, gboolean extend, GdkRectangle * window)
+{
+	gint n;
+	gint i;
+
+	n = (extend != TRUE) ?
+#if GTK_CHECK_VERSION(3, 22, 0)
+		gdk_display_get_n_monitors(desktop->display)
+#else
+		gdk_screen_get_n_monitors(desktop->screen)
+#endif
+		: 1;
+	for(i = 0; i < n; i++)
+		_background_monitor(desktop, filename, how, extend, window, i);
+}
+
+
+/* desktop_icon_add */
+static int _desktop_icon_add(Desktop * desktop, DesktopIcon * icon)
+{
+	DesktopIconWindow * window;
+	DesktopIconWindow ** p;
+
+	if((p = realloc(desktop->icons, sizeof(*p) * (desktop->icons_cnt + 1)))
+			== NULL)
+		return -desktop_perror(desktop, desktopicon_get_name(icon), 1);
+	desktop->icons = p;
+	if((window = desktopiconwindow_new(icon)) == NULL)
+		return -desktop_serror(desktop, desktopicon_get_name(icon), 1);
+	desktop->icons[desktop->icons_cnt++] = window;
+	desktopicon_set_background(icon, &desktop->background);
+	desktopicon_set_font(icon, desktop->font);
+	desktopicon_set_foreground(icon, &desktop->foreground);
+	desktopiconwindow_show(window);
 	return 0;
 }
 
-static int _files_on_refresh_loop_lookup(DesktopHandler * handler,
-		char const * name)
+
+/* desktop_icon_remove */
+static int _desktop_icon_remove(Desktop * desktop, DesktopIcon * icon)
 {
 	size_t i;
-	DesktopIcon * icon;
-	char const * p;
+	DesktopIcon * j;
+	DesktopIconWindow ** p;
 
-	for(i = 0; i < handler->desktop->icons_cnt; i++)
+	for(i = 0; i < desktop->icons_cnt; i++)
 	{
-		icon = desktopiconwindow_get_icon(handler->desktop->icons[i]);
-		if(desktopicon_get_updated(icon) == TRUE)
+		j = desktopiconwindow_get_icon(desktop->icons[i]);
+		if(j != icon)
 			continue;
-		if((p = desktopicon_get_path(icon)) == NULL
-				|| (p = strrchr(p, '/')) == NULL)
-			continue;
-		if(strcmp(name, ++p) != 0)
-			continue;
-		desktopicon_set_updated(icon, TRUE);
-		return 1;
+		desktopiconwindow_delete(desktop->icons[i]);
+		for(desktop->icons_cnt--; i < desktop->icons_cnt; i++)
+			desktop->icons[i] = desktop->icons[i + 1];
+		if((p = realloc(desktop->icons, sizeof(*p)
+						* (desktop->icons_cnt)))
+				!= NULL)
+			desktop->icons = p; /* we can ignore errors... */
+		else if(desktop->icons_cnt == 0)
+			desktop->icons = NULL; /* ...except when it's not one */
+		return 0;
 	}
-	return 0;
-}
-
-static int _files_on_refresh_loop_opendir(DesktopHandler * handler)
-{
-	struct stat st;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__,
-			handler->u.files.path);
-#endif
-	if((handler->u.files.refresh_dir = browser_vfs_opendir(
-					handler->u.files.path, &st)) == NULL)
-	{
-		_desktop_perror(NULL, handler->u.files.path, 1);
-		handler->u.files.refresh_source = 0;
-		return -1;
-	}
-	handler->u.files.refresh_mtime = st.st_mtime;
-	return 0;
-}
-
-
-/* desktophandler_homescreen_init */
-static int _homescreen_init_subdir(DesktopHandler * handler,
-		char const * subdir, char const * name);
-static void _homescreen_init_on_applications(Desktop * desktop, gpointer data);
-
-static void _desktophandler_homescreen_init(DesktopHandler * handler)
-{
-	DesktopIcon * desktopicon;
-	GdkPixbuf * icon;
-	char const * paths[] =
-	{
-#ifdef EMBEDDED
-		/* FIXME let this be configurable */
-		"deforaos-phone-contacts",
-		"deforaos-phone-dialer",
-		"deforaos-phone-messages",
-#endif
-		NULL
-	};
-	char const ** p;
-
-	if((desktopicon = desktopicon_new(handler->desktop, _("Applications"),
-					NULL)) == NULL)
-	{
-		_desktop_serror(handler->desktop, _("Applications"), 1);
-		return;
-	}
-	desktopicon_set_callback(desktopicon, _homescreen_init_on_applications,
-			NULL);
-	desktopicon_set_immutable(desktopicon, TRUE);
-	icon = gtk_icon_theme_load_icon(handler->desktop->theme,
-			"gnome-applications", handler->desktop->icons_size, 0,
-			NULL);
-	if(icon != NULL)
-		desktopicon_set_icon(desktopicon, icon);
-	_desktop_icon_add(handler->desktop, desktopicon);
-	for(p = paths; *p != NULL; p++)
-		_homescreen_init_subdir(handler, DATADIR "/applications", *p);
-}
-
-static int _homescreen_init_subdir(DesktopHandler * handler,
-		char const * subdir, char const * name)
-{
-	DesktopIcon * desktopicon;
-	String * q;
-
-	if((q = string_new_append(subdir, "/", name, ".desktop", NULL)) == NULL)
-		return -_desktop_error(NULL, name, error_get(NULL), 1);
-	if(access(q, R_OK) == 0
-			&& (desktopicon = desktopicon_new_application(
-					handler->desktop, q, DATADIR)) != NULL)
-		_desktop_icon_add(handler->desktop, desktopicon);
-	string_delete(q);
-	return 0;
-}
-
-static void _homescreen_init_on_applications(Desktop * desktop, gpointer data)
-{
-	(void) data;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s()\n", __func__);
-#endif
-	desktop_set_icons(desktop, DESKTOP_ICONS_CATEGORIES);
-}
-
-
-/* desktophandler_homescreen_destroy */
-static void _desktophandler_homescreen_destroy(DesktopHandler * handler)
-{
-	(void) handler;
-}
-
-
-/* desktophandler_homescreen_popup */
-static void _desktophandler_homescreen_popup(DesktopHandler * handler,
-		XButtonEvent * xbev)
-{
-	(void) handler;
-	(void) xbev;
-}
-
-
-/* desktophandler_homescreen_refresh */
-static void _desktophandler_homescreen_refresh(DesktopHandler * handler)
-{
-	(void) handler;
+	return 1;
 }
 
 
