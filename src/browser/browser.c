@@ -671,6 +671,7 @@ static void _delete_plugins(Browser * browser);
 
 void browser_delete(Browser * browser)
 {
+	browser->current = NULL;
 	if(browser->source != 0)
 		g_source_remove(browser->source);
 	_delete_plugins(browser);
