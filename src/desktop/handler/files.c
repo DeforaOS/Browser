@@ -23,7 +23,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 /* FIXME:
- * - remove (links to) application files upon deletion */
+ * - remove (links to) application files upon deletion
+ * - fix the popup menu for preferences
+ * - do not let the symlink window be modal */
 
 
 
@@ -245,6 +247,8 @@ static void _on_popup_preferences(gpointer data)
 {
 	DesktopHandler * handler = data;
 
+	gtk_widget_destroy(handler->u.files.menu);
+	handler->u.files.menu = NULL;
 	desktop_show_preferences(handler->desktop);
 }
 
