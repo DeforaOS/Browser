@@ -345,7 +345,7 @@ static void _applications_on_refresh_loop_xdg_home(DesktopHandler * handler,
 		homedir = g_get_home_dir();
 	if((p = string_new_append(homedir, "/", fallback, NULL)) == NULL)
 	{
-		desktop_perror(NULL, homedir, 1);
+		desktop_serror(NULL, homedir, 1);
 		return;
 	}
 	_applications_on_refresh_loop_xdg_path(handler, callback, p);
