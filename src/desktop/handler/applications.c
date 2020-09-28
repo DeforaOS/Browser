@@ -244,13 +244,15 @@ static void _applications_on_refresh_loop_path(DesktopHandler * handler,
 		fprintf(stderr, "DEBUG: %s() name=\"%s\" path=\"%s\"\n",
 				__func__, name, path);
 #endif
-		if((mime = mimehandler_new_load(name)) == NULL
-				|| mimehandler_can_display(mime) == 0)
+		if((mime = mimehandler_new_load(name)) == NULL)
 		{
-			if(mime != NULL)
-				mimehandler_delete(mime);
-			else
-				desktop_serror(NULL, NULL, 1);
+			desktop_serror(NULL, NULL, 1);
+			continue;
+		}
+		if(mimehandler_can_display(mime) == 0
+				|| mimehandler_can_execute(handler) == 0)
+		{
+			mimehandler_delete(mime);
 			continue;
 		}
 		handler->u.applications.apps = g_slist_insert_sorted(
