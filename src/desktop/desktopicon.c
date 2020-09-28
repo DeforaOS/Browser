@@ -88,7 +88,7 @@ struct _DesktopIcon
 	char const * mimetype;
 
 	/* applications */
-	Config * config;
+	MimeHandler * mime;
 
 	/* callback */
 	DesktopIconCallback callback;
@@ -104,12 +104,6 @@ struct _DesktopIcon
 	GtkWidget * event;
 	GtkWidget * label;
 };
-
-
-/* constants */
-static const char _desktop_type_application[] = "Application";
-static const char _desktop_type_directory[] = "Directory";
-static const char _desktop_type_link[] = "Link";
 
 
 /* prototypes */
@@ -231,9 +225,12 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
 		char const * datadir)
 {
 	DesktopIcon * desktopicon;
-	Config * config;
-	const char section[] = "Desktop Entry";
+	MimeHandler * mime;
+	MimeHandlerType type;
 	char const * name;
+#if GTK_CHECK_VERSION(2, 12, 0)
+	char const * comment;
+#endif
 	char const * icon;
 	char const * p;
 	GdkPixbuf * image = NULL;
@@ -242,25 +239,32 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
 	fprintf(stderr, "DEBUG: %s(%p, \"%s\")\n", __func__, (void *)desktop,
 			path);
 #endif
-	if((config = config_new()) == NULL)
+	if((mime = mimehandler_new_load(path)) == NULL)
 		return NULL;
-	if(config_load(config, path) != 0
-			|| ((p = config_get(config, section, "Hidden")) != NULL
-				&& strcmp(p, "true") == 0)
-			|| (p = config_get(config, section, "Type")) == NULL
-			|| (strcmp(p, _desktop_type_application) != 0
-				&& strcmp(p, _desktop_type_directory) != 0
-				&& strcmp(p, _desktop_type_link) != 0)
-			|| (name = config_get(config, section, "Name")) == NULL
-			|| ((p = config_get(config, section, "NoDisplay"))
-				!= NULL && strcmp(p, "true") == 0)
-			|| ((p = config_get(config, section, "TryExec")) != NULL
-				&& _new_application_access(p, X_OK) != 0))
+	if(mimehandler_is_deleted(mime)
+			|| ((type = mimehandler_get_type(mime))
+				!= MIMEHANDLER_TYPE_APPLICATION
+				&& type != MIMEHANDLER_TYPE_DIRECTORY
+				&& type != MIMEHANDLER_TYPE_LINK)
+			|| (name = mimehandler_get_name(mime, 1)) == NULL
+			|| mimehandler_can_display(mime) == 0
+			|| mimehandler_can_execute(mime) == 0)
 	{
-		config_delete(config);
+		mimehandler_delete(mime);
 		return NULL;
 	}
-	if((icon = config_get(config, section, "Icon")) == NULL)
+#if GTK_CHECK_VERSION(2, 12, 0)
+	comment = mimehandler_get_comment(mime, 1);
+#endif
+	if((p = mimehandler_get_generic_name(mime, 1)) != NULL)
+	{
+#if GTK_CHECK_VERSION(2, 12, 0)
+		if(comment == NULL)
+			comment = name;
+#endif
+		name = p;
+	}
+	if((icon = mimehandler_get_icon(mime, "Icon")) == NULL)
 		icon = "application-x-executable";
 	image = _new_application_icon(desktop, icon, datadir);
 	desktopicon = _desktopicon_new_do(desktop, image, name);
@@ -268,10 +272,14 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
 		g_object_unref(image);
 	if(desktopicon == NULL)
 	{
-		config_delete(config);
+		mimehandler_delete(mime);
 		return NULL;
 	}
-	desktopicon->config = config;
+#if GTK_CHECK_VERSION(2, 12, 0)
+	if(comment != NULL)
+		gtk_widget_set_tooltip_text(desktopicon->event, comment);
+#endif
+	desktopicon->mime = mime;
 	desktopicon_set_confirm(desktopicon, FALSE);
 	desktopicon_set_executable(desktopicon, TRUE);
 	desktopicon_set_immutable(desktopicon, TRUE);
@@ -394,8 +402,8 @@ DesktopIcon * desktopicon_new_category(Desktop * desktop, char const * name,
 /* desktopicon_delete */
 void desktopicon_delete(DesktopIcon * desktopicon)
 {
-	if(desktopicon->config != NULL)
-		config_delete(desktopicon->config);
+	if(desktopicon->mime != NULL)
+		mimehandler_delete(desktopicon->mime);
 	free(desktopicon->name);
 	free(desktopicon->path);
 	gtk_widget_destroy(desktopicon->event);
@@ -1016,33 +1024,36 @@ static void _on_icon_run(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
 	const char section[] = "Desktop Entry";
-	char const * p;
+	MimeHandlerType type;
 
 	if(desktopicon->confirm != FALSE && _run_confirm() != TRUE)
 		return;
-	if(desktopicon->config == NULL)
+	if(desktopicon->mime == NULL)
 		_run_binary(desktopicon);
-	else if((p = config_get(desktopicon->config, section, "Type")) == NULL)
-		return;
-	else if(strcmp(p, _desktop_type_application) == 0)
-		_run_application(desktopicon);
-	else if(strcmp(p, _desktop_type_directory) == 0)
-		_run_directory(desktopicon);
-	else if(strcmp(p, _desktop_type_link) == 0)
-		_run_link(desktopicon);
+	switch(mimehandler_get_type(desktopicon->mime))
+	{
+		case MIMEHANDLER_TYPE_APPLICATION:
+			_run_application(desktopicon);
+			break;
+		case MIMEHANDLER_TYPE_DIRECTORY:
+			_run_directory(desktopicon);
+			break;
+		case MIMEHANDLER_TYPE_LINK:
+			_run_link(desktopicon);
+			break;
+	}
 }
 
 static void _run_application(DesktopIcon * desktopicon)
 {
 	/* XXX code duplicated from DeforaOS Panel */
-	const char section[] = "Desktop Entry";
 	char * program;
 	char * p;
 	char const * q;
 	pid_t pid;
 	GError * error = NULL;
 
-	if((q = config_get(desktopicon->config, section, "Exec")) == NULL)
+	if((q = mimehandler_get_program(desktopicon->mime)) == NULL)
 		return;
 	if((program = strdup(q)) == NULL)
 		return; /* XXX report error */
@@ -1052,7 +1063,7 @@ static void _run_application(DesktopIcon * desktopicon)
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() \"%s\"", __func__, program);
 #endif
-	if((q = config_get(desktopicon->config, section, "Path")) == NULL)
+	if((q = mimehandler_get_path(desktopicon->mime)) == NULL)
 	{
 		/* execute the program directly */
 		if(g_spawn_command_line_async(program, &error) != TRUE)
@@ -1126,8 +1137,7 @@ static void _run_directory(DesktopIcon * desktopicon)
 	GError * error = NULL;
 
 	/* XXX this may not might the correct key */
-	if((directory = config_get(desktopicon->config, section, "Path"))
-			== NULL)
+	if((directory = mimehandler_get_path(desktopicon->mime)) == NULL)
 		return;
 	if((argv[2] = strdup(directory)) == NULL)
 		desktop_error(desktopicon->desktop, NULL, strerror(errno), 1);
@@ -1150,7 +1160,7 @@ static void _run_link(DesktopIcon * desktopicon)
 	const unsigned int flags = G_SPAWN_FILE_AND_ARGV_ZERO;
 	GError * error = NULL;
 
-	if((url = config_get(desktopicon->config, section, "URL")) == NULL)
+	if((url = mimehandler_get_url(desktopicon->mime)) == NULL)
 		return;
 	if((argv[2] = strdup(url)) == NULL)
 		desktop_error(desktopicon->desktop, NULL, strerror(errno), 1);
