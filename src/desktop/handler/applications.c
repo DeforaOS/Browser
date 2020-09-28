@@ -25,14 +25,26 @@
 
 
 
-/* DesktopHandlerApplications */
+/* DesktopMimeApplications */
 /* private */
+/* types */
+typedef struct _MimeApp
+{
+	MimeHandler * mime;
+	String * datadir;
+} MimeApp;
+
+
 /* prototypes */
 static void _desktophandler_applications_init(DesktopHandler * handler);
 static void _desktophandler_applications_destroy(DesktopHandler * handler);
 static void _desktophandler_applications_popup(DesktopHandler * handler,
 		XButtonEvent * xbev);
 static void _desktophandler_applications_refresh(DesktopHandler * handler);
+
+/* MimeApp */
+static MimeApp * _mimeapp_new(MimeHandler * handler, String const * path);
+static void _mimeapp_delete(MimeApp * mimeapp);
 
 
 /* functions */
@@ -88,7 +100,7 @@ static void _desktophandler_applications_destroy(DesktopHandler * handler)
 		g_source_remove(handler->u.applications.refresh_source);
 	if(handler->u.applications.refresh_dir != NULL)
 		browser_vfs_closedir(handler->u.applications.refresh_dir);
-	g_slist_foreach(handler->u.applications.apps, (GFunc)mimehandler_delete,
+	g_slist_foreach(handler->u.applications.apps, (GFunc)_mimeapp_delete,
 			NULL);
 	g_slist_free(handler->u.applications.apps);
 	handler->u.applications.apps = NULL;
@@ -125,7 +137,7 @@ static gint _applications_apps_compare(gconstpointer a, gconstpointer b);
 
 static void _desktophandler_applications_refresh(DesktopHandler * handler)
 {
-	g_slist_foreach(handler->u.applications.apps, (GFunc)mimehandler_delete,
+	g_slist_foreach(handler->u.applications.apps, (GFunc)_mimeapp_delete,
 			NULL);
 	g_slist_free(handler->u.applications.apps);
 	handler->u.applications.apps = NULL;
@@ -160,7 +172,9 @@ static gboolean _applications_on_refresh_done(DesktopHandler * handler)
 static void _applications_on_refresh_done_applications(DesktopHandler * handler)
 {
 	GSList * p;
+	MimeApp * mimeapp;
 	MimeHandler * mime;
+	char const * name;
 	DesktopCategory * dc = handler->u.applications.category;
 	String const ** categories;
 	size_t i;
@@ -169,7 +183,13 @@ static void _applications_on_refresh_done_applications(DesktopHandler * handler)
 
 	for(p = handler->u.applications.apps; p != NULL; p = p->next)
 	{
-		mime = p->data;
+		mimeapp = p->data;
+		mime = mimeapp->mime;
+		if((name = mimehandler_get_name(mime, 1)) == NULL)
+		{
+			desktop_serror(NULL, NULL, 1);
+			continue;
+		}
 		if(dc != NULL)
 		{
 			if((categories = mimehandler_get_categories(mime))
@@ -183,9 +203,9 @@ static void _applications_on_refresh_done_applications(DesktopHandler * handler)
 				continue;
 		}
 		filename = mimehandler_get_filename(mime);
-		/* FIXME keep track of the datadir */
 		if((icon = desktopicon_new_application(handler->desktop,
-						filename, NULL)) == NULL)
+						filename, mimeapp->datadir))
+				== NULL)
 			continue;
 		desktop_icon_add(handler->desktop, icon, FALSE);
 	}
@@ -210,7 +230,7 @@ static void _applications_on_refresh_loop_path(DesktopHandler * handler,
 	char * name = NULL;
 	char * p;
 	MimeHandler * mime;
-	(void) path;
+	MimeApp * mimeapp;
 
 	if((dir = browser_vfs_opendir(apppath, &st)) == NULL)
 	{
@@ -250,13 +270,15 @@ static void _applications_on_refresh_loop_path(DesktopHandler * handler,
 			continue;
 		}
 		if(mimehandler_can_display(mime) == 0
-				|| mimehandler_can_execute(handler) == 0)
+				|| mimehandler_can_execute(mime) == 0
+				|| (mimeapp = _mimeapp_new(mime, path))
+				== NULL)
 		{
 			mimehandler_delete(mime);
 			continue;
 		}
 		handler->u.applications.apps = g_slist_insert_sorted(
-				handler->u.applications.apps, mime,
+				handler->u.applications.apps, mimeapp,
 				_applications_apps_compare);
 	}
 	free(name);
@@ -271,32 +293,44 @@ static void _applications_on_refresh_loop_xdg(DesktopHandler * handler,
 	char * p;
 	size_t i;
 	size_t j;
+	int datadir = 1;
 
+	/* read through every XDG application folder */
 	if((path = getenv("XDG_DATA_DIRS")) == NULL || strlen(path) == 0)
-		/* XXX check this at build-time instead */
-		path = (strcmp(DATADIR, "/usr/local/share") == 0)
-			? DATADIR ":/usr/share"
-			: "/usr/local/share:" DATADIR ":/usr/share";
-	if((p = strdup(path)) == NULL)
 	{
-		desktop_perror(NULL, NULL, 1);
-		return;
+#if defined(__NetBSD__)
+		/* XXX include the default path for pkgsrc */
+		path = "/usr/pkg/share:" DATADIR ":/usr/share";
+#else
+		path = "/usr/local/share:" DATADIR ":/usr/share";
+#endif
+		datadir = 0;
 	}
-	for(i = 0, j = 0;; i++)
-		if(p[i] == '\0')
-		{
-			_applications_on_refresh_loop_xdg_path(handler, callback,
-					&p[j]);
-			break;
-		}
-		else if(p[i] == ':')
-		{
-			p[i] = '\0';
-			_applications_on_refresh_loop_xdg_path(handler, callback,
-					&p[j]);
-			j = i + 1;
-		}
+	if((p = strdup(path)) == NULL)
+		desktop_perror(NULL, NULL, 1);
+	else
+		for(i = 0, j = 0;; i++)
+			if(p[i] == '\0')
+			{
+				string_rtrim(&p[j], "/");
+				_applications_on_refresh_loop_xdg_path(handler,
+						callback, &p[j]);
+				datadir |= (strcmp(&p[j], DATADIR) == 0);
+				break;
+			}
+			else if(p[i] == ':')
+			{
+				p[i] = '\0';
+				string_rtrim(&p[j], "/");
+				_applications_on_refresh_loop_xdg_path(handler,
+						callback, &p[j]);
+				datadir |= (strcmp(&p[j], DATADIR) == 0);
+				j = i + 1;
+			}
 	free(p);
+	if(datadir == 0)
+		_applications_on_refresh_loop_xdg_path(handler, callback,
+				DATADIR);
 	_applications_on_refresh_loop_xdg_home(handler, callback);
 }
 
@@ -307,8 +341,7 @@ static void _applications_on_refresh_loop_xdg_home(DesktopHandler * handler,
 	char const fallback[] = ".local/share";
 	char const * path;
 	char const * homedir;
-	size_t len;
-	char * p;
+	String * p;
 
 	/* use $XDG_DATA_HOME if set and not empty */
 	if((path = getenv("XDG_DATA_HOME")) != NULL && strlen(path) > 0)
@@ -319,15 +352,13 @@ static void _applications_on_refresh_loop_xdg_home(DesktopHandler * handler,
 	/* fallback to "$HOME/.local/share" */
 	if((homedir = getenv("HOME")) == NULL)
 		homedir = g_get_home_dir();
-	len = strlen(homedir) + 1 + sizeof(fallback);
-	if((p = malloc(len)) == NULL)
+	if((p = string_new_append(homedir, "/", fallback, NULL)) == NULL)
 	{
 		desktop_perror(NULL, homedir, 1);
 		return;
 	}
-	snprintf(p, len, "%s/%s", homedir, fallback);
 	_applications_on_refresh_loop_xdg_path(handler, callback, p);
-	free(p);
+	string_delete(p);
 }
 
 static void _applications_on_refresh_loop_xdg_path(DesktopHandler * handler,
@@ -345,8 +376,10 @@ static void _applications_on_refresh_loop_xdg_path(DesktopHandler * handler,
 
 static gint _applications_apps_compare(gconstpointer a, gconstpointer b)
 {
-	MimeHandler * mha = (MimeHandler *)a;
-	MimeHandler * mhb = (MimeHandler *)b;
+	MimeApp * maa = (MimeApp *)a;
+	MimeApp * mab = (MimeApp *)b;
+	MimeHandler * mha = maa->mime;
+	MimeHandler * mhb = mab->mime;
 	String const * mhas;
 	String const * mhbs;
 
@@ -355,4 +388,35 @@ static gint _applications_apps_compare(gconstpointer a, gconstpointer b)
 	if((mhbs = mimehandler_get_generic_name(mhb, 1)) == NULL)
 		mhbs = mimehandler_get_name(mhb, 1);
 	return string_compare(mhas, mhbs);
+}
+
+
+/* MimeApp */
+/* mimeapp_new */
+static MimeApp * _mimeapp_new(MimeHandler * mime, String const * datadir)
+{
+	MimeApp * mimeapp;
+
+	if((mimeapp = object_new(sizeof(*mimeapp))) == NULL)
+		return NULL;
+	mimeapp->mime = NULL;
+	if(datadir == NULL)
+		mimeapp->datadir = NULL;
+	else if((mimeapp->datadir = string_new(datadir)) == NULL)
+	{
+		_mimeapp_delete(mimeapp);
+		return NULL;
+	}
+	mimeapp->mime = mime;
+	return mimeapp;
+}
+
+
+/* mimeapp_delete */
+static void _mimeapp_delete(MimeApp * mimeapp)
+{
+	if(mimeapp->mime != NULL)
+		mimehandler_delete(mimeapp->mime);
+	string_delete(mimeapp->datadir);
+	object_delete(mimeapp);
 }
