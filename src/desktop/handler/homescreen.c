@@ -49,9 +49,9 @@ static void _desktophandler_homescreen_init(DesktopHandler * handler)
 	{
 #ifdef EMBEDDED
 		/* FIXME let this be configurable */
-		"deforaos-phone-contacts",
-		"deforaos-phone-dialer",
-		"deforaos-phone-messages",
+		"org.defora.phone-contacts",
+		"org.defora.phone-dialer",
+		"org.defora.phone-messages",
 #endif
 		NULL
 	};
