@@ -31,7 +31,9 @@
 #include <string.h>
 #include <System.h>
 #include <libintl.h>
-#ifdef __linux__
+#if defined(__APPLE__)
+# include <errno.h>
+#elif defined(__linux__)
 # include <sys/syscall.h>
 # include <unistd.h>
 # include <errno.h>
@@ -89,7 +91,7 @@ static GtkWidget * _undelete_get_widget(Undelete * undelete);
 static void _undelete_refresh(Undelete * undelete, GList * selection);
 
 /* useful */
-#ifdef __linux__
+#if defined(__APPLE__) || defined(__linux__)
 static int getdents(int fd, char * buf, unsigned int count);
 #endif
 
@@ -191,7 +193,13 @@ static void _undelete_refresh(Undelete * undelete, GList * selection)
 
 
 /* useful */
-#ifdef __linux__
+#if defined(__APPLE__)
+static int getdents(int fd, char * buf, unsigned int count)
+{
+	errno = ENOSYS;
+	return -1;
+}
+#elif defined(__linux__)
 static int getdents(int fd, char * buf, unsigned int count)
 {
 	return syscall(__NR_getdents64, fd, buf, count);
