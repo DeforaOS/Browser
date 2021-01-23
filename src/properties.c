@@ -44,7 +44,6 @@
 #define N_(string) (string)
 
 #define COMMON_GET_ABSOLUTE_PATH
-#define COMMON_CONFIG_FILENAME
 #include "common.c"
 
 /* constants */
@@ -236,13 +235,13 @@ static int _new_load(Properties * properties, char const * plugin)
 	size_t i;
 	int cnt = 0;
 
-	p = _common_config_filename(BROWSER_CONFIG_FILE);
 	if((properties->config = config_new()) != NULL
-			&& config_load(properties->config, p) == 0
+			&& config_load_preferences(properties->config,
+				"DeforaOS/" VENDOR, PACKAGE,
+				BROWSER_CONFIG_FILE) == 0
 			&& (plugins = config_get(properties->config, NULL,
 					"properties")) == NULL)
 		plugins = "properties,preview";
-	string_delete(p);
 	if(plugin != NULL)
 	{
 		if(_properties_load(properties, plugin) == 0)

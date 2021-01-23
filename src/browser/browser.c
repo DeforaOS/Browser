@@ -51,7 +51,6 @@ static char const _license[] =
 #define _(string) gettext(string)
 #define N_(string) (string)
 
-#define COMMON_CONFIG_FILENAME
 #define COMMON_DND
 #define COMMON_EXEC
 #define COMMON_GET_ABSOLUTE_PATH
@@ -815,18 +814,15 @@ static void _error_response(gpointer data)
 /* browser_config_load */
 int browser_config_load(Browser * browser)
 {
-	String * filename;
 #if GTK_CHECK_VERSION(2, 6, 0)
 	String * p = NULL;
 #endif
 
 	if(browser->config == NULL)
 		return 0; /* XXX ignore error */
-	if((filename = _common_config_filename(BROWSER_CONFIG_FILE)) == NULL)
-		return -1;
-	if(config_load(browser->config, filename) != 0)
+	if(config_load_preferences(browser->config, "DeforaOS/" VENDOR, PACKAGE,
+				BROWSER_CONFIG_FILE) != 0)
 		browser_error(NULL, error_get(NULL), 1);
-	string_delete(filename);
 #if GTK_CHECK_VERSION(2, 6, 0)
 	/* XXX deserves a rework (enum) */
 	if(_config_load_string(browser->config, "default_view", &p) == 0
@@ -859,15 +855,12 @@ int browser_config_load(Browser * browser)
 int browser_config_save(Browser * browser)
 {
 	int ret = 0;
-	String * filename;
 #if GTK_CHECK_VERSION(2, 6, 0)
 	char * str[BV_COUNT] = { "details", "icons", "list", "thumbnails" };
 #endif
 
 	if(browser->config == NULL)
 		return 0; /* XXX ignore error */
-	if((filename = _common_config_filename(BROWSER_CONFIG_FILE)) == NULL)
-		return 1;
 #if GTK_CHECK_VERSION(2, 6, 0)
 	/* XXX deserves a rework (enum) */
 	if(browser->prefs.default_view >= BV_FIRST
@@ -884,8 +877,9 @@ int browser_config_save(Browser * browser)
 	ret |= _config_save_boolean(browser->config, "show_hidden_files",
 			browser->prefs.show_hidden_files);
 	if(ret == 0)
-		ret |= config_save(browser->config, filename);
-	string_delete(filename);
+		ret |= config_save_preferences_user(browser->config,
+				"DeforaOS/" VENDOR, PACKAGE,
+				BROWSER_CONFIG_FILE);
 	return ret;
 }
 
@@ -2527,18 +2521,16 @@ static int _browser_config_set(Browser * browser, char const * section,
 {
 	int ret;
 	String * s = NULL;
-	String * filename;
 
 	if(section != NULL && (s = string_new_append("plugin::", section, NULL))
 			== NULL)
 		return -browser_error(NULL, error_get(NULL), 1);
-	if((ret = config_set(browser->config, s, variable, value)) == 0
-			&& (filename = _common_config_filename(
-					BROWSER_CONFIG_FILE)) != NULL)
+	if((ret = config_set(browser->config, s, variable, value)) == 0)
 	{
-		if(config_save(browser->config, filename) != 0)
+		if(config_save_preferences_user(browser->config,
+					"DeforaOS/" VENDOR, PACKAGE,
+					BROWSER_CONFIG_FILE) != 0)
 			browser_error(NULL, error_get(NULL), 1);
-		string_delete(filename);
 	}
 	string_delete(s);
 	return ret;

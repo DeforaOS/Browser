@@ -39,10 +39,6 @@
 
 
 /* prototypes */
-#ifdef COMMON_CONFIG_FILENAME
-static String * _common_config_filename(String const * name);
-#endif
-
 #ifdef COMMON_DND
 static int _common_drag_data_received(GdkDragContext * context,
 		GtkSelectionData * seldata, char const * dest);
@@ -66,18 +62,6 @@ static int _common_symlink(GtkWidget * window, char const * cur);
 
 
 /* functions */
-#ifdef COMMON_CONFIG_FILENAME
-static String * _common_config_filename(String const * name)
-{
-	char const * homedir;
-
-	if((homedir = getenv("HOME")) == NULL)
-		homedir = g_get_home_dir();
-	return string_new_append(homedir, "/", name, NULL);
-}
-#endif
-
-
 #ifdef COMMON_DND
 /* common_drag_data_received */
 static int _common_drag_data_received(GdkDragContext * context,

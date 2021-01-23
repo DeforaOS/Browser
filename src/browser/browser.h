@@ -37,7 +37,7 @@
 
 /* Browser */
 /* defaults */
-# define BROWSER_CONFIG_FILE		".browser"
+# define BROWSER_CONFIG_FILE		"Browser.conf"
 # define BROWSER_ICON_WRAP_WIDTH	96
 # define BROWSER_LIST_WRAP_WIDTH	118
 # define BROWSER_THUMBNAIL_WRAP_WIDTH	112
