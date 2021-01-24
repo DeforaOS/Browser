@@ -215,10 +215,7 @@ DesktopIcon * desktopicon_new(Desktop * desktop, char const * name,
 
 
 /* desktopicon_new_application */
-static int _new_application_access(char const * path, int mode);
-static int _new_application_access_path(char const * path,
-		char const * filename, int mode);
-static GdkPixbuf * _new_application_icon(Desktop * desktop, char const * icon,
+static GdkPixbuf * _new_application_icon(Desktop * desktop, String const * icon,
 		char const * datadir);
 
 DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
@@ -227,12 +224,12 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
 	DesktopIcon * desktopicon;
 	MimeHandler * mime;
 	MimeHandlerType type;
-	char const * name;
+	String const * name;
 #if GTK_CHECK_VERSION(2, 12, 0)
-	char const * comment;
+	String const * comment;
 #endif
-	char const * icon;
-	char const * p;
+	String const * icon;
+	String const * p;
 	GdkPixbuf * image = NULL;
 
 #ifdef DEBUG
@@ -286,56 +283,7 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
 	return desktopicon;
 }
 
-static int _new_application_access(char const * path, int mode)
-{
-	int ret = -1;
-	char const * p;
-	char * q;
-	size_t i;
-	size_t j;
-
-	if(path[0] == '/')
-		return access(path, mode);
-	if((p = getenv("PATH")) == NULL)
-		return 0;
-	if((q = strdup(p)) == NULL)
-		return 0;
-	errno = ENOENT;
-	for(i = 0, j = 0;; i++)
-		if(q[i] == '\0')
-		{
-			ret = _new_application_access_path(&q[j], path, mode);
-			break;
-		}
-		else if(q[i] == ':')
-		{
-			q[i] = '\0';
-			if((ret = _new_application_access_path(&q[j], path,
-							mode)) == 0)
-				break;
-			j = i + 1;
-		}
-	free(q);
-	return ret;
-}
-
-static int _new_application_access_path(char const * path,
-		char const * filename, int mode)
-{
-	int ret;
-	char * p;
-	size_t len;
-
-	len = strlen(path) + 1 + strlen(filename) + 1;
-	if((p = malloc(len)) == NULL)
-		return -1;
-	snprintf(p, len, "%s/%s", path, filename);
-	ret = access(p, mode);
-	free(p);
-	return ret;
-}
-
-static GdkPixbuf * _new_application_icon(Desktop * desktop, char const * icon,
+static GdkPixbuf * _new_application_icon(Desktop * desktop, String const * icon,
 		char const * datadir)
 {
 	const char pixmaps[] = "/pixmaps/";
