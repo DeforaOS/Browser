@@ -3710,7 +3710,7 @@ static void _view_on_filename_edited(GtkCellRendererText * renderer,
 	(void) renderer;
 
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\") \"%s\"\n", __func__, path,
+	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\")\n", __func__, path,
 			filename);
 #endif
 	if(strlen(filename) == 0)
