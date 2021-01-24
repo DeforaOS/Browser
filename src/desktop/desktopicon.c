@@ -261,7 +261,7 @@ DesktopIcon * desktopicon_new_application(Desktop * desktop, char const * path,
 #endif
 		name = p;
 	}
-	if((icon = mimehandler_get_icon(mime, "Icon")) == NULL)
+	if((icon = mimehandler_get_icon(mime, 1)) == NULL)
 		icon = "application-x-executable";
 	image = _new_application_icon(desktop, icon, datadir);
 	desktopicon = _desktopicon_new_do(desktop, image, name);
@@ -971,8 +971,6 @@ static void _run_link(DesktopIcon * desktopicon);
 static void _on_icon_run(gpointer data)
 {
 	DesktopIcon * desktopicon = data;
-	const char section[] = "Desktop Entry";
-	MimeHandlerType type;
 
 	if(desktopicon->confirm != FALSE && _run_confirm() != TRUE)
 		return;
@@ -988,6 +986,8 @@ static void _on_icon_run(gpointer data)
 			break;
 		case MIMEHANDLER_TYPE_LINK:
 			_run_link(desktopicon);
+			break;
+		case MIMEHANDLER_TYPE_UNKNOWN:
 			break;
 	}
 }
@@ -1076,7 +1076,6 @@ static gboolean _run_confirm(void)
 
 static void _run_directory(DesktopIcon * desktopicon)
 {
-	const char section[] = "Desktop Entry";
 	char const * directory;
 	/* XXX open with the default file manager instead */
 	char * argv[] = { BINDIR "/" PROGNAME_BROWSER, PROGNAME_BROWSER, "--",
@@ -1100,7 +1099,6 @@ static void _run_directory(DesktopIcon * desktopicon)
 
 static void _run_link(DesktopIcon * desktopicon)
 {
-	const char section[] = "Desktop Entry";
 	char const * url;
 	/* XXX open with the default web browser instead */
 	char * argv[] = { BINDIR "/" PROGNAME_HTMLAPP, PROGNAME_HTMLAPP, "--",
