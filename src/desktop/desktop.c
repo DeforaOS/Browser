@@ -1870,8 +1870,8 @@ static int _desktop_get_monitor_properties(Desktop * desktop, int monitor,
 {
 #if GTK_CHECK_VERSION(3, 22, 0)
 	GdkMonitor * m;
-#endif
 	int s;
+#endif
 
 	if(monitor < 0)
 	{
