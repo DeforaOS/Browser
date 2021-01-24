@@ -289,7 +289,7 @@ BrowserWindow * browserwindow_new(String const * directory)
 /* browserwindow_delete */
 void browserwindow_delete(BrowserWindow * browser)
 {
-	if(browser->browser != 0)
+	if(browser->browser != NULL)
 		browser_delete(browser->browser);
 	gtk_widget_destroy(browser->window);
 	object_delete(browser);
