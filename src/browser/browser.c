@@ -820,8 +820,8 @@ int browser_config_load(Browser * browser)
 
 	if(browser->config == NULL)
 		return 0; /* XXX ignore error */
-	if(config_load_preferences(browser->config, "DeforaOS/" VENDOR, PACKAGE,
-				BROWSER_CONFIG_FILE) != 0)
+	if(config_load_preferences(browser->config, BROWSER_CONFIG_VENDOR,
+				PACKAGE, BROWSER_CONFIG_FILE) != 0)
 		browser_error(NULL, error_get(NULL), 1);
 #if GTK_CHECK_VERSION(2, 6, 0)
 	/* XXX deserves a rework (enum) */
@@ -878,7 +878,7 @@ int browser_config_save(Browser * browser)
 			browser->prefs.show_hidden_files);
 	if(ret == 0)
 		ret |= config_save_preferences_user(browser->config,
-				"DeforaOS/" VENDOR, PACKAGE,
+				BROWSER_CONFIG_VENDOR, PACKAGE,
 				BROWSER_CONFIG_FILE);
 	return ret;
 }
@@ -2528,7 +2528,7 @@ static int _browser_config_set(Browser * browser, char const * section,
 	if((ret = config_set(browser->config, s, variable, value)) == 0)
 	{
 		if(config_save_preferences_user(browser->config,
-					"DeforaOS/" VENDOR, PACKAGE,
+					BROWSER_CONFIG_VENDOR, PACKAGE,
 					BROWSER_CONFIG_FILE) != 0)
 			browser_error(NULL, error_get(NULL), 1);
 	}

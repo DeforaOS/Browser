@@ -237,7 +237,7 @@ static int _new_load(Properties * properties, char const * plugin)
 
 	if((properties->config = config_new()) != NULL
 			&& config_load_preferences(properties->config,
-				"DeforaOS/" VENDOR, PACKAGE,
+				BROWSER_CONFIG_VENDOR, PACKAGE,
 				BROWSER_CONFIG_FILE) == 0
 			&& (plugins = config_get(properties->config, NULL,
 					"properties")) == NULL)
