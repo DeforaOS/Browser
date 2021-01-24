@@ -94,6 +94,8 @@ static Places * _places_init(BrowserPluginHelper * helper)
 				_places_on_open_location), places);
 	return places;
 #else
+	(void) helper;
+
 	error_set("%s: %s", plugin.name, strerror(ENOSYS));
 	return NULL;
 #endif

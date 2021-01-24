@@ -442,6 +442,7 @@ static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 	GtkTreeIter fiter;
 	GtkTreeIter iter;
 	gchar * location;
+	(void) column;
 
 	model = gtk_tree_view_get_model(view);
 	if(gtk_tree_model_get_iter(model, &fiter, path) == FALSE)

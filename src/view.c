@@ -349,6 +349,8 @@ static void _view_delete(View * view)
 static String const * _view_config_get(View * view, String const * section,
 		String const * variable)
 {
+	(void) view;
+
 	if(section != NULL)
 	{
 		if(strcmp(section, "preview") == 0

@@ -361,6 +361,7 @@ static void _dirtree_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 	GtkTreeModel * model = GTK_TREE_MODEL(dirtree->sorted);
 	GtkTreeIter iter;
 	gchar * location;
+	(void) column;
 
 	gtk_tree_view_expand_row(view, path, FALSE);
 	gtk_tree_model_get_iter(model, &iter, path);
@@ -378,6 +379,8 @@ static void _dirtree_on_row_expanded(GtkTreeView * view, GtkTreeIter * iter,
 	GtkTreeModel * model = GTK_TREE_MODEL(dirtree->store);
 	GtkTreeIter child;
 	gchar * p;
+	(void) view;
+	(void) path;
 
 	if(dirtree->expanding == TRUE)
 		return;
