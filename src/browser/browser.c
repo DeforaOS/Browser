@@ -558,7 +558,7 @@ static gboolean _new_idle(gpointer data)
 
 static void _idle_load_plugins(Browser * browser)
 {
-	char const * plugins;
+	String const * plugins;
 	char * p;
 	char * q;
 	size_t i;
