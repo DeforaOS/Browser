@@ -196,6 +196,10 @@ static void _undelete_refresh(Undelete * undelete, GList * selection)
 #if defined(__APPLE__)
 static int getdents(int fd, char * buf, unsigned int count)
 {
+	(void) fd;
+	(void) buf;
+	(void) count;
+
 	errno = ENOSYS;
 	return -1;
 }
