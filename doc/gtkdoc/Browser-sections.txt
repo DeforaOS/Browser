@@ -13,6 +13,8 @@ DesktopLayout
 DesktopMessage
 DesktopMessageShow
 DESKTOP_CLIENT_MESSAGE
+Desktop
+DesktopHandler
 </SECTION>
 
 <SECTION>
@@ -38,6 +40,7 @@ browser_vfs_can_eject
 browser_vfs_can_mount
 browser_vfs_can_unmount
 browser_vfs_is_mountpoint
+browser_vfs_mkdir
 browser_vfs_opendir
 browser_vfs_closedir
 browser_vfs_readdir
