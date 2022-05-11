@@ -75,7 +75,9 @@ int main(int argc, char * argv[])
 {
 	int o;
 
-	gtk_init(&argc, &argv);
+	/* XXX avoid failures when offscreen */
+	if(getenv("DISPLAY") != NULL)
+		gtk_init(&argc, &argv);
 	while((o = getopt(argc, argv, "")) != -1)
 		switch(o)
 		{
