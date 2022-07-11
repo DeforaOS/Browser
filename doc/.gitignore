@@ -13,6 +13,11 @@
 /desktopctl.1
 /desktopctl.html
 /desktopctl.xml
+/gtkdoc/html
+/gtkdoc/html.stamp
+/gtkdoc/Browser.types
+/gtkdoc/tmpl.stamp
+/gtkdoc/xml.stamp
 /move.1
 /move.html
 /move.xml
