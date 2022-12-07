@@ -37,12 +37,16 @@
 #include <errno.h>
 #include <locale.h>
 #include <libintl.h>
-#include <X11/Xlib.h>
+#if defined(GDK_WINDOWING_X11)
+# include <X11/Xlib.h>
+#endif
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
-#include <gdk/gdkx.h>
-#include <X11/Xatom.h>
-#include <X11/extensions/Xrandr.h>
+#if defined(GDK_WINDOWING_X11)
+# include <gdk/gdkx.h>
+# include <X11/Xatom.h>
+# include <X11/extensions/Xrandr.h>
+#endif
 #include <System.h>
 #include "desktopicon.h"
 #include "desktopiconwindow.h"
@@ -307,7 +311,11 @@ static void _new_events(Desktop * desktop, GdkWindow * window,
 
 static void _new_filter(Desktop * desktop, GdkWindow * window)
 {
+#if defined(GDK_WINDOWING_X11)
 	gdk_window_add_filter(window, _on_root_event, desktop);
+#else
+	/* FIXME implement */
+#endif
 }
 
 static void _new_icons(Desktop * desktop)
@@ -524,6 +532,7 @@ static void _on_realize(gpointer data)
 	desktop_reset(desktop);
 }
 
+#if defined(GDK_WINDOWING_X11)
 static GdkFilterReturn _event_button_press(XButtonEvent * xbev,
 		Desktop * desktop);
 static GdkFilterReturn _event_configure(XConfigureEvent * xevent,
@@ -585,6 +594,7 @@ static GdkFilterReturn _event_property(XPropertyEvent * xevent,
 	_desktop_get_workarea(desktop);
 	return GDK_FILTER_CONTINUE;
 }
+#endif
 
 
 /* desktop_delete */
@@ -770,6 +780,7 @@ void desktop_set_icons(Desktop * desktop, DesktopIcons icons)
 /* desktop_set_layout */
 int desktop_set_layout(Desktop * desktop, DesktopLayout layout)
 {
+#if defined(GDK_WINDOWING_X11)
 	XRRScreenConfiguration * sc;
 	Rotation r;
 	SizeID size;
@@ -798,6 +809,10 @@ int desktop_set_layout(Desktop * desktop, DesktopLayout layout)
 	XRRSetScreenConfig(GDK_DISPLAY_XDISPLAY(desktop->display), sc,
 			GDK_WINDOW_XID(desktop->root), size, r, CurrentTime);
 	return gdk_error_trap_pop();
+#else
+	/* FIXME not implemented */
+	return -1;
+#endif
 }
 
 
@@ -1971,6 +1986,7 @@ static int _desktop_get_properties(Desktop * desktop, GdkRectangle * geometry,
 
 static void _properties_workarea(Desktop * desktop, GdkRectangle * workarea)
 {
+#if defined(GDK_WINDOWING_X11)
 	Atom atom;
 	Atom type;
 	int format;
@@ -2000,10 +2016,13 @@ static void _properties_workarea(Desktop * desktop, GdkRectangle * workarea)
 	}
 	if(p != NULL)
 		XFree(p);
-#ifdef DEBUG
+# ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() (%d, %d) %dx%d\n", __func__,
 			workarea->x, workarea->y,
 			workarea->width, workarea->height);
+# endif
+#else
+	/* FIXME implement */
 #endif
 }
 
