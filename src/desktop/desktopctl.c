@@ -31,6 +31,7 @@
 #include <locale.h>
 #include <libintl.h>
 #include <gtk/gtk.h>
+#include <System/error.h>
 #include <Desktop.h>
 #include "../../include/Browser/desktop.h"
 #include "../../config.h"
@@ -64,7 +65,9 @@ static int _usage(void);
 /* desktopctl */
 static int _desktopctl(int action, int what)
 {
-	desktop_message_send(DESKTOP_CLIENT_MESSAGE, action, what, TRUE);
+	if(desktop_message_send(DESKTOP_CLIENT_MESSAGE, action, what, TRUE)
+			!= 0)
+		return error_print(PROGNAME_DESKTOPCTL);
 	return 0;
 }
 
