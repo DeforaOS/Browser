@@ -279,8 +279,9 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 		return NULL;
 	}
 	/* internal */
-	desktop_message_register(NULL, DESKTOP_CLIENT_MESSAGE, _on_message,
-			desktop);
+	if(desktop_message_register(NULL, DESKTOP_CLIENT_MESSAGE, _on_message,
+				desktop) != 0)
+		error_print(PROGNAME_DESKTOP);
 	/* query the root window */
 #if GTK_CHECK_VERSION(2, 24, 0)
 	gdk_window_get_position(desktop->root, &desktop->window.x,
