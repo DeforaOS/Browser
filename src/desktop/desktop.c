@@ -272,9 +272,8 @@ Desktop * desktop_new(DesktopPrefs * prefs)
 	desktop->home = home;
 	desktop->mime = mime_new(NULL);
 	/* handler */
-	desktop->handler = desktophandler_new(desktop, DESKTOP_ICONS_NONE);
-	/* check for errors */
-	if(desktop->mime == NULL || desktop->handler == NULL)
+	if((desktop->handler = desktophandler_new(desktop, DESKTOP_ICONS_NONE))
+			== NULL)
 	{
 		desktop_delete(desktop);
 		return NULL;
