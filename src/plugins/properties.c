@@ -49,6 +49,8 @@ typedef struct _BrowserPlugin
 {
 	BrowserPluginHelper * helper;
 
+	int iconsize;
+
 	char * filename;
 	uid_t uid;
 	gid_t gid;
@@ -163,6 +165,15 @@ static Properties * _properties_new(BrowserPluginHelper * helper,
 	if((properties = object_new(sizeof(*properties))) == NULL)
 		return NULL;
 	properties->helper = helper;
+	properties->iconsize = helper->get_icon_size(helper->browser,
+#if GTK_CHECK_VERSION(2, 6, 0)
+			BROWSER_VIEW_ICONS
+#else
+			BROWSER_VIEW_DETAILS
+#endif
+			);
+	if(properties->iconsize < 0)
+		properties->iconsize = 48;
 	properties->filename = NULL;
 	properties->theme = gtk_icon_theme_get_default();
 	properties->group = NULL;
@@ -449,12 +460,11 @@ static void _refresh_type(Properties * properties, struct stat * lst,
 	BrowserPluginHelper * helper = properties->helper;
 	char const * type = NULL;
 	GdkPixbuf * pixbuf;
-	const int iconsize = 48;
 
 	type = helper->get_type(helper->browser, properties->filename,
 			st->st_mode);
 	pixbuf = helper->get_icon(helper->browser, properties->filename, type,
-			lst, NULL, iconsize);
+			lst, NULL, properties->iconsize);
 	gtk_image_set_from_pixbuf(GTK_IMAGE(properties->image), pixbuf);
 	g_object_unref(pixbuf);
 	if(type == NULL)
