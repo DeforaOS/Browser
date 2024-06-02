@@ -512,6 +512,7 @@ Browser * browser_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_box_pack_start(GTK_BOX(vbox), browser->statusbar, FALSE, TRUE, 0);
 	/* store */
 	browser->store = _create_store(browser);
+	g_object_ref(browser->store);
 	browser->detailview = NULL;
 #if GTK_CHECK_VERSION(2, 6, 0)
 	browser->iconview = NULL;
