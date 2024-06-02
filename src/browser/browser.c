@@ -3470,8 +3470,8 @@ static void _view_on_button_press_mime(Mime * mime, char const * mimetype,
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
 }
 
-static gboolean _view_on_button_press_show(Browser * browser, GdkEventButton * event,
-		GtkWidget * menu)
+static gboolean _view_on_button_press_show(Browser * browser,
+		GdkEventButton * event, GtkWidget * menu)
 {
 #if GTK_CHECK_VERSION(2, 6, 0)
 	if(browser_get_view(browser) != BROWSER_VIEW_DETAILS)
