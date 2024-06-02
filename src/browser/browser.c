@@ -1133,6 +1133,8 @@ void browser_open_with(Browser * browser, char const * path)
 	GtkWidget * vbox;
 	GtkWidget * widget = NULL;
 	GtkFileFilter * filter;
+	struct stat st;
+	mode_t mode;
 	char * filename = NULL;
 	gboolean active;
 	pid_t pid;
@@ -1165,7 +1167,8 @@ void browser_open_with(Browser * browser, char const * path)
 #else
 	vbox = GTK_DIALOG(dialog)->vbox;
 #endif
-	if(_browser_get_type(browser, path, 0) != NULL)
+	mode = (browser_vfs_stat(path, &st) == 0) ? st.st_mode : 0;
+	if(_browser_get_type(browser, path, mode) != NULL)
 	{
 		widget = gtk_check_button_new_with_mnemonic(
 				_("_Set as the default handler"));
