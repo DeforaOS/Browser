@@ -312,7 +312,7 @@ Browser * browser_new(GtkWidget * window, GtkAccelGroup * group,
 #if GTK_CHECK_VERSION(2, 6, 0)
 	/* XXX ignore errors */
 	browser->loading = gtk_icon_theme_load_icon(browser->theme,
-			"image-loading", 96,
+			"image-loading", BROWSER_ICON_SIZE_THUMBNAILS,
 			GTK_ICON_LOOKUP_GENERIC_FALLBACK
 			| GTK_ICON_LOOKUP_FORCE_SIZE, NULL);
 #endif
@@ -1073,10 +1073,11 @@ int browser_load(Browser * browser, char const * plugin)
 	gtk_widget_hide(widget);
 	theme = gtk_icon_theme_get_default();
 	if(bpd->icon != NULL)
-		icon = gtk_icon_theme_load_icon(theme, bpd->icon, 24, 0, NULL);
+		icon = gtk_icon_theme_load_icon(theme, bpd->icon,
+				BROWSER_ICON_SIZE_SMALL_ICONS, 0, NULL);
 	if(icon == NULL)
-		icon = gtk_icon_theme_load_icon(theme, "gnome-settings", 24, 0,
-				NULL);
+		icon = gtk_icon_theme_load_icon(theme, "gnome-settings",
+				BROWSER_ICON_SIZE_SMALL_ICONS, 0, NULL);
 #if GTK_CHECK_VERSION(2, 6, 0)
 	gtk_list_store_insert_with_values(browser->pl_store, &iter, -1,
 #else
@@ -1447,10 +1448,10 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		return;
 	if(icon24 != NULL)
 		*icon24 = browser_vfs_mime_icon(browser->mime, path, *type, lst,
-				st, 24);
+				st, BROWSER_ICON_SIZE_SMALL_ICONS);
 	if(icon48 != NULL)
 		*icon48 = browser_vfs_mime_icon(browser->mime, path, *type, lst,
-				st, 48);
+				st, BROWSER_ICON_SIZE_ICONS);
 	if(icon96 != NULL)
 	{
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -1469,7 +1470,7 @@ static void _insert_all(Browser * browser, struct stat * lst, struct stat * st,
 		else
 #endif
 		*icon96 = browser_vfs_mime_icon(browser->mime, path, *type, lst,
-				st, 96);
+				st, BROWSER_ICON_SIZE_THUMBNAILS);
 	}
 }
 
@@ -1553,10 +1554,13 @@ static gboolean _done_thumbnails(gpointer data)
 		if(type != NULL && path != NULL
 				&& strncmp(type, image, sizeof(image)) == 0)
 		{
-			if((icon = gdk_pixbuf_new_from_file_at_size(path, 96,
-							96, &error)) == NULL)
+			if((icon = gdk_pixbuf_new_from_file_at_size(path,
+							BROWSER_ICON_SIZE_THUMBNAILS,
+							BROWSER_ICON_SIZE_THUMBNAILS,
+							&error)) == NULL)
 				icon = browser_vfs_mime_icon(browser->mime,
-						path, type, NULL, NULL, 96);
+						path, type, NULL, NULL,
+						BROWSER_ICON_SIZE_THUMBNAILS);
 			if(error != NULL)
 			{
 				browser_error(NULL, error->message, 1);
@@ -2163,11 +2167,11 @@ static void _preferences_set_plugins(Browser * browser)
 		enabled = _browser_plugin_is_enabled(browser, de->d_name);
 		icon = NULL;
 		if(bpd->icon != NULL)
-			icon = gtk_icon_theme_load_icon(theme, bpd->icon, 24,
-					0, NULL);
+			icon = gtk_icon_theme_load_icon(theme, bpd->icon,
+					BROWSER_ICON_SIZE_SMALL_ICONS, 0, NULL);
 		if(icon == NULL)
 			icon = gtk_icon_theme_load_icon(theme, "gnome-settings",
-					24, 0, NULL);
+					BROWSER_ICON_SIZE_SMALL_ICONS, 0, NULL);
 #if GTK_CHECK_VERSION(2, 6, 0)
 		gtk_list_store_insert_with_values(browser->pr_plugin_store,
 				&iter, -1,
@@ -3127,7 +3131,8 @@ static void _view_list(Browser * browser)
 	gtk_icon_view_set_text_column(GTK_ICON_VIEW(browser->iconview),
 			BC_DISPLAY_NAME);
 	gtk_icon_view_set_item_width(GTK_ICON_VIEW(browser->iconview),
-			BROWSER_LIST_WRAP_WIDTH + 24);
+			BROWSER_LIST_WRAP_WIDTH
+			+ BROWSER_ICON_SIZE_SMALL_ICONS);
 # endif /* !GTK_CHECK_VERSION(2, 8, 0) */
 # if GTK_CHECK_VERSION(3, 0, 0)
 	gtk_icon_view_set_item_orientation(GTK_ICON_VIEW(browser->iconview),
