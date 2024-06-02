@@ -124,17 +124,17 @@ int main(int argc, char * argv[])
 		switch(o)
 		{
 			case 'D':
-				view = BV_DETAILS;
+				view = BROWSER_VIEW_DETAILS;
 				break;
 #if GTK_CHECK_VERSION(2, 6, 0)
 			case 'I':
-				view = BV_ICONS;
+				view = BROWSER_VIEW_ICONS;
 				break;
 			case 'L':
-				view = BV_LIST;
+				view = BROWSER_VIEW_LIST;
 				break;
 			case 'T':
-				view = BV_THUMBNAILS;
+				view = BROWSER_VIEW_THUMBNAILS;
 				break;
 #endif
 			default:

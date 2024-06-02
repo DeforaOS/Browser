@@ -567,7 +567,7 @@ static void _browserwindow_on_view_details(gpointer data)
 {
 	BrowserWindow * browser = data;
 
-	browser_set_view(browser->browser, BV_DETAILS);
+	browser_set_view(browser->browser, BROWSER_VIEW_DETAILS);
 }
 
 
@@ -576,7 +576,7 @@ static void _browserwindow_on_view_icons(gpointer data)
 {
 	BrowserWindow * browser = data;
 
-	browser_set_view(browser->browser, BV_ICONS);
+	browser_set_view(browser->browser, BROWSER_VIEW_ICONS);
 }
 
 
@@ -585,7 +585,7 @@ static void _browserwindow_on_view_list(gpointer data)
 {
 	BrowserWindow * browser = data;
 
-	browser_set_view(browser->browser, BV_LIST);
+	browser_set_view(browser->browser, BROWSER_VIEW_LIST);
 }
 
 
@@ -594,7 +594,7 @@ static void _browserwindow_on_view_thumbnails(gpointer data)
 {
 	BrowserWindow * browser = data;
 
-	browser_set_view(browser->browser, BV_THUMBNAILS);
+	browser_set_view(browser->browser, BROWSER_VIEW_THUMBNAILS);
 }
 # endif /* GTK_CHECK_VERSION(2, 6, 0) */
 

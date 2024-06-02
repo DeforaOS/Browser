@@ -237,17 +237,17 @@ void on_view_as(gpointer data)
 	view = browser_get_view(browser);
 	switch(view)
 	{
-		case BV_DETAILS:
-			browser_set_view(browser, BV_ICONS);
+		case BROWSER_VIEW_DETAILS:
+			browser_set_view(browser, BROWSER_VIEW_ICONS);
 			break;
-		case BV_LIST:
-			browser_set_view(browser, BV_THUMBNAILS);
+		case BROWSER_VIEW_LIST:
+			browser_set_view(browser, BROWSER_VIEW_THUMBNAILS);
 			break;
-		case BV_ICONS:
-			browser_set_view(browser, BV_LIST);
+		case BROWSER_VIEW_ICONS:
+			browser_set_view(browser, BROWSER_VIEW_LIST);
 			break;
-		case BV_THUMBNAILS:
-			browser_set_view(browser, BV_DETAILS);
+		case BROWSER_VIEW_THUMBNAILS:
+			browser_set_view(browser, BROWSER_VIEW_DETAILS);
 			break;
 	}
 }
@@ -258,7 +258,7 @@ void on_view_details(gpointer data)
 {
 	Browser * browser = data;
 
-	browser_set_view(browser, BV_DETAILS);
+	browser_set_view(browser, BROWSER_VIEW_DETAILS);
 }
 
 
@@ -267,7 +267,7 @@ void on_view_icons(gpointer data)
 {
 	Browser * browser = data;
 
-	browser_set_view(browser, BV_ICONS);
+	browser_set_view(browser, BROWSER_VIEW_ICONS);
 }
 
 
@@ -276,7 +276,7 @@ void on_view_list(gpointer data)
 {
 	Browser * browser = data;
 
-	browser_set_view(browser, BV_LIST);
+	browser_set_view(browser, BROWSER_VIEW_LIST);
 }
 
 
@@ -285,7 +285,7 @@ void on_view_thumbnails(gpointer data)
 {
 	Browser * browser = data;
 
-	browser_set_view(browser, BV_THUMBNAILS);
+	browser_set_view(browser, BROWSER_VIEW_THUMBNAILS);
 }
 #endif
 

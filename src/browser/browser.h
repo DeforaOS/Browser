@@ -49,23 +49,6 @@
 
 
 /* types */
-typedef enum _BrowserView
-{
-	BV_DETAILS = 0,
-# if GTK_CHECK_VERSION(2, 6, 0)
-	BV_ICONS,
-	BV_LIST,
-	BV_THUMBNAILS
-} BrowserView;
-#  define BV_FIRST BV_DETAILS
-#  define BV_LAST BV_THUMBNAILS
-# else
-} BrowserView;
-#  define BV_FIRST BV_DETAILS
-#  define BV_LAST BV_DETAILS
-# endif
-# define BV_COUNT (BV_LAST + 1)
-
 typedef struct _BrowserPrefs
 {
 # if GTK_CHECK_VERSION(2, 6, 0)

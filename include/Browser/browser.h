@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011-2018 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2024 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Browser */
 /* Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -24,12 +24,31 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 
-#ifndef DESKTOP_BROWSER_H
-# define DESKTOP_BROWSER_H
 
-# include "Browser/browser.h"
-# include "Browser/desktop.h"
-# include "Browser/plugin.h"
-# include "Browser/vfs.h"
+#ifndef BROWSER_BROWSER_BROWSER_H
+# define BROWSER_BROWSER_BROWSER_H
 
-#endif /* !DESKTOP_BROWSER_H */
+# include <gtk/gtk.h>
+
+
+/* Browser */
+/* public */
+/* types */
+typedef enum _BrowserView
+{
+	BROWSER_VIEW_DETAILS = 0,
+# if GTK_CHECK_VERSION(2, 6, 0)
+	BROWSER_VIEW_ICONS,
+	BROWSER_VIEW_LIST,
+	BROWSER_VIEW_THUMBNAILS
+# endif
+} BrowserView;
+# define BROWSER_VIEW_FIRST	BROWSER_VIEW_DETAILS
+# if GTK_CHECK_VERSION(2, 6, 0)
+#  define BROWSER_VIEW_LAST	BROWSER_VIEW_DETAILS
+# else
+#  define BROWSER_VIEW_LAST	BROWSER_VIEW_THUMBNAILS
+# endif
+# define BROWSER_VIEW_COUNT	(BROWSER_VIEW_LAST + 1)
+
+#endif /* !BROWSER_BROWSER_BROWSER_H */

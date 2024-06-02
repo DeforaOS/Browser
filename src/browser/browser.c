@@ -187,8 +187,8 @@ struct _Browser
 	GtkWidget * detailview;
 #if GTK_CHECK_VERSION(2, 6, 0)
 	GtkWidget * iconview;
-	BrowserView view;
 #endif
+	BrowserView view;
 	GtkListStore * store;
 	GtkWidget * statusbar;
 	guint statusbar_id;
@@ -256,6 +256,7 @@ static gboolean _browser_plugin_is_enabled(Browser * browser,
 static GdkPixbuf * _browser_get_icon(Browser * browser, char const * filename,
 		char const * type, struct stat * lst, struct stat * st,
 		int size);
+static int _browser_get_icon_size(Browser * browser, BrowserView view);
 static Mime * _browser_get_mime(Browser * browser);
 static GList * _browser_get_selection(Browser * browser);
 static char const * _browser_get_type(Browser * browser, char const * filename,
@@ -320,7 +321,7 @@ Browser * browser_new(GtkWidget * window, GtkAccelGroup * group,
 	/* config */
 	/* set defaults */
 #if GTK_CHECK_VERSION(2, 6, 0)
-	browser->prefs.default_view = BV_ICONS;
+	browser->prefs.default_view = BROWSER_VIEW_ICONS;
 #endif
 	browser->prefs.alternate_rows = TRUE;
 	browser->prefs.confirm_before_delete = TRUE;
@@ -353,8 +354,10 @@ Browser * browser_new(GtkWidget * window, GtkAccelGroup * group,
 	browser->pl_helper.config_set = _browser_config_set;
 	browser->pl_helper.error = browser_error;
 	browser->pl_helper.get_icon = _browser_get_icon;
+	browser->pl_helper.get_icon_size = _browser_get_icon_size;
 	browser->pl_helper.get_mime = _browser_get_mime;
 	browser->pl_helper.get_type = _browser_get_type;
+	browser->pl_helper.get_view = browser_get_view;
 	browser->pl_helper.refresh = browser_refresh;
 	browser->pl_helper.set_location = browser_set_location;
 
@@ -517,13 +520,16 @@ Browser * browser_new(GtkWidget * window, GtkAccelGroup * group,
 #if GTK_CHECK_VERSION(2, 6, 0)
 	browser->iconview = NULL;
 	browser->view = browser->prefs.default_view;
+#else
+	browser->view = BROWSER_VIEW_DETAILS;
+#endif
 	browser_set_view(browser, browser->view);
+#if GTK_CHECK_VERSION(2, 6, 0)
 	if(browser->iconview != NULL)
 		gtk_widget_grab_focus(browser->iconview);
-#else
-	browser_set_view(browser, BV_DETAILS);
-	gtk_widget_grab_focus(browser->detailview);
+	else
 #endif
+		gtk_widget_grab_focus(browser->detailview);
 
 	/* preferences */
 	browser->pr_window = NULL;
@@ -830,13 +836,13 @@ int browser_config_load(Browser * browser)
 			&& p != NULL)
 	{
 		if(strcmp(p, "details") == 0)
-			browser->prefs.default_view = BV_DETAILS;
+			browser->prefs.default_view = BROWSER_VIEW_DETAILS;
 		else if(strcmp(p, "icons") == 0)
-			browser->prefs.default_view = BV_ICONS;
+			browser->prefs.default_view = BROWSER_VIEW_ICONS;
 		else if(strcmp(p, "list") == 0)
-			browser->prefs.default_view = BV_LIST;
+			browser->prefs.default_view = BROWSER_VIEW_LIST;
 		else if(strcmp(p, "thumbnails") == 0)
-			browser->prefs.default_view = BV_THUMBNAILS;
+			browser->prefs.default_view = BROWSER_VIEW_THUMBNAILS;
 		string_delete(p);
 	}
 #endif
@@ -857,15 +863,16 @@ int browser_config_save(Browser * browser)
 {
 	int ret = 0;
 #if GTK_CHECK_VERSION(2, 6, 0)
-	char * str[BV_COUNT] = { "details", "icons", "list", "thumbnails" };
+	char * str[BROWSER_VIEW_COUNT] = { "details", "icons", "list",
+		"thumbnails" };
 #endif
 
 	if(browser->config == NULL)
 		return 0; /* XXX ignore error */
 #if GTK_CHECK_VERSION(2, 6, 0)
 	/* XXX deserves a rework (enum) */
-	if(browser->prefs.default_view >= BV_FIRST
-			&& browser->prefs.default_view <= BV_LAST)
+	if(browser->prefs.default_view >= BROWSER_VIEW_FIRST
+			&& browser->prefs.default_view <= BROWSER_VIEW_LAST)
 		ret |= config_set(browser->config, NULL, "default_view",
 				str[browser->prefs.default_view]);
 #endif
@@ -1783,7 +1790,7 @@ void browser_select_all(Browser * browser)
 	GtkTreeSelection * sel;
 
 #if GTK_CHECK_VERSION(2, 6, 0)
-	if(browser_get_view(browser) != BV_DETAILS)
+	if(browser_get_view(browser) != BROWSER_VIEW_DETAILS)
 	{
 		gtk_icon_view_select_all(GTK_ICON_VIEW(browser->iconview));
 		return;
@@ -1804,7 +1811,7 @@ GList * browser_selection_copy(Browser * browser)
 	char * q;
 
 #if GTK_CHECK_VERSION(2, 6, 0)
-	if(browser_get_view(browser) != BV_DETAILS)
+	if(browser_get_view(browser) != BROWSER_VIEW_DETAILS)
 		sel = gtk_icon_view_get_selected_items(GTK_ICON_VIEW(
 					browser->iconview));
 	else
@@ -2490,7 +2497,7 @@ void browser_unselect_all(Browser * browser)
 	GtkTreeSelection * sel;
 
 #if GTK_CHECK_VERSION(2, 6, 0)
-	if(browser_get_view(browser) != BV_DETAILS)
+	if(browser_get_view(browser) != BROWSER_VIEW_DETAILS)
 	{
 		gtk_icon_view_unselect_all(GTK_ICON_VIEW(browser->iconview));
 		return;
@@ -2578,6 +2585,26 @@ static GdkPixbuf * _browser_get_icon(Browser * browser, char const * filename,
 }
 
 
+/* browser_get_icon_size */
+static int _browser_get_icon_size(Browser * browser, BrowserView view)
+{
+	switch(view)
+	{
+		case BROWSER_VIEW_DETAILS:
+			return BROWSER_ICON_SIZE_SMALL_ICONS;
+#if GTK_CHECK_VERSION(2, 6, 0)
+		case BROWSER_VIEW_ICONS:
+			return BROWSER_ICON_SIZE_ICONS;
+		case BROWSER_VIEW_LIST:
+			return BROWSER_ICON_SIZE_SMALL_ICONS;
+		case BROWSER_VIEW_THUMBNAILS:
+			return BROWSER_ICON_SIZE_THUMBNAILS;
+#endif
+	}
+	return -1;
+}
+
+
 /* browser_get_mime */
 static Mime * _browser_get_mime(Browser * browser)
 {
@@ -2593,7 +2620,7 @@ static GList * _browser_get_selection(Browser * browser)
 	if(browser->current == NULL)
 		return NULL;
 #if GTK_CHECK_VERSION(2, 6, 0)
-	if(browser_get_view(browser) != BV_DETAILS)
+	if(browser_get_view(browser) != BROWSER_VIEW_DETAILS)
 		return gtk_icon_view_get_selected_items(GTK_ICON_VIEW(
 					browser->iconview));
 #endif
@@ -2772,22 +2799,22 @@ void browser_set_view(Browser * browser, BrowserView view)
 #if GTK_CHECK_VERSION(2, 6, 0)
 	switch(view)
 	{
-		case BV_DETAILS:
+		case BROWSER_VIEW_DETAILS:
 			_view_details(browser);
 			break;
-		case BV_ICONS:
+		case BROWSER_VIEW_ICONS:
 			_view_icons(browser);
 			break;
-		case BV_LIST:
+		case BROWSER_VIEW_LIST:
 			_view_list(browser);
 			break;
-		case BV_THUMBNAILS:
+		case BROWSER_VIEW_THUMBNAILS:
 			_view_thumbnails(browser);
 			break;
 	}
 # if GTK_CHECK_VERSION(3, 0, 0)
 	/* XXX necessary with Gtk+ 3 */
-	if(view != BV_DETAILS)
+	if(view != BROWSER_VIEW_DETAILS)
 		browser_refresh(browser);
 # endif
 #else
@@ -2811,7 +2838,7 @@ static void _view_details(Browser * browser)
 	fprintf(stderr, "DEBUG: %s() %u\n", __func__, browser->view);
 #endif
 #if GTK_CHECK_VERSION(2, 6, 0)
-	if(browser->view != BV_DETAILS)
+	if(browser->view != BROWSER_VIEW_DETAILS)
 	{
 		sel = gtk_icon_view_get_selected_items(GTK_ICON_VIEW(
 					browser->iconview));
@@ -2969,7 +2996,7 @@ static void _view_icons_view(Browser * browser)
 # ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() %u\n", __func__, browser->view);
 # endif
-	if(browser->view == BV_DETAILS)
+	if(browser->view == BROWSER_VIEW_DETAILS)
 	{
 		if((treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(
 							browser->detailview)))
@@ -3216,7 +3243,7 @@ static gboolean _view_on_button_press(GtkWidget * widget,
 	/* FIXME error checking + sub-functions */
 	gtk_tree_model_get_iter(GTK_TREE_MODEL(browser->store), &iter, path);
 #if GTK_CHECK_VERSION(2, 6, 0)
-	if(browser_get_view(browser) != BV_DETAILS)
+	if(browser_get_view(browser) != BROWSER_VIEW_DETAILS)
 	{
 		if(gtk_icon_view_path_is_selected(GTK_ICON_VIEW(
 						browser->iconview), path)
@@ -3273,7 +3300,7 @@ static GtkTreePath * _view_on_button_press_path(Browser * browser,
 	if(event->button == 3)
 	{
 #if GTK_CHECK_VERSION(2, 6, 0)
-		if(view != BV_DETAILS)
+		if(view != BROWSER_VIEW_DETAILS)
 			path = gtk_icon_view_get_path_at_pos(GTK_ICON_VIEW(
 						browser->iconview),
 					(int)event->x, (int)event->y);
@@ -3289,7 +3316,7 @@ static GtkTreePath * _view_on_button_press_path(Browser * browser,
 		path = NULL;
 		/* FIXME only considers one selected item */
 #if GTK_CHECK_VERSION(2, 6, 0)
-		if(view != BV_DETAILS)
+		if(view != BROWSER_VIEW_DETAILS)
 			gtk_icon_view_get_cursor(GTK_ICON_VIEW(
 						browser->iconview), &path,
 					NULL);
@@ -3447,7 +3474,7 @@ static gboolean _view_on_button_press_show(Browser * browser, GdkEventButton * e
 		GtkWidget * menu)
 {
 #if GTK_CHECK_VERSION(2, 6, 0)
-	if(browser_get_view(browser) != BV_DETAILS)
+	if(browser_get_view(browser) != BROWSER_VIEW_DETAILS)
 		gtk_menu_attach_to_widget(GTK_MENU(menu), browser->iconview,
 				NULL);
 	else

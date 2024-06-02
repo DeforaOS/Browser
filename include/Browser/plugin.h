@@ -31,6 +31,7 @@
 # include <sys/stat.h>
 # include <gtk/gtk.h>
 # include <Desktop.h>
+# include "browser.h"
 # include "vfs.h"
 
 
@@ -44,19 +45,26 @@ typedef struct _BrowserPlugin BrowserPlugin;
 typedef struct _BrowserPluginHelper
 {
 	Browser * browser;
+
+	/* accessors */
+	GdkPixbuf * (*get_icon)(Browser * browser, char const * filename,
+			char const * type, struct stat * lst, struct stat * st,
+			int size);
+	int (*get_icon_size)(Browser * browser, BrowserView view);
+	Mime * (*get_mime)(Browser * browser);
+	char const * (*get_type)(Browser * browser, char const * filename,
+			mode_t mode);
+	BrowserView (*get_view)(Browser * browser);
+	int (*set_location)(Browser * browser, char const * path);
+
+	int (*error)(Browser * browser, char const * message, int ret);
+	void (*refresh)(Browser * browser);
+
+	/* Config */
 	char const * (*config_get)(Browser * browser, char const * section,
 			char const * variable);
 	int (*config_set)(Browser * browser, char const * section,
 			char const * variable, char const * value);
-	int (*error)(Browser * browser, char const * message, int ret);
-	GdkPixbuf * (*get_icon)(Browser * browser, char const * filename,
-			char const * type, struct stat * lst, struct stat * st,
-			int size);
-	Mime * (*get_mime)(Browser * browser);
-	char const * (*get_type)(Browser * browser, char const * filename,
-			mode_t mode);
-	void (*refresh)(Browser * browser);
-	int (*set_location)(Browser * browser, char const * path);
 } BrowserPluginHelper;
 
 typedef const struct _BrowserPluginDefinition
