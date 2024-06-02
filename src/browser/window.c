@@ -30,6 +30,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <System.h>
 #include <Desktop.h>
+#include "browser.h"
 #include "callbacks.h"
 #include "window.h"
 #include "../../config.h"
@@ -251,7 +252,9 @@ BrowserWindow * browserwindow_new(String const * directory)
 	browser->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_add_accel_group(GTK_WINDOW(browser->window), group);
 	g_object_unref(group);
-	gtk_window_set_default_size(GTK_WINDOW(browser->window), 720, 480);
+	gtk_window_set_default_size(GTK_WINDOW(browser->window),
+			BROWSER_ICON_SIZE_ICONS * 15,
+			BROWSER_ICON_SIZE_ICONS * 10);
 #if GTK_CHECK_VERSION(2, 6, 0)
 	gtk_window_set_icon_name(GTK_WINDOW(browser->window), ICON_NAME);
 #endif
