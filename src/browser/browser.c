@@ -2583,6 +2583,8 @@ static GList * _browser_get_selection(Browser * browser)
 {
 	GtkTreeSelection * treesel;
 
+	if(browser->current == NULL)
+		return NULL;
 #if GTK_CHECK_VERSION(2, 6, 0)
 	if(browser_get_view(browser) != BV_DETAILS)
 		return gtk_icon_view_get_selected_items(GTK_ICON_VIEW(
