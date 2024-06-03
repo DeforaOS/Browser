@@ -451,6 +451,7 @@ static void _list_add(Trash * trash, Config * config, char const * path,
 	BrowserPluginHelper * helper = trash->helper;
 	size_t len;
 	GtkTreeIter iter;
+	gint iconsize;
 	GdkPixbuf * pixbuf;
 	char * p;
 	char const * q;
@@ -471,7 +472,9 @@ static void _list_add(Trash * trash, Config * config, char const * path,
 		g_free(p);
 		return;
 	}
-	pixbuf = helper->get_icon(helper->browser, q, NULL, NULL, NULL, 24);
+	gtk_icon_size_lookup(GTK_ICON_SIZE_SMALL_TOOLBAR, &iconsize, &iconsize);
+	pixbuf = helper->get_icon(helper->browser, q, NULL, NULL, NULL,
+			iconsize);
 	if((u = config_get(config, section, DATA_DELETIONDATE)) != NULL
 			&& strptime(u, "%Y-%m-%dT%H:%M:%S", &tm) != NULL)
 	{
