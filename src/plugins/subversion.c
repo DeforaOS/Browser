@@ -362,12 +362,9 @@ static String * _subversion_get_base(SVN * svn, char const * filename)
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, filename);
 #endif
-	cur = g_path_get_dirname(filename);
-	for(dir = cur; string_compare(dir, ".") != 0;
-			dir = g_path_get_dirname(cur))
+	cur = g_strdup(filename);
+	while(string_compare(cur, ".") != 0)
 	{
-		g_free(cur);
-		cur = dir;
 		if((p = string_new_append(dir, "/.svn", NULL)) == NULL)
 			break;
 		res = lstat(p, &st);
@@ -381,6 +378,9 @@ static String * _subversion_get_base(SVN * svn, char const * filename)
 		}
 		if(string_compare(dir, "/") == 0)
 			break;
+		dir = g_path_get_dirname(cur);
+		g_free(cur);
+		cur = dir;
 	}
 	g_free(cur);
 	return NULL;

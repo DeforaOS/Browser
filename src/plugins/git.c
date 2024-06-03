@@ -379,13 +379,10 @@ static String * _git_get_base(Git * git, char const * filename)
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, filename);
 #endif
-	cur = g_path_get_dirname(filename);
-	for(dir = cur; string_compare(dir, ".") != 0;
-			dir = g_path_get_dirname(cur))
+	cur = g_strdup(filename);
+	while(string_compare(cur, ".") != 0)
 	{
-		g_free(cur);
-		cur = dir;
-		if((p = string_new_append(dir, "/.git", NULL)) == NULL)
+		if((p = string_new_append(cur, "/.git", NULL)) == NULL)
 			break;
 		res = lstat(p, &st);
 #ifdef DEBUG
@@ -396,8 +393,11 @@ static String * _git_get_base(Git * git, char const * filename)
 			g_free(cur);
 			return p;
 		}
-		if(string_compare(dir, "/") == 0)
+		if(string_compare(cur, "/") == 0)
 			break;
+		dir = g_path_get_dirname(cur);
+		g_free(cur);
+		cur = dir;
 	}
 	g_free(cur);
 	return NULL;
