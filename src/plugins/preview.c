@@ -408,8 +408,13 @@ static void _preview_get_image_size(Preview * preview, gint * width,
 #endif
 		return;
 	}
+#if GTK_CHECK_VERSION(2, 6, 0)
+	*width = preview->helper->get_icon_size(preview->helper->browser,
+			BROWSER_VIEW_THUMBNAILS);
+#else
 	*width = PREVIEW_IMAGE_SIZE_DEFAULT;
-	*height = PREVIEW_IMAGE_SIZE_DEFAULT;
+#endif
+	*height = *width;
 	if(preview->path != NULL
 			&& (pixbuf = gdk_pixbuf_new_from_file(preview->path,
 					&error)) != NULL)
@@ -451,8 +456,14 @@ static void _preview_get_widget_size(Preview * preview, gint * width,
 	else
 #endif
 	{
+#if GTK_CHECK_VERSION(2, 6, 0)
+		*width = preview->helper->get_icon_size(
+				preview->helper->browser,
+				BROWSER_VIEW_THUMBNAILS);
+#else
 		*width = PREVIEW_IMAGE_SIZE_DEFAULT;
-		*height = PREVIEW_IMAGE_SIZE_DEFAULT;
+#endif
+		*height = *width;
 	}
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() %dx%d\n", __func__, *width, *height);
