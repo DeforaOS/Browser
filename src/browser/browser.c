@@ -360,6 +360,7 @@ Browser * browser_new(GtkWidget * window, GtkAccelGroup * group,
 	browser->pl_helper.get_view = browser_get_view;
 	browser->pl_helper.refresh = browser_refresh;
 	browser->pl_helper.set_location = browser_set_location;
+	browser->pl_helper.set_view = browser_set_view;
 
 	/* widgets */
 	browser->window = window;

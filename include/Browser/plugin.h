@@ -55,7 +55,9 @@ typedef struct _BrowserPluginHelper
 	char const * (*get_type)(Browser * browser, char const * filename,
 			mode_t mode);
 	BrowserView (*get_view)(Browser * browser);
+
 	int (*set_location)(Browser * browser, char const * path);
+	void (*set_view)(Browser * browser, BrowserView view);
 
 	int (*error)(Browser * browser, char const * message, int ret);
 	void (*refresh)(Browser * browser);
