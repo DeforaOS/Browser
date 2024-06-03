@@ -306,8 +306,9 @@ static Volumes * _volumes_init(BrowserPluginHelper * helper)
 	gtk_container_add(GTK_CONTAINER(volumes->window), volumes->view);
 	/* icons */
 	icontheme = gtk_icon_theme_get_default();
-	volumes->width = 24;
-	volumes->height = 24;
+	volumes->width = helper->get_icon_size(helper->browser,
+			BROWSER_VIEW_DETAILS);
+	volumes->height = volumes->width;
 	gtk_icon_size_lookup(GTK_ICON_SIZE_BUTTON, &volumes->width,
 			&volumes->height);
 	for(i = 0; i < DP_COUNT; i++)
