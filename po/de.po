@@ -106,20 +106,20 @@ msgstr "Fehler"
 
 #: ../src/browser/browser.c:1119
 msgid "Open file..."
-msgstr "Offnen..."
+msgstr "Öffnen..."
 
 #: ../src/browser/browser.c:1151 ../src/desktop/desktopicon.c:942
 #: ../src/view.c:497
 msgid "Open with..."
-msgstr "Offnen mit..."
+msgstr "Öffnen mit..."
 
 #: ../src/browser/browser.c:1161 ../src/view.c:503
 msgid "Executable files"
-msgstr ""
+msgstr "Ausführbare Datei"
 
 #: ../src/browser/browser.c:1166 ../src/view.c:508
 msgid "Shell scripts"
-msgstr ""
+msgstr "Shellskripte"
 
 #: ../src/browser/browser.c:1170 ../src/desktop/desktop.c:1423
 #: ../src/view.c:512
@@ -208,7 +208,7 @@ msgstr "Typ:"
 
 #: ../src/browser/browser.c:2254
 msgid "Open with:"
-msgstr "Offnen mit:"
+msgstr "Öffnen mit:"
 
 #: ../src/browser/browser.c:2275
 msgid "View with:"
@@ -291,7 +291,7 @@ msgstr "Aus_führen:"
 #: ../src/browser/browser.c:3420 ../src/desktop/desktopicon.c:853
 #: ../src/view.c:148 ../src/view.c:160
 msgid "Open _with..."
-msgstr "Offnen _mit..."
+msgstr "Öffnen _mit..."
 
 #: ../src/browser/browser.c:3533 ../src/desktop/desktopicon.c:1070
 msgid "Are you sure you want to execute this file?"
@@ -307,7 +307,7 @@ msgstr "Ordner"
 
 #: ../src/browser/browser.c:3604
 msgid "Symbolic link..."
-msgstr ""
+msgstr "Symbolische Verknüpfung..."
 
 #: ../src/browser/browser.c:3608
 msgid "Text file"
@@ -364,7 +364,7 @@ msgstr "Neu _Ordner"
 
 #: ../src/browser/window.c:151
 msgid "New _symbolic link..."
-msgstr ""
+msgstr "Neue _symbolische Verknüpfung..."
 
 #: ../src/browser/window.c:153
 msgid "_Open file..."
@@ -635,36 +635,36 @@ msgstr " nach \""
 #: ../src/common.c:234 ../src/copy.c:785 ../src/plugins/properties.c:552
 #: ../src/plugins/volumes.c:541
 msgid "bytes"
-msgstr "Bytes"
+msgstr "Byte"
 
 #: ../src/common.c:238 ../src/copy.c:792 ../src/plugins/properties.c:558
 #: ../src/plugins/volumes.c:547
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: ../src/common.c:240 ../src/copy.c:799 ../src/plugins/properties.c:560
 #: ../src/plugins/volumes.c:549
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: ../src/common.c:242 ../src/copy.c:806 ../src/plugins/properties.c:562
 #: ../src/plugins/volumes.c:551
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: ../src/common.c:244 ../src/plugins/properties.c:564
 #: ../src/plugins/volumes.c:553
 msgid "TB"
-msgstr ""
+msgstr "TB"
 
 #: ../src/common.c:248 ../src/plugins/properties.c:568
 #: ../src/plugins/volumes.c:557
 msgid "PB"
-msgstr ""
+msgstr "PB"
 
 #: ../src/common.c:270
 msgid "New symbolic link"
-msgstr ""
+msgstr "Neue symbolische Verknüpfung"
 
 #: ../src/common.c:283
 msgid "Destination:"
@@ -705,7 +705,7 @@ msgstr "Ordner ignoriert"
 
 #: ../src/copy.c:755
 msgid "0 bytes"
-msgstr "0 Bytes"
+msgstr "0 Byte"
 
 #: ../src/copy.c:772
 #, c-format
@@ -904,7 +904,7 @@ msgstr "Repository:"
 
 #: ../src/plugins/cvs.c:184
 msgid "Tag:"
-msgstr ""
+msgstr "Tag:"
 
 #: ../src/plugins/cvs.c:187 ../src/plugins/cvs.c:216
 msgid "Request diff"
@@ -939,7 +939,7 @@ msgstr "Löschen"
 #: ../src/plugins/git.c:219 ../src/plugins/subversion.c:169
 #: ../src/plugins/subversion.c:193
 msgid "Commit"
-msgstr ""
+msgstr "Commit"
 
 #: ../src/plugins/cvs.c:213
 msgid "Revision:"
@@ -947,7 +947,7 @@ msgstr "Revision:"
 
 #: ../src/plugins/cvs.c:240 ../src/plugins/subversion.c:200
 msgid "Add to repository"
-msgstr "Hinfügen"
+msgstr "Einfügen"
 
 #: ../src/plugins/cvs.c:403 ../src/plugins/cvs.c:455
 msgid "Not a CVS repository"
@@ -964,11 +964,11 @@ msgstr ""
 
 #: ../src/plugins/cvs.c:684
 msgid "Path: "
-msgstr ""
+msgstr "Pfad: "
 
 #: ../src/plugins/cvs.c:697
 msgid "Module: "
-msgstr ""
+msgstr "Module: "
 
 #: ../src/plugins/cvs.c:863 ../src/plugins/git.c:594
 msgid "Could not commit the file or directory"
@@ -980,15 +980,15 @@ msgstr ""
 
 #: ../src/plugins/favorites.c:91
 msgid "Favorites"
-msgstr ""
+msgstr "Favoriten"
 
 #: ../src/plugins/favorites.c:174
 msgid "Add to bookmarks"
-msgstr ""
+msgstr "Einfügen"
 
 #: ../src/plugins/favorites.c:182
 msgid "Remove from bookmarks"
-msgstr ""
+msgstr "Zurückziehen"
 
 #: ../src/plugins/git.c:111
 msgid "Git"
