@@ -1,6 +1,6 @@
 #!/bin/sh
 #$Id$
-#Copyright (c) 2013-2018 Pierre Pronchery <khorben@defora.org>
+#Copyright (c) 2013-2024 Pierre Pronchery <khorben@defora.org>
 #This file is part of DeforaOS Desktop Browser
 #Redistribution and use in source and binary forms, with or without
 #modification, are permitted provided that the following conditions are
