@@ -180,6 +180,9 @@ static Git * _git_init(BrowserPluginHelper * helper)
 	widget = _init_button(group, GTK_STOCK_FIND, _("View log"),
 			G_CALLBACK(_git_on_log), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
+	widget = _init_button(group, GTK_STOCK_ADD, _("Stage"),
+			G_CALLBACK(_git_on_add), git);
+	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
 	widget = _init_button(group, GTK_STOCK_PROPERTIES, _("Status"),
 			G_CALLBACK(_git_on_status), git);
 	gtk_box_pack_start(GTK_BOX(git->directory), widget, FALSE, TRUE, 0);
