@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Browser 0.6.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-05 18:59+0200\n"
+"POT-Creation-Date: 2024-06-05 19:30+0200\n"
 "PO-Revision-Date: 2024-06-05 18:59+0200\n"
 "Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
 "Language-Team: German\n"
@@ -59,17 +59,17 @@ msgstr ""
 
 #: ../src/browser/browser.c:378
 msgid "View as..."
-msgstr ""
+msgstr "Siehe als..."
 
 #: ../src/browser/browser.c:382 ../src/browser/browser.c:2005
 #: ../src/browser/browser.c:2013
 msgid "Details"
-msgstr ""
+msgstr "Details"
 
 #: ../src/browser/browser.c:389 ../src/browser/browser.c:2006
 #: ../src/browser/browser.c:2014 ../src/desktop/desktop.c:1590
 msgid "Icons"
-msgstr ""
+msgstr "Ikone"
 
 #: ../src/browser/browser.c:396 ../src/browser/browser.c:2007
 #: ../src/browser/browser.c:2015
@@ -93,7 +93,7 @@ msgstr " Standort: "
 #: ../src/desktop/desktopicon.c:1066 ../src/desktop/desktopicon.c:1071
 #: ../src/desktop/desktopicon.c:1217 ../src/desktop/desktopicon.c:1222
 msgid "Warning"
-msgstr "Achtung"
+msgstr "Warnung"
 
 #: ../src/browser/browser.c:784 ../src/browser/browser.c:788
 #: ../src/desktop/desktop.c:1826 ../src/desktop/desktop.c:1832
@@ -148,7 +148,7 @@ msgstr[1] "Wollen Sie wirklich %lu Dateien löschen?"
 
 #: ../src/browser/browser.c:1922
 msgid "File manager for the DeforaOS desktop"
-msgstr ""
+msgstr "Dateimanager für den DeforaOS-Desktop"
 
 #: ../src/browser/browser.c:1929
 msgid "translator-credits"
@@ -329,7 +329,7 @@ msgstr "Aktualisierung..."
 
 #: ../src/browser/browser.c:3961 ../src/browser/window.c:261
 msgid "File manager"
-msgstr ""
+msgstr "Dateimanager"
 
 #: ../src/browser/callbacks.c:146
 msgid "New folder"
@@ -440,7 +440,7 @@ msgstr "Applikationen"
 
 #: ../src/desktop/desktop.c:164
 msgid "Categories"
-msgstr ""
+msgstr "Kategorien"
 
 #: ../src/desktop/desktop.c:165
 msgid "Desktop contents"
@@ -520,7 +520,7 @@ msgstr "Vordergrund Farbe: "
 
 #: ../src/desktop/desktop.c:1577
 msgid "Font: "
-msgstr ""
+msgstr "Schriftschnitt: "
 
 #: ../src/desktop/desktop.c:1623
 msgid "Resolution: "
@@ -892,7 +892,7 @@ msgstr "CVS"
 
 #: ../src/plugins/cvs.c:172
 msgid "Checkout..."
-msgstr ""
+msgstr "Auschecken..."
 
 #: ../src/plugins/cvs.c:180
 msgid "Root:"
@@ -919,7 +919,7 @@ msgstr "Anmerken"
 #: ../src/plugins/git.c:210 ../src/plugins/subversion.c:160
 #: ../src/plugins/subversion.c:184
 msgid "View log"
-msgstr ""
+msgstr "Log sehen"
 
 #: ../src/plugins/cvs.c:195 ../src/plugins/cvs.c:224 ../src/plugins/git.c:183
 #: ../src/plugins/subversion.c:163 ../src/plugins/subversion.c:187
@@ -1045,7 +1045,7 @@ msgstr ""
 
 #: ../src/plugins/git.c:637
 msgid "No difference was found"
-msgstr ""
+msgstr "Kein Unterschied gefunden"
 
 #: ../src/plugins/git.c:668
 msgid "Could not initialize repository"
@@ -1077,19 +1077,19 @@ msgstr "Installieren"
 
 #: ../src/plugins/make.c:184 ../src/plugins/make.c:208
 msgid "Uninstall"
-msgstr ""
+msgstr "Deinstallieren"
 
 #: ../src/plugins/make.c:216
 msgid "Run configure"
-msgstr ""
+msgstr "configure ausführen"
 
 #: ../src/plugins/make.c:221
 msgid "Run ./autogen.sh"
-msgstr ""
+msgstr "./autogen.sh ausführen"
 
 #: ../src/plugins/make.c:226
 msgid "Run ./configure"
-msgstr ""
+msgstr "./configure ausführen"
 
 #: ../src/plugins/make.c:336 ../src/plugins/make.c:353
 msgid "No Makefile found"
@@ -1117,11 +1117,11 @@ msgstr ""
 
 #: ../src/plugins/properties.c:243
 msgid "Modified:"
-msgstr ""
+msgstr "Modifiziert:"
 
 #: ../src/plugins/properties.c:252
 msgid "Changed:"
-msgstr ""
+msgstr "Verändert:"
 
 #: ../src/plugins/properties.c:265
 msgid "Read:"
@@ -1190,7 +1190,7 @@ msgstr "Auswerfen"
 
 #: ../src/plugins/volumes.c:240
 msgid "Eject the volume"
-msgstr ""
+msgstr "Volume auswerfen"
 
 #: ../src/plugins/volumes.c:279
 msgid "Mountpoint"
