@@ -24,7 +24,7 @@ jobs:
     - name: bootstrap libSystem
       run: git clone https://github.com/DeforaOS/libSystem.git libSystem && for dir in include data src; do (cd libSystem/$dir && make PREFIX="$HOME/opt/DeforaOS" CCSHARED="cc -shared" install); done
     - name: bootstrap configure
-      run: git clone https://github.com/DeforaOS/configure.git configure && (cd configure/src && PKG_CONFIG_PATH="$HOME/opt/DeforaOS/lib/pkgconfig" make PREFIX="$HOME/opt/DeforaOS" CCSHARED="cc -shared" install)
+      run: git clone https://github.com/DeforaOS/configure.git configure && for dir in data src; do (cd configure/$dir && PKG_CONFIG_PATH="$HOME/opt/DeforaOS/lib/pkgconfig" make PREFIX="$HOME/opt/DeforaOS" install); done
     - name: bootstrap libDesktop
       run: git clone https://github.com/DeforaOS/libDesktop.git libDesktop && $HOME/opt/DeforaOS/bin/configure -p "$HOME/opt/DeforaOS" libDesktop && for dir in include data src; do (cd libDesktop/$dir && make PREFIX="$HOME/opt/DeforaOS" CCSHARED="cc -shared" install); done
     - name: configure
