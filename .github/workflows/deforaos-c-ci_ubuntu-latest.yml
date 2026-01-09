@@ -1,0 +1,37 @@
+name: DeforaOS C CI (ubuntu-latest)
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          docbook-xsl \
+          gtk-doc-tools \
+          libgtk-3-dev \
+          libxml2-utils \
+          xsltproc
+    - name: bootstrap libSystem
+      run: git clone https://github.com/DeforaOS/libSystem.git libSystem && for dir in include data src; do (cd libSystem/$dir && make PREFIX="$HOME/opt/DeforaOS" CCSHARED="cc -shared" install); done
+    - name: bootstrap configure
+      run: git clone https://github.com/DeforaOS/configure.git configure && (cd configure/src && PKG_CONFIG_PATH="$HOME/opt/DeforaOS/lib/pkgconfig" make PREFIX="$HOME/opt/DeforaOS" CCSHARED="cc -shared" install)
+    - name: bootstrap libDesktop
+      run: git clone https://github.com/DeforaOS/libDesktop.git libDesktop && $HOME/opt/DeforaOS/bin/configure -p "$HOME/opt/DeforaOS" libDesktop && for dir in include data src; do (cd libDesktop/$dir && make PREFIX="$HOME/opt/DeforaOS" CCSHARED="cc -shared" install); done
+    - name: configure
+      run: $HOME/opt/DeforaOS/bin/configure -p "$HOME/opt/DeforaOS"
+    - name: make
+      run: PKG_CONFIG_PATH="$HOME/opt/DeforaOS/lib/pkgconfig" make CCSHARED="cc -shared"
+    - name: make tests
+      run: PKG_CONFIG_PATH="$HOME/opt/DeforaOS/lib/pkgconfig" make CCSHARED="cc -shared" tests
+    - name: make distcheck
+      run: PKG_CONFIG_PATH="$HOME/opt/DeforaOS/lib/pkgconfig" make CCSHARED="cc -shared" distcheck
