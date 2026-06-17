@@ -350,7 +350,10 @@ static void _categories_on_refresh_loop_xdg(DesktopHandler * handler,
 	/* read through every XDG application folder */
 	if((path = getenv("XDG_DATA_DIRS")) == NULL || strlen(path) == 0)
 	{
-#if defined(__NetBSD__)
+#if defined(__FreeBSD__)
+		/* XXX really detect if DATADIR is already included */
+		path = DATADIR ":/usr/share";
+#elif defined(__NetBSD__)
 		/* XXX include the default path for pkgsrc */
 		path = "/usr/pkg/share:" DATADIR ":/usr/share";
 #else
