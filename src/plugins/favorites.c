@@ -83,6 +83,9 @@ static void _favorites_on_remove(gpointer data);
 static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 		GtkTreeViewColumn * column, gpointer data);
 
+/* wrappers */
+static void _favorites_wrap_g_free(void * a, void * b);
+
 
 /* public */
 /* variables */
@@ -193,7 +196,7 @@ static Favorites * _favorites_init(BrowserPluginHelper * helper)
 /* favorites_destroy */
 static void _favorites_destroy(Favorites * favorites)
 {
-	g_list_foreach(favorites->selection, (GFunc)g_free, NULL);
+	g_list_foreach(favorites->selection, _favorites_wrap_g_free, NULL);
 	g_list_free(favorites->selection);
 	object_delete(favorites);
 }
@@ -223,7 +226,7 @@ static void _favorites_refresh(Favorites * favorites, GList * selection)
 	int c;
 
 	/* obtain the current selection */
-	g_list_foreach(favorites->selection, (GFunc)g_free, NULL);
+	g_list_foreach(favorites->selection, _favorites_wrap_g_free, NULL);
 	g_list_free(favorites->selection);
 	favorites->selection = NULL;
 	g_list_foreach(selection, (GFunc)_refresh_copy, favorites);
@@ -455,4 +458,14 @@ static void _favorites_on_row_activated(GtkTreeView * view, GtkTreePath * path,
 		favorites->helper->set_location(favorites->helper->browser,
 				&location[sizeof(scheme) - 2]);
 	g_free(location);
+}
+
+
+/* wrappers */
+/* favorites_wrap_g_free */
+static void _favorites_wrap_g_free(void * a, void * b)
+{
+	(void) b;
+
+	g_free(a);
 }
