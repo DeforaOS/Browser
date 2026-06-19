@@ -139,6 +139,9 @@ static void _trash_on_selection_changed(GtkTreeSelection * treesel,
 		gpointer data);
 static gboolean _trash_on_timeout(gpointer data);
 
+/* wrappers */
+static void _trash_wrap_gtk_tree_path_free(void * a, void * b);
+
 
 /* public */
 /* variables */
@@ -358,7 +361,7 @@ static int _trash_delete_selection(Trash * trash)
 		return 0;
 	for(l = rows; l != NULL; l = l->next)
 		ret |= _delete_path(trash, model, l->data);
-	g_list_foreach(rows, (GFunc)gtk_tree_path_free, NULL);
+	g_list_foreach(rows, _trash_wrap_gtk_tree_path_free, NULL);
 	g_list_free(rows);
 	_trash_list(trash);
 	return (ret == 0) ? 0 : -1;
@@ -560,7 +563,7 @@ static int _trash_restore_selection(Trash * trash)
 		return 0;
 	for(l = rows; l != NULL; l = l->next)
 		ret |= _restore_path(trash, model, l->data);
-	g_list_foreach(rows, (GFunc)gtk_tree_path_free, NULL);
+	g_list_foreach(rows, _trash_wrap_gtk_tree_path_free, NULL);
 	g_list_free(rows);
 	_trash_list(trash);
 	return (ret == 0) ? 0 : -1;
@@ -647,4 +650,14 @@ static gboolean _trash_on_timeout(gpointer data)
 
 	_trash_list(trash);
 	return TRUE;
+}
+
+
+/* wrappers */
+/* trash_wrap_gtk_tree_path_free */
+static void _trash_wrap_gtk_tree_path_free(void * a, void * b)
+{
+	(void) b;
+
+	gtk_tree_path_free(a);
 }
