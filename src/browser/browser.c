@@ -278,6 +278,11 @@ static int _config_save_boolean(Config * config, char const * variable,
 static void _browser_on_plugin_combo_change(gpointer data);
 static void _browser_on_selection_changed(gpointer data);
 
+/* wrappers */
+static void _browser_wrap_free(void * a, void * b);
+static void _browser_wrap_g_free(void * a, void * b);
+static void _browser_wrap_gtk_tree_path_free(void * a, void * b);
+
 
 /* public */
 /* functions */
@@ -686,9 +691,9 @@ void browser_delete(Browser * browser)
 		config_delete(browser->config);
 	if(browser->refresh_id)
 		g_source_remove(browser->refresh_id);
-	g_list_foreach(browser->history, (GFunc)free, NULL);
+	g_list_foreach(browser->history, _browser_wrap_free, NULL);
 	g_list_free(browser->history);
-	g_list_foreach(browser->selection, (GFunc)free, NULL);
+	g_list_foreach(browser->selection, _browser_wrap_free, NULL);
 	g_list_free(browser->selection);
 	if(browser->detailview != NULL)
 		g_object_unref(browser->detailview);
@@ -906,7 +911,7 @@ void browser_copy(Browser * browser)
 		gtk_editable_copy_clipboard(GTK_EDITABLE(entry));
 		return;
 	}
-	g_list_foreach(browser->selection, (GFunc)free, NULL);
+	g_list_foreach(browser->selection, _browser_wrap_free, NULL);
 	g_list_free(browser->selection);
 	browser->selection = browser_selection_copy(browser);
 	browser->selection_cut = 0;
@@ -926,7 +931,7 @@ void browser_cut(Browser * browser)
 		gtk_editable_cut_clipboard(GTK_EDITABLE(entry));
 		return;
 	}
-	g_list_foreach(browser->selection, (GFunc)free, NULL);
+	g_list_foreach(browser->selection, _browser_wrap_free, NULL);
 	g_list_free(browser->selection);
 	browser->selection = browser_selection_copy(browser);
 	browser->selection_cut = 1;
@@ -1241,7 +1246,7 @@ void browser_properties(Browser * browser)
 	}
 	if(_common_exec(PROGNAME_PROPERTIES, NULL, selection) != 0)
 		browser_error(browser, strerror(errno), 1);
-	g_list_foreach(selection, (GFunc)free, NULL);
+	g_list_foreach(selection, _browser_wrap_free, NULL);
 	g_list_free(selection);
 }
 
@@ -1831,7 +1836,7 @@ GList * browser_selection_copy(Browser * browser)
 				BC_PATH, &q, -1);
 		p = g_list_append(p, q);
 	}
-	g_list_foreach(sel, (GFunc)gtk_tree_path_free, NULL);
+	g_list_foreach(sel, _browser_wrap_gtk_tree_path_free, NULL);
 	g_list_free(sel); /* XXX can probably be optimized for re-use */
 	return p;
 }
@@ -1857,7 +1862,7 @@ void browser_selection_delete(Browser * browser)
 						cnt), cnt) == 0)
 			&& _common_exec(PROGNAME_DELETE, "-ir", selection) != 0)
 		browser_error(browser, strerror(errno), 1);
-	g_list_foreach(selection, (GFunc)free, NULL);
+	g_list_foreach(selection, _browser_wrap_free, NULL);
 	g_list_free(selection);
 }
 
@@ -1892,7 +1897,8 @@ void browser_selection_paste(Browser * browser)
 			browser_error(browser, strerror(errno), 1);
 		else
 		{
-			g_list_foreach(browser->selection, (GFunc)free, NULL);
+			g_list_foreach(browser->selection, _browser_wrap_free,
+					NULL);
 			g_list_free(browser->selection);
 			browser->selection = NULL;
 		}
@@ -2710,7 +2716,8 @@ static int _location_directory(Browser * browser, char const * path, DIR * dir,
 	}
 	else if(strcmp(browser->current->data, p) != 0)
 	{
-		g_list_foreach(browser->current->next, (GFunc)free, NULL);
+		g_list_foreach(browser->current->next, _browser_wrap_free,
+				NULL);
 		g_list_free(browser->current->next);
 		browser->current->next = NULL;
 		browser->history = g_list_append(browser->history, p);
@@ -2870,7 +2877,7 @@ static void _view_details(Browser * browser)
 			for(p = sel; p != NULL; p = p->next)
 				gtk_tree_selection_select_path(treesel,
 						p->data);
-			g_list_foreach(sel, (GFunc)gtk_tree_path_free, NULL);
+			g_list_foreach(sel, _browser_wrap_gtk_tree_path_free, NULL);
 			g_list_free(sel);
 		}
 #endif
@@ -2981,7 +2988,7 @@ static void _view_icons_selection(Browser * browser, GList * sel)
 	for(p = sel; p != NULL; p = p->next)
 		gtk_icon_view_select_path(GTK_ICON_VIEW(browser->iconview),
 				p->data);
-	g_list_foreach(sel, (GFunc)gtk_tree_path_free, NULL);
+	g_list_foreach(sel, _browser_wrap_gtk_tree_path_free, NULL);
 	g_list_free(sel);
 }
 
@@ -3083,7 +3090,7 @@ static void _view_icons_on_icon_drag_data_get(GtkWidget * widget,
 	}
 	gtk_selection_data_set_text(seldata, p, len);
 	free(p);
-	g_list_foreach(selection, (GFunc)free, NULL);
+	g_list_foreach(selection, _browser_wrap_free, NULL);
 	g_list_free(selection);
 }
 
@@ -3861,9 +3868,9 @@ static void _browser_plugin_refresh(Browser * browser)
 		l = g_list_append(l, path);
 	}
 	_plugin_refresh_do_list(browser, l);
-	g_list_foreach(l, (GFunc)g_free, NULL);
+	g_list_foreach(l, _browser_wrap_g_free, NULL);
 	g_list_free(l);
-	g_list_foreach(sel, (GFunc)gtk_tree_path_free, NULL);
+	g_list_foreach(sel, _browser_wrap_gtk_tree_path_free, NULL);
 	g_list_free(sel);
 }
 
@@ -4100,4 +4107,32 @@ static void _browser_on_selection_changed(gpointer data)
 	Browser * browser = data;
 	
 	_browser_plugin_refresh(browser);
+}
+
+
+/* wrappers */
+/* browser_wrap_free */
+static void _browser_wrap_free(void * a, void * b)
+{
+	(void) b;
+
+	free(a);
+}
+
+
+/* browser_wrap_g_free */
+static void _browser_wrap_g_free(void * a, void * b)
+{
+	(void) b;
+
+	g_free(a);
+}
+
+
+/* browser_wrap_gtk_tree_path_free */
+static void _browser_wrap_gtk_tree_path_free(void * a, void * b)
+{
+	(void) b;
+
+	gtk_tree_path_free(a);
 }
