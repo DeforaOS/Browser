@@ -35,6 +35,10 @@
 
 
 /* Desktop */
+/* defaults */
+# define DESKTOP_CONFIG_FILE		"Desktop.conf"
+# define DESKTOP_CONFIG_VENDOR		"DeforaOS/" VENDOR
+
 /* types */
 typedef struct _DesktopPrefs
 {

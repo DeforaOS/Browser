@@ -141,8 +141,6 @@ typedef enum _DesktopHows
 
 
 /* constants */
-#define DESKTOPRC		".desktoprc"
-
 static const char * _desktop_hows[DESKTOP_HOW_COUNT] =
 {
 	"none",
@@ -1856,20 +1854,14 @@ static int _error_text(char const * message, char const * error, int ret)
 static Config * _desktop_get_config(Desktop * desktop)
 {
 	Config * config;
-	String * pathname = NULL;
 
-	if((config = config_new()) == NULL
-			|| (pathname = string_new_append(desktop->home,
-					"/" DESKTOPRC, NULL)) == NULL)
+	if((config = config_new()) == NULL)
 	{
-		if(config != NULL)
-			config_delete(config);
-		if(pathname != NULL)
-			object_delete(pathname);
 		desktop_serror(NULL, _("Could not load preferences"), FALSE);
 		return NULL;
 	}
-	config_load(config, pathname); /* XXX ignore errors */
+	config_load_preferences(config, DESKTOP_CONFIG_VENDOR, PACKAGE,
+			DESKTOP_CONFIG_FILE); /* XXX ignore errors */
 	return config;
 }
 
@@ -2543,12 +2535,9 @@ static void _desktop_on_preferences_response_ok(gpointer data)
 	snprintf(buf, sizeof(buf), "%d", desktop->prefs.monitor);
 	config_set(config, "icons", "monitor", buf);
 	/* XXX code duplication */
-	if((p = string_new_append(desktop->home, "/" DESKTOPRC, NULL)) != NULL)
-	{
-		if(config_save(config, p) != 0)
-			error_print(PROGNAME_DESKTOP);
-		string_delete(p);
-	}
+	if(config_save_preferences_user(config, DESKTOP_CONFIG_VENDOR, PACKAGE,
+				DESKTOP_CONFIG_FILE) != 0)
+		error_print(PROGNAME_DESKTOP);
 	config_delete(config);
 }
 
