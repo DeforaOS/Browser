@@ -470,7 +470,13 @@ static void _list_add(Volumes * volumes, char const * name, char const * device,
 	GdkPixbuf * pixbuf;
 	char const * ignore[] = { "kernfs", "proc", "procfs", "ptyfs" };
 	char const * cdrom[] = { "/dev/cd" };
-	char const * removable[] = { "/dev/ld", "/dev/sd" };
+	char const * removable[] = {
+#if defined(__FreeBSD__)
+			"/dev/da"
+#else
+			"/dev/ld", "/dev/sd"
+#endif
+	};
 	size_t i;
 	double fraction = 0.0;
 	unsigned int f = 0;
