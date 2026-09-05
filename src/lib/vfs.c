@@ -153,27 +153,30 @@ int browser_vfs_closedir(DIR * dir)
 int browser_vfs_eject(char const * mountpoint)
 {
 	int ret = 0;
-	char * argv[] = { PROGNAME_EJECT, "--", NULL, NULL };
+	char * argv[] = { PROGNAME_SUDO, "-A", PROGNAME_EJECT, "--", NULL,
+		NULL };
 	const unsigned int flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
+	gboolean root;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, mountpoint);
 #endif
 	if(mountpoint == NULL)
 		return error_set_code(-EINVAL, "%s", strerror(EINVAL));
-	if((argv[2] = _browser_vfs_get_device(mountpoint)) == NULL)
+	if((argv[4] = _browser_vfs_get_device(mountpoint)) == NULL)
 		return error_get_code();
+	root = (geteuid() == 0) ? TRUE : FALSE;
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, argv[2]);
 #endif
-	if(g_spawn_async(NULL, argv, NULL, flags, NULL, NULL, NULL, &error)
-			!= TRUE)
+	if(g_spawn_async(NULL, root ? &argv[2] : argv, NULL, root ? 0 : flags,
+				NULL, NULL, NULL, &error) != TRUE)
 	{
 		ret = -error_set_code(1, "%s: %s", mountpoint, error->message);
 		g_error_free(error);
 	}
-	free(argv[2]);
+	free(argv[4]);
 	return ret;
 }
 
