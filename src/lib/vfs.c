@@ -442,9 +442,13 @@ int browser_vfs_mount(char const * mountpoint)
 	int ret = 0;
 	char * argv[] = { PROGNAME_SUDO, "-A", PROGNAME_MOUNT, "--", NULL,
 		NULL };
+	const unsigned int flags = G_SPAWN_SEARCH_PATH;
 	GError * error = NULL;
 	gboolean root;
 
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, mountpoint);
+#endif
 	if(mountpoint == NULL)
 		return error_set_code(-EINVAL, "%s: %s", mountpoint,
 				strerror(EINVAL));
@@ -452,8 +456,7 @@ int browser_vfs_mount(char const * mountpoint)
 		return error_set_code(-errno, "%s: %s", mountpoint,
 				strerror(errno));
 	root = (geteuid() == 0) ? TRUE : FALSE;
-	if(g_spawn_async(NULL, root ? &argv[2] : argv, NULL,
-				root ? 0 : G_SPAWN_SEARCH_PATH,
+	if(g_spawn_async(NULL, root ? &argv[2] : argv, NULL, root ? 0 : flags,
 				NULL, NULL, NULL, &error) != TRUE)
 	{
 		error_set("%s: %s", mountpoint, error->message);
